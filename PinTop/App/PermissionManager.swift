@@ -8,9 +8,16 @@ class PermissionManager: ObservableObject {
     @Published var accessibilityGranted: Bool = false
 
     private var pollTimer: Timer?
+    private var backgroundCheckTimer: Timer?
 
     private init() {
         accessibilityGranted = AXIsProcessTrusted()
+        startBackgroundCheck()
+    }
+
+    deinit {
+        stopPolling()
+        stopBackgroundCheck()
     }
 
     // MARK: - 权限检查
@@ -50,5 +57,30 @@ class PermissionManager: ObservableObject {
     func stopPolling() {
         pollTimer?.invalidate()
         pollTimer = nil
+    }
+
+    // MARK: - 后台持续检测（应对 codesign 导致权限失效等场景）
+
+    /// 启动后台权限检测，每 3 秒检查一次权限状态变化
+    private func startBackgroundCheck() {
+        guard backgroundCheckTimer == nil else { return }
+        backgroundCheckTimer = Timer.scheduledTimer(withTimeInterval: 3.0, repeats: true) { [weak self] _ in
+            guard let self else { return }
+            let granted = AXIsProcessTrusted()
+            guard granted != self.accessibilityGranted else { return }
+            DispatchQueue.main.async {
+                self.accessibilityGranted = granted
+                if granted {
+                    // 权限恢复，通知监听方刷新窗口列表
+                    NotificationCenter.default.post(name: Constants.Notifications.accessibilityGranted, object: nil)
+                    AppMonitor.shared.refreshRunningApps()
+                }
+            }
+        }
+    }
+
+    private func stopBackgroundCheck() {
+        backgroundCheckTimer?.invalidate()
+        backgroundCheckTimer = nil
     }
 }

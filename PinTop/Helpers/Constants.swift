@@ -24,8 +24,8 @@ enum Constants {
         static let maxApps: Int = 8                    // 快捷面板最多 8 个 App
         static let maxWindowsPerApp: Int = 10          // 每个 App 最多显示 10 个窗口
         static let bottomBarHeight: CGFloat = 36       // 底部操作栏高度
-        static let appRowHeight: CGFloat = 32          // App 行高度
-        static let windowRowHeight: CGFloat = 28       // 窗口行高度
+        static let appRowHeight: CGFloat = 26          // App 行高度（紧凑布局）
+        static let windowRowHeight: CGFloat = 22       // 窗口行高度（紧凑布局）
         static let windowIndent: CGFloat = 28          // 窗口列表缩进
     }
 
@@ -35,7 +35,7 @@ enum Constants {
     static let borderColors: [String] = ["blue", "red", "green", "orange", "purple", "yellow"]
 
     // MARK: - Pin（供服务层使用的扁平常量）
-    static let maxPinnedWindows: Int = 6               // 最多 6 个置顶窗口
+    static let maxPinnedWindows: Int = 3               // 最多 3 个置顶窗口
     static let maxApps: Int = 8                        // 快捷面板最多 8 个 App
 
     // MARK: - 主看板

@@ -1,4 +1,5 @@
 import SwiftUI
+import UniformTypeIdentifiers
 
 /// 快捷面板配置页面
 /// 上方：已选应用区（拖拽排序，最多8个）
@@ -16,6 +17,8 @@ struct AppConfigView: View {
     @State private var searchText = ""
     // 刷新触发器（App 启动/退出时递增）
     @State private var refreshTrigger = 0
+    // 当前拖拽中的应用配置
+    @State private var draggedConfig: AppConfig?
 
     var body: some View {
         ScrollView {
@@ -59,11 +62,16 @@ struct AppConfigView: View {
                 VStack(spacing: 2) {
                     ForEach(configStore.appConfigs) { config in
                         selectedAppRow(config)
-                    }
-                    .onMove { source, destination in
-                        var configs = configStore.appConfigs
-                        configs.move(fromOffsets: source, toOffset: destination)
-                        configStore.reorderApps(configs.map(\.bundleID))
+                            .opacity(draggedConfig?.id == config.id ? 0.5 : 1.0)
+                            .onDrag {
+                                draggedConfig = config
+                                return NSItemProvider(object: config.bundleID as NSString)
+                            }
+                            .onDrop(of: [UTType.text], delegate: AppReorderDropDelegate(
+                                targetConfig: config,
+                                draggedConfig: $draggedConfig,
+                                configStore: configStore
+                            ))
                     }
                 }
                 .background(RoundedRectangle(cornerRadius: 8).fill(.quaternary.opacity(0.5)))
@@ -415,6 +423,37 @@ private struct AddKeywordField: View {
         guard !trimmed.isEmpty else { return }
         onAdd(trimmed)
         text = ""
+    }
+}
+
+/// 已选应用拖拽排序代理
+private struct AppReorderDropDelegate: DropDelegate {
+    let targetConfig: AppConfig
+    @Binding var draggedConfig: AppConfig?
+    let configStore: ConfigStore
+
+    func dropEntered(info: DropInfo) {
+        guard let dragged = draggedConfig,
+              dragged.id != targetConfig.id,
+              let fromIndex = configStore.appConfigs.firstIndex(where: { $0.id == dragged.id }),
+              let toIndex = configStore.appConfigs.firstIndex(where: { $0.id == targetConfig.id })
+        else { return }
+
+        withAnimation {
+            var configs = configStore.appConfigs
+            configs.move(fromOffsets: IndexSet(integer: fromIndex),
+                         toOffset: toIndex > fromIndex ? toIndex + 1 : toIndex)
+            configStore.reorderApps(configs.map(\.bundleID))
+        }
+    }
+
+    func performDrop(info: DropInfo) -> Bool {
+        draggedConfig = nil
+        return true
+    }
+
+    func dropUpdated(info: DropInfo) -> DropProposal? {
+        DropProposal(operation: .move)
     }
 }
 

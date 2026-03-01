@@ -33,6 +33,15 @@ final class QuickPanelWindow: NSPanel {
     private let resizeHandleSize: CGFloat = 5
     private let resizeCornerSize: CGFloat = 10
 
+    // MARK: - 面板拖动状态
+
+    private var isDraggingPanel = false
+    private var dragPanelStartMouseLocation: CGPoint = .zero
+    private var dragPanelStartFrame: NSRect = .zero
+
+    /// 防止联动拖动递归
+    private var isSyncMoving = false
+
     // MARK: - 初始化
 
     init() {
@@ -112,6 +121,25 @@ final class QuickPanelWindow: NSPanel {
             name: NSNotification.Name("FloatingBall.mouseExited"),
             object: nil
         )
+        // 监听浮球拖动，联动移动面板
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(handleBallDragMoved(_:)),
+            name: NSNotification.Name("FloatingBall.dragMoved"),
+            object: nil
+        )
+    }
+
+    @objc private func handleBallDragMoved(_ notification: Notification) {
+        guard isPanelPinned, !isSyncMoving else { return }
+        guard let deltaX = notification.userInfo?["deltaX"] as? CGFloat,
+              let deltaY = notification.userInfo?["deltaY"] as? CGFloat else { return }
+        isSyncMoving = true
+        var newFrame = frame
+        newFrame.origin.x += deltaX
+        newFrame.origin.y += deltaY
+        setFrame(newFrame, display: true)
+        isSyncMoving = false
     }
 
     @objc private func ballMouseExited() {
@@ -218,6 +246,79 @@ final class QuickPanelWindow: NSPanel {
     func cancelDismissTimer() {
         dismissTimer?.invalidate()
         dismissTimer = nil
+    }
+
+    // MARK: - 事件分发拦截（修复 resize 热区被子视图吞没的问题）
+
+    /// 非激活面板的 contentView 子视图（scrollView 等）会吞没 resize 热区的鼠标事件，
+    /// 通过重写 sendEvent 在事件分发前拦截 resize 操作
+    override func sendEvent(_ event: NSEvent) {
+        switch event.type {
+        case .leftMouseDown:
+            let location = event.locationInWindow
+            // 优先检测 resize 热区
+            if resizeEdgeAt(location) != nil {
+                mouseDown(with: event)
+                return
+            }
+            // 检测 topBar 区域拖动（窗口顶部 24px）
+            if location.y > frame.height - 24 {
+                // 检查是否点击在按钮上（按钮点击不应被拖动拦截）
+                if let hitView = contentView?.hitTest(location),
+                   hitView is NSButton || hitView.superview is NSButton {
+                    break // 让按钮正常处理点击
+                }
+                isDraggingPanel = true
+                dragPanelStartMouseLocation = NSEvent.mouseLocation
+                dragPanelStartFrame = frame
+                return
+            }
+        case .leftMouseDragged:
+            if isResizing {
+                mouseDragged(with: event)
+                return
+            }
+            if isDraggingPanel {
+                handlePanelDrag()
+                return
+            }
+        case .leftMouseUp:
+            if isResizing {
+                mouseUp(with: event)
+                return
+            }
+            if isDraggingPanel {
+                isDraggingPanel = false
+                return
+            }
+        default:
+            break
+        }
+        super.sendEvent(event)
+    }
+
+    /// 处理面板拖动
+    private func handlePanelDrag() {
+        let currentMouse = NSEvent.mouseLocation
+        // 计算增量 delta（相对上一帧）
+        let deltaX = currentMouse.x - dragPanelStartMouseLocation.x
+        let deltaY = currentMouse.y - dragPanelStartMouseLocation.y
+        // 更新参考点为当前位置，下一帧计算增量
+        dragPanelStartMouseLocation = currentMouse
+
+        var newFrame = frame
+        newFrame.origin.x += deltaX
+        newFrame.origin.y += deltaY
+        setFrame(newFrame, display: true)
+
+        // 面板钉住时，同步拖动浮球
+        if isPanelPinned {
+            NotificationCenter.default.post(
+                name: NSNotification.Name("QuickPanel.dragMoved"),
+                object: nil,
+                userInfo: ["deltaX": deltaX, "deltaY": deltaY]
+            )
+        }
     }
 
     // MARK: - Resize 鼠标事件

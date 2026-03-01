@@ -39,6 +39,19 @@ class PinManager: ObservableObject {
         let level = Constants.pinnedWindowBaseLevel + Int32(pinnedCount)
         WindowService.shared.setWindowLevel(window.id, level: level)
 
+        // 补充 AXRaise 确保窗口提升到前台
+        WindowService.shared.axRaiseWindow(window.id)
+
+        // 强制将窗口提升到所有窗口之上
+        WindowService.shared.orderWindowAbove(window.id)
+
+        // 激活目标 App，确保窗口获得焦点
+        if let app = NSRunningApplication(processIdentifier: window.ownerPID) {
+            app.activate()
+        }
+
+        NSLog("[PinTop] pin: 窗口 %d (%@) 已置顶，目标层级 %d", window.id, window.title, level)
+
         // 注册 AX 观察器监听窗口关闭/最小化
         observeWindow(windowID: window.id, pid: window.ownerPID)
 

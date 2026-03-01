@@ -9,7 +9,7 @@ final class FloatingBallView: NSView {
 
     /// 是否正在拖拽中
     private var isDragging = false
-    /// 拖拽起始点（窗口坐标系）
+    /// 拖拽起始点（屏幕坐标系）
     private var dragStartPoint: CGPoint = .zero
     /// 拖拽起始时窗口位置
     private var windowStartOrigin: CGPoint = .zero
@@ -25,6 +25,12 @@ final class FloatingBallView: NSView {
     private var clickTimer: Timer?
     /// 当前点击次数
     private var clickCount: Int = 0
+    /// 面板是否被钉住（钉住时不响应 hover）
+    private var isPanelPinned = false
+    /// 防止联动拖动递归
+    private var isSyncMoving = false
+    /// 上一帧鼠标位置（用于计算增量 delta）
+    private var lastDragPoint: CGPoint = .zero
 
     // MARK: - 子视图
 
@@ -40,32 +46,27 @@ final class FloatingBallView: NSView {
         return view
     }()
 
-    /// 渐变覆盖层（增强立体感）
+    /// 渐变覆盖层（柔和立体感）
     private let gradientOverlay: NSView = {
         let view = NSView()
         view.wantsLayer = true
         let gradient = CAGradientLayer()
         gradient.colors = [
-            NSColor.white.withAlphaComponent(0.15).cgColor,
-            NSColor.white.withAlphaComponent(0.02).cgColor,
-            NSColor.black.withAlphaComponent(0.05).cgColor,
+            NSColor.white.withAlphaComponent(0.12).cgColor,
+            NSColor.white.withAlphaComponent(0.04).cgColor,
+            NSColor.clear.cgColor,
+            NSColor.black.withAlphaComponent(0.03).cgColor,
         ]
-        gradient.locations = [0.0, 0.5, 1.0]
-        gradient.startPoint = CGPoint(x: 0.5, y: 1.0)
-        gradient.endPoint = CGPoint(x: 0.5, y: 0.0)
+        gradient.locations = [0.0, 0.35, 0.65, 1.0]
+        gradient.startPoint = CGPoint(x: 0.3, y: 1.0)
+        gradient.endPoint = CGPoint(x: 0.7, y: 0.0)
         view.layer = gradient
         return view
     }()
 
-    /// 图钉图标
+    /// 品牌 Logo 图标
     private let iconView: NSImageView = {
         let imageView = NSImageView()
-        let config = NSImage.SymbolConfiguration(pointSize: 18, weight: .medium)
-        if let image = NSImage(systemSymbolName: "pin", accessibilityDescription: "PinTop") {
-            let configured = image.withSymbolConfiguration(config) ?? image
-            imageView.image = configured
-        }
-        imageView.contentTintColor = .labelColor
         imageView.imageScaling = .scaleProportionallyDown
         imageView.wantsLayer = true
         return imageView
@@ -123,6 +124,8 @@ final class FloatingBallView: NSView {
         layer?.shadowRadius = 6
         layer?.shadowOffset = CGSize(width: 0, height: -2)
         layer?.shadowOpacity = 0.5
+        // 圆形阴影路径（避免方框阴影）
+        layer?.shadowPath = CGPath(ellipseIn: CGRect(x: 0, y: 0, width: size, height: size), transform: nil)
 
         // 毛玻璃背景
         visualEffectView.frame = NSRect(x: 0, y: 0, width: size, height: size)
@@ -134,8 +137,9 @@ final class FloatingBallView: NSView {
         gradientOverlay.layer?.masksToBounds = true
         addSubview(gradientOverlay)
 
-        // 图钉图标（居中）
-        let iconSize: CGFloat = 22
+        // 品牌 Logo 图标（居中，尺寸略大以覆盖圆形区域）
+        let iconSize: CGFloat = 28
+        iconView.image = createBrandLogo(size: iconSize, highlighted: false)
         iconView.frame = NSRect(
             x: (size - iconSize) / 2,
             y: (size - iconSize) / 2,
@@ -153,6 +157,9 @@ final class FloatingBallView: NSView {
 
         // 添加鼠标追踪区域
         updateTrackingArea()
+
+        // 启动呼吸脉搏动画
+        startBreathingAnimation()
     }
 
     // MARK: - 布局更新
@@ -165,7 +172,7 @@ final class FloatingBallView: NSView {
         gradientOverlay.frame = NSRect(x: 0, y: 0, width: size, height: size)
         gradientOverlay.layer?.cornerRadius = size / 2
 
-        let iconSize: CGFloat = 22
+        let iconSize: CGFloat = 28
         iconView.frame = NSRect(
             x: (size - iconSize) / 2,
             y: (size - iconSize) / 2,
@@ -177,7 +184,32 @@ final class FloatingBallView: NSView {
         let badgeHeight: CGFloat = 16
         badgeLabel.frame = NSRect(x: size - badgeWidth + 4, y: size - badgeHeight + 4, width: badgeWidth, height: badgeHeight)
 
+        // 同步更新圆形阴影路径
+        layer?.shadowPath = CGPath(ellipseIn: CGRect(x: 0, y: 0, width: size, height: size), transform: nil)
+
         needsDisplay = true
+    }
+
+    // MARK: - 呼吸脉搏动画
+
+    /// 启动 idle 状态下的呼吸光晕动画
+    private func startBreathingAnimation() {
+        guard let layer = layer else { return }
+        layer.removeAnimation(forKey: "breathingAnimation")
+
+        let animation = CABasicAnimation(keyPath: "shadowOpacity")
+        animation.fromValue = layer.shadowOpacity
+        animation.toValue = max(layer.shadowOpacity - 0.2, 0.15)
+        animation.duration = 2.0
+        animation.autoreverses = true
+        animation.repeatCount = .infinity
+        animation.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
+        layer.add(animation, forKey: "breathingAnimation")
+    }
+
+    /// 停止呼吸动画
+    private func stopBreathingAnimation() {
+        layer?.removeAnimation(forKey: "breathingAnimation")
     }
 
     // MARK: - 追踪区域
@@ -211,6 +243,37 @@ final class FloatingBallView: NSView {
             name: PinManager.pinnedWindowsChanged,
             object: nil
         )
+        // 监听面板钉住状态变化
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(panelPinStateChanged(_:)),
+            name: NSNotification.Name("QuickPanel.pinStateChanged"),
+            object: nil
+        )
+        // 监听面板拖动，联动移动浮球
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(handlePanelDragMoved(_:)),
+            name: NSNotification.Name("QuickPanel.dragMoved"),
+            object: nil
+        )
+    }
+
+    @objc private func handlePanelDragMoved(_ notification: Notification) {
+        guard isPanelPinned, !isSyncMoving else { return }
+        guard let deltaX = notification.userInfo?["deltaX"] as? CGFloat,
+              let deltaY = notification.userInfo?["deltaY"] as? CGFloat else { return }
+        guard let window = window else { return }
+        isSyncMoving = true
+        var newOrigin = window.frame.origin
+        newOrigin.x += deltaX
+        newOrigin.y += deltaY
+        window.setFrameOrigin(newOrigin)
+        isSyncMoving = false
+    }
+
+    @objc private func panelPinStateChanged(_ notification: Notification) {
+        isPanelPinned = notification.userInfo?["isPinned"] as? Bool ?? false
     }
 
     @objc private func pinnedWindowsDidChange() {
@@ -220,33 +283,222 @@ final class FloatingBallView: NSView {
 
     // MARK: - 角标
 
-    /// 更新角标显示 + 图标样式
+    /// 更新角标显示 + 品牌 Logo 状态 + 光晕效果
     func updateBadge(_ count: Int) {
         badgeCount = count
+        let iconSize: CGFloat = 28
         if count > 0 {
             badgeLabel.stringValue = "\(count)"
             badgeLabel.isHidden = false
-            // 有置顶窗口时：pin.fill + 主题色
-            let config = NSImage.SymbolConfiguration(pointSize: 18, weight: .medium)
-            if let image = NSImage(systemSymbolName: "pin.fill", accessibilityDescription: "PinTop") {
-                iconView.image = image.withSymbolConfiguration(config) ?? image
-            }
-            iconView.contentTintColor = .systemBlue
+            // 有置顶窗口时：使用红色高亮版本的品牌 Logo
+            iconView.image = createBrandLogo(size: iconSize, highlighted: true)
+
+            // 红色光晕效果
+            layer?.shadowColor = NSColor.systemRed.withAlphaComponent(0.4).cgColor
+            layer?.shadowRadius = 10
+            layer?.shadowOffset = .zero
+            layer?.shadowOpacity = 0.7
+            // 切换为红色光晕呼吸
+            startBreathingAnimation()
         } else {
             badgeLabel.isHidden = true
-            // 无置顶窗口时：pin + 默认色
-            let config = NSImage.SymbolConfiguration(pointSize: 18, weight: .medium)
-            if let image = NSImage(systemSymbolName: "pin", accessibilityDescription: "PinTop") {
-                iconView.image = image.withSymbolConfiguration(config) ?? image
-            }
-            iconView.contentTintColor = .labelColor
+            // 无置顶窗口时：使用正常蓝色版本的品牌 Logo
+            iconView.image = createBrandLogo(size: iconSize, highlighted: false)
+
+            // 恢复默认黑色阴影
+            layer?.shadowColor = NSColor.black.withAlphaComponent(0.3).cgColor
+            layer?.shadowRadius = 6
+            layer?.shadowOffset = CGSize(width: 0, height: -2)
+            layer?.shadowOpacity = 0.5
+            // 恢复默认呼吸动画
+            startBreathingAnimation()
         }
         needsDisplay = true
+    }
+
+    // MARK: - 品牌 Logo 绘制
+
+    /// 程序化绘制品牌 Logo：立体球形背景 + 上方白色图钉 + 下方白色 PT 文字
+    /// - Parameters:
+    ///   - size: Logo 尺寸（正方形边长）
+    ///   - highlighted: 是否高亮（正常=蓝色渐变，highlighted=红色渐变）
+    /// - Returns: 绘制好的品牌 Logo 图片
+    private func createBrandLogo(size: CGFloat, highlighted: Bool) -> NSImage {
+        let image = NSImage(size: NSSize(width: size, height: size))
+        image.lockFocus()
+
+        let circleRect = NSRect(x: 0, y: 0, width: size, height: size)
+        let circlePath = NSBezierPath(ovalIn: circleRect)
+
+        // 1. 圆形渐变背景（从左上到右下，模拟光照方向）
+        let gradient: NSGradient?
+        if highlighted {
+            gradient = NSGradient(colorsAndLocations:
+                (NSColor(calibratedRed: 1.0, green: 0.35, blue: 0.3, alpha: 1.0), 0.0),
+                (NSColor(calibratedRed: 0.85, green: 0.15, blue: 0.15, alpha: 1.0), 0.5),
+                (NSColor(calibratedRed: 0.55, green: 0.05, blue: 0.05, alpha: 1.0), 1.0)
+            )
+        } else {
+            gradient = NSGradient(colorsAndLocations:
+                (NSColor(calibratedRed: 0.35, green: 0.65, blue: 1.0, alpha: 1.0), 0.0),
+                (NSColor(calibratedRed: 0.15, green: 0.45, blue: 0.85, alpha: 1.0), 0.5),
+                (NSColor(calibratedRed: 0.05, green: 0.2, blue: 0.55, alpha: 1.0), 1.0)
+            )
+        }
+        gradient?.draw(in: circlePath, angle: 135)
+
+        // 2. 球形高光：左上方椭圆高光（模拟 3D 球体反射）
+        NSGraphicsContext.saveGraphicsState()
+        circlePath.addClip()
+        let highlightRect = NSRect(
+            x: size * 0.08,
+            y: size * 0.45,
+            width: size * 0.55,
+            height: size * 0.50
+        )
+        let highlightPath = NSBezierPath(ovalIn: highlightRect)
+        let highlightGradient = NSGradient(colorsAndLocations:
+            (NSColor.white.withAlphaComponent(0.35), 0.0),
+            (NSColor.white.withAlphaComponent(0.08), 0.6),
+            (NSColor.clear, 1.0)
+        )
+        highlightGradient?.draw(in: highlightPath, angle: 90)
+        NSGraphicsContext.restoreGraphicsState()
+
+        // 3. 底部暗区（增强球形立体感）
+        NSGraphicsContext.saveGraphicsState()
+        circlePath.addClip()
+        let shadowRect = NSRect(
+            x: size * 0.1,
+            y: -size * 0.15,
+            width: size * 0.8,
+            height: size * 0.45
+        )
+        let shadowPath = NSBezierPath(ovalIn: shadowRect)
+        let shadowGradient = NSGradient(colorsAndLocations:
+            (NSColor.black.withAlphaComponent(0.2), 0.0),
+            (NSColor.clear, 1.0)
+        )
+        shadowGradient?.draw(in: shadowPath, angle: 90)
+        NSGraphicsContext.restoreGraphicsState()
+
+        // 4. 内边缘光（薄白色描边增强质感）
+        let innerGlow = NSBezierPath(ovalIn: NSRect(x: 0.5, y: 0.5, width: size - 1, height: size - 1))
+        NSColor.white.withAlphaComponent(0.2).setStroke()
+        innerGlow.lineWidth = 0.8
+        innerGlow.stroke()
+
+        // 5. 绘制白色 pin.fill 图标（上半部分，带轻微投影）
+        let pinSize = size * 0.35
+        let symbolConfig = NSImage.SymbolConfiguration(pointSize: pinSize, weight: .semibold)
+        if let pinSymbol = NSImage(systemSymbolName: "pin.fill", accessibilityDescription: nil),
+           let configured = pinSymbol.withSymbolConfiguration(symbolConfig) {
+            // 将 SF Symbol 渲染为白色
+            let tinted = NSImage(size: configured.size)
+            tinted.lockFocus()
+            NSColor.white.set()
+            let symbolRect = NSRect(origin: .zero, size: configured.size)
+            configured.draw(in: symbolRect)
+            symbolRect.fill(using: .sourceIn)
+            tinted.unlockFocus()
+
+            let symbolX = (size - tinted.size.width) / 2
+            let symbolY = size * 0.85 - tinted.size.height
+
+            // 图标投影（增加深度感）
+            let shadowTinted = NSImage(size: configured.size)
+            shadowTinted.lockFocus()
+            NSColor.black.withAlphaComponent(0.3).set()
+            configured.draw(in: symbolRect)
+            symbolRect.fill(using: .sourceIn)
+            shadowTinted.unlockFocus()
+            shadowTinted.draw(
+                in: NSRect(x: symbolX + 0.5, y: symbolY - 0.5, width: tinted.size.width, height: tinted.size.height),
+                from: .zero,
+                operation: .sourceOver,
+                fraction: 1.0
+            )
+
+            tinted.draw(
+                in: NSRect(x: symbolX, y: symbolY, width: tinted.size.width, height: tinted.size.height),
+                from: .zero,
+                operation: .sourceOver,
+                fraction: 1.0
+            )
+        }
+
+        // 6. 绘制白色 "PT" 文字（下半部分，带轻微投影）
+        let fontSize = size * 0.30
+        let ptFont = NSFont.systemFont(ofSize: fontSize, weight: .bold)
+
+        // 文字投影
+        let shadowPtAttributes: [NSAttributedString.Key: Any] = [
+            .font: ptFont,
+            .foregroundColor: NSColor.black.withAlphaComponent(0.3),
+        ]
+        let shadowPtString = NSAttributedString(string: "PT", attributes: shadowPtAttributes)
+        let ptTextSize = shadowPtString.size()
+        let ptX = (size - ptTextSize.width) / 2
+        let ptY = size * 0.05
+        shadowPtString.draw(at: NSPoint(x: ptX + 0.5, y: ptY - 0.5))
+
+        // 文字主体
+        let ptAttributes: [NSAttributedString.Key: Any] = [
+            .font: ptFont,
+            .foregroundColor: NSColor.white,
+        ]
+        let ptString = NSAttributedString(string: "PT", attributes: ptAttributes)
+        ptString.draw(at: NSPoint(x: ptX, y: ptY))
+
+        image.unlockFocus()
+        return image
+    }
+
+    // MARK: - 鼠标事件：右键菜单
+
+    override func rightMouseDown(with event: NSEvent) {
+        let menu = NSMenu()
+
+        let kanbanItem = NSMenuItem(title: "打开主看板", action: #selector(contextMenuOpenKanban), keyEquivalent: "")
+        kanbanItem.target = self
+        menu.addItem(kanbanItem)
+
+        let toggleItem = NSMenuItem(title: "显示/隐藏悬浮球", action: #selector(contextMenuToggleBall), keyEquivalent: "")
+        toggleItem.target = self
+        menu.addItem(toggleItem)
+
+        menu.addItem(NSMenuItem.separator())
+
+        let quitItem = NSMenuItem(title: "退出 PinTop", action: #selector(contextMenuQuit), keyEquivalent: "")
+        quitItem.target = self
+        menu.addItem(quitItem)
+
+        NSMenu.popUpContextMenu(menu, with: event, for: self)
+    }
+
+    @objc private func contextMenuOpenKanban() {
+        NotificationCenter.default.post(
+            name: NSNotification.Name("FloatingBall.openMainKanban"),
+            object: nil
+        )
+    }
+
+    @objc private func contextMenuToggleBall() {
+        NotificationCenter.default.post(
+            name: NSNotification.Name("FloatingBall.toggleBall"),
+            object: nil
+        )
+    }
+
+    @objc private func contextMenuQuit() {
+        NSApplication.shared.terminate(nil)
     }
 
     // MARK: - 鼠标事件：hover
 
     override func mouseEntered(with event: NSEvent) {
+        // 面板钉住时不响应 hover（不触发动画、计时器、面板弹出）
+        guard !isPanelPinned else { return }
         // 如果正在拖拽中，不触发 hover
         guard !isDragging else { return }
 
@@ -313,7 +565,7 @@ final class FloatingBallView: NSView {
 
     override func mouseDown(with event: NSEvent) {
         isDragging = false
-        dragStartPoint = event.locationInWindow
+        dragStartPoint = NSEvent.mouseLocation
         windowStartOrigin = window?.frame.origin ?? .zero
         clickCount += 1
     }
@@ -321,27 +573,31 @@ final class FloatingBallView: NSView {
     override func mouseDragged(with event: NSEvent) {
         guard let window = window else { return }
 
-        // 拖拽开始后取消 hover 计时器并关闭面板
+        // 拖拽开始后取消 hover 计时器
         if !isDragging {
             isDragging = true
             hoverTimer?.invalidate()
             hoverTimer = nil
             clickCount = 0
-            // 通知关闭快捷面板
-            NotificationCenter.default.post(
-                name: NSNotification.Name("FloatingBall.dragStarted"),
-                object: nil
-            )
+            lastDragPoint = NSEvent.mouseLocation
+            // 面板钉住时不关闭面板（联动拖动）
+            if !isPanelPinned {
+                NotificationCenter.default.post(
+                    name: NSNotification.Name("FloatingBall.dragStarted"),
+                    object: nil
+                )
+            }
         }
 
-        let currentPoint = event.locationInWindow
-        let deltaX = currentPoint.x - dragStartPoint.x
-        let deltaY = currentPoint.y - dragStartPoint.y
+        let currentPoint = NSEvent.mouseLocation
+        // 计算增量 delta（相对上一帧）
+        let deltaX = currentPoint.x - lastDragPoint.x
+        let deltaY = currentPoint.y - lastDragPoint.y
+        lastDragPoint = currentPoint
 
-        var newOrigin = CGPoint(
-            x: windowStartOrigin.x + deltaX,
-            y: windowStartOrigin.y + deltaY
-        )
+        var newOrigin = window.frame.origin
+        newOrigin.x += deltaX
+        newOrigin.y += deltaY
 
         // 限制在当前屏幕可见区域
         if let screen = window.screen ?? NSScreen.main {
@@ -352,6 +608,15 @@ final class FloatingBallView: NSView {
         }
 
         window.setFrameOrigin(newOrigin)
+
+        // 面板钉住时，同步拖动面板
+        if isPanelPinned {
+            NotificationCenter.default.post(
+                name: NSNotification.Name("FloatingBall.dragMoved"),
+                object: nil,
+                userInfo: ["deltaX": deltaX, "deltaY": deltaY]
+            )
+        }
     }
 
     override func mouseUp(with event: NSEvent) {
@@ -383,11 +648,17 @@ final class FloatingBallView: NSView {
 
     // MARK: - 点击处理
 
-    /// 单击：打开主看板
+    /// 单击：切换快捷面板钉住状态
     private func handleSingleClick() {
+        // 取消 hoverTimer，防止 hover 300ms 后重复触发面板
+        hoverTimer?.invalidate()
+        hoverTimer = nil
+        // 发送 toggleQuickPanel 通知，由 AppDelegate 处理钉住/取消钉住逻辑
+        guard let window = window else { return }
         NotificationCenter.default.post(
-            name: NSNotification.Name("FloatingBall.openMainKanban"),
-            object: nil
+            name: NSNotification.Name("FloatingBall.toggleQuickPanel"),
+            object: nil,
+            userInfo: ["ballFrame": NSValue(rect: window.frame)]
         )
     }
 
@@ -448,8 +719,9 @@ final class FloatingBallView: NSView {
 
     // MARK: - 贴边半隐藏
 
-    /// 检查是否需要贴边半隐藏
+    /// 检查是否需要贴边半隐藏（面板钉住时不触发半隐藏）
     private func checkHalfHide(edge: ScreenEdge) {
+        guard !isPanelPinned else { return }
         guard let window = window,
               let screen = window.screen ?? NSScreen.main else { return }
 

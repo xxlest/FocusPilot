@@ -38,6 +38,23 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
         // 设置菜单栏图标
         setupStatusBar()
+
+        // 设置 Dock 品牌图标
+        setupDockIcon()
+    }
+
+    /// 点击 Dock 图标时的行为
+    /// 没有可见窗口时打开主看板，有可见窗口时聚焦主看板
+    func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
+        if flag {
+            // 有可见窗口：聚焦主看板
+            mainKanbanWindow?.makeKeyAndOrderFront(nil)
+            NSApp.activate(ignoringOtherApps: true)
+        } else {
+            // 没有可见窗口：打开主看板
+            showMainKanban()
+        }
+        return false
     }
 
     func applicationWillTerminate(_ notification: Notification) {
@@ -80,6 +97,18 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             name: NSNotification.Name("FloatingBall.dragStarted"),
             object: nil
         )
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(handleToggleBall),
+            name: NSNotification.Name("FloatingBall.toggleBall"),
+            object: nil
+        )
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(handleToggleQuickPanel(_:)),
+            name: NSNotification.Name("FloatingBall.toggleQuickPanel"),
+            object: nil
+        )
     }
 
     @objc private func handleShowQuickPanel(_ notification: Notification) {
@@ -96,6 +125,31 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
     @objc private func handleBallDragStarted() {
         quickPanelWindow?.hide()
+    }
+
+    @objc private func handleToggleBall() {
+        toggleFloatingBall()
+    }
+
+    /// 单击浮球：切换快捷面板钉住状态
+    @objc private func handleToggleQuickPanel(_ notification: Notification) {
+        guard let value = notification.userInfo?["ballFrame"] as? NSValue else { return }
+        let ballFrame = value.rectValue
+
+        if let panel = quickPanelWindow, panel.isVisible, panel.isPanelPinned {
+            // 面板已显示且已钉住 → 取消钉住 + 关闭面板
+            panel.togglePanelPin()
+            panel.hide()
+        } else {
+            // 面板未显示或未钉住 → 弹出面板 + 自动钉住
+            showQuickPanel(relativeTo: ballFrame)
+            // 启动窗口刷新定时器
+            AppMonitor.shared.startWindowRefresh()
+            // 自动钉住面板
+            if let panel = quickPanelWindow, !panel.isPanelPinned {
+                panel.togglePanelPin()
+            }
+        }
     }
 
     // MARK: - 快捷键
@@ -162,8 +216,16 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
 
         if let button = statusItem?.button {
-            button.image = NSImage(systemSymbolName: "pin.fill", accessibilityDescription: "PinTop")
+            button.image = createStatusBarIcon(hasPinnedWindows: false)
         }
+
+        // 监听 Pin 状态变化，更新状态栏图标
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(updateStatusBarIcon),
+            name: PinManager.pinnedWindowsChanged,
+            object: nil
+        )
 
         let menu = NSMenu()
         menu.addItem(NSMenuItem(title: "显示/隐藏悬浮球", action: #selector(menuToggleBall), keyEquivalent: ""))
@@ -172,6 +234,68 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         menu.addItem(NSMenuItem(title: "退出 PinTop", action: #selector(menuQuit), keyEquivalent: "q"))
 
         statusItem?.menu = menu
+    }
+
+    // MARK: - 状态栏图标
+
+    /// 根据 Pin 状态更新状态栏图标
+    @objc private func updateStatusBarIcon() {
+        let hasPinned = !PinManager.shared.pinnedWindows.isEmpty
+        statusItem?.button?.image = createStatusBarIcon(hasPinnedWindows: hasPinned)
+    }
+
+    /// 自绘状态栏图标：上方小图钉 + 下方 PT 文字
+    /// - Parameter hasPinnedWindows: 是否有置顶窗口（有则红色着色，无则模板图标跟随系统深浅色）
+    /// - Returns: 状态栏图标
+    private func createStatusBarIcon(hasPinnedWindows: Bool) -> NSImage {
+        let iconSize: CGFloat = 18
+        let image = NSImage(size: NSSize(width: iconSize, height: iconSize))
+        image.lockFocus()
+
+        let drawColor: NSColor = hasPinnedWindows ? .systemRed : .black
+
+        // 上方绘制小图钉
+        let pinFontSize = iconSize * 0.38
+        let symbolConfig = NSImage.SymbolConfiguration(pointSize: pinFontSize, weight: .semibold)
+        if let pinSymbol = NSImage(systemSymbolName: "pin.fill", accessibilityDescription: nil),
+           let configured = pinSymbol.withSymbolConfiguration(symbolConfig) {
+            let tinted = NSImage(size: configured.size)
+            tinted.lockFocus()
+            drawColor.set()
+            let symbolRect = NSRect(origin: .zero, size: configured.size)
+            configured.draw(in: symbolRect)
+            symbolRect.fill(using: .sourceIn)
+            tinted.unlockFocus()
+
+            let pinX = (iconSize - tinted.size.width) / 2
+            let pinY = iconSize * 0.40
+            tinted.draw(
+                in: NSRect(x: pinX, y: pinY, width: tinted.size.width, height: tinted.size.height),
+                from: .zero,
+                operation: .sourceOver,
+                fraction: 1.0
+            )
+        }
+
+        // 下方绘制 PT 文字
+        let ptFontSize = iconSize * 0.32
+        let ptFont = NSFont.systemFont(ofSize: ptFontSize, weight: .bold)
+        let ptAttributes: [NSAttributedString.Key: Any] = [
+            .font: ptFont,
+            .foregroundColor: drawColor,
+        ]
+        let ptString = NSAttributedString(string: "PT", attributes: ptAttributes)
+        let ptSize = ptString.size()
+        let ptX = (iconSize - ptSize.width) / 2
+        let ptY: CGFloat = 0
+        ptString.draw(at: NSPoint(x: ptX, y: ptY))
+
+        image.unlockFocus()
+
+        // 无 Pin 时设为模板图标，跟随系统深浅色
+        image.isTemplate = !hasPinnedWindows
+
+        return image
     }
 
     // MARK: - 菜单操作
@@ -186,5 +310,63 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
     @objc private func menuQuit() {
         NSApplication.shared.terminate(nil)
+    }
+
+    // MARK: - Dock 图标
+
+    /// 程序化绘制 PT+图钉品牌 Dock 图标（蓝色渐变圆角矩形底 + 白色图钉 + 白色 PT）
+    private func setupDockIcon() {
+        let iconSize: CGFloat = 256
+        let icon = NSImage(size: NSSize(width: iconSize, height: iconSize))
+        icon.lockFocus()
+
+        // 1. 圆角矩形背景（Dock 图标标准形状）
+        let bgRect = NSRect(x: 0, y: 0, width: iconSize, height: iconSize)
+        let bgPath = NSBezierPath(roundedRect: bgRect, xRadius: iconSize * 0.22, yRadius: iconSize * 0.22)
+        let gradient = NSGradient(
+            starting: NSColor(calibratedRed: 0.2, green: 0.5, blue: 0.9, alpha: 1.0),
+            ending: NSColor(calibratedRed: 0.1, green: 0.3, blue: 0.7, alpha: 1.0)
+        )
+        gradient?.draw(in: bgPath, angle: 90)
+
+        // 2. 上方白色图钉图标
+        let pinFontSize = iconSize * 0.35
+        let symbolConfig = NSImage.SymbolConfiguration(pointSize: pinFontSize, weight: .semibold)
+        if let pinSymbol = NSImage(systemSymbolName: "pin.fill", accessibilityDescription: nil),
+           let configured = pinSymbol.withSymbolConfiguration(symbolConfig) {
+            let tinted = NSImage(size: configured.size)
+            tinted.lockFocus()
+            NSColor.white.set()
+            let symbolRect = NSRect(origin: .zero, size: configured.size)
+            configured.draw(in: symbolRect)
+            symbolRect.fill(using: .sourceIn)
+            tinted.unlockFocus()
+
+            let pinX = (iconSize - tinted.size.width) / 2
+            let pinY = iconSize * 0.85 - tinted.size.height
+            tinted.draw(
+                in: NSRect(x: pinX, y: pinY, width: tinted.size.width, height: tinted.size.height),
+                from: .zero,
+                operation: .sourceOver,
+                fraction: 1.0
+            )
+        }
+
+        // 3. 下方白色 PT 文字
+        let ptFontSize = iconSize * 0.28
+        let ptFont = NSFont.systemFont(ofSize: ptFontSize, weight: .bold)
+        let ptAttributes: [NSAttributedString.Key: Any] = [
+            .font: ptFont,
+            .foregroundColor: NSColor.white,
+        ]
+        let ptString = NSAttributedString(string: "PT", attributes: ptAttributes)
+        let ptSize = ptString.size()
+        let ptX = (iconSize - ptSize.width) / 2
+        let ptY = iconSize * 0.05
+        ptString.draw(at: NSPoint(x: ptX, y: ptY))
+
+        icon.unlockFocus()
+
+        NSApplication.shared.applicationIconImage = icon
     }
 }

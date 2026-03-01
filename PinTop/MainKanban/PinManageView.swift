@@ -104,16 +104,22 @@ struct PinManageView: View {
 
             // 辅助功能未授权提示
             if !permissionManager.accessibilityGranted {
-                HStack {
-                    Image(systemName: "exclamationmark.triangle.fill")
-                        .foregroundStyle(.yellow)
-                    Text("需要辅助功能权限才能置顶窗口")
-                        .font(.callout)
-                    Spacer()
-                    Button("前往设置") {
-                        permissionManager.requestAccessibility()
+                VStack(alignment: .leading, spacing: 6) {
+                    HStack {
+                        Image(systemName: "exclamationmark.triangle.fill")
+                            .foregroundStyle(.yellow)
+                        Text("需要辅助功能权限才能获取窗口标题和置顶窗口")
+                            .font(.callout)
+                        Spacer()
+                        Button("前往设置") {
+                            // 直接打开辅助功能设置面板
+                            NSWorkspace.shared.open(URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility")!)
+                        }
+                        .buttonStyle(.bordered)
                     }
-                    .buttonStyle(.bordered)
+                    Text("重新安装后，需要在系统设置中关闭再重新开启 PinTop 的辅助功能权限")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
                 }
                 .padding(10)
                 .background(RoundedRectangle(cornerRadius: 8).fill(.yellow.opacity(0.1)))
