@@ -1,0 +1,34 @@
+name: PinTop
+options:
+  bundleIdPrefix: com.pintop
+  deploymentTarget:
+    macOS: "14.0"
+  xcodeVersion: "16.0"
+  createIntermediateGroups: true
+  generateEmptyDirectories: true
+
+settings:
+  base:
+    SWIFT_VERSION: "5.9"
+    MACOSX_DEPLOYMENT_TARGET: "14.0"
+    SWIFT_OBJC_BRIDGING_HEADER: "PinTop/Helpers/PinTop-Bridging-Header.h"
+    ENABLE_HARDENED_RUNTIME: YES
+    CODE_SIGN_ENTITLEMENTS: "PinTop/Resources/PinTop.entitlements"
+
+targets:
+  PinTop:
+    type: application
+    platform: macOS
+    sources:
+      - path: PinTop
+        excludes:
+          - "**/*.entitlements"
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.pintop.PinTop
+        INFOPLIST_FILE: PinTop/Resources/Info.plist
+        PRODUCT_NAME: PinTop
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        GENERATE_INFOPLIST_FILE: false
+    info:
+      path: PinTop/Resources/Info.plist
