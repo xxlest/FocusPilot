@@ -1,13 +1,13 @@
-# PinTop Build & Install
+# Focus Copilot Build & Install
 # 适用于仅安装 Command Line Tools（无 Xcode IDE）的环境
 
-APP_NAME     := PinTop
-BUNDLE_ID    := com.pintop.PinTop
-VERSION      := 1.0
+APP_NAME     := FocusCopilot
+BUNDLE_ID    := com.focuscopilot.FocusCopilot
+VERSION      := 2.0
 BUILD_NUM    := 1
 MIN_MACOS    := 14.0
 
-BUILD_DIR    := /tmp/pintop-build
+BUILD_DIR    := /tmp/focuscopilot-build
 APP_BUNDLE   := $(BUILD_DIR)/$(APP_NAME).app
 INSTALL_DIR  := /Applications
 INSTALL_APP  := $(INSTALL_DIR)/$(APP_NAME).app
@@ -54,13 +54,13 @@ $(APP_BUNDLE)/Contents/Info.plist: PinTop/Resources/Info.plist
 		-e 's/$$(DEVELOPMENT_LANGUAGE)/zh_CN/g' \
 		-e 's/$$(EXECUTABLE_NAME)/$(APP_NAME)/g' \
 		-e 's/$$(PRODUCT_BUNDLE_IDENTIFIER)/$(BUNDLE_ID)/g' \
-		-e 's/$$(PRODUCT_NAME)/$(APP_NAME)/g' \
+		-e 's/$$(PRODUCT_NAME)/Focus Copilot/g' \
 		PinTop/Resources/Info.plist > $@
 	@# 追加运行时所需的 key（源 plist 中没有的）
 	@/usr/libexec/PlistBuddy -c "Add :LSMinimumSystemVersion string $(MIN_MACOS)" $@ 2>/dev/null || true
 	@# LSUIElement 已移除，App 显示在 Dock 中
 	@/usr/libexec/PlistBuddy -c "Add :NSPrincipalClass string NSApplication" $@ 2>/dev/null || true
-	@/usr/libexec/PlistBuddy -c "Add :NSAccessibilityUsageDescription string PinTop 需要辅助功能权限来管理窗口置顶和排列。" $@ 2>/dev/null || true
+	@/usr/libexec/PlistBuddy -c "Add :NSAccessibilityUsageDescription string Focus Copilot 需要辅助功能权限来管理窗口切换。" $@ 2>/dev/null || true
 	@echo "✓ Info.plist 已生成（变量已解析）"
 
 $(APP_BUNDLE)/Contents/PkgInfo:
@@ -69,16 +69,18 @@ $(APP_BUNDLE)/Contents/PkgInfo:
 
 # ── 安装 ──────────────────────────────────────────────
 install: build
-	@# 关闭正在运行的旧进程
-	@-pkill -x $(APP_NAME) 2>/dev/null; sleep 1
+	@# 关闭正在运行的旧进程（兼容新旧名称）
+	@-pkill -x $(APP_NAME) 2>/dev/null; pkill -x PinTop 2>/dev/null; sleep 1
 	@# 删除旧 App（确保 Spotlight 刷新）
 	@rm -rf $(INSTALL_APP)
+	@rm -rf $(INSTALL_DIR)/PinTop.app
 	@# 复制新 App
 	@cp -R $(APP_BUNDLE) $(INSTALL_APP)
 	@# 签名（ad-hoc 签名会改变 CDHash，导致 TCC 权限失效）
 	@codesign --force --deep --sign - $(INSTALL_APP)
 	@# 重置辅助功能权限（清除旧 CDHash 对应的 TCC 条目）
 	@-tccutil reset Accessibility $(BUNDLE_ID) 2>/dev/null
+	@-tccutil reset Accessibility com.pintop.PinTop 2>/dev/null
 	@# 触发 Spotlight 重新索引
 	@touch $(INSTALL_APP)
 	@mdimport $(INSTALL_APP)
@@ -86,11 +88,11 @@ install: build
 	@echo "✓ 正在启动..."
 	@open $(INSTALL_APP)
 	@echo ""
-	@echo "✅ PinTop 已安装并启动"
+	@echo "✅ Focus Copilot 已安装并启动"
 	@echo ""
 	@echo "⚠️  重新安装后需要重新授权辅助功能权限："
 	@echo "   系统设置 → 隐私与安全性 → 辅助功能"
-	@echo "   找到 PinTop → 关闭 → 重新开启"
+	@echo "   找到 Focus Copilot → 关闭 → 重新开启"
 	@echo ""
 	@echo "   正在打开系统设置..."
 	@open "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility"
@@ -103,5 +105,7 @@ clean:
 # ── 卸载 ──────────────────────────────────────────────
 uninstall:
 	@pkill -x $(APP_NAME) 2>/dev/null || true
+	@pkill -x PinTop 2>/dev/null || true
 	@rm -rf $(INSTALL_APP)
+	@rm -rf $(INSTALL_DIR)/PinTop.app
 	@echo "✓ 已卸载 $(APP_NAME)"

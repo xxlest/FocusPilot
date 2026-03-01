@@ -12,6 +12,9 @@ class ConfigStore: ObservableObject {
     @Published var windowRenames: [String: String] = [:]
     @Published var panelSize: PanelSize = .default
 
+    /// 悬浮球可见性（运行时状态，不持久化）
+    @Published var isBallVisible: Bool = true
+
     private let defaults = UserDefaults.standard
     private let encoder = JSONEncoder()
     private let decoder = JSONDecoder()
@@ -21,6 +24,9 @@ class ConfigStore: ObservableObject {
     // MARK: - 加载配置
 
     func load() {
+        // 从旧 bundle ID (PinTop) 自动迁移配置
+        migrateFromPinTop()
+
         if let data = defaults.data(forKey: Constants.Keys.appConfigs),
            let configs = try? decoder.decode([AppConfig].self, from: data) {
             appConfigs = configs
@@ -62,6 +68,45 @@ class ConfigStore: ObservableObject {
         }
         if let data = try? encoder.encode(panelSize) {
             defaults.set(data, forKey: Constants.Keys.panelSize)
+        }
+    }
+
+    // MARK: - 配置迁移（PinTop → FocusCopilot）
+
+    /// 从旧 bundle ID (com.pintop.PinTop) 自动迁移配置到新 bundle ID
+    /// 仅在新配置为空时执行一次迁移
+    private func migrateFromPinTop() {
+        // 如果新配置已有数据，跳过迁移
+        if defaults.data(forKey: Constants.Keys.appConfigs) != nil {
+            return
+        }
+
+        // 尝试读取旧 bundle ID 的 UserDefaults
+        guard let oldDefaults = UserDefaults(suiteName: "com.pintop.PinTop") else { return }
+
+        let oldKeyMap: [(old: String, new: String)] = [
+            ("PinTop.appConfigs", Constants.Keys.appConfigs),
+            ("PinTop.preferences", Constants.Keys.preferences),
+            ("PinTop.ballPosition", Constants.Keys.ballPosition),
+            ("PinTop.windowRenames", Constants.Keys.windowRenames),
+            ("PinTop.panelSize", Constants.Keys.panelSize),
+        ]
+
+        var migrated = false
+        for (oldKey, newKey) in oldKeyMap {
+            if let data = oldDefaults.data(forKey: oldKey) {
+                defaults.set(data, forKey: newKey)
+                migrated = true
+            }
+        }
+
+        if let completed = oldDefaults.object(forKey: "PinTop.onboardingCompleted") as? Bool {
+            defaults.set(completed, forKey: Constants.Keys.onboardingCompleted)
+            migrated = true
+        }
+
+        if migrated {
+            NSLog("[FocusCopilot] 已从 PinTop 迁移配置")
         }
     }
 

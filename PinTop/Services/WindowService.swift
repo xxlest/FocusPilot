@@ -17,6 +17,19 @@ class WindowService {
     // 窗口标题缓存：AX/CG 权限丢失时用上次成功获取的标题兜底
     private var titleCache: [CGWindowID: String] = [:]
 
+    /// 诊断日志（写入 /tmp，方便排查窗口切换问题）
+    func debugLog(_ message: String) {
+        let msg = "[\(ISO8601DateFormatter().string(from: Date()))] \(message)\n"
+        let path = "/tmp/focuscopilot-debug.log"
+        if let handle = FileHandle(forWritingAtPath: path) {
+            handle.seekToEndOfFile()
+            handle.write(msg.data(using: .utf8)!)
+            handle.closeFile()
+        } else {
+            FileManager.default.createFile(atPath: path, contents: msg.data(using: .utf8))
+        }
+    }
+
     private init() {
         // 动态加载 SkyLight 框架获取 Private API
         let skylight = dlopen("/System/Library/PrivateFrameworks/SkyLight.framework/SkyLight", RTLD_LAZY)
@@ -64,6 +77,49 @@ class WindowService {
         } else {
             axGetWindow = nil
         }
+    }
+
+    // MARK: - AX 可用性检测
+
+    /// AX API 实际可用性缓存（避免每次 reloadData 都做探测）
+    private var axApiAvailable: Bool?
+    private var axApiCheckTime: Date = .distantPast
+
+    /// 检查 AX API 是否真正可用（不仅检查权限标志，还验证实际调用能否成功）
+    /// 结果缓存 3 秒，避免频繁探测
+    func isAXApiAvailable() -> Bool {
+        // 缓存 3 秒内有效
+        if let cached = axApiAvailable, Date().timeIntervalSince(axApiCheckTime) < 3.0 {
+            return cached
+        }
+        let result = probeAXApi()
+        axApiAvailable = result
+        axApiCheckTime = Date()
+        return result
+    }
+
+    /// 清除 AX 可用性缓存（权限变化时调用）
+    func invalidateAXCache() {
+        axApiAvailable = nil
+    }
+
+    /// 实际探测 AX API：尝试获取任意运行中 App 的 AX 窗口列表
+    private func probeAXApi() -> Bool {
+        guard AXIsProcessTrusted() else { return false }
+        for app in NSWorkspace.shared.runningApplications {
+            guard app.activationPolicy == .regular, !app.isTerminated else { continue }
+            let axApp = AXUIElementCreateApplication(app.processIdentifier)
+            var windowsRef: CFTypeRef?
+            let err = AXUIElementCopyAttributeValue(axApp, kAXWindowsAttribute as CFString, &windowsRef)
+            if err == .success, let windows = windowsRef as? [AXUIElement], !windows.isEmpty {
+                // 进一步验证：尝试获取第一个窗口的标题
+                var titleRef: CFTypeRef?
+                AXUIElementCopyAttributeValue(windows[0], kAXTitleAttribute as CFString, &titleRef)
+                // 即使标题为空也算成功（有些窗口确实没有标题），关键是 AX 调用本身不报错
+                return true
+            }
+        }
+        return false
     }
 
     // MARK: - AX 窗口 → CGWindowID 映射
@@ -151,29 +207,23 @@ class WindowService {
 
     // MARK: - 标题解析
 
-    /// 解析窗口标题，五级兜底：AX 标题 → CG 标题 → 缓存 → 进程名 → "(无标题)"
-    /// AX 权限丢失时，CG 标题（kCGWindowName）需要屏幕录制权限；
-    /// 进程名（kCGWindowOwnerName）不需要任何权限，始终可获取
-    private func resolveTitle(windowID: CGWindowID, axTitle: String?, cgTitle: String?, ownerName: String? = nil) -> String {
+    /// 解析窗口标题，四级兜底：AX 标题 → CG 标题 → 缓存 → "(无标题)"
+    /// AX 权限丢失时，CG 标题（kCGWindowName）不需要辅助功能权限即可获取
+    private func resolveTitle(windowID: CGWindowID, axTitle: String?, cgTitle: String?) -> String {
         // 第 1 级：AX API 标题
         if let ax = axTitle, !ax.isEmpty {
             titleCache[windowID] = ax
             return ax
         }
-        // 第 2 级：CG 标题（kCGWindowName，macOS 10.15+ 需屏幕录制权限）
+        // 第 2 级：CG 标题（kCGWindowName）
         if let cg = cgTitle, !cg.isEmpty {
             titleCache[windowID] = cg
             return cg
         }
-        // 第 3 级：缓存（上次成功获取的标题）
+        // 第 3 级：缓存
         if let cached = titleCache[windowID] {
             return cached
         }
-        // 第 4 级：进程名（kCGWindowOwnerName，无需任何权限）
-        if let owner = ownerName, !owner.isEmpty {
-            return owner
-        }
-        // 第 5 级：兜底
         return "(无标题)"
     }
 
@@ -204,8 +254,7 @@ class WindowService {
                   let windowID = info[kCGWindowNumber as String] as? CGWindowID,
                   let boundsDict = info[kCGWindowBounds as String] as? [String: CGFloat],
                   let layer = info[kCGWindowLayer as String] as? Int,
-                  // 包含普通窗口(layer 0)和已 Pin 窗口(Pin 后 layer 会变化)
-                  layer == 0 || PinManager.shared.isPinned(windowID)
+                  layer == 0
             else { return nil }
 
             let bounds = CGRect(
@@ -216,8 +265,7 @@ class WindowService {
             )
 
             let cgTitle = info[kCGWindowName as String] as? String
-            let ownerName = info[kCGWindowOwnerName as String] as? String
-            let title = resolveTitle(windowID: windowID, axTitle: axTitleMap[windowID], cgTitle: cgTitle, ownerName: ownerName)
+            let title = resolveTitle(windowID: windowID, axTitle: axTitleMap[windowID], cgTitle: cgTitle)
 
             return WindowInfo(
                 id: windowID,
@@ -245,8 +293,7 @@ class WindowService {
                   let windowID = info[kCGWindowNumber as String] as? CGWindowID,
                   let boundsDict = info[kCGWindowBounds as String] as? [String: CGFloat],
                   let layer = info[kCGWindowLayer as String] as? Int,
-                  // 包含普通窗口(layer 0)和已 Pin 窗口(Pin 后 layer 会变化)
-                  layer == 0 || PinManager.shared.isPinned(windowID)
+                  layer == 0
             else { return nil }
 
             let bundleID = NSRunningApplication(processIdentifier: ownerPID)?.bundleIdentifier ?? ""
@@ -263,8 +310,7 @@ class WindowService {
             }
 
             let cgTitle = info[kCGWindowName as String] as? String
-            let ownerName = info[kCGWindowOwnerName as String] as? String
-            let title = resolveTitle(windowID: windowID, axTitle: axCache[ownerPID]?[windowID], cgTitle: cgTitle, ownerName: ownerName)
+            let title = resolveTitle(windowID: windowID, axTitle: axCache[ownerPID]?[windowID], cgTitle: cgTitle)
 
             return WindowInfo(
                 id: windowID,
@@ -282,46 +328,63 @@ class WindowService {
 
     /// 激活窗口并前置（通过 CGWindowID 精确匹配 AX 窗口）
     func activateWindow(_ window: WindowInfo) {
-        guard let app = NSRunningApplication(processIdentifier: window.ownerPID) else { return }
+        guard let app = NSRunningApplication(processIdentifier: window.ownerPID) else {
+            NSLog("[FocusCopilot] activateWindow: 找不到 PID %d 对应的进程", window.ownerPID)
+            return
+        }
+
+        debugLog("activateWindow: 激活窗口 \(window.id) (\(window.title)) PID=\(window.ownerPID) app=\(app.localizedName ?? "?")")
 
         // 确保 App 不在隐藏状态
         if app.isHidden {
             app.unhide()
         }
 
-        // 先激活 App
-        app.activate()
+        // 先激活 App（activate 返回 Bool 表示是否成功请求激活）
+        let activated = app.activate()
+        debugLog("activateWindow: app.activate() 返回 \(activated)")
 
         // 通过 AX API 提升窗口
         raiseWindowViaAX(window)
 
-        // 延迟 100ms 再次 AXRaise（等待系统完成 App 激活后再提升，确保 Electron 等应用响应）
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self] in
+        // 延迟 150ms 再次 AXRaise（等待系统完成 App 激活后再提升，确保 Electron 等应用响应）
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) { [weak self] in
             self?.raiseWindowViaAX(window)
+            // 再次确保 App 处于激活状态
+            app.activate()
         }
 
-        // 确保已 Pin 窗口仍在最上层（激活非 Pin 窗口可能导致 Pin 窗口被遮挡）
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
-            for pinnedWindow in PinManager.shared.pinnedWindows {
-                WindowService.shared.orderWindowAbove(pinnedWindow.id)
+        // 延迟 300ms 二次兜底重试（跨 App 场景：检查目标 App 是否已成为活跃应用）
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.30) { [weak self] in
+            if NSWorkspace.shared.frontmostApplication?.processIdentifier != window.ownerPID {
+                self?.debugLog("activateWindow: 300ms 兜底重试 wid=\(window.id)")
+                app.activate()
+                self?.raiseWindowViaAX(window)
             }
         }
     }
 
     /// 通过 AX API 提升指定窗口（内部方法）
     private func raiseWindowViaAX(_ window: WindowInfo) {
-        guard AXIsProcessTrusted() else { return }
+        guard AXIsProcessTrusted() else {
+            debugLog("raiseWindowViaAX: AX 权限未授权")
+            return
+        }
 
         let axApp = AXUIElementCreateApplication(window.ownerPID)
         var windowsRef: CFTypeRef?
-        AXUIElementCopyAttributeValue(axApp, kAXWindowsAttribute as CFString, &windowsRef)
+        let axErr = AXUIElementCopyAttributeValue(axApp, kAXWindowsAttribute as CFString, &windowsRef)
 
-        guard let axWindows = windowsRef as? [AXUIElement] else { return }
+        guard let axWindows = windowsRef as? [AXUIElement] else {
+            debugLog("raiseWindowViaAX: 获取 AX 窗口列表失败 err=\(axErr.rawValue)")
+            return
+        }
 
         // 优先通过 CGWindowID 精确匹配
         for axWindow in axWindows {
             if let wid = getCGWindowID(from: axWindow), wid == window.id {
-                AXUIElementPerformAction(axWindow, kAXRaiseAction as CFString)
+                let raiseErr = AXUIElementPerformAction(axWindow, kAXRaiseAction as CFString)
+                debugLog("raiseWindowViaAX: CGWindowID 精确匹配成功 wid=\(wid) raiseErr=\(raiseErr.rawValue)")
                 return
             }
         }
@@ -347,10 +410,13 @@ class WindowService {
                abs(window.bounds.origin.y - origin.y) < tolerance &&
                abs(window.bounds.width - size.width) < tolerance &&
                abs(window.bounds.height - size.height) < tolerance {
-                AXUIElementPerformAction(axWindow, kAXRaiseAction as CFString)
+                let raiseErr = AXUIElementPerformAction(axWindow, kAXRaiseAction as CFString)
+                debugLog("raiseWindowViaAX: 位置匹配成功 raiseErr=\(raiseErr.rawValue)")
                 return
             }
         }
+
+        debugLog("raiseWindowViaAX: 未找到匹配的 AX 窗口（CGWindowID=\(window.id), axWindows.count=\(axWindows.count)）")
     }
 
     /// 激活 App（不需要辅助功能权限）
@@ -367,11 +433,11 @@ class WindowService {
     /// 设置窗口层级
     func setWindowLevel(_ windowID: CGWindowID, level: Int32) {
         guard let cgsMainConnectionID = cgsMainConnectionIDFunc else {
-            NSLog("[PinTop] setWindowLevel: CGSMainConnectionID 函数指针为 nil，无法设置窗口层级")
+            NSLog("[FocusCopilot] setWindowLevel: CGSMainConnectionID 函数指针为 nil，无法设置窗口层级")
             return
         }
         guard let cgsSetWindowLevel = cgsSetWindowLevelFunc else {
-            NSLog("[PinTop] setWindowLevel: CGSSetWindowLevel 函数指针为 nil，无法设置窗口层级")
+            NSLog("[FocusCopilot] setWindowLevel: CGSSetWindowLevel 函数指针为 nil，无法设置窗口层级")
             return
         }
 
@@ -379,7 +445,7 @@ class WindowService {
         let result = cgsSetWindowLevel(cid, windowID, level)
 
         if result != .success {
-            NSLog("[PinTop] setWindowLevel: CGSSetWindowLevel 返回错误 %d（windowID=%d, level=%d）", result.rawValue, windowID, level)
+            NSLog("[FocusCopilot] setWindowLevel: CGSSetWindowLevel 返回错误 %d（windowID=%d, level=%d）", result.rawValue, windowID, level)
         }
 
         // 验证：读回窗口实际 layer，确认是否生效
@@ -387,7 +453,7 @@ class WindowService {
             if let info = windowList.first(where: { ($0[kCGWindowNumber as String] as? CGWindowID) == windowID }),
                let actualLayer = info[kCGWindowLayer as String] as? Int32 {
                 if actualLayer != level {
-                    NSLog("[PinTop] setWindowLevel: 窗口 %d 层级验证不一致（期望 %d，实际 %d），尝试 AXRaise 回退", windowID, level, actualLayer)
+                    NSLog("[FocusCopilot] setWindowLevel: 窗口 %d 层级验证不一致（期望 %d，实际 %d），尝试 AXRaise 回退", windowID, level, actualLayer)
                     // CGS API 未生效，通过 AX API 回退提升窗口
                     axRaiseWindow(windowID)
                 }
@@ -405,7 +471,7 @@ class WindowService {
         let cid = cgsMainConnectionID()
         let result = cgsOrderWindow(cid, windowID, 1, 0) // 1 = kCGSOrderAbove, 0 = above all
         if result != .success {
-            NSLog("[PinTop] orderWindowAbove: CGSOrderWindow 失败 %d", result.rawValue)
+            NSLog("[FocusCopilot] orderWindowAbove: CGSOrderWindow 失败 %d", result.rawValue)
         }
     }
 

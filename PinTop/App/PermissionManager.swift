@@ -45,6 +45,8 @@ class PermissionManager: ObservableObject {
             guard granted != self.accessibilityGranted else { return }
             DispatchQueue.main.async {
                 self.accessibilityGranted = granted
+                // 权限状态变化时清除 AX 可用性缓存
+                WindowService.shared.invalidateAXCache()
                 if granted {
                     // 通知权限已恢复，由监听方刷新窗口列表（解耦 AppMonitor）
                     NotificationCenter.default.post(name: Constants.Notifications.accessibilityGranted, object: nil)
@@ -70,6 +72,8 @@ class PermissionManager: ObservableObject {
             guard granted != self.accessibilityGranted else { return }
             DispatchQueue.main.async {
                 self.accessibilityGranted = granted
+                // 权限状态变化时清除 AX 可用性缓存
+                WindowService.shared.invalidateAXCache()
                 if granted {
                     // 权限恢复，通知监听方刷新窗口列表
                     NotificationCenter.default.post(name: Constants.Notifications.accessibilityGranted, object: nil)

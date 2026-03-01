@@ -108,7 +108,6 @@ struct Preferences: Codable {
     var pinBorderColor: String = "blue"
     var pinSoundEnabled: Bool = true
     var hotkeyPinToggle: String = "⌘⇧P"
-    var hotkeyUnpinAll: String = "⌘⇧U"
     var hotkeyBallToggle: String = "⌘⇧B"
 }
 

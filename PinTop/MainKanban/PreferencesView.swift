@@ -30,7 +30,6 @@ struct PreferencesView: View {
 
             VStack(spacing: 8) {
                 hotkeyRow(label: "Pin/Unpin 当前窗口", value: $configStore.preferences.hotkeyPinToggle)
-                hotkeyRow(label: "Unpin 全部", value: $configStore.preferences.hotkeyUnpinAll)
                 hotkeyRow(label: "悬浮球显隐", value: $configStore.preferences.hotkeyBallToggle)
             }
         }

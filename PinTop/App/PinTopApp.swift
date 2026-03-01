@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// PinTop 应用入口
+/// Focus Copilot 应用入口
 /// 使用 NSApplicationDelegateAdaptor 连接 AppDelegate，主要逻辑在 AppDelegate 中
 /// 不显示主窗口，悬浮球通过 AppDelegate 手动创建
 @main

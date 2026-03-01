@@ -15,7 +15,7 @@ class MainKanbanWindow: NSWindow, NSWindowDelegate {
             defer: false
         )
 
-        title = "PinTop"
+        title = "Focus Copilot"
         minSize = NSSize(width: 640, height: 480)
         center()
 

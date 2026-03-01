@@ -1,8 +1,8 @@
 import SwiftUI
 
-/// 置顶管理页面
-/// 上方：已置顶窗口（拖拽排序，最多6个）
-/// 下方：可置顶窗口列表
+/// 标记管理页面
+/// 上方：已标记窗口（拖拽排序）
+/// 下方：可标记窗口列表
 struct PinManageView: View {
     @ObservedObject private var pinManager = PinManager.shared
     @ObservedObject private var appMonitor = AppMonitor.shared
@@ -29,7 +29,7 @@ struct PinManageView: View {
                 Text("已置顶窗口")
                     .font(.headline)
                 Spacer()
-                Text("[\(pinManager.pinnedCount)/\(Constants.maxPinnedWindows)]")
+                Text("[\(pinManager.pinnedCount)]")
                     .foregroundStyle(.secondary)
             }
 
@@ -117,7 +117,7 @@ struct PinManageView: View {
                         }
                         .buttonStyle(.bordered)
                     }
-                    Text("重新安装后，需要在系统设置中关闭再重新开启 PinTop 的辅助功能权限")
+                    Text("重新安装后，需要在系统设置中关闭再重新开启 Focus Copilot 的辅助功能权限")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
@@ -158,7 +158,7 @@ struct PinManageView: View {
                     .foregroundStyle(pinManager.isPinned(window.id) ? .blue : .secondary)
             }
             .buttonStyle(.borderless)
-            .disabled(!permissionManager.accessibilityGranted || (!pinManager.isPinned(window.id) && pinManager.pinnedCount >= Constants.maxPinnedWindows))
+            .disabled(!permissionManager.accessibilityGranted)
 
             Text(app.localizedName)
                 .fontWeight(.medium)

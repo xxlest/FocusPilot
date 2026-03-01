@@ -35,7 +35,6 @@ enum Constants {
     static let borderColors: [String] = ["blue", "red", "green", "orange", "purple", "yellow"]
 
     // MARK: - Pin（供服务层使用的扁平常量）
-    static let maxPinnedWindows: Int = 3               // 最多 3 个置顶窗口
     static let maxApps: Int = 8                        // 快捷面板最多 8 个 App
 
     // MARK: - 主看板
@@ -57,20 +56,20 @@ enum Constants {
 
     // MARK: - UserDefaults Keys
     enum Keys {
-        static let appConfigs = "PinTop.appConfigs"
-        static let preferences = "PinTop.preferences"
-        static let ballPosition = "PinTop.ballPosition"
-        static let onboardingCompleted = "PinTop.onboardingCompleted"
-        static let windowRenames = "PinTop.windowRenames"
-        static let panelSize = "PinTop.panelSize"
+        static let appConfigs = "FocusCopilot.appConfigs"
+        static let preferences = "FocusCopilot.preferences"
+        static let ballPosition = "FocusCopilot.ballPosition"
+        static let onboardingCompleted = "FocusCopilot.onboardingCompleted"
+        static let windowRenames = "FocusCopilot.windowRenames"
+        static let panelSize = "FocusCopilot.panelSize"
     }
 
     // MARK: - 通知名称
     enum Notifications {
-        static let appStatusChanged = Notification.Name("PinTop.appStatusChanged")
-        static let windowsChanged = Notification.Name("PinTop.windowsChanged")
-        static let pinnedWindowsChanged = Notification.Name("PinTop.pinnedWindowsChanged")
-        static let ballVisibilityChanged = Notification.Name("PinTop.ballVisibilityChanged")
-        static let accessibilityGranted = Notification.Name("PinTop.accessibilityGranted")
+        static let appStatusChanged = Notification.Name("FocusCopilot.appStatusChanged")
+        static let windowsChanged = Notification.Name("FocusCopilot.windowsChanged")
+        static let pinnedWindowsChanged = Notification.Name("FocusCopilot.pinnedWindowsChanged")
+        static let ballVisibilityChanged = Notification.Name("FocusCopilot.ballVisibilityChanged")
+        static let accessibilityGranted = Notification.Name("FocusCopilot.accessibilityGranted")
     }
 }

@@ -278,45 +278,18 @@ final class FloatingBallView: NSView {
 
     // MARK: - 角标
 
-    /// 更新角标显示 + 品牌 Logo 状态 + 光晕效果
+    /// 更新角标（V2.0: 角标始终隐藏，浮球不随 Pin 状态变化）
     func updateBadge(_ count: Int) {
         badgeCount = count
-        let iconSize: CGFloat = 28
-        if count > 0 {
-            badgeLabel.stringValue = "\(count)"
-            badgeLabel.isHidden = false
-            // 有置顶窗口时：使用红色高亮版本的品牌 Logo
-            iconView.image = createBrandLogo(size: iconSize, highlighted: true)
-
-            // 红色光晕效果
-            layer?.shadowColor = NSColor.systemRed.withAlphaComponent(0.4).cgColor
-            layer?.shadowRadius = 10
-            layer?.shadowOffset = .zero
-            layer?.shadowOpacity = 0.7
-            // 切换为红色光晕呼吸
-            startBreathingAnimation()
-        } else {
-            badgeLabel.isHidden = true
-            // 无置顶窗口时：使用正常橙色版本的品牌 Logo
-            iconView.image = createBrandLogo(size: iconSize, highlighted: false)
-
-            // 恢复默认黑色阴影
-            layer?.shadowColor = NSColor.black.withAlphaComponent(0.3).cgColor
-            layer?.shadowRadius = 6
-            layer?.shadowOffset = CGSize(width: 0, height: -2)
-            layer?.shadowOpacity = 0.5
-            // 恢复默认呼吸动画
-            startBreathingAnimation()
-        }
-        needsDisplay = true
+        badgeLabel.isHidden = true
     }
 
     // MARK: - 品牌 Logo 绘制
 
-    /// 程序化绘制品牌 Logo：立体球形背景 + 上方白色图钉 + 下方白色 PT 文字
+    /// 程序化绘制品牌 Logo：立体球形背景 + 上方白色图钉 + 下方白色 FC 文字
     /// - Parameters:
     ///   - size: Logo 尺寸（正方形边长）
-    ///   - highlighted: 是否高亮（正常=橙色渐变，highlighted=红色渐变）
+    ///   - highlighted: 保留参数兼容性（V2.0 始终使用橙色渐变）
     /// - Returns: 绘制好的品牌 Logo 图片
     private func createBrandLogo(size: CGFloat, highlighted: Bool) -> NSImage {
         let image = NSImage(size: NSSize(width: size, height: size))
@@ -325,21 +298,12 @@ final class FloatingBallView: NSView {
         let circleRect = NSRect(x: 0, y: 0, width: size, height: size)
         let circlePath = NSBezierPath(ovalIn: circleRect)
 
-        // 1. 圆形渐变背景（从左上到右下，模拟光照方向）
-        let gradient: NSGradient?
-        if highlighted {
-            gradient = NSGradient(colorsAndLocations:
-                (NSColor(calibratedRed: 1.0, green: 0.35, blue: 0.3, alpha: 1.0), 0.0),
-                (NSColor(calibratedRed: 0.85, green: 0.15, blue: 0.15, alpha: 1.0), 0.5),
-                (NSColor(calibratedRed: 0.55, green: 0.05, blue: 0.05, alpha: 1.0), 1.0)
-            )
-        } else {
-            gradient = NSGradient(colorsAndLocations:
-                (NSColor(calibratedRed: 1.0, green: 0.65, blue: 0.3, alpha: 1.0), 0.0),   // 浅橙
-                (NSColor(calibratedRed: 0.9, green: 0.45, blue: 0.1, alpha: 1.0), 0.5),   // 中橙
-                (NSColor(calibratedRed: 0.6, green: 0.25, blue: 0.05, alpha: 1.0), 1.0)   // 深橙
-            )
-        }
+        // 1. 圆形渐变背景（始终使用橙色渐变）
+        let gradient = NSGradient(colorsAndLocations:
+            (NSColor(calibratedRed: 1.0, green: 0.65, blue: 0.3, alpha: 1.0), 0.0),   // 浅橙
+            (NSColor(calibratedRed: 0.9, green: 0.45, blue: 0.1, alpha: 1.0), 0.5),   // 中橙
+            (NSColor(calibratedRed: 0.6, green: 0.25, blue: 0.05, alpha: 1.0), 1.0)   // 深橙
+        )
         gradient?.draw(in: circlePath, angle: 135)
 
         // 2. 球形高光：左上方椭圆高光（模拟 3D 球体反射）
@@ -422,28 +386,28 @@ final class FloatingBallView: NSView {
             )
         }
 
-        // 6. 绘制白色 "PT" 文字（下半部分，带轻微投影）
+        // 6. 绘制白色 "FC" 文字（下半部分，带轻微投影）
         let fontSize = size * 0.30
-        let ptFont = NSFont.systemFont(ofSize: fontSize, weight: .bold)
+        let fcFont = NSFont.systemFont(ofSize: fontSize, weight: .bold)
 
         // 文字投影
-        let shadowPtAttributes: [NSAttributedString.Key: Any] = [
-            .font: ptFont,
+        let shadowFcAttributes: [NSAttributedString.Key: Any] = [
+            .font: fcFont,
             .foregroundColor: NSColor.black.withAlphaComponent(0.3),
         ]
-        let shadowPtString = NSAttributedString(string: "PT", attributes: shadowPtAttributes)
-        let ptTextSize = shadowPtString.size()
-        let ptX = (size - ptTextSize.width) / 2
-        let ptY = size * 0.05
-        shadowPtString.draw(at: NSPoint(x: ptX + 0.5, y: ptY - 0.5))
+        let shadowFcString = NSAttributedString(string: "FC", attributes: shadowFcAttributes)
+        let fcTextSize = shadowFcString.size()
+        let fcX = (size - fcTextSize.width) / 2
+        let fcY = size * 0.05
+        shadowFcString.draw(at: NSPoint(x: fcX + 0.5, y: fcY - 0.5))
 
         // 文字主体
-        let ptAttributes: [NSAttributedString.Key: Any] = [
-            .font: ptFont,
+        let fcAttributes: [NSAttributedString.Key: Any] = [
+            .font: fcFont,
             .foregroundColor: NSColor.white,
         ]
-        let ptString = NSAttributedString(string: "PT", attributes: ptAttributes)
-        ptString.draw(at: NSPoint(x: ptX, y: ptY))
+        let fcString = NSAttributedString(string: "FC", attributes: fcAttributes)
+        fcString.draw(at: NSPoint(x: fcX, y: fcY))
 
         image.unlockFocus()
         return image
@@ -464,7 +428,7 @@ final class FloatingBallView: NSView {
 
         menu.addItem(NSMenuItem.separator())
 
-        let quitItem = NSMenuItem(title: "退出 PinTop", action: #selector(contextMenuQuit), keyEquivalent: "")
+        let quitItem = NSMenuItem(title: "退出 Focus Copilot", action: #selector(contextMenuQuit), keyEquivalent: "")
         quitItem.target = self
         menu.addItem(quitItem)
 

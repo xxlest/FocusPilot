@@ -34,27 +34,51 @@ struct MainKanbanView: View {
             .safeAreaInset(edge: .bottom) {
                 VStack(spacing: 0) {
                     Divider()
-                    // 退出按钮（固定在底部，不随 List 滚动）
-                    Button(action: { showQuitConfirmation = true }) {
-                        HStack {
-                            Image(systemName: "power")
-                            Text("退出 PinTop")
+                    // 底部双按钮：左=悬浮球显隐，右=退出
+                    HStack(spacing: 0) {
+                        // 左半：悬浮球显隐切换
+                        Button(action: {
+                            NotificationCenter.default.post(
+                                name: NSNotification.Name("FloatingBall.toggleBall"),
+                                object: nil
+                            )
+                        }) {
+                            HStack(spacing: 4) {
+                                Image(systemName: configStore.isBallVisible ? "eye" : "eye.slash")
+                                Text(configStore.isBallVisible ? "隐藏" : "显示")
+                            }
+                            .font(.caption)
+                            .frame(maxWidth: .infinity)
                         }
-                        .foregroundStyle(.red)
+                        .buttonStyle(.plain)
+                        .padding(.vertical, 8)
+
+                        Divider().frame(height: 16)
+
+                        // 右半：退出
+                        Button(action: { showQuitConfirmation = true }) {
+                            HStack(spacing: 4) {
+                                Image(systemName: "power")
+                                Text("退出")
+                            }
+                            .font(.caption)
+                            .foregroundStyle(.red)
+                            .frame(maxWidth: .infinity)
+                        }
+                        .buttonStyle(.plain)
+                        .padding(.vertical, 8)
                     }
-                    .buttonStyle(.plain)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 8)
+                    .padding(.horizontal, 8)
                 }
             }
             .navigationSplitViewColumnWidth(180)
-            .alert("退出 PinTop", isPresented: $showQuitConfirmation) {
+            .alert("退出 Focus Copilot", isPresented: $showQuitConfirmation) {
                 Button("取消", role: .cancel) { }
                 Button("退出", role: .destructive) {
                     NSApplication.shared.terminate(nil)
                 }
             } message: {
-                Text("是否确认退出 PinTop？退出后将取消所有窗口置顶。")
+                Text("是否确认退出 Focus Copilot？")
             }
         } detail: {
             // 右侧内容区
