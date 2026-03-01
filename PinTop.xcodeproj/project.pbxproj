@@ -10,7 +10,6 @@
 		0409B6953395291BECE2C360 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = C517749A811B74FB89B09D12 /* Models.swift */; };
 		08DFF61D76690F4CC5724632 /* HotkeyManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 654D90AC10B3141530F22C4E /* HotkeyManager.swift */; };
 		109AAD788484BC721682FF54 /* MainKanbanView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 81DFD476B580D87DE839B719 /* MainKanbanView.swift */; };
-		25E2B55DA062693A1BD355CE /* PinManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A89520A6C14A5E574B495E70 /* PinManager.swift */; };
 		362E1C964D78B184D4A36797 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 49B5CB65AC70CD464D2F5C4D /* Assets.xcassets */; };
 		3FC97BC3AF423D634F6E8C5D /* AppMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4E92BF2D27098C5BDB257F5 /* AppMonitor.swift */; };
 		47C3265FCEBC380667B0FE16 /* FloatingBallView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8F93286D01C141DFFC1FB577 /* FloatingBallView.swift */; };
@@ -20,7 +19,6 @@
 		695FE633262FD14FC567167B /* ConfigStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = E08C4EC35C81F8106955C68C /* ConfigStore.swift */; };
 		7031E75AAEF5866903BAB322 /* FloatingBallWindow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7FF14F1A5D8E31189DDF7D51 /* FloatingBallWindow.swift */; };
 		7895CB741C1E48ADD636ECB1 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = D964B9EA262CB12568904D90 /* AppDelegate.swift */; };
-		7A3C658620EA24A6099B8A01 /* PinManageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 54017C6BE2D60BC1BEC64A9F /* PinManageView.swift */; };
 		7B905E144772454BC3BABB15 /* Constants.swift in Sources */ = {isa = PBXBuildFile; fileRef = F32128E1B3B8C027228EE34C /* Constants.swift */; };
 		9561BA67B7EEBB13E18A4069 /* PermissionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3DCDC5F4D4A8F4D97A099BF /* PermissionManager.swift */; };
 		C0D3240A782C567269950416 /* PreferencesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E1D987B30198EF49787BEE9 /* PreferencesView.swift */; };
@@ -36,7 +34,6 @@
 		3E1D987B30198EF49787BEE9 /* PreferencesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreferencesView.swift; sourceTree = "<group>"; };
 		49B5CB65AC70CD464D2F5C4D /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		4BFEF4D96623A05F37826052 /* MainKanbanWindow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainKanbanWindow.swift; sourceTree = "<group>"; };
-		54017C6BE2D60BC1BEC64A9F /* PinManageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PinManageView.swift; sourceTree = "<group>"; };
 		578F527924A9131FE21B0CBB /* PinTopApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PinTopApp.swift; sourceTree = "<group>"; };
 		654D90AC10B3141530F22C4E /* HotkeyManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HotkeyManager.swift; sourceTree = "<group>"; };
 		656FDE2081298840E613E1E7 /* PinTop-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "PinTop-Bridging-Header.h"; sourceTree = "<group>"; };
@@ -45,7 +42,6 @@
 		8F93286D01C141DFFC1FB577 /* FloatingBallView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FloatingBallView.swift; sourceTree = "<group>"; };
 		922C6620CC1D48DAAA4F3B6C /* WindowService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowService.swift; sourceTree = "<group>"; };
 		A2F3CFEC288ECAB40E4D0EBC /* CGSPrivate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = CGSPrivate.h; sourceTree = "<group>"; };
-		A89520A6C14A5E574B495E70 /* PinManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PinManager.swift; sourceTree = "<group>"; };
 		ADADFD7CAAB3AF191763AAF4 /* QuickPanelView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuickPanelView.swift; sourceTree = "<group>"; };
 		C3DCDC5F4D4A8F4D97A099BF /* PermissionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PermissionManager.swift; sourceTree = "<group>"; };
 		C517749A811B74FB89B09D12 /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
@@ -80,7 +76,6 @@
 				F4E92BF2D27098C5BDB257F5 /* AppMonitor.swift */,
 				E08C4EC35C81F8106955C68C /* ConfigStore.swift */,
 				654D90AC10B3141530F22C4E /* HotkeyManager.swift */,
-				A89520A6C14A5E574B495E70 /* PinManager.swift */,
 				922C6620CC1D48DAAA4F3B6C /* WindowService.swift */,
 			);
 			path = Services;
@@ -161,7 +156,6 @@
 				00C2E84D0EB4866ADB180906 /* AppConfigView.swift */,
 				81DFD476B580D87DE839B719 /* MainKanbanView.swift */,
 				4BFEF4D96623A05F37826052 /* MainKanbanWindow.swift */,
-				54017C6BE2D60BC1BEC64A9F /* PinManageView.swift */,
 				3E1D987B30198EF49787BEE9 /* PreferencesView.swift */,
 			);
 			path = MainKanban;
@@ -244,8 +238,6 @@
 				F274C86B8856696EB070161B /* MainKanbanWindow.swift in Sources */,
 				0409B6953395291BECE2C360 /* Models.swift in Sources */,
 				9561BA67B7EEBB13E18A4069 /* PermissionManager.swift in Sources */,
-				7A3C658620EA24A6099B8A01 /* PinManageView.swift in Sources */,
-				25E2B55DA062693A1BD355CE /* PinManager.swift in Sources */,
 				49CF290C50B9A3C9315CCE2B /* PinTopApp.swift in Sources */,
 				C0D3240A782C567269950416 /* PreferencesView.swift in Sources */,
 				E58DCC761B887004A31FE0D9 /* QuickPanelView.swift in Sources */,

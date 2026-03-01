@@ -1,15 +1,39 @@
 import AppKit
 import ApplicationServices
 
+// MARK: - 快捷面板 Tab 枚举
+
+enum QuickPanelTab {
+    case selected   // 已选
+    case favorites  // 收藏
+}
+
 // MARK: - 快捷面板内容视图
-// App 列表 + 内嵌窗口列表，每个窗口行前面有标记切换按钮
-// 支持实时更新、钉住模式、窗口重命名
+// 已选/收藏两个 Tab，App 列表 + 内嵌窗口列表
+// 支持实时更新、钉住模式、窗口重命名、窗口行高亮+前置
 
 final class QuickPanelView: NSView {
 
+    // MARK: - 状态
+
+    /// 当前 Tab 页
+    private var currentTab: QuickPanelTab = .selected
+
+    /// 当前高亮的窗口行 ID（同一时间只有一个）
+    private var highlightedWindowID: CGWindowID?
+
+    /// 多窗口 App 折叠状态（按 bundleID 跟踪）
+    private var collapsedApps: Set<String> = []
+
+    /// 上次刷新时的窗口数据快照
+    private var lastWindowSnapshot: String = ""
+
+    /// 鼠标追踪区域
+    private var trackingArea: NSTrackingArea?
+
     // MARK: - 子视图
 
-    /// 顶部栏（钉住按钮）
+    /// 顶部栏
     private let topBar: NSView = {
         let view = NSView()
         view.wantsLayer = true
@@ -23,7 +47,7 @@ final class QuickPanelView: NSView {
         return box
     }()
 
-    /// 打开主界面按钮（放在顶部左侧）
+    /// 打开主界面按钮（顶部左侧）
     private lazy var openKanbanButton: NSButton = {
         let btn = NSButton()
         btn.bezelStyle = .recessed
@@ -39,7 +63,27 @@ final class QuickPanelView: NSView {
         return btn
     }()
 
-    /// 面板钉住按钮（放在顶部右侧，SF Symbol pin 图标）
+    /// 已选 Tab 按钮
+    private lazy var selectedTabButton: NSButton = {
+        let btn = NSButton(title: "已选", target: self, action: #selector(switchToSelectedTab))
+        btn.bezelStyle = .recessed
+        btn.isBordered = false
+        btn.font = .systemFont(ofSize: 11, weight: .medium)
+        btn.contentTintColor = .controlAccentColor
+        return btn
+    }()
+
+    /// 收藏 Tab 按钮
+    private lazy var favoritesTabButton: NSButton = {
+        let btn = NSButton(title: "收藏", target: self, action: #selector(switchToFavoritesTab))
+        btn.bezelStyle = .recessed
+        btn.isBordered = false
+        btn.font = .systemFont(ofSize: 11)
+        btn.contentTintColor = .secondaryLabelColor
+        return btn
+    }()
+
+    /// 面板钉住按钮（顶部右侧）
     private lazy var panelPinButton: NSButton = {
         let btn = NSButton()
         btn.bezelStyle = .recessed
@@ -77,14 +121,52 @@ final class QuickPanelView: NSView {
         return stack
     }()
 
-    /// 多窗口 App 折叠状态（按 bundleID 跟踪）
-    private var collapsedApps: Set<String> = []
+    /// 底部分割线
+    private let bottomSeparator: NSBox = {
+        let box = NSBox()
+        box.boxType = .separator
+        return box
+    }()
 
-    /// 上次刷新时的窗口数据快照
-    private var lastWindowSnapshot: String = ""
+    /// 底部按钮栏
+    private let bottomBar: NSView = {
+        let view = NSView()
+        view.wantsLayer = true
+        return view
+    }()
 
-    /// 鼠标追踪区域
-    private var trackingArea: NSTrackingArea?
+    /// 底部左按钮：悬浮球 显示/隐藏
+    private lazy var ballToggleButton: NSButton = {
+        let btn = NSButton(title: "悬浮球 隐藏", target: self, action: #selector(toggleBallVisibility))
+        btn.bezelStyle = .recessed
+        btn.isBordered = false
+        btn.font = .systemFont(ofSize: 13)
+        btn.contentTintColor = .controlAccentColor
+        updateBallToggleButton(btn)
+        return btn
+    }()
+
+    /// 底部右按钮：退出
+    private lazy var quitButton: NSButton = {
+        let btn = NSButton(title: "退出", target: self, action: #selector(handleQuit))
+        btn.bezelStyle = .recessed
+        btn.isBordered = false
+        btn.font = .systemFont(ofSize: 13)
+        btn.contentTintColor = .systemRed
+        if let img = NSImage(systemSymbolName: "power", accessibilityDescription: "退出") {
+            let config = NSImage.SymbolConfiguration(pointSize: 11, weight: .medium)
+            btn.image = img.withSymbolConfiguration(config) ?? img
+        }
+        btn.imagePosition = .imageLeading
+        return btn
+    }()
+
+    /// 底部中间分割线
+    private let bottomDivider: NSBox = {
+        let box = NSBox()
+        box.boxType = .separator
+        return box
+    }()
 
     // MARK: - 初始化
 
@@ -122,19 +204,37 @@ final class QuickPanelView: NSView {
         addSubview(topBar)
         addSubview(topSeparator)
         topBar.addSubview(openKanbanButton)
+        topBar.addSubview(selectedTabButton)
+        topBar.addSubview(favoritesTabButton)
         topBar.addSubview(panelPinButton)
 
+        // 滚动区域
         addSubview(scrollView)
 
-        // 使用 Auto Layout
+        // 底部栏
+        addSubview(bottomSeparator)
+        addSubview(bottomBar)
+        bottomBar.addSubview(ballToggleButton)
+        bottomBar.addSubview(bottomDivider)
+        bottomBar.addSubview(quitButton)
+
+        // Auto Layout
         topBar.translatesAutoresizingMaskIntoConstraints = false
         topSeparator.translatesAutoresizingMaskIntoConstraints = false
         openKanbanButton.translatesAutoresizingMaskIntoConstraints = false
+        selectedTabButton.translatesAutoresizingMaskIntoConstraints = false
+        favoritesTabButton.translatesAutoresizingMaskIntoConstraints = false
         panelPinButton.translatesAutoresizingMaskIntoConstraints = false
         scrollView.translatesAutoresizingMaskIntoConstraints = false
         contentStack.translatesAutoresizingMaskIntoConstraints = false
+        bottomSeparator.translatesAutoresizingMaskIntoConstraints = false
+        bottomBar.translatesAutoresizingMaskIntoConstraints = false
+        ballToggleButton.translatesAutoresizingMaskIntoConstraints = false
+        bottomDivider.translatesAutoresizingMaskIntoConstraints = false
+        quitButton.translatesAutoresizingMaskIntoConstraints = false
 
         let topBarHeight: CGFloat = 24
+        let bottomBarHeight = Constants.Panel.bottomBarHeight
 
         NSLayoutConstraint.activate([
             // 顶部栏
@@ -148,24 +248,59 @@ final class QuickPanelView: NSView {
             topSeparator.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -8),
             topSeparator.topAnchor.constraint(equalTo: topBar.bottomAnchor),
 
-            // 打开主界面按钮（顶部左侧）
+            // 打开主界面按钮（左侧）
             openKanbanButton.leadingAnchor.constraint(equalTo: topBar.leadingAnchor, constant: 8),
             openKanbanButton.centerYAnchor.constraint(equalTo: topBar.centerYAnchor),
 
-            // 钉住按钮（顶部右侧）
+            // Tab 按钮（居中偏左）
+            selectedTabButton.leadingAnchor.constraint(equalTo: openKanbanButton.trailingAnchor, constant: 8),
+            selectedTabButton.centerYAnchor.constraint(equalTo: topBar.centerYAnchor),
+            favoritesTabButton.leadingAnchor.constraint(equalTo: selectedTabButton.trailingAnchor, constant: 4),
+            favoritesTabButton.centerYAnchor.constraint(equalTo: topBar.centerYAnchor),
+
+            // 钉住按钮（右侧）
             panelPinButton.trailingAnchor.constraint(equalTo: topBar.trailingAnchor, constant: -8),
             panelPinButton.centerYAnchor.constraint(equalTo: topBar.centerYAnchor),
 
-            // 滚动区域（在顶部栏和视图底部之间）
+            // 滚动区域（顶部栏和底部栏之间）
             scrollView.topAnchor.constraint(equalTo: topSeparator.bottomAnchor),
             scrollView.leadingAnchor.constraint(equalTo: leadingAnchor),
             scrollView.trailingAnchor.constraint(equalTo: trailingAnchor),
-            scrollView.bottomAnchor.constraint(equalTo: bottomAnchor),
+            scrollView.bottomAnchor.constraint(equalTo: bottomSeparator.topAnchor),
 
             // contentStack 宽度跟随 scrollView
             contentStack.leadingAnchor.constraint(equalTo: scrollView.contentView.leadingAnchor),
             contentStack.trailingAnchor.constraint(equalTo: scrollView.contentView.trailingAnchor),
             contentStack.topAnchor.constraint(equalTo: scrollView.contentView.topAnchor),
+
+            // 底部分割线
+            bottomSeparator.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 8),
+            bottomSeparator.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -8),
+            bottomSeparator.bottomAnchor.constraint(equalTo: bottomBar.topAnchor),
+
+            // 底部栏
+            bottomBar.leadingAnchor.constraint(equalTo: leadingAnchor),
+            bottomBar.trailingAnchor.constraint(equalTo: trailingAnchor),
+            bottomBar.bottomAnchor.constraint(equalTo: bottomAnchor),
+            bottomBar.heightAnchor.constraint(equalToConstant: bottomBarHeight),
+
+            // 底部左按钮：悬浮球 显示/隐藏
+            ballToggleButton.leadingAnchor.constraint(equalTo: bottomBar.leadingAnchor),
+            ballToggleButton.topAnchor.constraint(equalTo: bottomBar.topAnchor),
+            ballToggleButton.bottomAnchor.constraint(equalTo: bottomBar.bottomAnchor),
+            ballToggleButton.trailingAnchor.constraint(equalTo: bottomDivider.leadingAnchor),
+
+            // 底部中间分割线
+            bottomDivider.centerXAnchor.constraint(equalTo: bottomBar.centerXAnchor),
+            bottomDivider.topAnchor.constraint(equalTo: bottomBar.topAnchor, constant: 8),
+            bottomDivider.bottomAnchor.constraint(equalTo: bottomBar.bottomAnchor, constant: -8),
+            bottomDivider.widthAnchor.constraint(equalToConstant: 1),
+
+            // 底部右按钮：退出
+            quitButton.leadingAnchor.constraint(equalTo: bottomDivider.trailingAnchor),
+            quitButton.topAnchor.constraint(equalTo: bottomBar.topAnchor),
+            quitButton.bottomAnchor.constraint(equalTo: bottomBar.bottomAnchor),
+            quitButton.trailingAnchor.constraint(equalTo: bottomBar.trailingAnchor),
         ])
 
         // 鼠标追踪
@@ -228,18 +363,18 @@ final class QuickPanelView: NSView {
             name: AppMonitor.appStatusChanged,
             object: nil
         )
-        // Pin 窗口变化
-        NotificationCenter.default.addObserver(
-            self,
-            selector: #selector(pinnedWindowsDidChange),
-            name: PinManager.pinnedWindowsChanged,
-            object: nil
-        )
         // 面板钉住状态变化
         NotificationCenter.default.addObserver(
             self,
             selector: #selector(panelPinStateChanged(_:)),
             name: Constants.Notifications.panelPinStateChanged,
+            object: nil
+        )
+        // 悬浮球可见性变化
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(ballVisibilityDidChange),
+            name: Constants.Notifications.ballVisibilityChanged,
             object: nil
         )
     }
@@ -252,13 +387,13 @@ final class QuickPanelView: NSView {
         reloadData()
     }
 
-    @objc private func pinnedWindowsDidChange() {
-        reloadData()  // 始终刷新，因为标记按钮状态需要更新
-    }
-
     @objc private func panelPinStateChanged(_ notification: Notification) {
         let isPinned = notification.userInfo?["isPinned"] as? Bool ?? false
         updatePanelPinButton(isPinned: isPinned)
+    }
+
+    @objc private func ballVisibilityDidChange() {
+        updateBallToggleButton(ballToggleButton)
     }
 
     private func updatePanelPinButton(isPinned: Bool) {
@@ -286,17 +421,51 @@ final class QuickPanelView: NSView {
         }
     }
 
+    // MARK: - Tab 切换
+
+    @objc private func switchToSelectedTab() {
+        guard currentTab != .selected else { return }
+        currentTab = .selected
+        highlightedWindowID = nil
+        updateTabButtonStyles()
+        lastWindowSnapshot = ""
+        reloadData()
+    }
+
+    @objc private func switchToFavoritesTab() {
+        guard currentTab != .favorites else { return }
+        currentTab = .favorites
+        highlightedWindowID = nil
+        updateTabButtonStyles()
+        lastWindowSnapshot = ""
+        reloadData()
+    }
+
+    private func updateTabButtonStyles() {
+        switch currentTab {
+        case .selected:
+            selectedTabButton.font = .systemFont(ofSize: 11, weight: .medium)
+            selectedTabButton.contentTintColor = .controlAccentColor
+            favoritesTabButton.font = .systemFont(ofSize: 11)
+            favoritesTabButton.contentTintColor = .secondaryLabelColor
+        case .favorites:
+            selectedTabButton.font = .systemFont(ofSize: 11)
+            selectedTabButton.contentTintColor = .secondaryLabelColor
+            favoritesTabButton.font = .systemFont(ofSize: 11, weight: .medium)
+            favoritesTabButton.contentTintColor = .controlAccentColor
+        }
+    }
+
     // MARK: - 数据加载
 
     /// 重新加载面板数据（带去重，避免无意义刷新导致闪烁）
     func reloadData() {
         // 计算当前数据快照
-        let pinnedIDs = PinManager.shared.pinnedWindows.map { $0.id }
         let windowKeys = AppMonitor.shared.runningApps.flatMap { app in
             app.windows.map { "\(app.bundleID):\($0.id):\($0.title)" }
         }.joined(separator: "|")
 
-        let snapshot = "\(pinnedIDs):\(windowKeys)"
+        let snapshot = "\(currentTab):\(windowKeys):\(highlightedWindowID ?? 0)"
         if snapshot == lastWindowSnapshot {
             return // 数据未变化，跳过刷新
         }
@@ -304,51 +473,61 @@ final class QuickPanelView: NSView {
 
         // 清空内容
         contentStack.arrangedSubviews.forEach { $0.removeFromSuperview() }
-        buildNormalMode()
+        buildContent()
         // 更新面板高度
         updatePanelSize()
     }
 
-    /// 重置面板状态
+    /// 重置面板状态（面板关闭时调用）
     func resetToNormalMode() {
         updatePanelPinButton(isPinned: false)
+        highlightedWindowID = nil
+        currentTab = .selected
+        updateTabButtonStyles()
+        collapsedApps.removeAll()
     }
 
-    // MARK: - 正常模式
+    // MARK: - 内容构建
 
-    private func buildNormalMode() {
-        let configs = ConfigStore.shared.appConfigs
+    private func buildContent() {
+        // 根据当前 Tab 获取数据源
+        let configs: [AppConfig]
+        switch currentTab {
+        case .selected:
+            configs = ConfigStore.shared.appConfigs
+        case .favorites:
+            configs = ConfigStore.shared.favoriteAppConfigs
+        }
+
         let runningApps = AppMonitor.shared.runningApps
 
         // 空状态
         if configs.isEmpty {
-            let emptyLabel = createLabel("点击悬浮球配置应用", size: 13, color: .secondaryLabelColor)
+            let message = currentTab == .selected ? "点击悬浮球配置应用" : "尚未收藏任何应用"
+            let emptyLabel = createLabel(message, size: 13, color: .secondaryLabelColor)
             emptyLabel.alignment = .center
             contentStack.addArrangedSubview(emptyLabel)
             return
         }
 
-        // 检查辅助功能权限（使用 WindowService 带缓存的检测，避免每次 reloadData 都做系统调用）
+        // 检查辅助功能权限
         let hasAccessibility = WindowService.shared.isAXApiAvailable()
 
-        // 无权限时：显示 App 列表 + 权限引导提示（不显示窗口列表）
+        // 无权限时：显示 App 列表 + 权限引导提示
         if !hasAccessibility {
-            // 显示 App 列表（不需要 AX 权限）
             for config in configs.prefix(Constants.Panel.maxApps) {
                 let running = runningApps.first(where: { $0.bundleID == config.bundleID })
                 let isRunning = running?.isRunning ?? false
                 let appRow = createAppRow(config: config, runningApp: running, isRunning: isRunning)
                 contentStack.addArrangedSubview(appRow)
             }
-            // 权限引导提示
             let permissionHint = createPermissionHintView()
             contentStack.addArrangedSubview(permissionHint)
             return
         }
 
-        // 正常模式：按配置顺序遍历 App（最多 8 个）
+        // 正常模式：按配置顺序遍历 App
         for config in configs.prefix(Constants.Panel.maxApps) {
-            // 查找运行状态
             let running = runningApps.first(where: { $0.bundleID == config.bundleID })
             let isRunning = running?.isRunning ?? false
 
@@ -359,7 +538,7 @@ final class QuickPanelView: NSView {
             // 窗口列表：有窗口时显示（多窗口折叠状态下不显示）
             if let app = running, !app.windows.isEmpty,
                !(app.windows.count > 1 && collapsedApps.contains(config.bundleID)) {
-                let windowList = createWindowList(windows: app.windows, bundleID: config.bundleID, keywords: config.pinnedKeywords)
+                let windowList = createWindowList(windows: app.windows, bundleID: config.bundleID)
                 contentStack.addArrangedSubview(windowList)
             }
         }
@@ -426,8 +605,8 @@ final class QuickPanelView: NSView {
             let chevronView = NSImageView()
             chevronView.translatesAutoresizingMaskIntoConstraints = false
             if let chevronImage = NSImage(systemSymbolName: chevronName, accessibilityDescription: isCollapsed ? "展开" : "折叠") {
-                let config = NSImage.SymbolConfiguration(pointSize: 10, weight: .medium)
-                chevronView.image = chevronImage.withSymbolConfiguration(config) ?? chevronImage
+                let symConfig = NSImage.SymbolConfiguration(pointSize: 10, weight: .medium)
+                chevronView.image = chevronImage.withSymbolConfiguration(symConfig) ?? chevronImage
             }
             chevronView.contentTintColor = .secondaryLabelColor
             NSLayoutConstraint.activate([
@@ -437,12 +616,19 @@ final class QuickPanelView: NSView {
             rowStack.addArrangedSubview(chevronView)
         }
 
-        // 未运行 App 灰度显示
+        // 点击行为
         if !isRunning {
+            // 未运行 App：灰度显示，点击启动
             row.alphaValue = 0.5
-            row.toolTip = "未运行"
+            row.toolTip = "点击启动"
+            row.bundleID = config.bundleID
+            row.clickHandler = { [weak self] in
+                guard let self = self else { return }
+                WindowService.shared.debugLog("QuickPanel: 启动未运行App bundleID=\(config.bundleID)")
+                self.launchApp(bundleID: config.bundleID)
+            }
         } else if let app = runningApp, app.windows.count > 1 {
-            // 多窗口 App：点击切换折叠/展开（使用 clickHandler 替代手势识别器，与窗口行一致）
+            // 多窗口 App：点击切换折叠/展开
             row.bundleID = config.bundleID
             row.clickHandler = { [weak self] in
                 guard let self = self else { return }
@@ -453,24 +639,24 @@ final class QuickPanelView: NSView {
                     self.collapsedApps.insert(config.bundleID)
                 }
                 WindowService.shared.debugLog("QuickPanel: App行折叠切换 bundleID=\(config.bundleID) \(wasCollapsed ? "展开" : "折叠")")
-                // 强制清除快照，确保刷新
                 self.lastWindowSnapshot = ""
                 self.reloadData()
             }
         } else {
-            // 单窗口 App：点击整行激活窗口（使用 clickHandler 替代手势识别器）
+            // 单窗口 App：点击激活窗口
             row.bundleID = config.bundleID
             row.clickHandler = { [weak self] in
                 guard let self = self else { return }
-                // 激活该 App 的具体窗口
                 if let app = AppMonitor.shared.runningApps.first(where: { $0.bundleID == config.bundleID }),
                    let firstWindow = app.windows.first {
                     WindowService.shared.debugLog("QuickPanel: 点击单窗口App行 bundleID=\(config.bundleID) wid=\(firstWindow.id)")
+                    self.highlightedWindowID = firstWindow.id
                     WindowService.shared.activateWindow(firstWindow)
+                    self.lastWindowSnapshot = ""
+                    self.reloadData()
                 } else {
                     WindowService.shared.activateApp(config.bundleID)
                 }
-                self.dismissPanelIfNeeded()
             }
         }
 
@@ -479,7 +665,7 @@ final class QuickPanelView: NSView {
 
     // MARK: - 创建窗口列表
 
-    private func createWindowList(windows: [WindowInfo], bundleID: String, keywords: [String]) -> NSView {
+    private func createWindowList(windows: [WindowInfo], bundleID: String) -> NSView {
         let container = NSView()
         container.translatesAutoresizingMaskIntoConstraints = false
 
@@ -497,30 +683,9 @@ final class QuickPanelView: NSView {
             stack.trailingAnchor.constraint(equalTo: container.trailingAnchor),
         ])
 
-        // 按关键词分区排序（不再按 Pin 状态排序）
-        let (keywordPinned, normalWindows) = categorizeWindows(windows, keywords: keywords)
-
-        // 关键词置顶区
-        for windowInfo in keywordPinned {
-            let windowRow = createWindowRow(windowInfo: windowInfo, bundleID: bundleID, isPinnedSection: true)
-            stack.addArrangedSubview(windowRow)
-        }
-
-        // 关键词置顶区和普通区之间的分割线
-        if !keywordPinned.isEmpty && !normalWindows.isEmpty {
-            let separator = NSBox()
-            separator.boxType = .separator
-            separator.translatesAutoresizingMaskIntoConstraints = false
-            stack.addArrangedSubview(separator)
-            NSLayoutConstraint.activate([
-                separator.leadingAnchor.constraint(equalTo: stack.leadingAnchor),
-                separator.trailingAnchor.constraint(equalTo: stack.trailingAnchor, constant: -12),
-            ])
-        }
-
-        // 普通区
-        for windowInfo in normalWindows {
-            let windowRow = createWindowRow(windowInfo: windowInfo, bundleID: bundleID, isPinnedSection: false)
+        // 所有窗口平铺显示（无分区、无分割线）
+        for windowInfo in windows {
+            let windowRow = createWindowRow(windowInfo: windowInfo, bundleID: bundleID)
             stack.addArrangedSubview(windowRow)
         }
 
@@ -529,7 +694,7 @@ final class QuickPanelView: NSView {
 
     // MARK: - 创建窗口行
 
-    private func createWindowRow(windowInfo: WindowInfo, bundleID: String, isPinnedSection: Bool) -> NSView {
+    private func createWindowRow(windowInfo: WindowInfo, bundleID: String) -> NSView {
         let row = HoverableRowView()
         row.translatesAutoresizingMaskIntoConstraints = false
         row.windowID = windowInfo.id
@@ -551,41 +716,6 @@ final class QuickPanelView: NSView {
             row.heightAnchor.constraint(greaterThanOrEqualToConstant: Constants.Panel.windowRowHeight),
         ])
 
-        // 标记切换按钮（最前面）
-        let pinButton = NSButton()
-        pinButton.bezelStyle = .inline
-        pinButton.isBordered = false
-        let isPinned = PinManager.shared.isPinned(windowInfo.id)
-        // 未选中：灰色倾斜图钉（pin, secondaryLabelColor）
-        // 已选中：红色竖直图钉（pin.fill, systemRed）
-        let pinSymbolName = isPinned ? "pin.fill" : "pin"
-        let pinColor: NSColor = isPinned ? .systemRed : .secondaryLabelColor
-        if let pinImage = NSImage(systemSymbolName: pinSymbolName, accessibilityDescription: "标记") {
-            let config = NSImage.SymbolConfiguration(pointSize: 11, weight: .medium)
-            let configuredImage = pinImage.withSymbolConfiguration(config) ?? pinImage
-            if isPinned {
-                pinButton.image = Self.rotatedPinImage(from: configuredImage)
-            } else {
-                pinButton.image = configuredImage
-            }
-        }
-        pinButton.contentTintColor = pinColor
-        pinButton.target = self
-        pinButton.action = #selector(handlePinToggle(_:))
-        pinButton.tag = Int(windowInfo.id)
-        pinButton.translatesAutoresizingMaskIntoConstraints = false
-        NSLayoutConstraint.activate([
-            pinButton.widthAnchor.constraint(equalToConstant: 20),
-            pinButton.heightAnchor.constraint(equalToConstant: 20),
-        ])
-        rowStack.addArrangedSubview(pinButton)
-
-        // ★ 标识（关键词匹配置顶区窗口）
-        if isPinnedSection {
-            let starLabel = createLabel("★", size: 11, color: .systemYellow)
-            rowStack.addArrangedSubview(starLabel)
-        }
-
         // 窗口标题：优先使用自定义名称
         let renameKey = Self.renameKey(bundleID: bundleID, title: windowInfo.title)
         let customName = ConfigStore.shared.windowRenames[renameKey]
@@ -598,7 +728,6 @@ final class QuickPanelView: NSView {
 
         let titleLabel = createLabel(displayTitle, size: 11, color: .labelColor)
         titleLabel.lineBreakMode = .byTruncatingTail
-        // tooltip 始终显示原始标题
         titleLabel.toolTip = windowInfo.title
         titleLabel.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
         rowStack.addArrangedSubview(titleLabel)
@@ -609,17 +738,27 @@ final class QuickPanelView: NSView {
         spacer.setContentHuggingPriority(.defaultLow, for: .horizontal)
         rowStack.addArrangedSubview(spacer)
 
+        // 选中高亮状态
+        if highlightedWindowID == windowInfo.id {
+            row.wantsLayer = true
+            row.layer?.backgroundColor = NSColor.controlAccentColor.withAlphaComponent(0.15).cgColor
+            row.layer?.cornerRadius = 4
+        }
+
         // 设置右键菜单
         row.contextMenuProvider = { [weak self] in
             self?.createWindowContextMenu(bundleID: bundleID, windowInfo: windowInfo)
         }
 
-        // 点击窗口条目：激活该窗口（通过 clickHandler，避免手势识别器拦截按钮点击）
+        // 点击窗口行：高亮 + 前置窗口
         row.clickHandler = { [weak self] in
             guard let self = self else { return }
             WindowService.shared.debugLog("QuickPanel: 点击窗口行 wid=\(windowInfo.id) title=\(windowInfo.title)")
+            self.highlightedWindowID = windowInfo.id
             WindowService.shared.activateWindow(windowInfo)
-            self.dismissPanelIfNeeded()
+            // 刷新以更新高亮状态
+            self.lastWindowSnapshot = ""
+            self.reloadData()
         }
 
         return row
@@ -653,7 +792,6 @@ final class QuickPanelView: NSView {
         let key = Self.renameKey(bundleID: bundleID, title: windowInfo.title)
         let currentName = ConfigStore.shared.windowRenames[key] ?? windowInfo.title
 
-        // 弹出重命名对话框
         let alert = NSAlert()
         alert.messageText = "重命名窗口"
         alert.informativeText = "原始标题：\(windowInfo.title)"
@@ -666,8 +804,6 @@ final class QuickPanelView: NSView {
         textField.isBezeled = true
         textField.bezelStyle = .roundedBezel
         alert.accessoryView = textField
-
-        // 让 textField 获取焦点
         alert.window.initialFirstResponder = textField
 
         let response = alert.runModal()
@@ -678,7 +814,6 @@ final class QuickPanelView: NSView {
                 ConfigStore.shared.save()
                 reloadData()
             } else if newName == windowInfo.title {
-                // 如果名称等于原始标题，清除自定义名称
                 ConfigStore.shared.windowRenames.removeValue(forKey: key)
                 ConfigStore.shared.save()
                 reloadData()
@@ -699,54 +834,24 @@ final class QuickPanelView: NSView {
         return "\(bundleID)::\(title)"
     }
 
-    // MARK: - 关键词匹配与分区
-
-    /// 按关键词将窗口分为置顶区和普通区（保持原始 z-order 不重排）
-    private func categorizeWindows(_ windows: [WindowInfo], keywords: [String]) -> (pinned: [WindowInfo], normal: [WindowInfo]) {
-        guard !keywords.isEmpty else {
-            return ([], windows)
-        }
-
-        var pinned: [WindowInfo] = []
-        var normal: [WindowInfo] = []
-
-        for window in windows {
-            var matched = false
-            for keyword in keywords {
-                if window.title.localizedCaseInsensitiveContains(keyword) {
-                    pinned.append(window)
-                    matched = true
-                    break // 只取第一个命中的关键词
-                }
-            }
-            if !matched {
-                normal.append(window)
-            }
-        }
-
-        // 保持原始 z-order（CGWindowList 返回的顺序即为屏幕显示顺序）
-        return (pinned, normal)
-    }
-
     // MARK: - 面板高度计算
 
     private func updatePanelSize() {
         guard let panelWindow = window else { return }
         guard let screen = panelWindow.screen ?? NSScreen.main else { return }
 
-        // 计算内容高度（顶部栏 24 + 分割线 1 + 内容）
+        // 计算内容高度（顶部栏 24 + 分割线 1 + 内容 + 底部分割线 1 + 底部栏 36）
         contentStack.layoutSubtreeIfNeeded()
         let contentHeight = contentStack.fittingSize.height
-        let totalHeight = contentHeight + 24 + 4 // 顶部栏+分割线
+        let totalHeight = contentHeight + 24 + 4 + Constants.Panel.bottomBarHeight + 1
 
-        // 限制最大高度：取屏幕 60% 和记忆高度的较大值
+        // 限制最大高度
         let maxHeight = screen.visibleFrame.height * Constants.Panel.maxHeightRatio
         let savedHeight = ConfigStore.shared.panelSize.height
         let heightLimit = min(max(savedHeight, Constants.Panel.minHeight), maxHeight)
         let finalHeight = min(totalHeight, heightLimit)
         let clampedHeight = max(finalHeight, Constants.Panel.minHeight)
 
-        // 更新窗口大小（保持原点不变）
         var frame = panelWindow.frame
         let heightDiff = clampedHeight - frame.height
         frame.size.height = clampedHeight
@@ -755,21 +860,6 @@ final class QuickPanelView: NSView {
     }
 
     // MARK: - 事件处理
-
-    @objc private func handlePinToggle(_ sender: NSButton) {
-        let windowID = CGWindowID(sender.tag)
-        // 从 sender 的父视图链中找到 HoverableRowView
-        guard let rowStack = sender.superview as? NSStackView,
-              let row = rowStack.superview as? HoverableRowView,
-              let windowInfo = row.windowInfo else { return }
-
-        if PinManager.shared.isPinned(windowID) {
-            PinManager.shared.unpin(windowID: windowID)
-        } else {
-            _ = PinManager.shared.pin(window: windowInfo)
-        }
-        // Pin 状态变化会通过通知触发 reloadData
-    }
 
     @objc private func togglePanelPin() {
         if let panelWindow = window as? QuickPanelWindow {
@@ -781,11 +871,56 @@ final class QuickPanelView: NSView {
         NotificationCenter.default.post(name: Constants.Notifications.ballOpenMainKanban, object: nil)
     }
 
-    // App 行点击已改用 clickHandler 闭包（在 createAppRow 中设置），无需手势识别器方法
+    @objc private func toggleBallVisibility() {
+        NotificationCenter.default.post(
+            name: Constants.Notifications.ballToggle,
+            object: nil
+        )
+    }
+
+    @objc private func handleQuit() {
+        let alert = NSAlert()
+        alert.messageText = "退出 Focus Copilot"
+        alert.informativeText = "是否确认退出 Focus Copilot？"
+        alert.addButton(withTitle: "退出")
+        alert.addButton(withTitle: "取消")
+        alert.buttons.first?.hasDestructiveAction = true
+
+        let response = alert.runModal()
+        if response == .alertFirstButtonReturn {
+            NSApplication.shared.terminate(nil)
+        }
+    }
+
+    /// 更新悬浮球显隐按钮状态
+    private func updateBallToggleButton(_ btn: NSButton) {
+        let isVisible = ConfigStore.shared.isBallVisible
+        btn.title = isVisible ? "悬浮球 隐藏" : "悬浮球 显示"
+        if let img = NSImage(systemSymbolName: isVisible ? "eye" : "eye.slash", accessibilityDescription: nil) {
+            let config = NSImage.SymbolConfiguration(pointSize: 11, weight: .medium)
+            btn.image = img.withSymbolConfiguration(config) ?? img
+        }
+        btn.imagePosition = .imageLeading
+    }
+
+    /// 启动未运行的 App
+    private func launchApp(bundleID: String) {
+        guard let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleID) else {
+            WindowService.shared.debugLog("QuickPanel: 找不到 App URL bundleID=\(bundleID)")
+            return
+        }
+        let configuration = NSWorkspace.OpenConfiguration()
+        NSWorkspace.shared.openApplication(at: url, configuration: configuration) { app, error in
+            if let error = error {
+                WindowService.shared.debugLog("QuickPanel: 启动 App 失败 bundleID=\(bundleID) error=\(error)")
+            } else {
+                WindowService.shared.debugLog("QuickPanel: App 已启动 bundleID=\(bundleID) pid=\(app?.processIdentifier ?? -1)")
+            }
+        }
+    }
 
     // MARK: - 权限引导视图
 
-    /// 创建权限引导提示（无辅助功能权限时显示）
     private func createPermissionHintView() -> NSView {
         let container = NSView()
         container.translatesAutoresizingMaskIntoConstraints = false
@@ -805,7 +940,6 @@ final class QuickPanelView: NSView {
             stack.trailingAnchor.constraint(equalTo: container.trailingAnchor),
         ])
 
-        // 分割线
         let separator = NSBox()
         separator.boxType = .separator
         separator.translatesAutoresizingMaskIntoConstraints = false
@@ -815,12 +949,10 @@ final class QuickPanelView: NSView {
             separator.trailingAnchor.constraint(equalTo: stack.trailingAnchor),
         ])
 
-        // 锁图标
         let lockLabel = createLabel("🔒", size: 16, color: .labelColor)
         lockLabel.alignment = .center
         stack.addArrangedSubview(lockLabel)
 
-        // 提示文字
         let hintLabel = createLabel("需要辅助功能权限", size: 12, color: .secondaryLabelColor)
         hintLabel.alignment = .center
         stack.addArrangedSubview(hintLabel)
@@ -829,7 +961,6 @@ final class QuickPanelView: NSView {
         detailLabel.alignment = .center
         stack.addArrangedSubview(detailLabel)
 
-        // "前往设置"按钮
         let settingsButton = NSButton(title: "前往系统设置", target: self, action: #selector(openAccessibilitySettings))
         settingsButton.bezelStyle = .recessed
         settingsButton.controlSize = .small
@@ -845,7 +976,7 @@ final class QuickPanelView: NSView {
 
     // MARK: - 工具方法
 
-    /// 将 SF Symbol pin 图标旋转 45° 变竖直（pin 默认倾斜 45°）
+    /// 将 SF Symbol pin 图标旋转 45° 变竖直
     private static func rotatedPinImage(from image: NSImage) -> NSImage {
         let rotated = NSImage(size: image.size)
         rotated.lockFocus()
@@ -858,16 +989,6 @@ final class QuickPanelView: NSView {
         rotated.unlockFocus()
         rotated.isTemplate = true
         return rotated
-    }
-
-    /// 面板未钉住时收起面板
-    private func dismissPanelIfNeeded() {
-        if let panelWindow = window as? QuickPanelWindow, panelWindow.isPanelPinned {
-            return
-        }
-        if let panelWindow = window as? QuickPanelWindow {
-            panelWindow.hide()
-        }
     }
 
     private func createLabel(_ text: String, size: CGFloat, color: NSColor) -> NSTextField {
@@ -894,7 +1015,7 @@ final class HoverableRowView: NSView {
     var windowInfo: WindowInfo?
     /// 右键菜单提供者
     var contextMenuProvider: (() -> NSMenu?)?
-    /// 点击处理闭包（用于窗口行点击，避免手势识别器拦截内部按钮）
+    /// 点击处理闭包
     var clickHandler: (() -> Void)?
 
     private var trackingArea: NSTrackingArea?
@@ -939,25 +1060,29 @@ final class HoverableRowView: NSView {
 
     override func mouseEntered(with event: NSEvent) {
         isHovered = true
-        layer?.backgroundColor = NSColor.labelColor.withAlphaComponent(0.08).cgColor
-        layer?.cornerRadius = 4
+        // hover 高亮不覆盖选中高亮（选中高亮由 QuickPanelView 在构建行时设置）
+        if layer?.backgroundColor == nil || layer?.backgroundColor == NSColor.clear.cgColor {
+            layer?.backgroundColor = NSColor.labelColor.withAlphaComponent(0.08).cgColor
+            layer?.cornerRadius = 4
+        }
     }
 
     override func mouseExited(with event: NSEvent) {
         isHovered = false
-        layer?.backgroundColor = nil
+        // 恢复时也要检查是否有选中高亮
+        if layer?.backgroundColor == NSColor.labelColor.withAlphaComponent(0.08).cgColor {
+            layer?.backgroundColor = nil
+        }
     }
 
-    // MARK: - 点击处理（优先让内部 NSButton 处理，其余区域触发 clickHandler）
+    // MARK: - 点击处理
 
     override func mouseUp(with event: NSEvent) {
-        // 检查点击位置是否在 NSButton 上（让按钮自己处理点击）
         let location = convert(event.locationInWindow, from: nil)
         if let hitView = hitTest(location), hitView is NSButton || hitView.superview is NSButton {
             super.mouseUp(with: event)
             return
         }
-        // 非按钮区域：触发行点击处理
         if let handler = clickHandler {
             handler()
         } else {

@@ -7,7 +7,6 @@ class HotkeyManager {
 
     // 快捷键动作
     enum HotkeyAction: Int, CaseIterable {
-        case pinToggle = 1    // ⌘⇧P
         case ballToggle = 6   // ⌘⇧B
     }
 
@@ -41,9 +40,6 @@ class HotkeyManager {
         InstallEventHandler(GetApplicationEventTarget(), handler, 1, &eventType, nil, &eventHandler)
 
         // 注册各快捷键
-        // ⌘⇧P (P=0x23)
-        registerHotKey(id: HotkeyAction.pinToggle.rawValue, keyCode: UInt32(kVK_ANSI_P),
-                       modifiers: UInt32(cmdKey | shiftKey))
         // ⌘⇧B (B=0x0B)
         registerHotKey(id: HotkeyAction.ballToggle.rawValue, keyCode: UInt32(kVK_ANSI_B),
                        modifiers: UInt32(cmdKey | shiftKey))

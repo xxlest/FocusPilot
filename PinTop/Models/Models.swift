@@ -7,7 +7,27 @@ struct AppConfig: Codable, Identifiable, Equatable {
     let bundleID: String
     var displayName: String
     var order: Int
-    var pinnedKeywords: [String]
+    var isFavorite: Bool
+
+    // 自定义解码：兼容旧数据（无 isFavorite 字段时默认 false，忽略旧 pinnedKeywords）
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        bundleID = try container.decode(String.self, forKey: .bundleID)
+        displayName = try container.decode(String.self, forKey: .displayName)
+        order = try container.decode(Int.self, forKey: .order)
+        isFavorite = try container.decodeIfPresent(Bool.self, forKey: .isFavorite) ?? false
+    }
+
+    init(bundleID: String, displayName: String, order: Int, isFavorite: Bool = false) {
+        self.bundleID = bundleID
+        self.displayName = displayName
+        self.order = order
+        self.isFavorite = isFavorite
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case bundleID, displayName, order, isFavorite
+    }
 }
 
 // MARK: - 运行中的 App 信息（运行时）
@@ -61,20 +81,6 @@ struct WindowInfo: Identifiable, Equatable {
     }
 }
 
-// MARK: - Pin 窗口信息
-
-struct PinnedWindow: Identifiable, Equatable {
-    let id: CGWindowID
-    let ownerBundleID: String
-    var title: String
-    var order: Int
-    let ownerPID: pid_t
-
-    static func == (lhs: PinnedWindow, rhs: PinnedWindow) -> Bool {
-        lhs.id == rhs.id
-    }
-}
-
 // MARK: - 悬浮球位置（持久化）
 
 struct BallPosition: Codable {
@@ -105,9 +111,6 @@ struct Preferences: Codable {
     var ballOpacity: CGFloat = 0.8
     var colorTheme: ColorTheme = .system
     var launchAtLogin: Bool = false
-    var pinBorderColor: String = "blue"
-    var pinSoundEnabled: Bool = true
-    var hotkeyPinToggle: String = "⌘⇧P"
     var hotkeyBallToggle: String = "⌘⇧B"
 }
 

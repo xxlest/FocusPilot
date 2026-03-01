@@ -229,13 +229,6 @@ final class FloatingBallView: NSView {
     // MARK: - 通知监听
 
     private func setupNotifications() {
-        // 监听 Pin 窗口变化，更新角标
-        NotificationCenter.default.addObserver(
-            self,
-            selector: #selector(pinnedWindowsDidChange),
-            name: PinManager.pinnedWindowsChanged,
-            object: nil
-        )
         // 监听面板钉住状态变化
         NotificationCenter.default.addObserver(
             self,
@@ -269,14 +262,9 @@ final class FloatingBallView: NSView {
         isPanelPinned = notification.userInfo?["isPinned"] as? Bool ?? false
     }
 
-    @objc private func pinnedWindowsDidChange() {
-        let count = PinManager.shared.pinnedCount
-        updateBadge(count)
-    }
-
     // MARK: - 角标
 
-    /// 更新角标（V2.0: 角标始终隐藏，浮球不随 Pin 状态变化）
+    /// 更新角标（V3.0: 角标始终隐藏）
     func updateBadge(_ count: Int) {
         badgeLabel.isHidden = true
     }

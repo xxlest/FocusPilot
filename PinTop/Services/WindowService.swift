@@ -6,7 +6,6 @@ class WindowService {
     static let shared = WindowService()
 
     // CGS Private API 函数指针（可能在某些 macOS 版本上不可用）
-    // 暴露给 PinManager 用于层级持续维持
     let cgsMainConnectionIDFunc: (@convention(c) () -> Int32)?
     let cgsSetWindowLevelFunc: (@convention(c) (Int32, CGWindowID, Int32) -> CGError)?
     private let cgsOrderWindow: (@convention(c) (Int32, CGWindowID, Int32, CGWindowID) -> CGError)?

@@ -61,9 +61,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         // 移除所有通知观察者
         NotificationCenter.default.removeObserver(self)
 
-        // 清除所有 Pin 状态
-        PinManager.shared.unpinAll()
-
         // 停止 App 监控
         AppMonitor.shared.stopMonitoring()
 
@@ -158,12 +155,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         HotkeyManager.shared.registerAll()
         HotkeyManager.shared.onAction = { [weak self] action in
             switch action {
-            case .pinToggle:
-                // Pin/Unpin 当前活跃窗口
-                let windows = WindowService.shared.listAllWindows()
-                if let frontWindow = windows.first {
-                    PinManager.shared.togglePin(window: frontWindow)
-                }
             case .ballToggle:
                 self?.toggleFloatingBall()
             }
@@ -207,6 +198,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                 ball.show()
                 ConfigStore.shared.isBallVisible = true
             }
+            // 通知快捷面板更新悬浮球显隐按钮文案
+            NotificationCenter.default.post(
+                name: Constants.Notifications.ballVisibilityChanged,
+                object: nil
+            )
         }
     }
 
@@ -216,16 +212,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
 
         if let button = statusItem?.button {
-            button.image = createStatusBarIcon(hasPinnedWindows: false)
+            button.image = createStatusBarIcon()
         }
-
-        // 监听 Pin 状态变化，更新状态栏图标
-        NotificationCenter.default.addObserver(
-            self,
-            selector: #selector(updateStatusBarIcon),
-            name: PinManager.pinnedWindowsChanged,
-            object: nil
-        )
 
         let menu = NSMenu()
         menu.addItem(NSMenuItem(title: "显示/隐藏悬浮球", action: #selector(menuToggleBall), keyEquivalent: ""))
@@ -238,16 +226,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
     // MARK: - 状态栏图标
 
-    /// 根据 Pin 状态更新状态栏图标
-    @objc private func updateStatusBarIcon() {
-        let hasPinned = !PinManager.shared.pinnedWindows.isEmpty
-        statusItem?.button?.image = createStatusBarIcon(hasPinnedWindows: hasPinned)
-    }
-
-    /// 自绘状态栏图标：上方小图钉 + 下方 FC 文字
-    /// - Parameter hasPinnedWindows: 是否有置顶窗口（有则红色着色，无则模板图标跟随系统深浅色）
-    /// - Returns: 状态栏图标
-    private func createStatusBarIcon(hasPinnedWindows: Bool) -> NSImage {
+    /// 自绘状态栏图标：图钉图标（模板图标，跟随系统深浅色）
+    private func createStatusBarIcon() -> NSImage {
         let iconSize: CGFloat = 16
         let symbolConfig = NSImage.SymbolConfiguration(pointSize: 13, weight: .medium)
         guard let pinSymbol = NSImage(systemSymbolName: "pin.fill", accessibilityDescription: "Focus Copilot"),
@@ -258,36 +238,20 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         let image = NSImage(size: NSSize(width: iconSize, height: iconSize))
         image.lockFocus()
 
-        if hasPinnedWindows {
-            // 有标记窗口时：红色着色
-            NSColor.systemRed.set()
-            let rect = NSRect(
+        configured.draw(
+            in: NSRect(
                 x: (iconSize - configured.size.width) / 2,
                 y: (iconSize - configured.size.height) / 2,
                 width: configured.size.width,
                 height: configured.size.height
-            )
-            configured.draw(in: rect)
-            rect.fill(using: .sourceIn)
-        } else {
-            // 无标记窗口时：居中绘制
-            configured.draw(
-                in: NSRect(
-                    x: (iconSize - configured.size.width) / 2,
-                    y: (iconSize - configured.size.height) / 2,
-                    width: configured.size.width,
-                    height: configured.size.height
-                ),
-                from: .zero,
-                operation: .sourceOver,
-                fraction: 1.0
-            )
-        }
+            ),
+            from: .zero,
+            operation: .sourceOver,
+            fraction: 1.0
+        )
 
         image.unlockFocus()
-
-        // 无标记时设为模板图标，跟随系统深浅色
-        image.isTemplate = !hasPinnedWindows
+        image.isTemplate = true
 
         return image
     }

@@ -32,9 +32,7 @@ enum Constants {
     // MARK: - 偏好设置范围
     static let ballSizeRange: ClosedRange<CGFloat> = 30...60
     static let ballOpacityRange: ClosedRange<CGFloat> = 0.3...1.0
-    static let borderColors: [String] = ["blue", "red", "green", "orange", "purple", "yellow"]
-
-    // MARK: - Pin（供服务层使用的扁平常量）
+    // MARK: - App 配置
     static let maxApps: Int = Panel.maxApps
 
     // MARK: - 主看板
@@ -51,8 +49,6 @@ enum Constants {
     // MARK: - 窗口层级
     static let floatingBallLevel = CGWindowLevelForKey(.statusWindow) + 100
     static let quickPanelLevel = CGWindowLevelForKey(.statusWindow) + 50
-    // Pin 窗口层级：使用 statusWindow 级别确保覆盖所有普通窗口（包括非配置 App）
-    static let pinnedWindowBaseLevel = CGWindowLevelForKey(.statusWindow) + 10
 
     // MARK: - UserDefaults Keys
     enum Keys {
@@ -69,7 +65,6 @@ enum Constants {
         // 系统级通知
         static let appStatusChanged = Notification.Name("FocusCopilot.appStatusChanged")
         static let windowsChanged = Notification.Name("FocusCopilot.windowsChanged")
-        static let pinnedWindowsChanged = Notification.Name("FocusCopilot.pinnedWindowsChanged")
         static let ballVisibilityChanged = Notification.Name("FocusCopilot.ballVisibilityChanged")
         static let accessibilityGranted = Notification.Name("FocusCopilot.accessibilityGranted")
 

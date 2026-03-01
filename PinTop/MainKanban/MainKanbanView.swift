@@ -3,13 +3,11 @@ import SwiftUI
 /// 主看板导航项
 enum KanbanTab: String, CaseIterable {
     case appConfig = "快捷面板配置"
-    case pinManage = "置顶管理"
     case preferences = "偏好设置"
 
     var icon: String {
         switch self {
         case .appConfig: return "square.grid.2x2"
-        case .pinManage: return "pin.fill"
         case .preferences: return "gearshape"
         }
     }
@@ -21,7 +19,6 @@ struct MainKanbanView: View {
     @State private var selectedTab: KanbanTab = .appConfig
     @State private var showQuitConfirmation = false
     @ObservedObject private var configStore = ConfigStore.shared
-    @ObservedObject private var pinManager = PinManager.shared
     @ObservedObject private var appMonitor = AppMonitor.shared
 
     var body: some View {
@@ -45,9 +42,9 @@ struct MainKanbanView: View {
                         }) {
                             HStack(spacing: 4) {
                                 Image(systemName: configStore.isBallVisible ? "eye" : "eye.slash")
-                                Text(configStore.isBallVisible ? "隐藏" : "显示")
+                                Text(configStore.isBallVisible ? "悬浮球 隐藏" : "悬浮球 显示")
                             }
-                            .font(.caption)
+                            .font(.callout)
                             .frame(maxWidth: .infinity)
                         }
                         .buttonStyle(.plain)
@@ -61,7 +58,7 @@ struct MainKanbanView: View {
                                 Image(systemName: "power")
                                 Text("退出")
                             }
-                            .font(.caption)
+                            .font(.callout)
                             .foregroundStyle(.red)
                             .frame(maxWidth: .infinity)
                         }
@@ -85,8 +82,6 @@ struct MainKanbanView: View {
             switch selectedTab {
             case .appConfig:
                 AppConfigView()
-            case .pinManage:
-                PinManageView()
             case .preferences:
                 PreferencesView()
             }

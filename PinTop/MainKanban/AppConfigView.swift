@@ -2,15 +2,12 @@ import SwiftUI
 import UniformTypeIdentifiers
 
 /// 快捷面板配置页面
-/// 上方：已选应用区（拖拽排序，最多8个）
-/// 中间：窗口关键词配置（展开区域）
+/// 上方：已选应用区（拖拽排序，最多8个，支持收藏标记）
 /// 下方：可选应用区（已激活/已安装 Tab 切换 + 搜索）
 struct AppConfigView: View {
     @ObservedObject private var configStore = ConfigStore.shared
     @ObservedObject private var appMonitor = AppMonitor.shared
 
-    // 当前展开关键词配置的 App bundleID
-    @State private var expandedAppID: String?
     // 可选应用区 Tab
     @State private var selectedSourceTab: AppSourceTab = .running
     // 搜索文本
@@ -79,175 +76,43 @@ struct AppConfigView: View {
         }
     }
 
-    /// 已选应用行：拖拽手柄 + 图标 + 名称 + 设置按钮 + 移除按钮
+    /// 已选应用行：拖拽手柄 + 图标 + 名称 + 收藏按钮 + 移除按钮
     private func selectedAppRow(_ config: AppConfig) -> some View {
-        VStack(spacing: 0) {
-            HStack(spacing: 8) {
-                // 拖拽手柄
-                Image(systemName: "line.3.horizontal")
-                    .foregroundStyle(.secondary)
-
-                // App 图标
-                appIcon(for: config.bundleID)
-                    .frame(width: 20, height: 20)
-
-                // App 名称
-                Text(config.displayName)
-                    .lineLimit(1)
-
-                Spacer()
-
-                // 设置按钮（展开关键词配置）
-                Button {
-                    withAnimation {
-                        if expandedAppID == config.bundleID {
-                            expandedAppID = nil
-                        } else {
-                            expandedAppID = config.bundleID
-                        }
-                    }
-                } label: {
-                    Image(systemName: "gearshape")
-                }
-                .buttonStyle(.borderless)
-
-                // 移除按钮
-                Button {
-                    configStore.removeApp(config.bundleID)
-                    if expandedAppID == config.bundleID {
-                        expandedAppID = nil
-                    }
-                } label: {
-                    Image(systemName: "xmark.circle.fill")
-                        .foregroundStyle(.secondary)
-                }
-                .buttonStyle(.borderless)
-            }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 8)
-
-            // 展开的关键词配置区域
-            if expandedAppID == config.bundleID {
-                keywordConfigSection(for: config)
-                    .transition(.opacity.combined(with: .move(edge: .top)))
-            }
-        }
-    }
-
-    // MARK: - 窗口关键词配置
-
-    private func keywordConfigSection(for config: AppConfig) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Divider()
-
-            Text("窗口排序关键词")
-                .font(.subheadline)
+        HStack(spacing: 8) {
+            // 拖拽手柄
+            Image(systemName: "line.3.horizontal")
                 .foregroundStyle(.secondary)
 
-            // 关键词列表
-            ForEach(Array(config.pinnedKeywords.enumerated()), id: \.offset) { index, keyword in
-                HStack {
-                    Text("\(index + 1).")
-                        .foregroundStyle(.secondary)
-                        .frame(width: 20)
-                    Text(keyword)
-                    Spacer()
-                    Button {
-                        var keywords = config.pinnedKeywords
-                        keywords.remove(at: index)
-                        configStore.updateKeywords(for: config.bundleID, keywords: keywords)
-                    } label: {
-                        Image(systemName: "xmark")
-                            .foregroundStyle(.secondary)
-                    }
-                    .buttonStyle(.borderless)
-                }
-            }
+            // App 图标
+            appIcon(for: config.bundleID)
+                .frame(width: 20, height: 20)
 
-            // 添加关键词
-            AddKeywordField { newKeyword in
-                var keywords = config.pinnedKeywords
-                keywords.append(newKeyword)
-                configStore.updateKeywords(for: config.bundleID, keywords: keywords)
-            }
+            // App 名称
+            Text(config.displayName)
+                .lineLimit(1)
 
-            // 实时预览
-            windowPreview(for: config)
+            Spacer()
+
+            // 收藏切换按钮
+            Button {
+                configStore.toggleFavorite(config.bundleID)
+            } label: {
+                Image(systemName: config.isFavorite ? "star.fill" : "star")
+                    .foregroundStyle(config.isFavorite ? .yellow : .secondary)
+            }
+            .buttonStyle(.borderless)
+
+            // 移除按钮
+            Button {
+                configStore.removeApp(config.bundleID)
+            } label: {
+                Image(systemName: "xmark.circle.fill")
+                    .foregroundStyle(.secondary)
+            }
+            .buttonStyle(.borderless)
         }
         .padding(.horizontal, 12)
-        .padding(.bottom, 12)
-    }
-
-    /// 实时预览：当前窗口匹配结果
-    private func windowPreview(for config: AppConfig) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text("当前窗口预览")
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-
-            let runningApp = appMonitor.runningApps.first { $0.bundleID == config.bundleID }
-            let windows = runningApp?.windows ?? []
-
-            if windows.isEmpty {
-                Text("该应用当前未运行或无窗口")
-                    .font(.caption)
-                    .foregroundStyle(.tertiary)
-            } else {
-                let (pinnedWindows, normalWindows) = categorizeWindows(windows, keywords: config.pinnedKeywords)
-
-                VStack(alignment: .leading, spacing: 2) {
-                    // 置顶区
-                    ForEach(pinnedWindows, id: \.id) { window in
-                        HStack(spacing: 4) {
-                            Text("★")
-                                .foregroundStyle(.yellow)
-                            Text(window.title.isEmpty ? "（无标题）" : window.title)
-                                .lineLimit(1)
-                        }
-                        .font(.caption)
-                    }
-
-                    // 分割线（仅在有置顶窗口时显示）
-                    if !pinnedWindows.isEmpty && !normalWindows.isEmpty {
-                        Divider()
-                    }
-
-                    // 普通区
-                    ForEach(normalWindows, id: \.id) { window in
-                        Text(window.title.isEmpty ? "（无标题）" : window.title)
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                            .padding(.leading, 16)
-                    }
-                }
-                .padding(8)
-                .background(RoundedRectangle(cornerRadius: 6).fill(.quaternary))
-            }
-        }
-    }
-
-    /// 按关键词分类窗口为置顶区和普通区
-    private func categorizeWindows(_ windows: [WindowInfo], keywords: [String]) -> ([WindowInfo], [WindowInfo]) {
-        var pinned: [(index: Int, window: WindowInfo)] = []
-        var normal: [WindowInfo] = []
-
-        for window in windows {
-            var matched = false
-            for (index, keyword) in keywords.enumerated() {
-                if window.title.localizedCaseInsensitiveContains(keyword) {
-                    pinned.append((index, window))
-                    matched = true
-                    break
-                }
-            }
-            if !matched {
-                normal.append(window)
-            }
-        }
-
-        // 按关键词顺序排序
-        pinned.sort { $0.index < $1.index }
-        return (pinned.map(\.window), normal)
+        .padding(.vertical, 8)
     }
 
     // MARK: - 可选应用区
@@ -397,33 +262,6 @@ private struct AvailableApp {
     let name: String
     let isRunning: Bool
     let isSelected: Bool
-}
-
-/// 添加关键词输入框
-private struct AddKeywordField: View {
-    let onAdd: (String) -> Void
-    @State private var text = ""
-
-    var body: some View {
-        HStack {
-            TextField("输入关键词...", text: $text)
-                .textFieldStyle(.roundedBorder)
-                .onSubmit {
-                    addKeyword()
-                }
-            Button("添加") {
-                addKeyword()
-            }
-            .disabled(text.trimmingCharacters(in: .whitespaces).isEmpty)
-        }
-    }
-
-    private func addKeyword() {
-        let trimmed = text.trimmingCharacters(in: .whitespaces)
-        guard !trimmed.isEmpty else { return }
-        onAdd(trimmed)
-        text = ""
-    }
 }
 
 /// 已选应用拖拽排序代理

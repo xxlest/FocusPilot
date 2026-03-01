@@ -29,7 +29,6 @@ struct PreferencesView: View {
                 .font(.headline)
 
             VStack(spacing: 8) {
-                hotkeyRow(label: "Pin/Unpin 当前窗口", value: $configStore.preferences.hotkeyPinToggle)
                 hotkeyRow(label: "悬浮球显隐", value: $configStore.preferences.hotkeyBallToggle)
             }
         }
@@ -120,45 +119,6 @@ struct PreferencesView: View {
                         try? SMAppService.mainApp.unregister()
                     }
                 }
-
-            // Pin 窗口边框颜色
-            HStack {
-                Text("Pin 窗口边框颜色")
-                    .frame(width: 140, alignment: .leading)
-                HStack(spacing: 8) {
-                    ForEach(["blue", "red", "green", "orange", "purple", "yellow"], id: \.self) { colorName in
-                        Circle()
-                            .fill(borderColor(for: colorName))
-                            .frame(width: 24, height: 24)
-                            .overlay(
-                                Circle()
-                                    .stroke(configStore.preferences.pinBorderColor == colorName ? Color.primary : Color.clear, lineWidth: 2)
-                            )
-                            .onTapGesture {
-                                configStore.preferences.pinBorderColor = colorName
-                            }
-                    }
-                }
-                Spacer()
-            }
-
-            // Pin 操作音效
-            Toggle("Pin 操作音效", isOn: $configStore.preferences.pinSoundEnabled)
-        }
-    }
-
-    // MARK: - 辅助方法
-
-    /// 将颜色名称映射为 SwiftUI Color
-    private func borderColor(for name: String) -> Color {
-        switch name {
-        case "blue": return .blue
-        case "red": return .red
-        case "green": return .green
-        case "orange": return .orange
-        case "purple": return .purple
-        case "yellow": return .yellow
-        default: return .blue
         }
     }
 }

@@ -1,68 +1,94 @@
-# Focus Copilot V2.1 验收报告
+# Focus Copilot V3.0 验收报告
 
 ## 1. 验收用例结果
 
-| 用例 | 需求 | 结果 | 验证方式 | 备注 |
-|------|------|------|----------|------|
-| TC-01 | ⌘⇧U 快捷键已移除 | PASS | 代码审查 | HotkeyManager/AppDelegate 中无 unpinAll 引用 |
-| TC-02 | 偏好设置无 Unpin All 行 | PASS | 代码审查 | PreferencesView 仅显示 2 行快捷键（⌘⇧P、⌘⇧B） |
-| TC-03 | 底部按钮 - 悬浮球显隐 | PASS | 代码审查 | 左半按钮 eye/eye.slash 图标切换，通知 FloatingBall.toggleBall |
-| TC-04 | 底部按钮 - 退出 | PASS | 代码审查 | 右半按钮保持原有确认对话框逻辑 |
-| TC-05 | 窗口行整行可点击 | PASS | 运行时日志 | 点击文字区域成功触发 activateWindow，AXRaise 返回 0 |
-| TC-06 | 单窗口 App 行整行可点击 | PASS | 运行时日志 | iTerm2/元宝/白描/闪电说 均通过 clickHandler 激活 |
-| TC-07 | 跨 App 窗口激活 | PASS | 运行时日志 | 300ms 兜底重试正确触发，AXRaise 全部成功 |
-| TC-08 | 多窗口 App 折叠/展开 | PASS | 运行时日志 | Cursor/Antigravity/微信 折叠/展开交替正常 |
+| 用例 | 结果 | 验证方式 | 备注 |
+|---|---|---|---|
+| TC-01 Tab 切换 | PASS | 代码审查 | buildContent() 根据 currentTab 切换数据源，favoriteAppConfigs 正确过滤 |
+| TC-02 窗口行高亮+前置 | PASS | 代码审查 | highlightedWindowID 全局唯一，点击新行自动取消旧高亮 |
+| TC-03 启动未运行 App | PASS | 代码审查 | NSWorkspace.openApplication 启动，AppMonitor 自动刷新 |
+| TC-04 底部悬浮球显隐 | PASS | 代码审查+修复 | 发现并修复 BUG：toggleFloatingBall 未发送 ballVisibilityChanged 通知 |
+| TC-05 底部退出 | PASS | 代码审查 | NSAlert 确认框 + terminate |
+| TC-06 收藏持久化 | PASS | 代码审查 | isFavorite 通过 Codable 编码到 UserDefaults，load/save 完整覆盖 |
+| TC-07 高亮重置 | PASS | 代码审查 | QuickPanelWindow.hide → resetToNormalMode → highlightedWindowID = nil |
+| TC-08 旧数据迁移 | PASS | 代码审查 | 自定义 init(from decoder:) 使用 decodeIfPresent，默认 false |
 
 ## 2. 架构符合度
 
-### 与 V2.1 架构文档一致性
-- HotkeyManager 删除 unpinAll，仅保留 pinToggle 和 ballToggle ✅
-- AppDelegate 删除 .unpinAll 处理分支 ✅
-- Models.Preferences 删除 hotkeyUnpinAll 字段 ✅
-- MainKanbanView 底部改为 HStack 双按钮（显隐+退出） ✅
-- ConfigStore 新增 isBallVisible 运行时属性 ✅
-- QuickPanelView App 行改用 clickHandler（移除 NSClickGestureRecognizer） ✅
-- WindowService.activateWindow 增加 300ms 兜底重试 ✅
+### 实际代码 vs 架构文档
 
-### 关键设计决策
-- App 行和窗口行统一使用 `HoverableRowView.clickHandler` 模式，避免手势识别器与按钮冲突
-- 折叠切换时强制清除 `lastWindowSnapshot` 确保即时刷新
-- 悬浮球可见性通过 `ConfigStore.isBallVisible`（`@Published`）在 SwiftUI 和 AppKit 间同步
+- 模块划分：按计划实现，3 层（Models/Services、QuickPanel、MainKanban）
+- 接口契约：ConfigStore 新增 toggleFavorite/favoriteAppConfigs 已实现
+- 数据模型：AppConfig 添加 isFavorite、移除 pinnedKeywords、删除 PinnedWindow
+- 通知机制：移除 pinnedWindowsChanged，新增 ballVisibilityChanged 的使用
+
+### 偏离说明
+
+- 架构文档建议保留 `hotkeyPinToggle` 偏好字段，实际实现中完整移除了 Pin 相关快捷键（包括 HotkeyManager 中的 pinToggle action），因为 V3.0 无 Pin 概念，保留会造成混淆
+- 移除了 Preferences 中 pinBorderColor 和 pinSoundEnabled 字段，以及对应的 UI 配置区域
 
 ## 3. 非目标确认
 
-- 未恢复 CGS 窗口层级控制（always-on-top）✅
-- 未支持自定义快捷键 ✅
-- 未修改悬浮球外观/动画 ✅
-- 未引入新文件 ✅
+- ✅ 未实现收藏 Tab 独立排序（沿用 order）
+- ✅ 未添加快捷面板搜索框
+- ✅ 未添加窗口缩略图预览
+- ✅ 未修改 WindowService/AppMonitor
+- ✅ 未修改悬浮球核心逻辑（仅移除 PinManager 监听）
 
 ## 4. 已知问题清单
 
-### P2 缺陷（不阻塞）
-- `app.activate()` 对部分已激活应用返回 `false`，但 AXRaise 始终成功，不影响功能
-- 旧 `/Applications/PinTop.app` 仍需 `sudo rm -rf` 手动清理
+### P2（不阻塞发布）
+
+- AppMonitor.swift:80 存在 unused result warning（非新引入，`checkAccessibility()` 返回值未使用）
+- 悬浮球角标功能保留但始终隐藏（updateBadge 强制 isHidden = true），可考虑后续清理
 
 ### 技术债务
-- AppMonitor.swift 有一个未使用返回值警告（`checkAccessibility()`）
-- 辅助功能权限每次 codesign 后需重新授权（已自动化处理）
 
-## 5. 交付物清单
+- WindowService 中的 CGS Private API 函数指针（cgsSetWindowLevelFunc）不再被 PinManager 使用，但 setWindowLevel 仍可能被其他场景使用，暂保留
 
-### 修改的文件
+## 5. 缺陷检测与修复记录
 
-| 文件 | 变更摘要 |
-|------|----------|
-| `PinTop/Services/HotkeyManager.swift` | 删除 unpinAll 枚举值和 ⌘⇧U 注册 |
-| `PinTop/App/AppDelegate.swift` | 删除 .unpinAll 处理，toggleFloatingBall 同步 isBallVisible |
-| `PinTop/Models/Models.swift` | 删除 hotkeyUnpinAll 属性 |
-| `PinTop/MainKanban/PreferencesView.swift` | 删除 Unpin All 快捷键行 |
-| `PinTop/MainKanban/MainKanbanView.swift` | 底部拆分为双按钮（显隐悬浮球 + 退出） |
-| `PinTop/Services/ConfigStore.swift` | 新增 isBallVisible 运行时属性 |
-| `PinTop/QuickPanel/QuickPanelView.swift` | App 行改用 clickHandler，删除手势识别器方法，折叠添加日志 |
-| `PinTop/Services/WindowService.swift` | activateWindow 增加 300ms 兜底重试 |
+### P0/P1 缺陷
 
-### 新增文件
+| 缺陷 | 级别 | 修复情况 |
+|---|---|---|
+| AppDelegate.swift 残留 PinManager.unpinAll() 调用 | P0 | ✅ 已修复 |
+| AppDelegate.swift 残留 pinToggle 热键处理 | P0 | ✅ 已修复 |
+| AppDelegate.swift 状态栏图标依赖 PinManager 状态 | P1 | ✅ 已修复（简化为固定模板图标） |
+| FloatingBallView.swift 残留 PinManager.pinnedWindowsChanged 监听 | P0 | ✅ 已修复 |
+| HotkeyManager.swift 残留 pinToggle 快捷键注册 | P0 | ✅ 已修复 |
+| project.pbxproj 残留 PinManageView.swift 引用 | P0 | ✅ 已修复（4处引用全部移除） |
+| PreferencesView.swift 残留 Pin 窗口边框颜色和音效配置 | P1 | ✅ 已修复 |
+| toggleFloatingBall 未发送 ballVisibilityChanged 通知 | P1 | ✅ 已修复 |
 
-| 文件 | 职责 |
-|------|------|
-| `reports/v21-architecture.md` | V2.1 架构文档 |
+## 6. 交付物清单
+
+### 修改文件
+
+| 文件 | 职责 | 变更类型 |
+|---|---|---|
+| PinTop/Models/Models.swift | 数据模型 | 修改（AppConfig 添加 isFavorite，移除 PinnedWindow，清理 Preferences） |
+| PinTop/Services/ConfigStore.swift | 配置持久化 | 修改（添加 toggleFavorite/favoriteAppConfigs） |
+| PinTop/Services/WindowService.swift | 窗口操作 | 修改（清理注释） |
+| PinTop/Services/HotkeyManager.swift | 快捷键管理 | 修改（移除 pinToggle） |
+| PinTop/Helpers/Constants.swift | 常量定义 | 修改（移除 pin 相关常量） |
+| PinTop/QuickPanel/QuickPanelView.swift | 快捷面板视图 | 重写（Tab 切换、高亮、底部栏、启动 App） |
+| PinTop/MainKanban/MainKanbanView.swift | 主看板 | 修改（移除 pinManage Tab，更新按钮文案） |
+| PinTop/MainKanban/AppConfigView.swift | App 配置 | 修改（添加收藏切换，移除关键词配置） |
+| PinTop/MainKanban/PreferencesView.swift | 偏好设置 | 修改（移除 Pin 相关配置项） |
+| PinTop/App/AppDelegate.swift | 生命周期管理 | 修改（移除 PinManager 引用，简化状态栏图标） |
+| PinTop/FloatingBall/FloatingBallView.swift | 悬浮球视图 | 修改（移除 PinManager 监听） |
+| PinTop.xcodeproj/project.pbxproj | 项目配置 | 修改（移除 PinManageView 引用） |
+
+### 删除文件
+
+| 文件 | 原因 |
+|---|---|
+| PinTop/Services/PinManager.swift | V3.0 移除 Pin 标记功能 |
+| PinTop/MainKanban/PinManageView.swift | V3.0 移除置顶管理页面 |
+
+### 构建验证
+
+- 构建命令：`make build`
+- 构建结果：✅ 成功（0 错误，1 已知 warning）
+- 输出路径：`/tmp/focuscopilot-build/FocusCopilot.app`

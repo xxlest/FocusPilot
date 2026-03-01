@@ -119,7 +119,7 @@ class ConfigStore: ObservableObject {
             bundleID: bundleID,
             displayName: displayName,
             order: appConfigs.count,
-            pinnedKeywords: []
+            isFavorite: false
         )
         appConfigs.append(config)
         save()
@@ -146,11 +146,17 @@ class ConfigStore: ObservableObject {
         save()
     }
 
-    func updateKeywords(for bundleID: String, keywords: [String]) {
+    /// 切换指定 App 的收藏状态
+    func toggleFavorite(_ bundleID: String) {
         if let index = appConfigs.firstIndex(where: { $0.bundleID == bundleID }) {
-            appConfigs[index].pinnedKeywords = keywords
+            appConfigs[index].isFavorite.toggle()
             save()
         }
+    }
+
+    /// 收藏的 App 配置列表
+    var favoriteAppConfigs: [AppConfig] {
+        appConfigs.filter { $0.isFavorite }
     }
 
     // MARK: - 悬浮球位置
