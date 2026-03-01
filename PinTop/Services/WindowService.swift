@@ -17,17 +17,30 @@ class WindowService {
     // 窗口标题缓存：AX/CG 权限丢失时用上次成功获取的标题兜底
     private var titleCache: [CGWindowID: String] = [:]
 
+    // 日志格式化器（避免每次调用 debugLog 都创建新实例）
+    private static let dateFormatter: ISO8601DateFormatter = {
+        let f = ISO8601DateFormatter()
+        return f
+    }()
+
+    // 持久日志文件句柄
+    private var logFileHandle: FileHandle?
+    private static let logPath = "/tmp/focuscopilot-debug.log"
+
     /// 诊断日志（写入 /tmp，方便排查窗口切换问题）
     func debugLog(_ message: String) {
-        let msg = "[\(ISO8601DateFormatter().string(from: Date()))] \(message)\n"
-        let path = "/tmp/focuscopilot-debug.log"
-        if let handle = FileHandle(forWritingAtPath: path) {
-            handle.seekToEndOfFile()
-            handle.write(msg.data(using: .utf8)!)
-            handle.closeFile()
-        } else {
-            FileManager.default.createFile(atPath: path, contents: msg.data(using: .utf8))
+        let msg = "[\(Self.dateFormatter.string(from: Date()))] \(message)\n"
+        guard let data = msg.data(using: .utf8) else { return }
+
+        if logFileHandle == nil {
+            if !FileManager.default.fileExists(atPath: Self.logPath) {
+                FileManager.default.createFile(atPath: Self.logPath, contents: nil)
+            }
+            logFileHandle = FileHandle(forWritingAtPath: Self.logPath)
+            logFileHandle?.seekToEndOfFile()
         }
+
+        logFileHandle?.write(data)
     }
 
     private init() {
@@ -448,15 +461,14 @@ class WindowService {
             NSLog("[FocusCopilot] setWindowLevel: CGSSetWindowLevel 返回错误 %d（windowID=%d, level=%d）", result.rawValue, windowID, level)
         }
 
-        // 验证：读回窗口实际 layer，确认是否生效
-        if let windowList = CGWindowListCopyWindowInfo([.optionAll], kCGNullWindowID) as? [[String: Any]] {
-            if let info = windowList.first(where: { ($0[kCGWindowNumber as String] as? CGWindowID) == windowID }),
-               let actualLayer = info[kCGWindowLayer as String] as? Int32 {
-                if actualLayer != level {
-                    NSLog("[FocusCopilot] setWindowLevel: 窗口 %d 层级验证不一致（期望 %d，实际 %d），尝试 AXRaise 回退", windowID, level, actualLayer)
-                    // CGS API 未生效，通过 AX API 回退提升窗口
-                    axRaiseWindow(windowID)
-                }
+        // 验证：读回窗口实际 layer，确认是否生效（精确查询单个窗口，避免枚举全部窗口）
+        if let windowList = CGWindowListCreateDescriptionFromArray([windowID] as CFArray) as? [[String: Any]],
+           let info = windowList.first,
+           let actualLayer = info[kCGWindowLayer as String] as? Int32 {
+            if actualLayer != level {
+                NSLog("[FocusCopilot] setWindowLevel: 窗口 %d 层级验证不一致（期望 %d，实际 %d），尝试 AXRaise 回退", windowID, level, actualLayer)
+                // CGS API 未生效，通过 AX API 回退提升窗口
+                axRaiseWindow(windowID)
             }
         }
 

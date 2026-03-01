@@ -118,14 +118,14 @@ final class QuickPanelWindow: NSPanel {
         NotificationCenter.default.addObserver(
             self,
             selector: #selector(ballMouseExited),
-            name: NSNotification.Name("FloatingBall.mouseExited"),
+            name: Constants.Notifications.ballMouseExited,
             object: nil
         )
         // 监听浮球拖动，联动移动面板
         NotificationCenter.default.addObserver(
             self,
             selector: #selector(handleBallDragMoved(_:)),
-            name: NSNotification.Name("FloatingBall.dragMoved"),
+            name: Constants.Notifications.ballDragMoved,
             object: nil
         )
     }
@@ -225,7 +225,7 @@ final class QuickPanelWindow: NSPanel {
         }
         // 通知 panelView 更新钉住按钮状态
         NotificationCenter.default.post(
-            name: NSNotification.Name("QuickPanel.pinStateChanged"),
+            name: Constants.Notifications.panelPinStateChanged,
             object: nil,
             userInfo: ["isPinned": isPanelPinned]
         )
@@ -314,7 +314,7 @@ final class QuickPanelWindow: NSPanel {
         // 面板钉住时，同步拖动浮球
         if isPanelPinned {
             NotificationCenter.default.post(
-                name: NSNotification.Name("QuickPanel.dragMoved"),
+                name: Constants.Notifications.panelDragMoved,
                 object: nil,
                 userInfo: ["deltaX": deltaX, "deltaY": deltaY]
             )

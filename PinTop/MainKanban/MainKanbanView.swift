@@ -39,7 +39,7 @@ struct MainKanbanView: View {
                         // 左半：悬浮球显隐切换
                         Button(action: {
                             NotificationCenter.default.post(
-                                name: NSNotification.Name("FloatingBall.toggleBall"),
+                                name: Constants.Notifications.ballToggle,
                                 object: nil
                             )
                         }) {

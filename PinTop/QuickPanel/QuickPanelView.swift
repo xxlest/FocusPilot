@@ -239,7 +239,7 @@ final class QuickPanelView: NSView {
         NotificationCenter.default.addObserver(
             self,
             selector: #selector(panelPinStateChanged(_:)),
-            name: NSNotification.Name("QuickPanel.pinStateChanged"),
+            name: Constants.Notifications.panelPinStateChanged,
             object: nil
         )
     }
@@ -267,18 +267,7 @@ final class QuickPanelView: NSView {
         if let img = NSImage(systemSymbolName: symbolName, accessibilityDescription: isPinned ? "取消钉住" : "钉住面板") {
             let configuredImage = img.withSymbolConfiguration(config) ?? img
             if isPinned {
-                // 已钉住时旋转图标为竖直（与窗口 Pin 图标旋转逻辑一致）
-                let rotatedImage = NSImage(size: configuredImage.size)
-                rotatedImage.lockFocus()
-                let transform = NSAffineTransform()
-                transform.translateX(by: configuredImage.size.width / 2, yBy: configuredImage.size.height / 2)
-                transform.rotate(byDegrees: 45)
-                transform.translateX(by: -configuredImage.size.width / 2, yBy: -configuredImage.size.height / 2)
-                transform.concat()
-                configuredImage.draw(in: NSRect(origin: .zero, size: configuredImage.size))
-                rotatedImage.unlockFocus()
-                rotatedImage.isTemplate = true
-                panelPinButton.image = rotatedImage
+                panelPinButton.image = Self.rotatedPinImage(from: configuredImage)
             } else {
                 panelPinButton.image = configuredImage
             }
@@ -339,9 +328,8 @@ final class QuickPanelView: NSView {
             return
         }
 
-        // 检查辅助功能权限
-        // 权限提示使用 AXIsProcessTrusted()（即时检查），避免行为检测缓存延迟
-        let hasAccessibility = AXIsProcessTrusted()
+        // 检查辅助功能权限（使用 WindowService 带缓存的检测，避免每次 reloadData 都做系统调用）
+        let hasAccessibility = WindowService.shared.isAXApiAvailable()
 
         // 无权限时：显示 App 列表 + 权限引导提示（不显示窗口列表）
         if !hasAccessibility {
@@ -482,13 +470,7 @@ final class QuickPanelView: NSView {
                 } else {
                     WindowService.shared.activateApp(config.bundleID)
                 }
-                // 钉住模式下不收起面板
-                if let panelWindow = self.window as? QuickPanelWindow, panelWindow.isPanelPinned {
-                    return
-                }
-                if let panelWindow = self.window as? QuickPanelWindow {
-                    panelWindow.hide()
-                }
+                self.dismissPanelIfNeeded()
             }
         }
 
@@ -582,18 +564,7 @@ final class QuickPanelView: NSView {
             let config = NSImage.SymbolConfiguration(pointSize: 11, weight: .medium)
             let configuredImage = pinImage.withSymbolConfiguration(config) ?? pinImage
             if isPinned {
-                // 已标记时旋转图标为竖直（SF Symbol pin 默认倾斜 45°，逆时针旋转 45° 变竖直）
-                let rotatedImage = NSImage(size: configuredImage.size)
-                rotatedImage.lockFocus()
-                let transform = NSAffineTransform()
-                transform.translateX(by: configuredImage.size.width / 2, yBy: configuredImage.size.height / 2)
-                transform.rotate(byDegrees: 45)
-                transform.translateX(by: -configuredImage.size.width / 2, yBy: -configuredImage.size.height / 2)
-                transform.concat()
-                configuredImage.draw(in: NSRect(origin: .zero, size: configuredImage.size))
-                rotatedImage.unlockFocus()
-                rotatedImage.isTemplate = true
-                pinButton.image = rotatedImage
+                pinButton.image = Self.rotatedPinImage(from: configuredImage)
             } else {
                 pinButton.image = configuredImage
             }
@@ -648,13 +619,7 @@ final class QuickPanelView: NSView {
             guard let self = self else { return }
             WindowService.shared.debugLog("QuickPanel: 点击窗口行 wid=\(windowInfo.id) title=\(windowInfo.title)")
             WindowService.shared.activateWindow(windowInfo)
-            // 钉住模式下不收起面板
-            if let panelWindow = self.window as? QuickPanelWindow, panelWindow.isPanelPinned {
-                return
-            }
-            if let panelWindow = self.window as? QuickPanelWindow {
-                panelWindow.hide()
-            }
+            self.dismissPanelIfNeeded()
         }
 
         return row
@@ -813,7 +778,7 @@ final class QuickPanelView: NSView {
     }
 
     @objc private func openMainKanban() {
-        NotificationCenter.default.post(name: NSNotification.Name("FloatingBall.openMainKanban"), object: nil)
+        NotificationCenter.default.post(name: Constants.Notifications.ballOpenMainKanban, object: nil)
     }
 
     // App 行点击已改用 clickHandler 闭包（在 createAppRow 中设置），无需手势识别器方法
@@ -879,6 +844,31 @@ final class QuickPanelView: NSView {
     }
 
     // MARK: - 工具方法
+
+    /// 将 SF Symbol pin 图标旋转 45° 变竖直（pin 默认倾斜 45°）
+    private static func rotatedPinImage(from image: NSImage) -> NSImage {
+        let rotated = NSImage(size: image.size)
+        rotated.lockFocus()
+        let transform = NSAffineTransform()
+        transform.translateX(by: image.size.width / 2, yBy: image.size.height / 2)
+        transform.rotate(byDegrees: 45)
+        transform.translateX(by: -image.size.width / 2, yBy: -image.size.height / 2)
+        transform.concat()
+        image.draw(in: NSRect(origin: .zero, size: image.size))
+        rotated.unlockFocus()
+        rotated.isTemplate = true
+        return rotated
+    }
+
+    /// 面板未钉住时收起面板
+    private func dismissPanelIfNeeded() {
+        if let panelWindow = window as? QuickPanelWindow, panelWindow.isPanelPinned {
+            return
+        }
+        if let panelWindow = window as? QuickPanelWindow {
+            panelWindow.hide()
+        }
+    }
 
     private func createLabel(_ text: String, size: CGFloat, color: NSColor) -> NSTextField {
         let label = NSTextField(labelWithString: text)

@@ -35,7 +35,7 @@ enum Constants {
     static let borderColors: [String] = ["blue", "red", "green", "orange", "purple", "yellow"]
 
     // MARK: - Pin（供服务层使用的扁平常量）
-    static let maxApps: Int = 8                        // 快捷面板最多 8 个 App
+    static let maxApps: Int = Panel.maxApps
 
     // MARK: - 主看板
     static let kanbanWidth: CGFloat = 800
@@ -66,10 +66,24 @@ enum Constants {
 
     // MARK: - 通知名称
     enum Notifications {
+        // 系统级通知
         static let appStatusChanged = Notification.Name("FocusCopilot.appStatusChanged")
         static let windowsChanged = Notification.Name("FocusCopilot.windowsChanged")
         static let pinnedWindowsChanged = Notification.Name("FocusCopilot.pinnedWindowsChanged")
         static let ballVisibilityChanged = Notification.Name("FocusCopilot.ballVisibilityChanged")
         static let accessibilityGranted = Notification.Name("FocusCopilot.accessibilityGranted")
+
+        // 悬浮球通知
+        static let ballShowQuickPanel = Notification.Name("FloatingBall.showQuickPanel")
+        static let ballToggle = Notification.Name("FloatingBall.toggleBall")
+        static let ballOpenMainKanban = Notification.Name("FloatingBall.openMainKanban")
+        static let ballDragStarted = Notification.Name("FloatingBall.dragStarted")
+        static let ballDragMoved = Notification.Name("FloatingBall.dragMoved")
+        static let ballMouseExited = Notification.Name("FloatingBall.mouseExited")
+        static let ballToggleQuickPanel = Notification.Name("FloatingBall.toggleQuickPanel")
+
+        // 快捷面板通知
+        static let panelPinStateChanged = Notification.Name("QuickPanel.pinStateChanged")
+        static let panelDragMoved = Notification.Name("QuickPanel.dragMoved")
     }
 }

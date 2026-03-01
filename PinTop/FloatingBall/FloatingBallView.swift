@@ -19,8 +19,6 @@ final class FloatingBallView: NSView {
     private var hoverTimer: Timer?
     /// 追踪区域
     private var trackingArea: NSTrackingArea?
-    /// 角标数量
-    private var badgeCount: Int = 0
     /// 面板是否被钉住（钉住时不响应 hover）
     private var isPanelPinned = false
     /// 防止联动拖动递归
@@ -134,7 +132,7 @@ final class FloatingBallView: NSView {
 
         // 品牌 Logo 图标（居中，尺寸略大以覆盖圆形区域）
         let iconSize: CGFloat = 28
-        iconView.image = createBrandLogo(size: iconSize, highlighted: false)
+        iconView.image = createBrandLogo(size: iconSize)
         iconView.frame = NSRect(
             x: (size - iconSize) / 2,
             y: (size - iconSize) / 2,
@@ -242,14 +240,14 @@ final class FloatingBallView: NSView {
         NotificationCenter.default.addObserver(
             self,
             selector: #selector(panelPinStateChanged(_:)),
-            name: NSNotification.Name("QuickPanel.pinStateChanged"),
+            name: Constants.Notifications.panelPinStateChanged,
             object: nil
         )
         // 监听面板拖动，联动移动浮球
         NotificationCenter.default.addObserver(
             self,
             selector: #selector(handlePanelDragMoved(_:)),
-            name: NSNotification.Name("QuickPanel.dragMoved"),
+            name: Constants.Notifications.panelDragMoved,
             object: nil
         )
     }
@@ -280,18 +278,15 @@ final class FloatingBallView: NSView {
 
     /// 更新角标（V2.0: 角标始终隐藏，浮球不随 Pin 状态变化）
     func updateBadge(_ count: Int) {
-        badgeCount = count
         badgeLabel.isHidden = true
     }
 
     // MARK: - 品牌 Logo 绘制
 
     /// 程序化绘制品牌 Logo：立体球形背景 + 上方白色图钉 + 下方白色 FC 文字
-    /// - Parameters:
-    ///   - size: Logo 尺寸（正方形边长）
-    ///   - highlighted: 保留参数兼容性（V2.0 始终使用橙色渐变）
+    /// - Parameter size: Logo 尺寸（正方形边长）
     /// - Returns: 绘制好的品牌 Logo 图片
-    private func createBrandLogo(size: CGFloat, highlighted: Bool) -> NSImage {
+    private func createBrandLogo(size: CGFloat) -> NSImage {
         let image = NSImage(size: NSSize(width: size, height: size))
         image.lockFocus()
 
@@ -437,14 +432,14 @@ final class FloatingBallView: NSView {
 
     @objc private func contextMenuOpenKanban() {
         NotificationCenter.default.post(
-            name: NSNotification.Name("FloatingBall.openMainKanban"),
+            name: Constants.Notifications.ballOpenMainKanban,
             object: nil
         )
     }
 
     @objc private func contextMenuToggleBall() {
         NotificationCenter.default.post(
-            name: NSNotification.Name("FloatingBall.toggleBall"),
+            name: Constants.Notifications.ballToggle,
             object: nil
         )
     }
@@ -505,7 +500,7 @@ final class FloatingBallView: NSView {
 
         // 通知快捷面板鼠标已离开悬浮球
         NotificationCenter.default.post(
-            name: NSNotification.Name("FloatingBall.mouseExited"),
+            name: Constants.Notifications.ballMouseExited,
             object: nil
         )
     }
@@ -514,7 +509,7 @@ final class FloatingBallView: NSView {
     private func triggerQuickPanel() {
         guard let window = window else { return }
         NotificationCenter.default.post(
-            name: NSNotification.Name("FloatingBall.showQuickPanel"),
+            name: Constants.Notifications.ballShowQuickPanel,
             object: nil,
             userInfo: ["ballFrame": NSValue(rect: window.frame)]
         )
@@ -539,7 +534,7 @@ final class FloatingBallView: NSView {
             // 面板钉住时不关闭面板（联动拖动）
             if !isPanelPinned {
                 NotificationCenter.default.post(
-                    name: NSNotification.Name("FloatingBall.dragStarted"),
+                    name: Constants.Notifications.ballDragStarted,
                     object: nil
                 )
             }
@@ -569,7 +564,7 @@ final class FloatingBallView: NSView {
         // 面板钉住时，同步拖动面板
         if isPanelPinned {
             NotificationCenter.default.post(
-                name: NSNotification.Name("FloatingBall.dragMoved"),
+                name: Constants.Notifications.ballDragMoved,
                 object: nil,
                 userInfo: ["deltaX": deltaX, "deltaY": deltaY]
             )
@@ -598,7 +593,7 @@ final class FloatingBallView: NSView {
         // 发送 toggleQuickPanel 通知，由 AppDelegate 处理钉住/取消钉住逻辑
         guard let window = window else { return }
         NotificationCenter.default.post(
-            name: NSNotification.Name("FloatingBall.toggleQuickPanel"),
+            name: Constants.Notifications.ballToggleQuickPanel,
             object: nil,
             userInfo: ["ballFrame": NSValue(rect: window.frame)]
         )

@@ -82,31 +82,31 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         NotificationCenter.default.addObserver(
             self,
             selector: #selector(handleShowQuickPanel(_:)),
-            name: NSNotification.Name("FloatingBall.showQuickPanel"),
+            name: Constants.Notifications.ballShowQuickPanel,
             object: nil
         )
         NotificationCenter.default.addObserver(
             self,
             selector: #selector(handleOpenMainKanban),
-            name: NSNotification.Name("FloatingBall.openMainKanban"),
+            name: Constants.Notifications.ballOpenMainKanban,
             object: nil
         )
         NotificationCenter.default.addObserver(
             self,
             selector: #selector(handleBallDragStarted),
-            name: NSNotification.Name("FloatingBall.dragStarted"),
+            name: Constants.Notifications.ballDragStarted,
             object: nil
         )
         NotificationCenter.default.addObserver(
             self,
             selector: #selector(handleToggleBall),
-            name: NSNotification.Name("FloatingBall.toggleBall"),
+            name: Constants.Notifications.ballToggle,
             object: nil
         )
         NotificationCenter.default.addObserver(
             self,
             selector: #selector(handleToggleQuickPanel(_:)),
-            name: NSNotification.Name("FloatingBall.toggleQuickPanel"),
+            name: Constants.Notifications.ballToggleQuickPanel,
             object: nil
         )
     }
