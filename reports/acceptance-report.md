@@ -191,3 +191,130 @@ make install
 # 6. 面板钉住时：拖浮球带面板，拖面板带浮球（联动拖动）
 # 7. 浮球图标有 3D 立体质感（球形高光+底部暗区+投影）
 ```
+
+---
+
+## V1.6.1 Bug 修复（2026-03-01）
+
+**日期**: 2026-03-01
+**范围**: 3 个 Bug 修复
+**规模**: S（3 个文件修改）
+**流程**: 直接修复（S 规模）
+
+---
+
+## 1. Bug 修复情况
+
+| # | Bug 描述 | 根因 | 修复方式 | 状态 |
+|---|----------|------|----------|------|
+| 1 | Pin 窗口视觉变化但实际不置顶 | CGSSetWindowLevel 对跨进程窗口可能不生效 + listWindows 过滤 layer==0 导致 Pin 后窗口从列表消失 | (a) listWindows/listAllWindows 放行已 Pin 窗口(layer!=0 也保留) (b) PinManager 添加层级持续维持机制(定时器+App切换监听) | ✅ 已修复 |
+| 2 | 面板窗口顺序与屏幕显示不一致 | categorizeWindows 按关键词索引排序打乱了 CGWindowList 原始 z-order | 移除关键词索引排序，保持 CGWindowList 返回的 z-order | ✅ 已修复 |
+| 3 | 无窗口/单窗口应用点击不激活 | V1.6 折叠功能 `windows.count > 1` 条件导致单窗口 App 的窗口列表不再显示 | 改为 `!app.windows.isEmpty && !(多窗口已折叠)` | ✅ 已修复 |
+
+## 2. 验收用例结果
+
+| 用例 | 描述 | 结果 | 验证方式 |
+|------|------|------|----------|
+| TC-01 | Pin 窗口后窗口实际置顶 | PASS | 代码审查（enforcePinnedLevels: orderWindowAbove 循环 + didActivateApplication 监听） |
+| TC-02 | Pin 窗口在列表刷新后仍显示 | PASS | 代码审查（listWindows: layer==0 \|\| isPinned(windowID)） |
+| TC-03 | 面板窗口顺序与屏幕 z-order 一致 | PASS | 代码审查（categorizeWindows 不再 sorted by keywordIndex） |
+| TC-04 | 单窗口 App 显示窗口列表 | PASS | 代码审查（buildNormalMode: !app.windows.isEmpty && !(多窗口已折叠)） |
+| TC-05 | 多窗口 App 折叠/展开正常 | PASS | 代码审查（条件逻辑兼容 count==1 和 count>1） |
+| TC-06 | 无窗口运行中 App 点击激活 | PASS | 代码审查（else 分支 handleAppClick → activateApp） |
+| TC-07 | 编译通过 | PASS | `make build` 成功（仅 1 个历史 warning） |
+| TC-08 | 安装运行正常 | PASS | `make install` 成功 + 进程启动 |
+
+## 3. 实现详情
+
+### Bug 1: Pin 窗口层级持续维持
+
+**修改**: `WindowService.swift` + `PinManager.swift`
+
+**WindowService.swift**:
+- `listWindows(for:)` 和 `listAllWindows()`：layer 过滤条件从 `layer == 0` 改为 `layer == 0 || PinManager.shared.isPinned(windowID)`
+- `cgsMainConnectionIDFunc` 和 `cgsSetWindowLevelFunc` 改为非 private，供 PinManager 直接调用
+
+**PinManager.swift**:
+- 新增 `enforcementTimer`：有 Pin 窗口时每 1 秒调用 `enforcePinnedLevels()` 强制维持层级
+- 新增 `activationObserver`：监听 `NSWorkspace.didActivateApplicationNotification`，App 切换时立即重新提升 Pin 窗口（延迟 0.1s 等系统排序完成）
+- `enforcePinnedLevels()`：对每个 Pin 窗口调用 CGSSetWindowLevel + orderWindowAbove
+- `startEnforcementIfNeeded()` / `stopEnforcementIfNeeded()`：pin/unpin/unpinAll 时自动启停
+
+### Bug 2: 窗口顺序保持 z-order
+
+**修改**: `QuickPanelView.swift`
+- `categorizeWindows` 移除 `sorted(by: keywordIndex)` 排序，直接用 `append` 保持 CGWindowList 原始 z-order
+- 各分区（Pin 区 / 关键词区 / 普通区）内部均保持屏幕显示顺序
+
+### Bug 3: 单窗口 App 窗口列表恢复
+
+**修改**: `QuickPanelView.swift`
+- `buildNormalMode` 窗口列表条件从 `app.windows.count > 1 && !collapsed` 改为 `!app.windows.isEmpty && !(count > 1 && collapsed)`
+- 单窗口 App 始终展示窗口列表（与 V1.5 行为一致）
+- 多窗口 App 保持折叠/展开功能
+
+## 4. 交付物清单
+
+| 文件 | 修改内容 |
+|------|----------|
+| `WindowService.swift` | layer 过滤放行已 Pin 窗口 + CGS 函数指针暴露 |
+| `PinManager.swift` | 层级持续维持（定时器+App切换监听） |
+| `QuickPanelView.swift` | 窗口 z-order 保持 + 单窗口列表恢复 |
+
+## 5. 安装后操作指南
+
+```bash
+make install
+# 系统设置 → 隐私与安全性 → 辅助功能 → PinTop 关闭 → 重新开启
+# 验证：Pin 窗口实际置顶 + 切换 App 后 Pin 窗口仍在最上层
+# 验证：面板窗口顺序与屏幕一致
+# 验证：单窗口 App 可看到并点击窗口行
+```
+
+---
+
+## V1.7 悬浮球颜色调整（2026-03-01）
+
+**日期**: 2026-03-01
+**范围**: 悬浮球正常态背景色从蓝色改为橙色
+**规模**: S（1 个文件修改）
+**流程**: Teams 开发流程（S 规模）
+
+---
+
+## 1. 需求
+
+将悬浮球正常态（无置顶窗口时）的品牌 Logo 背景渐变色从蓝色系改为橙色系，使视觉更新颖。
+
+## 2. 验收用例结果
+
+| 用例 | 描述 | 结果 | 验证方式 |
+|------|------|------|----------|
+| TC-01 | 正常态渐变色已改为橙色系 | PASS | 代码审查（浅橙 1.0/0.65/0.3 → 中橙 0.9/0.45/0.1 → 深橙 0.6/0.25/0.05） |
+| TC-02 | 高亮态（有置顶窗口）仍为红色渐变 | PASS | 代码审查（if highlighted 分支未修改，红色色值不变） |
+| TC-03 | 注释已同步更新为"橙色" | PASS | 代码审查（第 300 行、第 319 行注释均已更新） |
+| TC-04 | 编译通过 | PASS | `make build` 成功（仅 1 个历史 warning） |
+
+## 3. 实现详情
+
+**修改文件**: `FloatingBallView.swift`
+
+| 修改点 | 修改前 | 修改后 |
+|--------|--------|--------|
+| 正常态渐变浅色（位置 0.0） | `(0.35, 0.65, 1.0)` 浅蓝 | `(1.0, 0.65, 0.3)` 浅橙 |
+| 正常态渐变中色（位置 0.5） | `(0.15, 0.45, 0.85)` 中蓝 | `(0.9, 0.45, 0.1)` 中橙 |
+| 正常态渐变深色（位置 1.0） | `(0.05, 0.2, 0.55)` 深蓝 | `(0.6, 0.25, 0.05)` 深橙 |
+| 注释（第 300 行） | "正常蓝色版本的品牌 Logo" | "正常橙色版本的品牌 Logo" |
+| 注释（第 319 行） | "正常=蓝色渐变" | "正常=橙色渐变" |
+
+## 4. 已知问题
+
+| 级别 | 描述 | 影响 |
+|------|------|------|
+| 备注 | Dock 图标（AppDelegate.swift）仍为蓝色渐变 | 不在本次需求范围，如需统一可后续调整 |
+
+## 5. 交付物清单
+
+| 文件 | 修改内容 |
+|------|----------|
+| `FloatingBallView.swift` | 正常态渐变色蓝→橙 + 注释更新 |

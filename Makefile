@@ -92,6 +92,8 @@ install: build
 	@echo "   系统设置 → 隐私与安全性 → 辅助功能"
 	@echo "   找到 PinTop → 关闭 → 重新开启"
 	@echo ""
+	@echo "   正在打开系统设置..."
+	@open "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility"
 
 # ── 清理 ──────────────────────────────────────────────
 clean:

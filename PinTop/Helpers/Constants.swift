@@ -52,7 +52,8 @@ enum Constants {
     // MARK: - 窗口层级
     static let floatingBallLevel = CGWindowLevelForKey(.statusWindow) + 100
     static let quickPanelLevel = CGWindowLevelForKey(.statusWindow) + 50
-    static let pinnedWindowBaseLevel = CGWindowLevelForKey(.floatingWindow) + 10
+    // Pin 窗口层级：使用 statusWindow 级别确保覆盖所有普通窗口（包括非配置 App）
+    static let pinnedWindowBaseLevel = CGWindowLevelForKey(.statusWindow) + 10
 
     // MARK: - UserDefaults Keys
     enum Keys {

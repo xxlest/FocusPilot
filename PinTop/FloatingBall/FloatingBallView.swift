@@ -21,16 +21,12 @@ final class FloatingBallView: NSView {
     private var trackingArea: NSTrackingArea?
     /// 角标数量
     private var badgeCount: Int = 0
-    /// 单击检测计时器（区分单击和双击）
-    private var clickTimer: Timer?
-    /// 当前点击次数
-    private var clickCount: Int = 0
     /// 面板是否被钉住（钉住时不响应 hover）
     private var isPanelPinned = false
     /// 防止联动拖动递归
     private var isSyncMoving = false
-    /// 上一帧鼠标位置（用于计算增量 delta）
-    private var lastDragPoint: CGPoint = .zero
+    /// 上一帧窗口位置（用于联动面板计算增量）
+    private var lastWindowOrigin: CGPoint = .zero
 
     // MARK: - 子视图
 
@@ -106,7 +102,6 @@ final class FloatingBallView: NSView {
 
     deinit {
         hoverTimer?.invalidate()
-        clickTimer?.invalidate()
         if let area = trackingArea {
             removeTrackingArea(area)
         }
@@ -302,7 +297,7 @@ final class FloatingBallView: NSView {
             startBreathingAnimation()
         } else {
             badgeLabel.isHidden = true
-            // 无置顶窗口时：使用正常蓝色版本的品牌 Logo
+            // 无置顶窗口时：使用正常橙色版本的品牌 Logo
             iconView.image = createBrandLogo(size: iconSize, highlighted: false)
 
             // 恢复默认黑色阴影
@@ -321,7 +316,7 @@ final class FloatingBallView: NSView {
     /// 程序化绘制品牌 Logo：立体球形背景 + 上方白色图钉 + 下方白色 PT 文字
     /// - Parameters:
     ///   - size: Logo 尺寸（正方形边长）
-    ///   - highlighted: 是否高亮（正常=蓝色渐变，highlighted=红色渐变）
+    ///   - highlighted: 是否高亮（正常=橙色渐变，highlighted=红色渐变）
     /// - Returns: 绘制好的品牌 Logo 图片
     private func createBrandLogo(size: CGFloat, highlighted: Bool) -> NSImage {
         let image = NSImage(size: NSSize(width: size, height: size))
@@ -340,9 +335,9 @@ final class FloatingBallView: NSView {
             )
         } else {
             gradient = NSGradient(colorsAndLocations:
-                (NSColor(calibratedRed: 0.35, green: 0.65, blue: 1.0, alpha: 1.0), 0.0),
-                (NSColor(calibratedRed: 0.15, green: 0.45, blue: 0.85, alpha: 1.0), 0.5),
-                (NSColor(calibratedRed: 0.05, green: 0.2, blue: 0.55, alpha: 1.0), 1.0)
+                (NSColor(calibratedRed: 1.0, green: 0.65, blue: 0.3, alpha: 1.0), 0.0),   // 浅橙
+                (NSColor(calibratedRed: 0.9, green: 0.45, blue: 0.1, alpha: 1.0), 0.5),   // 中橙
+                (NSColor(calibratedRed: 0.6, green: 0.25, blue: 0.05, alpha: 1.0), 1.0)   // 深橙
             )
         }
         gradient?.draw(in: circlePath, angle: 135)
@@ -567,7 +562,6 @@ final class FloatingBallView: NSView {
         isDragging = false
         dragStartPoint = NSEvent.mouseLocation
         windowStartOrigin = window?.frame.origin ?? .zero
-        clickCount += 1
     }
 
     override func mouseDragged(with event: NSEvent) {
@@ -578,8 +572,6 @@ final class FloatingBallView: NSView {
             isDragging = true
             hoverTimer?.invalidate()
             hoverTimer = nil
-            clickCount = 0
-            lastDragPoint = NSEvent.mouseLocation
             // 面板钉住时不关闭面板（联动拖动）
             if !isPanelPinned {
                 NotificationCenter.default.post(
@@ -590,14 +582,11 @@ final class FloatingBallView: NSView {
         }
 
         let currentPoint = NSEvent.mouseLocation
-        // 计算增量 delta（相对上一帧）
-        let deltaX = currentPoint.x - lastDragPoint.x
-        let deltaY = currentPoint.y - lastDragPoint.y
-        lastDragPoint = currentPoint
-
-        var newOrigin = window.frame.origin
-        newOrigin.x += deltaX
-        newOrigin.y += deltaY
+        // 偏移量方式：始终基于 mouseDown 时的起始位置计算，避免边缘夹紧导致漂移
+        var newOrigin = CGPoint(
+            x: windowStartOrigin.x + (currentPoint.x - dragStartPoint.x),
+            y: windowStartOrigin.y + (currentPoint.y - dragStartPoint.y)
+        )
 
         // 限制在当前屏幕可见区域
         if let screen = window.screen ?? NSScreen.main {
@@ -607,7 +596,11 @@ final class FloatingBallView: NSView {
             newOrigin.y = max(visibleFrame.minY, min(newOrigin.y, visibleFrame.maxY - ballSize.height))
         }
 
+        // 计算增量用于面板联动
+        let oldOrigin = window.frame.origin
         window.setFrameOrigin(newOrigin)
+        let deltaX = newOrigin.x - oldOrigin.x
+        let deltaY = newOrigin.y - oldOrigin.y
 
         // 面板钉住时，同步拖动面板
         if isPanelPinned {
@@ -627,23 +620,8 @@ final class FloatingBallView: NSView {
             return
         }
 
-        // 处理点击（区分单击/双击）
-        let currentClickCount = clickCount
-
-        // 取消之前的单击计时器
-        clickTimer?.invalidate()
-
-        if currentClickCount >= 2 {
-            // 双击：隐藏悬浮球
-            clickCount = 0
-            handleDoubleClick()
-        } else {
-            // 等待 250ms 判断是否还有第二次点击
-            clickTimer = Timer.scheduledTimer(withTimeInterval: 0.25, repeats: false) { [weak self] _ in
-                self?.clickCount = 0
-                self?.handleSingleClick()
-            }
-        }
+        // 直接触发单击（不再支持双击隐藏，悬浮球始终可见）
+        handleSingleClick()
     }
 
     // MARK: - 点击处理
@@ -660,11 +638,6 @@ final class FloatingBallView: NSView {
             object: nil,
             userInfo: ["ballFrame": NSValue(rect: window.frame)]
         )
-    }
-
-    /// 双击：隐藏悬浮球
-    private func handleDoubleClick() {
-        hide()
     }
 
     // MARK: - 贴边吸附

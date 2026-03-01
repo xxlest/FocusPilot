@@ -38,6 +38,34 @@ final class QuickPanelView: NSView {
         return btn
     }()
 
+    /// 置顶过滤按钮（放在顶部中间偏右）
+    private lazy var pinFilterButton: NSButton = {
+        let btn = NSButton()
+        btn.bezelStyle = .recessed
+        btn.isBordered = false
+        if let img = NSImage(systemSymbolName: "line.3.horizontal.decrease.circle", accessibilityDescription: "过滤置顶窗口") {
+            let config = NSImage.SymbolConfiguration(pointSize: 12, weight: .medium)
+            btn.image = img.withSymbolConfiguration(config) ?? img
+        }
+        btn.contentTintColor = .secondaryLabelColor
+        btn.toolTip = "仅显示置顶窗口"
+        btn.target = self
+        btn.action = #selector(togglePinFilter)
+        return btn
+    }()
+
+    /// 标题标签（显示当前模式：全部窗口 / 置顶窗口）
+    private let titleLabel: NSTextField = {
+        let label = NSTextField(labelWithString: "")
+        label.font = .systemFont(ofSize: 11, weight: .medium)
+        label.textColor = .secondaryLabelColor
+        label.isEditable = false
+        label.isBezeled = false
+        label.drawsBackground = false
+        label.translatesAutoresizingMaskIntoConstraints = false
+        return label
+    }()
+
     /// 面板钉住按钮（放在顶部右侧，SF Symbol pin 图标）
     private lazy var panelPinButton: NSButton = {
         let btn = NSButton()
@@ -79,6 +107,14 @@ final class QuickPanelView: NSView {
     /// 多窗口 App 折叠状态（按 bundleID 跟踪）
     private var collapsedApps: Set<String> = []
 
+    /// 置顶过滤模式：仅显示已 Pin 的窗口和对应 App
+    private var isFilteringPinned = false
+
+    /// 上次刷新时的 Pin 窗口 ID 快照（防止无意义刷新）
+    private var lastPinnedSnapshot: [CGWindowID] = []
+    /// 上次刷新时的窗口数据快照
+    private var lastWindowSnapshot: String = ""
+
     /// 鼠标追踪区域
     private var trackingArea: NSTrackingArea?
 
@@ -108,8 +144,8 @@ final class QuickPanelView: NSView {
     private func setupView() {
         wantsLayer = true
 
-        // 滚动视图
-        let clipView = NSClipView()
+        // 滚动视图（使用翻转的 ClipView 确保内容从顶部开始显示）
+        let clipView = FlippedClipView()
         clipView.drawsBackground = false
         clipView.documentView = contentStack
         scrollView.contentView = clipView
@@ -118,6 +154,8 @@ final class QuickPanelView: NSView {
         addSubview(topBar)
         addSubview(topSeparator)
         topBar.addSubview(openKanbanButton)
+        topBar.addSubview(titleLabel)
+        topBar.addSubview(pinFilterButton)
         topBar.addSubview(panelPinButton)
 
         addSubview(scrollView)
@@ -126,6 +164,8 @@ final class QuickPanelView: NSView {
         topBar.translatesAutoresizingMaskIntoConstraints = false
         topSeparator.translatesAutoresizingMaskIntoConstraints = false
         openKanbanButton.translatesAutoresizingMaskIntoConstraints = false
+        titleLabel.translatesAutoresizingMaskIntoConstraints = false
+        pinFilterButton.translatesAutoresizingMaskIntoConstraints = false
         panelPinButton.translatesAutoresizingMaskIntoConstraints = false
         scrollView.translatesAutoresizingMaskIntoConstraints = false
         contentStack.translatesAutoresizingMaskIntoConstraints = false
@@ -147,6 +187,14 @@ final class QuickPanelView: NSView {
             // 打开主界面按钮（顶部左侧）
             openKanbanButton.leadingAnchor.constraint(equalTo: topBar.leadingAnchor, constant: 8),
             openKanbanButton.centerYAnchor.constraint(equalTo: topBar.centerYAnchor),
+
+            // 标题标签（居中）
+            titleLabel.centerXAnchor.constraint(equalTo: topBar.centerXAnchor),
+            titleLabel.centerYAnchor.constraint(equalTo: topBar.centerYAnchor),
+
+            // 置顶过滤按钮（钉住按钮左边）
+            pinFilterButton.trailingAnchor.constraint(equalTo: panelPinButton.leadingAnchor, constant: -4),
+            pinFilterButton.centerYAnchor.constraint(equalTo: topBar.centerYAnchor),
 
             // 钉住按钮（顶部右侧）
             panelPinButton.trailingAnchor.constraint(equalTo: topBar.trailingAnchor, constant: -8),
@@ -281,9 +329,9 @@ final class QuickPanelView: NSView {
         }
 
         if isPinned {
-            panelPinButton.contentTintColor = .systemBlue
+            panelPinButton.contentTintColor = .systemRed
             panelPinButton.wantsLayer = true
-            panelPinButton.layer?.backgroundColor = NSColor.systemBlue.withAlphaComponent(0.15).cgColor
+            panelPinButton.layer?.backgroundColor = NSColor.systemRed.withAlphaComponent(0.15).cgColor
             panelPinButton.layer?.cornerRadius = 4
             panelPinButton.toolTip = "取消钉住"
         } else {
@@ -295,8 +343,20 @@ final class QuickPanelView: NSView {
 
     // MARK: - 数据加载
 
-    /// 重新加载面板数据
+    /// 重新加载面板数据（带去重，避免无意义刷新导致闪烁）
     func reloadData() {
+        // 计算当前数据快照
+        let pinnedIDs = PinManager.shared.pinnedWindows.map { $0.id }
+        let windowKeys = AppMonitor.shared.runningApps.flatMap { app in
+            app.windows.map { "\(app.bundleID):\($0.id):\($0.title)" }
+        }.joined(separator: "|")
+
+        let snapshot = "\(isFilteringPinned):\(pinnedIDs):\(windowKeys)"
+        if snapshot == lastWindowSnapshot {
+            return // 数据未变化，跳过刷新
+        }
+        lastWindowSnapshot = snapshot
+
         // 清空内容
         contentStack.arrangedSubviews.forEach { $0.removeFromSuperview() }
         buildNormalMode()
@@ -323,7 +383,45 @@ final class QuickPanelView: NSView {
             return
         }
 
-        // 按配置顺序遍历 App（最多 8 个）
+        // 置顶过滤模式：仅显示有 Pin 窗口的 App 和对应的 Pin 窗口
+        if isFilteringPinned {
+            let pinnedWindows = PinManager.shared.pinnedWindows
+            if pinnedWindows.isEmpty {
+                let emptyLabel = createLabel("暂无置顶窗口", size: 13, color: .secondaryLabelColor)
+                emptyLabel.alignment = .center
+                contentStack.addArrangedSubview(emptyLabel)
+                return
+            }
+
+            // 按 App 分组 Pin 窗口
+            var pinnedByApp: [String: [PinnedWindow]] = [:]
+            for pinned in pinnedWindows {
+                pinnedByApp[pinned.ownerBundleID, default: []].append(pinned)
+            }
+
+            for (bundleID, appPinnedWindows) in pinnedByApp {
+                // 显示 App 行
+                let config = configs.first(where: { $0.bundleID == bundleID })
+                let running = runningApps.first(where: { $0.bundleID == bundleID })
+                let displayName = config?.displayName ?? running?.localizedName ?? bundleID
+                let tempConfig = AppConfig(bundleID: bundleID, displayName: displayName, order: 0, pinnedKeywords: [])
+                let appRow = createAppRow(config: tempConfig, runningApp: running, isRunning: running?.isRunning ?? false)
+                contentStack.addArrangedSubview(appRow)
+
+                // 显示该 App 下的 Pin 窗口
+                if let app = running {
+                    let pinnedIDs = Set(appPinnedWindows.map { $0.id })
+                    let pinnedWindowInfos = app.windows.filter { pinnedIDs.contains($0.id) }
+                    if !pinnedWindowInfos.isEmpty {
+                        let windowList = createWindowList(windows: pinnedWindowInfos, bundleID: bundleID, keywords: [])
+                        contentStack.addArrangedSubview(windowList)
+                    }
+                }
+            }
+            return
+        }
+
+        // 正常模式：按配置顺序遍历 App（最多 8 个）
         for config in configs.prefix(Constants.Panel.maxApps) {
             // 查找运行状态
             let running = runningApps.first(where: { $0.bundleID == config.bundleID })
@@ -333,8 +431,9 @@ final class QuickPanelView: NSView {
             let appRow = createAppRow(config: config, runningApp: running, isRunning: isRunning)
             contentStack.addArrangedSubview(appRow)
 
-            // 多窗口 App：未折叠时展开窗口列表
-            if let app = running, app.windows.count > 1, !collapsedApps.contains(config.bundleID) {
+            // 窗口列表：有窗口时显示（多窗口折叠状态下不显示）
+            if let app = running, !app.windows.isEmpty,
+               !(app.windows.count > 1 && collapsedApps.contains(config.bundleID)) {
                 let windowList = createWindowList(windows: app.windows, bundleID: config.bundleID, keywords: config.pinnedKeywords)
                 contentStack.addArrangedSubview(windowList)
             }
@@ -692,20 +791,20 @@ final class QuickPanelView: NSView {
 
     // MARK: - 关键词匹配与分区
 
-    /// 按关键词将窗口分为置顶区和普通区
+    /// 按关键词将窗口分为置顶区和普通区（保持原始 z-order 不重排）
     private func categorizeWindows(_ windows: [WindowInfo], keywords: [String]) -> (pinned: [WindowInfo], normal: [WindowInfo]) {
         guard !keywords.isEmpty else {
             return ([], windows)
         }
 
-        var pinnedWithIndex: [(window: WindowInfo, keywordIndex: Int)] = []
+        var pinned: [WindowInfo] = []
         var normal: [WindowInfo] = []
 
         for window in windows {
             var matched = false
-            for (index, keyword) in keywords.enumerated() {
+            for keyword in keywords {
                 if window.title.localizedCaseInsensitiveContains(keyword) {
-                    pinnedWithIndex.append((window, index))
+                    pinned.append(window)
                     matched = true
                     break // 只取第一个命中的关键词
                 }
@@ -715,9 +814,7 @@ final class QuickPanelView: NSView {
             }
         }
 
-        // 置顶区按关键词配置顺序排列
-        let pinned = pinnedWithIndex.sorted(by: { $0.keywordIndex < $1.keywordIndex }).map(\.window)
-
+        // 保持原始 z-order（CGWindowList 返回的顺序即为屏幕显示顺序）
         return (pinned, normal)
     }
 
@@ -760,7 +857,10 @@ final class QuickPanelView: NSView {
             PinManager.shared.unpin(windowID: windowID)
         } else {
             let success = PinManager.shared.pin(window: windowInfo)
-            if !success && PinManager.shared.pinnedCount >= Constants.maxPinnedWindows {
+            if success {
+                // Pin 成功后激活该窗口，确保窗口实际排到最前
+                WindowService.shared.activateWindow(windowInfo)
+            } else if PinManager.shared.pinnedCount >= Constants.maxPinnedWindows {
                 showToast("最多置顶 \(Constants.maxPinnedWindows) 个窗口")
             }
         }
@@ -810,6 +910,37 @@ final class QuickPanelView: NSView {
         }
     }
 
+    @objc private func togglePinFilter() {
+        isFilteringPinned.toggle()
+        updatePinFilterButton()
+        reloadData()
+    }
+
+    private func updatePinFilterButton() {
+        let symbolName = isFilteringPinned ? "line.3.horizontal.decrease.circle.fill" : "line.3.horizontal.decrease.circle"
+        let config = NSImage.SymbolConfiguration(pointSize: 12, weight: .medium)
+        if let img = NSImage(systemSymbolName: symbolName, accessibilityDescription: isFilteringPinned ? "显示全部" : "过滤置顶窗口") {
+            pinFilterButton.image = img.withSymbolConfiguration(config) ?? img
+        }
+        if isFilteringPinned {
+            pinFilterButton.contentTintColor = .systemRed
+            pinFilterButton.wantsLayer = true
+            pinFilterButton.layer?.backgroundColor = NSColor.systemRed.withAlphaComponent(0.15).cgColor
+            pinFilterButton.layer?.cornerRadius = 4
+            pinFilterButton.toolTip = "显示全部窗口"
+            // 更新标题标签
+            titleLabel.stringValue = "置顶窗口"
+            titleLabel.textColor = .systemRed
+        } else {
+            pinFilterButton.contentTintColor = .secondaryLabelColor
+            pinFilterButton.layer?.backgroundColor = nil
+            pinFilterButton.toolTip = "仅显示置顶窗口"
+            // 更新标题标签
+            titleLabel.stringValue = ""
+            titleLabel.textColor = .secondaryLabelColor
+        }
+    }
+
     @objc private func togglePanelPin() {
         if let panelWindow = window as? QuickPanelWindow {
             panelWindow.togglePanelPin()
@@ -836,7 +967,13 @@ final class QuickPanelView: NSView {
     @objc private func handleAppClick(_ gesture: NSClickGestureRecognizer) {
         guard let row = gesture.view as? HoverableRowView,
               let bundleID = row.bundleID else { return }
-        WindowService.shared.activateApp(bundleID)
+        // 单窗口 App：直接激活具体窗口（而不仅仅激活 App），确保 Electron 等应用窗口能正确前置
+        if let app = AppMonitor.shared.runningApps.first(where: { $0.bundleID == bundleID }),
+           let firstWindow = app.windows.first {
+            WindowService.shared.activateWindow(firstWindow)
+        } else {
+            WindowService.shared.activateApp(bundleID)
+        }
         // 钉住模式下不收起面板
         if let panelWindow = window as? QuickPanelWindow, panelWindow.isPanelPinned {
             return
@@ -949,4 +1086,10 @@ final class HoverableRowView: NSView {
     override func menu(for event: NSEvent) -> NSMenu? {
         return contextMenuProvider?() ?? super.menu(for: event)
     }
+}
+
+// MARK: - 翻转坐标系的 ClipView（确保内容从顶部开始显示）
+
+private final class FlippedClipView: NSClipView {
+    override var isFlipped: Bool { true }
 }

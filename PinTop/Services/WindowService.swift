@@ -6,8 +6,9 @@ class WindowService {
     static let shared = WindowService()
 
     // CGS Private API 函数指针（可能在某些 macOS 版本上不可用）
-    private let cgsMainConnectionID: (@convention(c) () -> Int32)?
-    private let cgsSetWindowLevel: (@convention(c) (Int32, CGWindowID, Int32) -> CGError)?
+    // 暴露给 PinManager 用于层级持续维持
+    let cgsMainConnectionIDFunc: (@convention(c) () -> Int32)?
+    let cgsSetWindowLevelFunc: (@convention(c) (Int32, CGWindowID, Int32) -> CGError)?
     private let cgsOrderWindow: (@convention(c) (Int32, CGWindowID, Int32, CGWindowID) -> CGError)?
 
     // _AXUIElementGetWindow 私有 API：从 AXUIElement 获取 CGWindowID
@@ -22,19 +23,19 @@ class WindowService {
         let cg = dlopen("/System/Library/Frameworks/CoreGraphics.framework/CoreGraphics", RTLD_LAZY)
 
         if let sym = dlsym(skylight, "CGSMainConnectionID") {
-            cgsMainConnectionID = unsafeBitCast(sym, to: (@convention(c) () -> Int32).self)
+            cgsMainConnectionIDFunc = unsafeBitCast(sym, to: (@convention(c) () -> Int32).self)
         } else if let fallback = dlsym(cg, "_CGSDefaultConnection") {
-            cgsMainConnectionID = unsafeBitCast(fallback, to: (@convention(c) () -> Int32).self)
+            cgsMainConnectionIDFunc = unsafeBitCast(fallback, to: (@convention(c) () -> Int32).self)
         } else {
-            cgsMainConnectionID = nil
+            cgsMainConnectionIDFunc = nil
         }
 
         if let sym = dlsym(skylight, "CGSSetWindowLevel") {
-            cgsSetWindowLevel = unsafeBitCast(sym, to: (@convention(c) (Int32, CGWindowID, Int32) -> CGError).self)
+            cgsSetWindowLevelFunc = unsafeBitCast(sym, to: (@convention(c) (Int32, CGWindowID, Int32) -> CGError).self)
         } else if let sym = dlsym(cg, "CGSSetWindowLevel") {
-            cgsSetWindowLevel = unsafeBitCast(sym, to: (@convention(c) (Int32, CGWindowID, Int32) -> CGError).self)
+            cgsSetWindowLevelFunc = unsafeBitCast(sym, to: (@convention(c) (Int32, CGWindowID, Int32) -> CGError).self)
         } else {
-            cgsSetWindowLevel = nil
+            cgsSetWindowLevelFunc = nil
         }
 
         if let sym = dlsym(skylight, "CGSOrderWindow") {
@@ -150,23 +151,29 @@ class WindowService {
 
     // MARK: - 标题解析
 
-    /// 解析窗口标题，四级兜底：AX 标题 → CG 标题 → 缓存 → "(无标题)"
-    /// AX 权限丢失时，CG 标题（kCGWindowName）不需要辅助功能权限即可获取
-    private func resolveTitle(windowID: CGWindowID, axTitle: String?, cgTitle: String?) -> String {
+    /// 解析窗口标题，五级兜底：AX 标题 → CG 标题 → 缓存 → 进程名 → "(无标题)"
+    /// AX 权限丢失时，CG 标题（kCGWindowName）需要屏幕录制权限；
+    /// 进程名（kCGWindowOwnerName）不需要任何权限，始终可获取
+    private func resolveTitle(windowID: CGWindowID, axTitle: String?, cgTitle: String?, ownerName: String? = nil) -> String {
         // 第 1 级：AX API 标题
         if let ax = axTitle, !ax.isEmpty {
             titleCache[windowID] = ax
             return ax
         }
-        // 第 2 级：CG 标题（kCGWindowName）
+        // 第 2 级：CG 标题（kCGWindowName，macOS 10.15+ 需屏幕录制权限）
         if let cg = cgTitle, !cg.isEmpty {
             titleCache[windowID] = cg
             return cg
         }
-        // 第 3 级：缓存
+        // 第 3 级：缓存（上次成功获取的标题）
         if let cached = titleCache[windowID] {
             return cached
         }
+        // 第 4 级：进程名（kCGWindowOwnerName，无需任何权限）
+        if let owner = ownerName, !owner.isEmpty {
+            return owner
+        }
+        // 第 5 级：兜底
         return "(无标题)"
     }
 
@@ -197,7 +204,8 @@ class WindowService {
                   let windowID = info[kCGWindowNumber as String] as? CGWindowID,
                   let boundsDict = info[kCGWindowBounds as String] as? [String: CGFloat],
                   let layer = info[kCGWindowLayer as String] as? Int,
-                  layer == 0  // 只获取普通窗口层级
+                  // 包含普通窗口(layer 0)和已 Pin 窗口(Pin 后 layer 会变化)
+                  layer == 0 || PinManager.shared.isPinned(windowID)
             else { return nil }
 
             let bounds = CGRect(
@@ -208,7 +216,8 @@ class WindowService {
             )
 
             let cgTitle = info[kCGWindowName as String] as? String
-            let title = resolveTitle(windowID: windowID, axTitle: axTitleMap[windowID], cgTitle: cgTitle)
+            let ownerName = info[kCGWindowOwnerName as String] as? String
+            let title = resolveTitle(windowID: windowID, axTitle: axTitleMap[windowID], cgTitle: cgTitle, ownerName: ownerName)
 
             return WindowInfo(
                 id: windowID,
@@ -236,7 +245,8 @@ class WindowService {
                   let windowID = info[kCGWindowNumber as String] as? CGWindowID,
                   let boundsDict = info[kCGWindowBounds as String] as? [String: CGFloat],
                   let layer = info[kCGWindowLayer as String] as? Int,
-                  layer == 0
+                  // 包含普通窗口(layer 0)和已 Pin 窗口(Pin 后 layer 会变化)
+                  layer == 0 || PinManager.shared.isPinned(windowID)
             else { return nil }
 
             let bundleID = NSRunningApplication(processIdentifier: ownerPID)?.bundleIdentifier ?? ""
@@ -253,7 +263,8 @@ class WindowService {
             }
 
             let cgTitle = info[kCGWindowName as String] as? String
-            let title = resolveTitle(windowID: windowID, axTitle: axCache[ownerPID]?[windowID], cgTitle: cgTitle)
+            let ownerName = info[kCGWindowOwnerName as String] as? String
+            let title = resolveTitle(windowID: windowID, axTitle: axCache[ownerPID]?[windowID], cgTitle: cgTitle, ownerName: ownerName)
 
             return WindowInfo(
                 id: windowID,
@@ -273,66 +284,81 @@ class WindowService {
     func activateWindow(_ window: WindowInfo) {
         guard let app = NSRunningApplication(processIdentifier: window.ownerPID) else { return }
 
+        // 确保 App 不在隐藏状态
+        if app.isHidden {
+            app.unhide()
+        }
+
         // 先激活 App
         app.activate()
 
         // 通过 AX API 提升窗口
-        if AXIsProcessTrusted() {
-            let axApp = AXUIElementCreateApplication(window.ownerPID)
-            var windowsRef: CFTypeRef?
-            AXUIElementCopyAttributeValue(axApp, kAXWindowsAttribute as CFString, &windowsRef)
+        raiseWindowViaAX(window)
 
-            if let axWindows = windowsRef as? [AXUIElement] {
-                var raised = false
-
-                // 优先通过 CGWindowID 精确匹配
-                for axWindow in axWindows {
-                    if let wid = getCGWindowID(from: axWindow), wid == window.id {
-                        AXUIElementPerformAction(axWindow, kAXRaiseAction as CFString)
-                        raised = true
-                        break
-                    }
-                }
-
-                // 回退：位置匹配
-                if !raised {
-                    let tolerance: CGFloat = 10
-                    for axWindow in axWindows {
-                        var posRef: CFTypeRef?
-                        AXUIElementCopyAttributeValue(axWindow, kAXPositionAttribute as CFString, &posRef)
-                        var origin = CGPoint.zero
-                        if let posVal = posRef {
-                            AXValueGetValue(posVal as! AXValue, .cgPoint, &origin)
-                        }
-
-                        var sizeRef: CFTypeRef?
-                        AXUIElementCopyAttributeValue(axWindow, kAXSizeAttribute as CFString, &sizeRef)
-                        var size = CGSize.zero
-                        if let sizeVal = sizeRef {
-                            AXValueGetValue(sizeVal as! AXValue, .cgSize, &size)
-                        }
-
-                        if abs(window.bounds.origin.x - origin.x) < tolerance &&
-                           abs(window.bounds.origin.y - origin.y) < tolerance &&
-                           abs(window.bounds.width - size.width) < tolerance &&
-                           abs(window.bounds.height - size.height) < tolerance {
-                            AXUIElementPerformAction(axWindow, kAXRaiseAction as CFString)
-                            break
-                        }
-                    }
-                }
-            }
+        // 延迟 100ms 再次 AXRaise（等待系统完成 App 激活后再提升，确保 Electron 等应用响应）
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self] in
+            self?.raiseWindowViaAX(window)
         }
 
         // 确保已 Pin 窗口仍在最上层（激活非 Pin 窗口可能导致 Pin 窗口被遮挡）
-        for pinnedWindow in PinManager.shared.pinnedWindows {
-            orderWindowAbove(pinnedWindow.id)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+            for pinnedWindow in PinManager.shared.pinnedWindows {
+                WindowService.shared.orderWindowAbove(pinnedWindow.id)
+            }
+        }
+    }
+
+    /// 通过 AX API 提升指定窗口（内部方法）
+    private func raiseWindowViaAX(_ window: WindowInfo) {
+        guard AXIsProcessTrusted() else { return }
+
+        let axApp = AXUIElementCreateApplication(window.ownerPID)
+        var windowsRef: CFTypeRef?
+        AXUIElementCopyAttributeValue(axApp, kAXWindowsAttribute as CFString, &windowsRef)
+
+        guard let axWindows = windowsRef as? [AXUIElement] else { return }
+
+        // 优先通过 CGWindowID 精确匹配
+        for axWindow in axWindows {
+            if let wid = getCGWindowID(from: axWindow), wid == window.id {
+                AXUIElementPerformAction(axWindow, kAXRaiseAction as CFString)
+                return
+            }
+        }
+
+        // 回退：位置匹配
+        let tolerance: CGFloat = 10
+        for axWindow in axWindows {
+            var posRef: CFTypeRef?
+            AXUIElementCopyAttributeValue(axWindow, kAXPositionAttribute as CFString, &posRef)
+            var origin = CGPoint.zero
+            if let posVal = posRef {
+                AXValueGetValue(posVal as! AXValue, .cgPoint, &origin)
+            }
+
+            var sizeRef: CFTypeRef?
+            AXUIElementCopyAttributeValue(axWindow, kAXSizeAttribute as CFString, &sizeRef)
+            var size = CGSize.zero
+            if let sizeVal = sizeRef {
+                AXValueGetValue(sizeVal as! AXValue, .cgSize, &size)
+            }
+
+            if abs(window.bounds.origin.x - origin.x) < tolerance &&
+               abs(window.bounds.origin.y - origin.y) < tolerance &&
+               abs(window.bounds.width - size.width) < tolerance &&
+               abs(window.bounds.height - size.height) < tolerance {
+                AXUIElementPerformAction(axWindow, kAXRaiseAction as CFString)
+                return
+            }
         }
     }
 
     /// 激活 App（不需要辅助功能权限）
     func activateApp(_ bundleID: String) {
         guard let app = NSRunningApplication.runningApplications(withBundleIdentifier: bundleID).first else { return }
+        if app.isHidden {
+            app.unhide()
+        }
         app.activate()
     }
 
@@ -340,11 +366,11 @@ class WindowService {
 
     /// 设置窗口层级
     func setWindowLevel(_ windowID: CGWindowID, level: Int32) {
-        guard let cgsMainConnectionID = cgsMainConnectionID else {
+        guard let cgsMainConnectionID = cgsMainConnectionIDFunc else {
             NSLog("[PinTop] setWindowLevel: CGSMainConnectionID 函数指针为 nil，无法设置窗口层级")
             return
         }
-        guard let cgsSetWindowLevel = cgsSetWindowLevel else {
+        guard let cgsSetWindowLevel = cgsSetWindowLevelFunc else {
             NSLog("[PinTop] setWindowLevel: CGSSetWindowLevel 函数指针为 nil，无法设置窗口层级")
             return
         }
@@ -374,7 +400,7 @@ class WindowService {
 
     /// 将窗口提升到所有窗口之上
     func orderWindowAbove(_ windowID: CGWindowID) {
-        guard let cgsMainConnectionID = cgsMainConnectionID,
+        guard let cgsMainConnectionID = cgsMainConnectionIDFunc,
               let cgsOrderWindow = cgsOrderWindow else { return }
         let cid = cgsMainConnectionID()
         let result = cgsOrderWindow(cid, windowID, 1, 0) // 1 = kCGSOrderAbove, 0 = above all
