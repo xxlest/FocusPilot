@@ -12,7 +12,7 @@ class ConfigStore: ObservableObject {
     @Published var windowRenames: [String: String] = [:]
     @Published var panelSize: PanelSize = .default
     /// 快捷面板上次选择的 Tab（持久化，面板关闭再打开时恢复）
-    @Published var lastPanelTab: String = QuickPanelTab.all.rawValue
+    @Published var lastPanelTab: String = QuickPanelTab.running.rawValue
 
     /// 悬浮球可见性（运行时状态，不持久化）
     @Published var isBallVisible: Bool = true
@@ -53,7 +53,7 @@ class ConfigStore: ObservableObject {
            let size = try? decoder.decode(PanelSize.self, from: data) {
             panelSize = size
         }
-        lastPanelTab = defaults.string(forKey: Constants.Keys.lastPanelTab) ?? QuickPanelTab.all.rawValue
+        lastPanelTab = defaults.string(forKey: Constants.Keys.lastPanelTab) ?? QuickPanelTab.running.rawValue
     }
 
     // MARK: - 保存配置

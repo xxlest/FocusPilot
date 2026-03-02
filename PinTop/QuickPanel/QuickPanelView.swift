@@ -4,7 +4,6 @@ import ApplicationServices
 // MARK: - 快捷面板 Tab 枚举
 
 enum QuickPanelTab: String {
-    case all        = "all"       // 全部
     case running    = "running"   // 已打开
     case favorites  = "favorites" // 收藏
 }
@@ -18,7 +17,7 @@ final class QuickPanelView: NSView {
     // MARK: - 状态
 
     /// 当前 Tab 页（setupView 中从 ConfigStore 恢复）
-    private var currentTab: QuickPanelTab = .all
+    private var currentTab: QuickPanelTab = .running
 
     /// 当前高亮的窗口行 ID（同一时间只有一个）
     private var highlightedWindowID: CGWindowID?
@@ -61,16 +60,6 @@ final class QuickPanelView: NSView {
         btn.toolTip = "打开主界面"
         btn.target = self
         btn.action = #selector(openMainKanban)
-        return btn
-    }()
-
-    /// 全部 Tab 按钮
-    private lazy var allTabButton: NSButton = {
-        let btn = NSButton(title: "全部", target: self, action: #selector(switchToAllTab))
-        btn.bezelStyle = .recessed
-        btn.isBordered = false
-        btn.font = .systemFont(ofSize: 11, weight: .medium)
-        btn.contentTintColor = .controlAccentColor
         return btn
     }()
 
@@ -168,7 +157,6 @@ final class QuickPanelView: NSView {
         addSubview(topBar)
         addSubview(topSeparator)
         topBar.addSubview(openKanbanButton)
-        topBar.addSubview(allTabButton)
         topBar.addSubview(runningTabButton)
         topBar.addSubview(favoritesTabButton)
         topBar.addSubview(panelPinButton)
@@ -180,7 +168,6 @@ final class QuickPanelView: NSView {
         topBar.translatesAutoresizingMaskIntoConstraints = false
         topSeparator.translatesAutoresizingMaskIntoConstraints = false
         openKanbanButton.translatesAutoresizingMaskIntoConstraints = false
-        allTabButton.translatesAutoresizingMaskIntoConstraints = false
         runningTabButton.translatesAutoresizingMaskIntoConstraints = false
         favoritesTabButton.translatesAutoresizingMaskIntoConstraints = false
         panelPinButton.translatesAutoresizingMaskIntoConstraints = false
@@ -205,12 +192,10 @@ final class QuickPanelView: NSView {
             openKanbanButton.leadingAnchor.constraint(equalTo: topBar.leadingAnchor, constant: 8),
             openKanbanButton.centerYAnchor.constraint(equalTo: topBar.centerYAnchor),
 
-            // Tab 按钮（居中偏左）
-            allTabButton.leadingAnchor.constraint(equalTo: openKanbanButton.trailingAnchor, constant: 6),
-            allTabButton.centerYAnchor.constraint(equalTo: topBar.centerYAnchor),
-            runningTabButton.leadingAnchor.constraint(equalTo: allTabButton.trailingAnchor, constant: 2),
+            // Tab 按钮
+            runningTabButton.leadingAnchor.constraint(equalTo: openKanbanButton.trailingAnchor, constant: 8),
             runningTabButton.centerYAnchor.constraint(equalTo: topBar.centerYAnchor),
-            favoritesTabButton.leadingAnchor.constraint(equalTo: runningTabButton.trailingAnchor, constant: 2),
+            favoritesTabButton.leadingAnchor.constraint(equalTo: runningTabButton.trailingAnchor, constant: 4),
             favoritesTabButton.centerYAnchor.constraint(equalTo: topBar.centerYAnchor),
 
             // 钉住按钮（右侧）
@@ -233,7 +218,7 @@ final class QuickPanelView: NSView {
         updateTrackingArea()
 
         // 从 ConfigStore 恢复上次选择的 Tab
-        currentTab = QuickPanelTab(rawValue: ConfigStore.shared.lastPanelTab) ?? .all
+        currentTab = QuickPanelTab(rawValue: ConfigStore.shared.lastPanelTab) ?? .running
         updateTabButtonStyles()
     }
 
@@ -352,20 +337,18 @@ final class QuickPanelView: NSView {
         reloadData()
     }
 
-    @objc private func switchToAllTab() { switchTab(.all) }
     @objc private func switchToRunningTab() { switchTab(.running) }
     @objc private func switchToFavoritesTab() { switchTab(.favorites) }
 
     private func updateTabButtonStyles() {
         // 先全部重置为未选中样式
-        for btn in [allTabButton, runningTabButton, favoritesTabButton] {
+        for btn in [runningTabButton, favoritesTabButton] {
             btn.font = .systemFont(ofSize: 11)
             btn.contentTintColor = .secondaryLabelColor
         }
         // 设置选中 Tab 样式
         let selectedButton: NSButton
         switch currentTab {
-        case .all:       selectedButton = allTabButton
         case .running:   selectedButton = runningTabButton
         case .favorites: selectedButton = favoritesTabButton
         }
@@ -409,8 +392,6 @@ final class QuickPanelView: NSView {
 
     private func buildContent() {
         switch currentTab {
-        case .all:
-            buildAllTabContent()
         case .running:
             buildRunningTabContent()
         case .favorites:
@@ -418,12 +399,7 @@ final class QuickPanelView: NSView {
         }
     }
 
-    /// "全部"Tab：显示所有运行中 App
-    private func buildAllTabContent() {
-        buildRunningAppList(apps: AppMonitor.shared.runningApps, emptyText: "没有正在运行的应用")
-    }
-
-    /// "已打开"Tab：仅显示有可见窗口的运行中 App
+    /// "已打开"Tab：显示有可见窗口的运行中 App
     private func buildRunningTabContent() {
         buildRunningAppList(apps: AppMonitor.shared.runningApps.filter { !$0.windows.isEmpty }, emptyText: "没有已打开窗口的应用")
     }
@@ -702,6 +678,27 @@ final class QuickPanelView: NSView {
         spacer.setContentHuggingPriority(.defaultLow, for: .horizontal)
         rowStack.addArrangedSubview(spacer)
 
+        // 关闭窗口按钮（叉号）
+        let closeButton = NSButton()
+        closeButton.bezelStyle = .recessed
+        closeButton.isBordered = false
+        closeButton.translatesAutoresizingMaskIntoConstraints = false
+        if let img = NSImage(systemSymbolName: "xmark", accessibilityDescription: "关闭窗口") {
+            let config = NSImage.SymbolConfiguration(pointSize: 9, weight: .medium)
+            closeButton.image = img.withSymbolConfiguration(config) ?? img
+        }
+        closeButton.contentTintColor = .tertiaryLabelColor
+        closeButton.toolTip = "关闭窗口"
+        closeButton.target = self
+        closeButton.action = #selector(handleCloseWindow(_:))
+        // 用 tag 关联 windowInfo（通过 identifier 传递）
+        closeButton.identifier = NSUserInterfaceItemIdentifier("\(bundleID)::\(windowInfo.id)")
+        NSLayoutConstraint.activate([
+            closeButton.widthAnchor.constraint(equalToConstant: 16),
+            closeButton.heightAnchor.constraint(equalToConstant: 16),
+        ])
+        rowStack.addArrangedSubview(closeButton)
+
         // 选中高亮状态
         if highlightedWindowID == windowInfo.id {
             row.isHighlighted = true
@@ -727,6 +724,33 @@ final class QuickPanelView: NSView {
         }
 
         return row
+    }
+
+    // MARK: - 关闭窗口
+
+    @objc private func handleCloseWindow(_ sender: NSButton) {
+        guard let identifier = sender.identifier?.rawValue else { return }
+        // 从 identifier 解析 bundleID 和 windowID
+        let parts = identifier.split(separator: ":", maxSplits: 2, omittingEmptySubsequences: false)
+        guard parts.count == 3, let windowID = CGWindowID(parts[2]) else { return }
+        let bundleID = String(parts[0])
+
+        // 从 AppMonitor 查找窗口信息
+        guard let app = AppMonitor.shared.runningApps.first(where: { $0.bundleID == bundleID }),
+              let windowInfo = app.windows.first(where: { $0.id == windowID }) else { return }
+
+        // 弹出确认对话框
+        let alert = NSAlert()
+        alert.messageText = "关闭窗口"
+        alert.informativeText = "确定要关闭「\(windowInfo.title.isEmpty ? "无标题" : windowInfo.title)」？"
+        alert.addButton(withTitle: "关闭")
+        alert.addButton(withTitle: "取消")
+        alert.buttons.first?.hasDestructiveAction = true
+
+        let response = alert.runModal()
+        if response == .alertFirstButtonReturn {
+            WindowService.shared.closeWindow(windowInfo)
+        }
     }
 
     // MARK: - 窗口右键菜单（重命名）

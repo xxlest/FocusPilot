@@ -454,6 +454,29 @@ class WindowService {
         debugLog("raiseAndFocusAXWindow: wid=\(wid) raiseErr=\(raiseErr.rawValue)")
     }
 
+    /// 关闭指定窗口（通过 AX API 点击窗口关闭按钮）
+    func closeWindow(_ window: WindowInfo) {
+        guard AXIsProcessTrusted() else {
+            debugLog("closeWindow: AX 权限未授权")
+            return
+        }
+
+        guard let axWindow = findAXWindow(pid: window.ownerPID, windowID: window.id) else {
+            debugLog("closeWindow: 未找到匹配的 AX 窗口 wid=\(window.id)")
+            return
+        }
+
+        // 获取窗口的关闭按钮并点击
+        var closeButtonRef: CFTypeRef?
+        let err = AXUIElementCopyAttributeValue(axWindow, kAXCloseButtonAttribute as CFString, &closeButtonRef)
+        if err == .success, let closeButton = closeButtonRef {
+            AXUIElementPerformAction(closeButton as! AXUIElement, kAXPressAction as CFString)
+            debugLog("closeWindow: 已关闭窗口 wid=\(window.id) title=\(window.title)")
+        } else {
+            debugLog("closeWindow: 获取关闭按钮失败 wid=\(window.id) err=\(err.rawValue)")
+        }
+    }
+
     /// 激活 App（不需要辅助功能权限）
     func activateApp(_ bundleID: String) {
         guard let app = NSRunningApplication.runningApplications(withBundleIdentifier: bundleID).first else { return }
