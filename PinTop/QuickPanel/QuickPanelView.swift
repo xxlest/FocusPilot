@@ -418,7 +418,7 @@ final class QuickPanelView: NSView {
             contentStack.addArrangedSubview(appRow)
 
             if hasAccessibility, !app.windows.isEmpty,
-               !(app.windows.count > 1 && collapsedApps.contains(app.bundleID)) {
+               !(collapsedApps.contains(app.bundleID)) {
                 let windowList = createWindowList(windows: app.windows, bundleID: app.bundleID)
                 contentStack.addArrangedSubview(windowList)
             }
@@ -451,7 +451,7 @@ final class QuickPanelView: NSView {
 
             // 窗口列表（运行中且有权限时显示）
             if hasAccessibility, let app = running, !app.windows.isEmpty,
-               !(app.windows.count > 1 && collapsedApps.contains(config.bundleID)) {
+               !collapsedApps.contains(config.bundleID) {
                 let windowList = createWindowList(windows: app.windows, bundleID: config.bundleID)
                 contentStack.addArrangedSubview(windowList)
             }
@@ -542,8 +542,8 @@ final class QuickPanelView: NSView {
         spacer.setContentHuggingPriority(.defaultLow, for: .horizontal)
         rowStack.addArrangedSubview(spacer)
 
-        // 窗口数量（多窗口时显示）
-        if windows.count > 1 {
+        // 窗口数量 + 折叠/展开指示器（有窗口时显示）
+        if !windows.isEmpty {
             let countLabel = createLabel("\(windows.count) 个窗口", size: 11, color: .secondaryLabelColor)
             rowStack.addArrangedSubview(countLabel)
 
@@ -563,7 +563,7 @@ final class QuickPanelView: NSView {
             rowStack.addArrangedSubview(chevronView)
         }
 
-        // 点击行为
+        // 点击行为：所有运行中 App 统一为折叠/展开（窗口激活通过点击窗口行）
         row.bundleID = bundleID
         if !isRunning {
             // 未运行 App：灰度显示，点击启动
@@ -572,8 +572,8 @@ final class QuickPanelView: NSView {
             row.clickHandler = { [weak self] in
                 self?.launchApp(bundleID: bundleID)
             }
-        } else if windows.count > 1 {
-            // 多窗口 App：点击切换折叠/展开
+        } else if !windows.isEmpty {
+            // 运行中 App（有窗口）：点击切换折叠/展开
             row.clickHandler = { [weak self] in
                 guard let self = self else { return }
                 if self.collapsedApps.contains(bundleID) {
@@ -585,7 +585,7 @@ final class QuickPanelView: NSView {
                 self.reloadData()
             }
         } else {
-            // 单窗口或无窗口 App：点击激活
+            // 运行中但无窗口 App：点击激活 App
             row.clickHandler = { [weak self] in
                 guard let self = self else { return }
                 if let runApp = AppMonitor.shared.runningApps.first(where: { $0.bundleID == bundleID }),
