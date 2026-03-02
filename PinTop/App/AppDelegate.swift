@@ -1,5 +1,6 @@
 import AppKit
 import SwiftUI
+import Combine
 
 /// 应用生命周期管理
 /// 负责初始化各服务、创建悬浮球、注册快捷键、设置菜单栏图标
@@ -14,6 +15,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     // MARK: - 菜单栏
 
     private var statusItem: NSStatusItem?
+
+    // MARK: - 偏好设置观察
+
+    private var preferencesObserver: AnyCancellable?
 
     // MARK: - 生命周期
 
@@ -32,6 +37,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
         // 创建并显示悬浮球
         setupFloatingBall()
+
+        // 应用偏好设置（大小、透明度、主题）并监听后续变化
+        applyPreferences(ConfigStore.shared.preferences)
+        observePreferences()
 
         // 注册全局快捷键并设置回调
         setupHotkeys()
@@ -195,6 +204,36 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             window.close()
         } else {
             showMainKanban()
+        }
+    }
+
+    // MARK: - 偏好设置应用
+
+    /// 监听偏好设置变化，实时应用到悬浮球
+    private func observePreferences() {
+        preferencesObserver = ConfigStore.shared.$preferences
+            .dropFirst() // 跳过初始值（已在 applyPreferences 中处理）
+            .sink { [weak self] prefs in
+                self?.applyPreferences(prefs)
+            }
+    }
+
+    /// 将偏好设置应用到悬浮球（大小、透明度、颜色主题）
+    private func applyPreferences(_ prefs: Preferences) {
+        // 悬浮球大小
+        floatingBallWindow?.updateSize(prefs.ballSize)
+
+        // 悬浮球透明度
+        floatingBallWindow?.alphaValue = prefs.ballOpacity
+
+        // 颜色主题
+        switch prefs.colorTheme {
+        case .system:
+            NSApp.appearance = nil
+        case .light:
+            NSApp.appearance = NSAppearance(named: .aqua)
+        case .dark:
+            NSApp.appearance = NSAppearance(named: .darkAqua)
         }
     }
 
