@@ -52,7 +52,7 @@ final class QuickPanelView: NSView {
         let btn = NSButton()
         btn.bezelStyle = .recessed
         btn.isBordered = false
-        if let img = NSImage(systemSymbolName: "macwindow", accessibilityDescription: "打开主界面") {
+        if let img = NSImage(systemSymbolName: "gearshape", accessibilityDescription: "打开主界面") {
             let config = NSImage.SymbolConfiguration(pointSize: 12, weight: .medium)
             btn.image = img.withSymbolConfiguration(config) ?? img
         }
@@ -730,25 +730,28 @@ final class QuickPanelView: NSView {
 
     @objc private func handleCloseWindow(_ sender: NSButton) {
         guard let identifier = sender.identifier?.rawValue else { return }
-        // 从 identifier 解析 bundleID 和 windowID
         let parts = identifier.split(separator: ":", maxSplits: 2, omittingEmptySubsequences: false)
         guard parts.count == 3, let windowID = CGWindowID(parts[2]) else { return }
         let bundleID = String(parts[0])
-
-        // 从 AppMonitor 查找窗口信息
         guard let app = AppMonitor.shared.runningApps.first(where: { $0.bundleID == bundleID }),
               let windowInfo = app.windows.first(where: { $0.id == windowID }) else { return }
+        confirmAndCloseWindow(windowInfo)
+    }
 
-        // 弹出确认对话框
+    @objc private func handleCloseWindowFromMenu(_ sender: NSMenuItem) {
+        guard let info = sender.representedObject as? (String, WindowInfo) else { return }
+        confirmAndCloseWindow(info.1)
+    }
+
+    /// 弹出确认对话框后关闭窗口
+    private func confirmAndCloseWindow(_ windowInfo: WindowInfo) {
         let alert = NSAlert()
         alert.messageText = "关闭窗口"
         alert.informativeText = "确定要关闭「\(windowInfo.title.isEmpty ? "无标题" : windowInfo.title)」？"
         alert.addButton(withTitle: "关闭")
         alert.addButton(withTitle: "取消")
         alert.buttons.first?.hasDestructiveAction = true
-
-        let response = alert.runModal()
-        if response == .alertFirstButtonReturn {
+        if alert.runModal() == .alertFirstButtonReturn {
             WindowService.shared.closeWindow(windowInfo)
         }
     }
@@ -770,6 +773,14 @@ final class QuickPanelView: NSView {
             clearItem.representedObject = key
             menu.addItem(clearItem)
         }
+
+        menu.addItem(NSMenuItem.separator())
+
+        // 关闭窗口
+        let closeItem = NSMenuItem(title: "关闭窗口", action: #selector(handleCloseWindowFromMenu(_:)), keyEquivalent: "")
+        closeItem.target = self
+        closeItem.representedObject = (bundleID, windowInfo)
+        menu.addItem(closeItem)
 
         return menu
     }
