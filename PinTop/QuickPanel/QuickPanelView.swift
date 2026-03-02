@@ -678,27 +678,6 @@ final class QuickPanelView: NSView {
         spacer.setContentHuggingPriority(.defaultLow, for: .horizontal)
         rowStack.addArrangedSubview(spacer)
 
-        // 关闭窗口按钮（叉号）
-        let closeButton = NSButton()
-        closeButton.bezelStyle = .recessed
-        closeButton.isBordered = false
-        closeButton.translatesAutoresizingMaskIntoConstraints = false
-        if let img = NSImage(systemSymbolName: "xmark", accessibilityDescription: "关闭窗口") {
-            let config = NSImage.SymbolConfiguration(pointSize: 9, weight: .medium)
-            closeButton.image = img.withSymbolConfiguration(config) ?? img
-        }
-        closeButton.contentTintColor = .tertiaryLabelColor
-        closeButton.toolTip = "关闭窗口"
-        closeButton.target = self
-        closeButton.action = #selector(handleCloseWindow(_:))
-        // 用 tag 关联 windowInfo（通过 identifier 传递）
-        closeButton.identifier = NSUserInterfaceItemIdentifier("\(bundleID)::\(windowInfo.id)")
-        NSLayoutConstraint.activate([
-            closeButton.widthAnchor.constraint(equalToConstant: 16),
-            closeButton.heightAnchor.constraint(equalToConstant: 16),
-        ])
-        rowStack.addArrangedSubview(closeButton)
-
         // 选中高亮状态
         if highlightedWindowID == windowInfo.id {
             row.isHighlighted = true
@@ -728,34 +707,6 @@ final class QuickPanelView: NSView {
 
     // MARK: - 关闭窗口
 
-    @objc private func handleCloseWindow(_ sender: NSButton) {
-        guard let identifier = sender.identifier?.rawValue else { return }
-        let parts = identifier.split(separator: ":", maxSplits: 2, omittingEmptySubsequences: false)
-        guard parts.count == 3, let windowID = CGWindowID(parts[2]) else { return }
-        let bundleID = String(parts[0])
-        guard let app = AppMonitor.shared.runningApps.first(where: { $0.bundleID == bundleID }),
-              let windowInfo = app.windows.first(where: { $0.id == windowID }) else { return }
-        confirmAndCloseWindow(windowInfo)
-    }
-
-    @objc private func handleCloseWindowFromMenu(_ sender: NSMenuItem) {
-        guard let info = sender.representedObject as? (String, WindowInfo) else { return }
-        confirmAndCloseWindow(info.1)
-    }
-
-    /// 弹出确认对话框后关闭窗口
-    private func confirmAndCloseWindow(_ windowInfo: WindowInfo) {
-        let alert = NSAlert()
-        alert.messageText = "关闭窗口"
-        alert.informativeText = "确定要关闭「\(windowInfo.title.isEmpty ? "无标题" : windowInfo.title)」？"
-        alert.addButton(withTitle: "关闭")
-        alert.addButton(withTitle: "取消")
-        alert.buttons.first?.hasDestructiveAction = true
-        if alert.runModal() == .alertFirstButtonReturn {
-            WindowService.shared.closeWindow(windowInfo)
-        }
-    }
-
     // MARK: - 窗口右键菜单（重命名）
 
     private func createWindowContextMenu(bundleID: String, windowInfo: WindowInfo) -> NSMenu {
@@ -773,14 +724,6 @@ final class QuickPanelView: NSView {
             clearItem.representedObject = key
             menu.addItem(clearItem)
         }
-
-        menu.addItem(NSMenuItem.separator())
-
-        // 关闭窗口
-        let closeItem = NSMenuItem(title: "关闭窗口", action: #selector(handleCloseWindowFromMenu(_:)), keyEquivalent: "")
-        closeItem.target = self
-        closeItem.representedObject = (bundleID, windowInfo)
-        menu.addItem(closeItem)
 
         return menu
     }
