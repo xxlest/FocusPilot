@@ -339,6 +339,7 @@ class WindowService {
     // MARK: - 窗口操作（需要辅助功能权限）
 
     /// 激活窗口并前置（通过 CGWindowID 精确匹配 AX 窗口）
+    /// 使用 NSWorkspace.openApplication 确保跨 App 场景真正置顶
     func activateWindow(_ window: WindowInfo) {
         guard let app = NSRunningApplication(processIdentifier: window.ownerPID) else {
             NSLog("[FocusCopilot] activateWindow: 找不到 PID %d 对应的进程", window.ownerPID)
@@ -352,39 +353,47 @@ class WindowService {
             app.unhide()
         }
 
-        // 激活 App：先 yieldActivation 让出激活权，再 activate 目标
-        // macOS 14+ 中 activate() 要求调用方是前台 App，nonactivatingPanel 不满足此条件
-        // yieldActivation 告诉系统"我把前台权让给目标 App"，解决 activate 返回 false 的问题
-        NSApp.yieldActivation(to: app)
-        let activated = app.activate()
-        debugLog("activateWindow: app.activate() 返回 \(activated)")
-
-        // 通过 AX API 提升窗口
-        raiseWindowViaAX(window)
-
-        // 延迟 150ms 再次 AXRaise（等待系统完成 App 激活后再提升，确保 Electron 等应用响应）
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) { [weak self] in
-            self?.raiseWindowViaAX(window)
-            // 再次确保 App 处于激活状态
+        // 使用 NSWorkspace.openApplication 激活 App（系统级 API，不受 nonactivatingPanel 限制）
+        // 这是 macOS 14+ 上最可靠的跨 App 激活方式
+        if let bundleID = app.bundleIdentifier,
+           let appURL = NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleID) {
+            let config = NSWorkspace.OpenConfiguration()
+            config.activates = true
+            NSWorkspace.shared.openApplication(at: appURL, configuration: config) { _, error in
+                if let error = error {
+                    WindowService.shared.debugLog("activateWindow: openApplication 失败 \(error.localizedDescription)")
+                }
+            }
+        } else {
+            // 回退：yieldActivation + activate
             NSApp.yieldActivation(to: app)
             app.activate()
         }
+        debugLog("activateWindow: 已请求激活 App")
 
-        // 延迟 300ms 二次兜底重试（跨 App 场景：检查目标 App 是否已成为活跃应用）
+        // 通过 AX API 提升特定窗口 + 设为主窗口 + 设为聚焦窗口
+        raiseAndFocusWindowViaAX(window)
+
+        // 延迟 150ms 再次确保（等待 openApplication 完成 + Electron 等应用响应）
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) { [weak self] in
+            self?.raiseAndFocusWindowViaAX(window)
+        }
+
+        // 延迟 300ms 兜底重试
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.30) { [weak self] in
             if NSWorkspace.shared.frontmostApplication?.processIdentifier != window.ownerPID {
                 self?.debugLog("activateWindow: 300ms 兜底重试 wid=\(window.id)")
                 NSApp.yieldActivation(to: app)
                 app.activate()
-                self?.raiseWindowViaAX(window)
+                self?.raiseAndFocusWindowViaAX(window)
             }
         }
     }
 
-    /// 通过 AX API 提升指定窗口（内部方法）
-    private func raiseWindowViaAX(_ window: WindowInfo) {
+    /// 通过 AX API 提升并聚焦指定窗口（AXRaise + 设为主窗口）
+    private func raiseAndFocusWindowViaAX(_ window: WindowInfo) {
         guard AXIsProcessTrusted() else {
-            debugLog("raiseWindowViaAX: AX 权限未授权")
+            debugLog("raiseAndFocusWindowViaAX: AX 权限未授权")
             return
         }
 
@@ -393,15 +402,14 @@ class WindowService {
         let axErr = AXUIElementCopyAttributeValue(axApp, kAXWindowsAttribute as CFString, &windowsRef)
 
         guard let axWindows = windowsRef as? [AXUIElement] else {
-            debugLog("raiseWindowViaAX: 获取 AX 窗口列表失败 err=\(axErr.rawValue)")
+            debugLog("raiseAndFocusWindowViaAX: 获取 AX 窗口列表失败 err=\(axErr.rawValue)")
             return
         }
 
         // 优先通过 CGWindowID 精确匹配
         for axWindow in axWindows {
             if let wid = getCGWindowID(from: axWindow), wid == window.id {
-                let raiseErr = AXUIElementPerformAction(axWindow, kAXRaiseAction as CFString)
-                debugLog("raiseWindowViaAX: CGWindowID 精确匹配成功 wid=\(wid) raiseErr=\(raiseErr.rawValue)")
+                raiseAndFocusAXWindow(axWindow, wid: wid)
                 return
             }
         }
@@ -427,13 +435,23 @@ class WindowService {
                abs(window.bounds.origin.y - origin.y) < tolerance &&
                abs(window.bounds.width - size.width) < tolerance &&
                abs(window.bounds.height - size.height) < tolerance {
-                let raiseErr = AXUIElementPerformAction(axWindow, kAXRaiseAction as CFString)
-                debugLog("raiseWindowViaAX: 位置匹配成功 raiseErr=\(raiseErr.rawValue)")
+                raiseAndFocusAXWindow(axWindow, wid: window.id)
                 return
             }
         }
 
-        debugLog("raiseWindowViaAX: 未找到匹配的 AX 窗口（CGWindowID=\(window.id), axWindows.count=\(axWindows.count)）")
+        debugLog("raiseAndFocusWindowViaAX: 未找到匹配的 AX 窗口（CGWindowID=\(window.id), axWindows.count=\(axWindows.count)）")
+    }
+
+    /// 对匹配的 AX 窗口执行 Raise + 设为主窗口 + 设为聚焦窗口
+    private func raiseAndFocusAXWindow(_ axWindow: AXUIElement, wid: CGWindowID) {
+        // AXRaise：提升窗口到 App 的窗口栈顶
+        let raiseErr = AXUIElementPerformAction(axWindow, kAXRaiseAction as CFString)
+        // 设为主窗口（kAXMainAttribute）：确保窗口成为 App 的主要窗口
+        AXUIElementSetAttributeValue(axWindow, kAXMainAttribute as CFString, kCFBooleanTrue)
+        // 设为聚焦窗口（kAXFocusedAttribute）：确保窗口获得键盘焦点
+        AXUIElementSetAttributeValue(axWindow, kAXFocusedAttribute as CFString, kCFBooleanTrue)
+        debugLog("raiseAndFocusAXWindow: wid=\(wid) raiseErr=\(raiseErr.rawValue)")
     }
 
     /// 激活 App（不需要辅助功能权限）
@@ -442,8 +460,15 @@ class WindowService {
         if app.isHidden {
             app.unhide()
         }
-        NSApp.yieldActivation(to: app)
-        app.activate()
+        // 使用 NSWorkspace.openApplication 确保跨 App 激活
+        if let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleID) {
+            let config = NSWorkspace.OpenConfiguration()
+            config.activates = true
+            NSWorkspace.shared.openApplication(at: url, configuration: config, completionHandler: nil)
+        } else {
+            NSApp.yieldActivation(to: app)
+            app.activate()
+        }
     }
 
     // MARK: - 窗口层级控制（CGS Private API）
