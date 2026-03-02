@@ -121,53 +121,6 @@ final class QuickPanelView: NSView {
         return stack
     }()
 
-    /// 底部分割线
-    private let bottomSeparator: NSBox = {
-        let box = NSBox()
-        box.boxType = .separator
-        return box
-    }()
-
-    /// 底部按钮栏
-    private let bottomBar: NSView = {
-        let view = NSView()
-        view.wantsLayer = true
-        return view
-    }()
-
-    /// 底部左按钮：悬浮球 显示/隐藏
-    private lazy var ballToggleButton: NSButton = {
-        let btn = NSButton(title: "悬浮球 隐藏", target: self, action: #selector(toggleBallVisibility))
-        btn.bezelStyle = .recessed
-        btn.isBordered = false
-        btn.font = .systemFont(ofSize: 13)
-        btn.contentTintColor = .controlAccentColor
-        updateBallToggleButton(btn)
-        return btn
-    }()
-
-    /// 底部右按钮：退出
-    private lazy var quitButton: NSButton = {
-        let btn = NSButton(title: "退出", target: self, action: #selector(handleQuit))
-        btn.bezelStyle = .recessed
-        btn.isBordered = false
-        btn.font = .systemFont(ofSize: 13)
-        btn.contentTintColor = .systemRed
-        if let img = NSImage(systemSymbolName: "power", accessibilityDescription: "退出") {
-            let config = NSImage.SymbolConfiguration(pointSize: 11, weight: .medium)
-            btn.image = img.withSymbolConfiguration(config) ?? img
-        }
-        btn.imagePosition = .imageLeading
-        return btn
-    }()
-
-    /// 底部中间分割线
-    private let bottomDivider: NSBox = {
-        let box = NSBox()
-        box.boxType = .separator
-        return box
-    }()
-
     // MARK: - 初始化
 
     override init(frame frameRect: NSRect) {
@@ -211,13 +164,6 @@ final class QuickPanelView: NSView {
         // 滚动区域
         addSubview(scrollView)
 
-        // 底部栏
-        addSubview(bottomSeparator)
-        addSubview(bottomBar)
-        bottomBar.addSubview(ballToggleButton)
-        bottomBar.addSubview(bottomDivider)
-        bottomBar.addSubview(quitButton)
-
         // Auto Layout
         topBar.translatesAutoresizingMaskIntoConstraints = false
         topSeparator.translatesAutoresizingMaskIntoConstraints = false
@@ -227,14 +173,8 @@ final class QuickPanelView: NSView {
         panelPinButton.translatesAutoresizingMaskIntoConstraints = false
         scrollView.translatesAutoresizingMaskIntoConstraints = false
         contentStack.translatesAutoresizingMaskIntoConstraints = false
-        bottomSeparator.translatesAutoresizingMaskIntoConstraints = false
-        bottomBar.translatesAutoresizingMaskIntoConstraints = false
-        ballToggleButton.translatesAutoresizingMaskIntoConstraints = false
-        bottomDivider.translatesAutoresizingMaskIntoConstraints = false
-        quitButton.translatesAutoresizingMaskIntoConstraints = false
 
         let topBarHeight: CGFloat = 24
-        let bottomBarHeight = Constants.Panel.bottomBarHeight
 
         NSLayoutConstraint.activate([
             // 顶部栏
@@ -262,45 +202,16 @@ final class QuickPanelView: NSView {
             panelPinButton.trailingAnchor.constraint(equalTo: topBar.trailingAnchor, constant: -8),
             panelPinButton.centerYAnchor.constraint(equalTo: topBar.centerYAnchor),
 
-            // 滚动区域（顶部栏和底部栏之间）
+            // 滚动区域（顶部栏到底部）
             scrollView.topAnchor.constraint(equalTo: topSeparator.bottomAnchor),
             scrollView.leadingAnchor.constraint(equalTo: leadingAnchor),
             scrollView.trailingAnchor.constraint(equalTo: trailingAnchor),
-            scrollView.bottomAnchor.constraint(equalTo: bottomSeparator.topAnchor),
+            scrollView.bottomAnchor.constraint(equalTo: bottomAnchor),
 
             // contentStack 宽度跟随 scrollView
             contentStack.leadingAnchor.constraint(equalTo: scrollView.contentView.leadingAnchor),
             contentStack.trailingAnchor.constraint(equalTo: scrollView.contentView.trailingAnchor),
             contentStack.topAnchor.constraint(equalTo: scrollView.contentView.topAnchor),
-
-            // 底部分割线
-            bottomSeparator.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 8),
-            bottomSeparator.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -8),
-            bottomSeparator.bottomAnchor.constraint(equalTo: bottomBar.topAnchor),
-
-            // 底部栏
-            bottomBar.leadingAnchor.constraint(equalTo: leadingAnchor),
-            bottomBar.trailingAnchor.constraint(equalTo: trailingAnchor),
-            bottomBar.bottomAnchor.constraint(equalTo: bottomAnchor),
-            bottomBar.heightAnchor.constraint(equalToConstant: bottomBarHeight),
-
-            // 底部左按钮：悬浮球 显示/隐藏
-            ballToggleButton.leadingAnchor.constraint(equalTo: bottomBar.leadingAnchor),
-            ballToggleButton.topAnchor.constraint(equalTo: bottomBar.topAnchor),
-            ballToggleButton.bottomAnchor.constraint(equalTo: bottomBar.bottomAnchor),
-            ballToggleButton.trailingAnchor.constraint(equalTo: bottomDivider.leadingAnchor),
-
-            // 底部中间分割线
-            bottomDivider.centerXAnchor.constraint(equalTo: bottomBar.centerXAnchor),
-            bottomDivider.topAnchor.constraint(equalTo: bottomBar.topAnchor, constant: 8),
-            bottomDivider.bottomAnchor.constraint(equalTo: bottomBar.bottomAnchor, constant: -8),
-            bottomDivider.widthAnchor.constraint(equalToConstant: 1),
-
-            // 底部右按钮：退出
-            quitButton.leadingAnchor.constraint(equalTo: bottomDivider.trailingAnchor),
-            quitButton.topAnchor.constraint(equalTo: bottomBar.topAnchor),
-            quitButton.bottomAnchor.constraint(equalTo: bottomBar.bottomAnchor),
-            quitButton.trailingAnchor.constraint(equalTo: bottomBar.trailingAnchor),
         ])
 
         // 鼠标追踪
@@ -370,13 +281,6 @@ final class QuickPanelView: NSView {
             name: Constants.Notifications.panelPinStateChanged,
             object: nil
         )
-        // 悬浮球可见性变化
-        NotificationCenter.default.addObserver(
-            self,
-            selector: #selector(ballVisibilityDidChange),
-            name: Constants.Notifications.ballVisibilityChanged,
-            object: nil
-        )
     }
 
     @objc private func windowsDidChange() {
@@ -390,10 +294,6 @@ final class QuickPanelView: NSView {
     @objc private func panelPinStateChanged(_ notification: Notification) {
         let isPinned = notification.userInfo?["isPinned"] as? Bool ?? false
         updatePanelPinButton(isPinned: isPinned)
-    }
-
-    @objc private func ballVisibilityDidChange() {
-        updateBallToggleButton(ballToggleButton)
     }
 
     private func updatePanelPinButton(isPinned: Bool) {
@@ -460,12 +360,13 @@ final class QuickPanelView: NSView {
 
     /// 重新加载面板数据（带去重，避免无意义刷新导致闪烁）
     func reloadData() {
-        // 计算当前数据快照
+        // 计算当前数据快照（含运行状态，确保 App 启动/退出时触发刷新）
         let windowKeys = AppMonitor.shared.runningApps.flatMap { app in
-            app.windows.map { "\(app.bundleID):\($0.id):\($0.title)" }
+            ["\(app.bundleID):\(app.isRunning)"] + app.windows.map { "\(app.bundleID):\($0.id):\($0.title)" }
         }.joined(separator: "|")
 
-        let snapshot = "\(currentTab):\(windowKeys):\(highlightedWindowID ?? 0)"
+        let configKeys = ConfigStore.shared.appConfigs.map { "\($0.bundleID):\($0.isFavorite)" }.joined(separator: ",")
+        let snapshot = "\(currentTab):\(windowKeys):\(configKeys):\(highlightedWindowID ?? 0)"
         if snapshot == lastWindowSnapshot {
             return // 数据未变化，跳过刷新
         }
@@ -485,6 +386,7 @@ final class QuickPanelView: NSView {
         currentTab = .selected
         updateTabButtonStyles()
         collapsedApps.removeAll()
+        lastWindowSnapshot = ""  // 清除快照，确保下次打开时强制刷新
     }
 
     // MARK: - 内容构建
@@ -506,7 +408,10 @@ final class QuickPanelView: NSView {
             let message = currentTab == .selected ? "点击悬浮球配置应用" : "尚未收藏任何应用"
             let emptyLabel = createLabel(message, size: 13, color: .secondaryLabelColor)
             emptyLabel.alignment = .center
+            emptyLabel.translatesAutoresizingMaskIntoConstraints = false
             contentStack.addArrangedSubview(emptyLabel)
+            // 让 label 填满 stack 宽度以实现视觉居中
+            emptyLabel.widthAnchor.constraint(equalTo: contentStack.widthAnchor).isActive = true
             return
         }
 
@@ -740,6 +645,7 @@ final class QuickPanelView: NSView {
 
         // 选中高亮状态
         if highlightedWindowID == windowInfo.id {
+            row.isHighlighted = true
             row.wantsLayer = true
             row.layer?.backgroundColor = NSColor.controlAccentColor.withAlphaComponent(0.15).cgColor
             row.layer?.cornerRadius = 4
@@ -812,10 +718,12 @@ final class QuickPanelView: NSView {
             if !newName.isEmpty && newName != windowInfo.title {
                 ConfigStore.shared.windowRenames[key] = newName
                 ConfigStore.shared.save()
+                lastWindowSnapshot = ""
                 reloadData()
             } else if newName == windowInfo.title {
                 ConfigStore.shared.windowRenames.removeValue(forKey: key)
                 ConfigStore.shared.save()
+                lastWindowSnapshot = ""
                 reloadData()
             }
         }
@@ -825,6 +733,7 @@ final class QuickPanelView: NSView {
         guard let key = sender.representedObject as? String else { return }
         ConfigStore.shared.windowRenames.removeValue(forKey: key)
         ConfigStore.shared.save()
+        lastWindowSnapshot = ""
         reloadData()
     }
 
@@ -840,17 +749,10 @@ final class QuickPanelView: NSView {
         guard let panelWindow = window else { return }
         guard let screen = panelWindow.screen ?? NSScreen.main else { return }
 
-        // 计算内容高度（顶部栏 24 + 分割线 1 + 内容 + 底部分割线 1 + 底部栏 36）
-        contentStack.layoutSubtreeIfNeeded()
-        let contentHeight = contentStack.fittingSize.height
-        let totalHeight = contentHeight + 24 + 4 + Constants.Panel.bottomBarHeight + 1
-
-        // 限制最大高度
+        // 使用用户保存的高度（尊重手动 resize 设定），内容不足时 scrollView 留白
         let maxHeight = screen.visibleFrame.height * Constants.Panel.maxHeightRatio
         let savedHeight = ConfigStore.shared.panelSize.height
-        let heightLimit = min(max(savedHeight, Constants.Panel.minHeight), maxHeight)
-        let finalHeight = min(totalHeight, heightLimit)
-        let clampedHeight = max(finalHeight, Constants.Panel.minHeight)
+        let clampedHeight = min(max(savedHeight, Constants.Panel.minHeight), maxHeight)
 
         var frame = panelWindow.frame
         let heightDiff = clampedHeight - frame.height
@@ -871,37 +773,6 @@ final class QuickPanelView: NSView {
         NotificationCenter.default.post(name: Constants.Notifications.ballOpenMainKanban, object: nil)
     }
 
-    @objc private func toggleBallVisibility() {
-        NotificationCenter.default.post(
-            name: Constants.Notifications.ballToggle,
-            object: nil
-        )
-    }
-
-    @objc private func handleQuit() {
-        let alert = NSAlert()
-        alert.messageText = "退出 Focus Copilot"
-        alert.informativeText = "是否确认退出 Focus Copilot？"
-        alert.addButton(withTitle: "退出")
-        alert.addButton(withTitle: "取消")
-        alert.buttons.first?.hasDestructiveAction = true
-
-        let response = alert.runModal()
-        if response == .alertFirstButtonReturn {
-            NSApplication.shared.terminate(nil)
-        }
-    }
-
-    /// 更新悬浮球显隐按钮状态
-    private func updateBallToggleButton(_ btn: NSButton) {
-        let isVisible = ConfigStore.shared.isBallVisible
-        btn.title = isVisible ? "悬浮球 隐藏" : "悬浮球 显示"
-        if let img = NSImage(systemSymbolName: isVisible ? "eye" : "eye.slash", accessibilityDescription: nil) {
-            let config = NSImage.SymbolConfiguration(pointSize: 11, weight: .medium)
-            btn.image = img.withSymbolConfiguration(config) ?? img
-        }
-        btn.imagePosition = .imageLeading
-    }
 
     /// 启动未运行的 App
     private func launchApp(bundleID: String) {
@@ -1020,6 +891,8 @@ final class HoverableRowView: NSView {
 
     private var trackingArea: NSTrackingArea?
     private var isHovered = false
+    /// 标记该行是否处于选中高亮状态（由外部设置）
+    var isHighlighted = false
 
     override init(frame frameRect: NSRect) {
         super.init(frame: frameRect)
@@ -1061,7 +934,7 @@ final class HoverableRowView: NSView {
     override func mouseEntered(with event: NSEvent) {
         isHovered = true
         // hover 高亮不覆盖选中高亮（选中高亮由 QuickPanelView 在构建行时设置）
-        if layer?.backgroundColor == nil || layer?.backgroundColor == NSColor.clear.cgColor {
+        if !isHighlighted {
             layer?.backgroundColor = NSColor.labelColor.withAlphaComponent(0.08).cgColor
             layer?.cornerRadius = 4
         }
@@ -1069,8 +942,8 @@ final class HoverableRowView: NSView {
 
     override func mouseExited(with event: NSEvent) {
         isHovered = false
-        // 恢复时也要检查是否有选中高亮
-        if layer?.backgroundColor == NSColor.labelColor.withAlphaComponent(0.08).cgColor {
+        // 恢复时检查是否有选中高亮，避免清除选中状态
+        if !isHighlighted {
             layer?.backgroundColor = nil
         }
     }

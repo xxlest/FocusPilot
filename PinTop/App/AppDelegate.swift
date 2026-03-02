@@ -137,8 +137,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             // 面板已显示且已钉住 → 取消钉住 + 关闭面板
             panel.togglePanelPin()
             panel.hide()
+        } else if let panel = quickPanelWindow, panel.isVisible, !panel.isPanelPinned {
+            // 面板已在 hover 模式下可见 → 直接钉住，避免闪烁
+            panel.togglePanelPin()
         } else {
-            // 面板未显示或未钉住 → 弹出面板 + 自动钉住
+            // 面板未显示 → 弹出面板 + 自动钉住
             showQuickPanel(relativeTo: ballFrame)
             // 启动窗口刷新定时器
             AppMonitor.shared.startWindowRefresh()

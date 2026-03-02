@@ -433,7 +433,15 @@ final class FloatingBallView: NSView {
     }
 
     @objc private func contextMenuQuit() {
-        NSApplication.shared.terminate(nil)
+        let alert = NSAlert()
+        alert.messageText = "退出 Focus Copilot"
+        alert.informativeText = "确定要退出应用吗？"
+        alert.alertStyle = .warning
+        alert.addButton(withTitle: "退出")
+        alert.addButton(withTitle: "取消")
+        if alert.runModal() == .alertFirstButtonReturn {
+            NSApplication.shared.terminate(nil)
+        }
     }
 
     // MARK: - 鼠标事件：hover

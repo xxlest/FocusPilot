@@ -404,8 +404,11 @@ final class QuickPanelWindow: NSPanel {
 
         let inRightEdge = location.x >= w - resizeHandleSize
         let inBottomEdge = location.y <= resizeHandleSize
+        // 右下角使用更大的热区（10px），方便拖拽
+        let inCornerRight = location.x >= w - resizeCornerSize
+        let inCornerBottom = location.y <= resizeCornerSize
 
-        if inRightEdge && inBottomEdge {
+        if inCornerRight && inCornerBottom {
             return .bottomRight
         } else if inRightEdge {
             return .right

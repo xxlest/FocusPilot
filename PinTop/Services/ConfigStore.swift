@@ -151,6 +151,8 @@ class ConfigStore: ObservableObject {
         if let index = appConfigs.firstIndex(where: { $0.bundleID == bundleID }) {
             appConfigs[index].isFavorite.toggle()
             save()
+            // 通知 QuickPanel 刷新（收藏 Tab 数据源变更）
+            NotificationCenter.default.post(name: Constants.Notifications.appStatusChanged, object: nil)
         }
     }
 

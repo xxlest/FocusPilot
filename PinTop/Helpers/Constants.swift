@@ -23,7 +23,6 @@ enum Constants {
         static let maxHeightRatio: CGFloat = 0.6       // 面板最大高度 = 屏幕 60%
         static let maxApps: Int = 8                    // 快捷面板最多 8 个 App
         static let maxWindowsPerApp: Int = 10          // 每个 App 最多显示 10 个窗口
-        static let bottomBarHeight: CGFloat = 36       // 底部操作栏高度
         static let appRowHeight: CGFloat = 26          // App 行高度（紧凑布局）
         static let windowRowHeight: CGFloat = 22       // 窗口行高度（紧凑布局）
         static let windowIndent: CGFloat = 28          // 窗口列表缩进
