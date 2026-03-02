@@ -85,7 +85,7 @@ struct AppConfigView: View {
             .padding(.horizontal)
             .padding(.vertical, 8)
         }
-        .navigationTitle("收藏管理")
+        .navigationTitle("")
         .onReceive(NotificationCenter.default.publisher(for: Constants.Notifications.appStatusChanged)) { _ in
             refreshTrigger += 1
         }

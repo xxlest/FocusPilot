@@ -15,7 +15,7 @@ struct PreferencesView: View {
             }
             .padding()
         }
-        .navigationTitle("偏好设置")
+        .navigationTitle("")
         .onDisappear {
             configStore.save()
         }

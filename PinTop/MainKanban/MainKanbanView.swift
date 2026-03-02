@@ -86,5 +86,18 @@ struct MainKanbanView: View {
                 PreferencesView()
             }
         }
+        // 移除默认的侧边栏切换按钮（位置会浮动），用固定位置的替代
+        .toolbar(removing: .sidebarToggle)
+        .toolbar {
+            // 放在 navigation 区域（紧跟窗口控制按钮之后，位置固定）
+            ToolbarItem(placement: .navigation) {
+                Button {
+                    NSApp.sendAction(#selector(NSSplitViewController.toggleSidebar(_:)), to: nil, from: nil)
+                } label: {
+                    Image(systemName: "sidebar.left")
+                }
+                .help("切换侧边栏")
+            }
+        }
     }
 }

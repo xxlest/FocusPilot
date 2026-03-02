@@ -16,6 +16,8 @@ class MainKanbanWindow: NSWindow, NSWindowDelegate {
         )
 
         title = "Focus Copilot"
+        // 隐藏标题栏中的导航标题（不显示侧边栏当前激活项名称）
+        subtitle = ""
         minSize = NSSize(width: 640, height: 480)
         center()
 
