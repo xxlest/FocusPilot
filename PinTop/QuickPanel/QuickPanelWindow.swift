@@ -291,6 +291,19 @@ final class QuickPanelWindow: NSPanel {
                 isDraggingPanel = false
                 return
             }
+        case .mouseMoved:
+            // 在 sendEvent 层拦截 mouseMoved，确保 resize 光标不被子视图吞没
+            let location = event.locationInWindow
+            if let edge = resizeEdgeAt(location) {
+                switch edge {
+                case .right:       NSCursor.resizeLeftRight.set()
+                case .bottom:      NSCursor.resizeUpDown.set()
+                case .bottomRight: NSCursor.resizeLeftRight.set()
+                }
+                return
+            } else {
+                NSCursor.arrow.set()
+            }
         default:
             break
         }
