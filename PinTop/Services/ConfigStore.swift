@@ -11,6 +11,7 @@ class ConfigStore: ObservableObject {
     @Published var onboardingCompleted: Bool = false
     @Published var windowRenames: [String: String] = [:]
     @Published var panelSize: PanelSize = .default
+    @Published var lastPanelTab: String = "all"
 
     /// 悬浮球可见性（运行时状态，不持久化）
     @Published var isBallVisible: Bool = true
@@ -51,6 +52,7 @@ class ConfigStore: ObservableObject {
            let size = try? decoder.decode(PanelSize.self, from: data) {
             panelSize = size
         }
+        lastPanelTab = defaults.string(forKey: Constants.Keys.lastPanelTab) ?? "all"
     }
 
     // MARK: - 保存配置
@@ -72,6 +74,7 @@ class ConfigStore: ObservableObject {
         if let data = try? encoder.encode(panelSize) {
             defaults.set(data, forKey: Constants.Keys.panelSize)
         }
+        defaults.set(lastPanelTab, forKey: Constants.Keys.lastPanelTab)
     }
 
     // MARK: - 配置迁移（PinTop → FocusCopilot）
@@ -197,6 +200,13 @@ class ConfigStore: ObservableObject {
     /// 检查指定 App 是否已收藏（在 appConfigs 中即为收藏）
     func isFavorite(_ bundleID: String) -> Bool {
         appConfigs.contains { $0.bundleID == bundleID }
+    }
+
+    // MARK: - 面板 Tab 记忆
+
+    func saveLastPanelTab(_ tab: String) {
+        lastPanelTab = tab
+        defaults.set(tab, forKey: Constants.Keys.lastPanelTab)
     }
 
     // MARK: - 悬浮球位置

@@ -57,6 +57,7 @@ enum Constants {
         static let onboardingCompleted = "FocusCopilot.onboardingCompleted"
         static let windowRenames = "FocusCopilot.windowRenames"
         static let panelSize = "FocusCopilot.panelSize"
+        static let lastPanelTab = "FocusCopilot.lastPanelTab"
     }
 
     // MARK: - 通知名称
