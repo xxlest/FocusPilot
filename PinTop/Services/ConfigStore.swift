@@ -27,6 +27,9 @@ class ConfigStore: ObservableObject {
         // 从旧 bundle ID (PinTop) 自动迁移配置
         migrateFromPinTop()
 
+        // V3.1 迁移：移除非收藏的 appConfigs，仅保留 isFavorite==true 的
+        migrateToV31()
+
         if let data = defaults.data(forKey: Constants.Keys.appConfigs),
            let configs = try? decoder.decode([AppConfig].self, from: data) {
             appConfigs = configs
@@ -110,6 +113,48 @@ class ConfigStore: ObservableObject {
         }
     }
 
+    // MARK: - V3.1 数据迁移（移除非收藏 App）
+
+    /// 将旧数据中仅 isFavorite==true 的 App 保留为收藏，其余移除
+    private func migrateToV31() {
+        let migrationKey = "FocusCopilot.v31Migrated"
+        guard !defaults.bool(forKey: migrationKey) else { return }
+
+        // 用临时结构解码旧数据（含 isFavorite 字段）
+        struct OldAppConfig: Decodable {
+            let bundleID: String
+            let displayName: String
+            let order: Int
+            let isFavorite: Bool
+
+            init(from decoder: Decoder) throws {
+                let container = try decoder.container(keyedBy: CodingKeys.self)
+                bundleID = try container.decode(String.self, forKey: .bundleID)
+                displayName = try container.decode(String.self, forKey: .displayName)
+                order = try container.decode(Int.self, forKey: .order)
+                isFavorite = try container.decodeIfPresent(Bool.self, forKey: .isFavorite) ?? false
+            }
+
+            private enum CodingKeys: String, CodingKey {
+                case bundleID, displayName, order, isFavorite
+            }
+        }
+
+        if let data = defaults.data(forKey: Constants.Keys.appConfigs),
+           let oldConfigs = try? decoder.decode([OldAppConfig].self, from: data) {
+            let favorites = oldConfigs.filter { $0.isFavorite }
+            let newConfigs = favorites.enumerated().map { index, old in
+                AppConfig(bundleID: old.bundleID, displayName: old.displayName, order: index)
+            }
+            if let newData = try? encoder.encode(newConfigs) {
+                defaults.set(newData, forKey: Constants.Keys.appConfigs)
+            }
+            NSLog("[FocusCopilot] V3.1 迁移完成：保留 \(newConfigs.count) 个收藏 App")
+        }
+
+        defaults.set(true, forKey: migrationKey)
+    }
+
     // MARK: - App 配置 CRUD
 
     func addApp(_ bundleID: String, displayName: String) {
@@ -118,11 +163,12 @@ class ConfigStore: ObservableObject {
         let config = AppConfig(
             bundleID: bundleID,
             displayName: displayName,
-            order: appConfigs.count,
-            isFavorite: false
+            order: appConfigs.count
         )
         appConfigs.append(config)
         save()
+        // 通知 QuickPanel 刷新（收藏数据变更）
+        NotificationCenter.default.post(name: Constants.Notifications.appStatusChanged, object: nil)
     }
 
     func removeApp(_ bundleID: String) {
@@ -132,6 +178,8 @@ class ConfigStore: ObservableObject {
             appConfigs[i].order = i
         }
         save()
+        // 通知 QuickPanel 刷新（收藏数据变更）
+        NotificationCenter.default.post(name: Constants.Notifications.appStatusChanged, object: nil)
     }
 
     func reorderApps(_ ids: [String]) {
@@ -146,19 +194,9 @@ class ConfigStore: ObservableObject {
         save()
     }
 
-    /// 切换指定 App 的收藏状态
-    func toggleFavorite(_ bundleID: String) {
-        if let index = appConfigs.firstIndex(where: { $0.bundleID == bundleID }) {
-            appConfigs[index].isFavorite.toggle()
-            save()
-            // 通知 QuickPanel 刷新（收藏 Tab 数据源变更）
-            NotificationCenter.default.post(name: Constants.Notifications.appStatusChanged, object: nil)
-        }
-    }
-
-    /// 收藏的 App 配置列表
-    var favoriteAppConfigs: [AppConfig] {
-        appConfigs.filter { $0.isFavorite }
+    /// 检查指定 App 是否已收藏（在 appConfigs 中即为收藏）
+    func isFavorite(_ bundleID: String) -> Bool {
+        appConfigs.contains { $0.bundleID == bundleID }
     }
 
     // MARK: - 悬浮球位置

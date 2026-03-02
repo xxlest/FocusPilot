@@ -7,26 +7,23 @@ struct AppConfig: Codable, Identifiable, Equatable {
     let bundleID: String
     var displayName: String
     var order: Int
-    var isFavorite: Bool
 
-    // 自定义解码：兼容旧数据（无 isFavorite 字段时默认 false，忽略旧 pinnedKeywords）
+    // 自定义解码：兼容旧数据（忽略旧 isFavorite / pinnedKeywords 字段）
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         bundleID = try container.decode(String.self, forKey: .bundleID)
         displayName = try container.decode(String.self, forKey: .displayName)
         order = try container.decode(Int.self, forKey: .order)
-        isFavorite = try container.decodeIfPresent(Bool.self, forKey: .isFavorite) ?? false
     }
 
-    init(bundleID: String, displayName: String, order: Int, isFavorite: Bool = false) {
+    init(bundleID: String, displayName: String, order: Int) {
         self.bundleID = bundleID
         self.displayName = displayName
         self.order = order
-        self.isFavorite = isFavorite
     }
 
     private enum CodingKeys: String, CodingKey {
-        case bundleID, displayName, order, isFavorite
+        case bundleID, displayName, order
     }
 }
 

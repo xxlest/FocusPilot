@@ -4,12 +4,12 @@ import ApplicationServices
 // MARK: - 快捷面板 Tab 枚举
 
 enum QuickPanelTab {
-    case selected   // 已选
+    case all        // 全部
     case favorites  // 收藏
 }
 
 // MARK: - 快捷面板内容视图
-// 已选/收藏两个 Tab，App 列表 + 内嵌窗口列表
+// 全部/收藏两个 Tab，App 列表 + 内嵌窗口列表
 // 支持实时更新、钉住模式、窗口重命名、窗口行高亮+前置
 
 final class QuickPanelView: NSView {
@@ -17,7 +17,7 @@ final class QuickPanelView: NSView {
     // MARK: - 状态
 
     /// 当前 Tab 页
-    private var currentTab: QuickPanelTab = .selected
+    private var currentTab: QuickPanelTab = .all
 
     /// 当前高亮的窗口行 ID（同一时间只有一个）
     private var highlightedWindowID: CGWindowID?
@@ -63,9 +63,9 @@ final class QuickPanelView: NSView {
         return btn
     }()
 
-    /// 已选 Tab 按钮
-    private lazy var selectedTabButton: NSButton = {
-        let btn = NSButton(title: "已选", target: self, action: #selector(switchToSelectedTab))
+    /// 全部 Tab 按钮
+    private lazy var allTabButton: NSButton = {
+        let btn = NSButton(title: "全部", target: self, action: #selector(switchToAllTab))
         btn.bezelStyle = .recessed
         btn.isBordered = false
         btn.font = .systemFont(ofSize: 11, weight: .medium)
@@ -157,7 +157,7 @@ final class QuickPanelView: NSView {
         addSubview(topBar)
         addSubview(topSeparator)
         topBar.addSubview(openKanbanButton)
-        topBar.addSubview(selectedTabButton)
+        topBar.addSubview(allTabButton)
         topBar.addSubview(favoritesTabButton)
         topBar.addSubview(panelPinButton)
 
@@ -168,7 +168,7 @@ final class QuickPanelView: NSView {
         topBar.translatesAutoresizingMaskIntoConstraints = false
         topSeparator.translatesAutoresizingMaskIntoConstraints = false
         openKanbanButton.translatesAutoresizingMaskIntoConstraints = false
-        selectedTabButton.translatesAutoresizingMaskIntoConstraints = false
+        allTabButton.translatesAutoresizingMaskIntoConstraints = false
         favoritesTabButton.translatesAutoresizingMaskIntoConstraints = false
         panelPinButton.translatesAutoresizingMaskIntoConstraints = false
         scrollView.translatesAutoresizingMaskIntoConstraints = false
@@ -193,9 +193,9 @@ final class QuickPanelView: NSView {
             openKanbanButton.centerYAnchor.constraint(equalTo: topBar.centerYAnchor),
 
             // Tab 按钮（居中偏左）
-            selectedTabButton.leadingAnchor.constraint(equalTo: openKanbanButton.trailingAnchor, constant: 8),
-            selectedTabButton.centerYAnchor.constraint(equalTo: topBar.centerYAnchor),
-            favoritesTabButton.leadingAnchor.constraint(equalTo: selectedTabButton.trailingAnchor, constant: 4),
+            allTabButton.leadingAnchor.constraint(equalTo: openKanbanButton.trailingAnchor, constant: 8),
+            allTabButton.centerYAnchor.constraint(equalTo: topBar.centerYAnchor),
+            favoritesTabButton.leadingAnchor.constraint(equalTo: allTabButton.trailingAnchor, constant: 4),
             favoritesTabButton.centerYAnchor.constraint(equalTo: topBar.centerYAnchor),
 
             // 钉住按钮（右侧）
@@ -323,9 +323,9 @@ final class QuickPanelView: NSView {
 
     // MARK: - Tab 切换
 
-    @objc private func switchToSelectedTab() {
-        guard currentTab != .selected else { return }
-        currentTab = .selected
+    @objc private func switchToAllTab() {
+        guard currentTab != .all else { return }
+        currentTab = .all
         highlightedWindowID = nil
         updateTabButtonStyles()
         lastWindowSnapshot = ""
@@ -343,14 +343,14 @@ final class QuickPanelView: NSView {
 
     private func updateTabButtonStyles() {
         switch currentTab {
-        case .selected:
-            selectedTabButton.font = .systemFont(ofSize: 11, weight: .medium)
-            selectedTabButton.contentTintColor = .controlAccentColor
+        case .all:
+            allTabButton.font = .systemFont(ofSize: 11, weight: .medium)
+            allTabButton.contentTintColor = .controlAccentColor
             favoritesTabButton.font = .systemFont(ofSize: 11)
             favoritesTabButton.contentTintColor = .secondaryLabelColor
         case .favorites:
-            selectedTabButton.font = .systemFont(ofSize: 11)
-            selectedTabButton.contentTintColor = .secondaryLabelColor
+            allTabButton.font = .systemFont(ofSize: 11)
+            allTabButton.contentTintColor = .secondaryLabelColor
             favoritesTabButton.font = .systemFont(ofSize: 11, weight: .medium)
             favoritesTabButton.contentTintColor = .controlAccentColor
         }
@@ -365,8 +365,8 @@ final class QuickPanelView: NSView {
             ["\(app.bundleID):\(app.isRunning)"] + app.windows.map { "\(app.bundleID):\($0.id):\($0.title)" }
         }.joined(separator: "|")
 
-        let configKeys = ConfigStore.shared.appConfigs.map { "\($0.bundleID):\($0.isFavorite)" }.joined(separator: ",")
-        let snapshot = "\(currentTab):\(windowKeys):\(configKeys):\(highlightedWindowID ?? 0)"
+        let favoriteKeys = ConfigStore.shared.appConfigs.map { $0.bundleID }.joined(separator: ",")
+        let snapshot = "\(currentTab):\(windowKeys):\(favoriteKeys):\(highlightedWindowID ?? 0)"
         if snapshot == lastWindowSnapshot {
             return // 数据未变化，跳过刷新
         }
@@ -383,7 +383,7 @@ final class QuickPanelView: NSView {
     func resetToNormalMode() {
         updatePanelPinButton(isPinned: false)
         highlightedWindowID = nil
-        currentTab = .selected
+        currentTab = .all
         updateTabButtonStyles()
         collapsedApps.removeAll()
         lastWindowSnapshot = ""  // 清除快照，确保下次打开时强制刷新
@@ -392,25 +392,24 @@ final class QuickPanelView: NSView {
     // MARK: - 内容构建
 
     private func buildContent() {
-        // 根据当前 Tab 获取数据源
-        let configs: [AppConfig]
         switch currentTab {
-        case .selected:
-            configs = ConfigStore.shared.appConfigs
+        case .all:
+            buildAllTabContent()
         case .favorites:
-            configs = ConfigStore.shared.favoriteAppConfigs
+            buildFavoritesTabContent()
         }
+    }
 
+    /// "全部"Tab：显示所有运行中 App（数据源来自 AppMonitor）
+    private func buildAllTabContent() {
         let runningApps = AppMonitor.shared.runningApps
 
         // 空状态
-        if configs.isEmpty {
-            let message = currentTab == .selected ? "点击悬浮球配置应用" : "尚未收藏任何应用"
-            let emptyLabel = createLabel(message, size: 13, color: .secondaryLabelColor)
+        if runningApps.isEmpty {
+            let emptyLabel = createLabel("没有正在运行的应用", size: 13, color: .secondaryLabelColor)
             emptyLabel.alignment = .center
             emptyLabel.translatesAutoresizingMaskIntoConstraints = false
             contentStack.addArrangedSubview(emptyLabel)
-            // 让 label 填满 stack 宽度以实现视觉居中
             emptyLabel.widthAnchor.constraint(equalTo: contentStack.widthAnchor).isActive = true
             return
         }
@@ -418,40 +417,173 @@ final class QuickPanelView: NSView {
         // 检查辅助功能权限
         let hasAccessibility = WindowService.shared.isAXApiAvailable()
 
-        // 无权限时：显示 App 列表 + 权限引导提示
-        if !hasAccessibility {
-            for config in configs.prefix(Constants.Panel.maxApps) {
-                let running = runningApps.first(where: { $0.bundleID == config.bundleID })
-                let isRunning = running?.isRunning ?? false
-                let appRow = createAppRow(config: config, runningApp: running, isRunning: isRunning)
-                contentStack.addArrangedSubview(appRow)
+        for app in runningApps {
+            let appRow = createRunningAppRow(app: app)
+            contentStack.addArrangedSubview(appRow)
+
+            // 窗口列表（需要辅助功能权限）
+            if hasAccessibility, !app.windows.isEmpty,
+               !(app.windows.count > 1 && collapsedApps.contains(app.bundleID)) {
+                let windowList = createWindowList(windows: app.windows, bundleID: app.bundleID)
+                contentStack.addArrangedSubview(windowList)
             }
+        }
+
+        // 无权限提示
+        if !hasAccessibility {
             let permissionHint = createPermissionHintView()
             contentStack.addArrangedSubview(permissionHint)
+        }
+    }
+
+    /// "收藏"Tab：显示收藏 App 列表（数据源来自 ConfigStore）
+    private func buildFavoritesTabContent() {
+        let configs = ConfigStore.shared.appConfigs
+        let runningApps = AppMonitor.shared.runningApps
+
+        // 空状态
+        if configs.isEmpty {
+            let emptyLabel = createLabel("尚未收藏任何应用", size: 13, color: .secondaryLabelColor)
+            emptyLabel.alignment = .center
+            emptyLabel.translatesAutoresizingMaskIntoConstraints = false
+            contentStack.addArrangedSubview(emptyLabel)
+            emptyLabel.widthAnchor.constraint(equalTo: contentStack.widthAnchor).isActive = true
             return
         }
 
-        // 正常模式：按配置顺序遍历 App
-        for config in configs.prefix(Constants.Panel.maxApps) {
+        let hasAccessibility = WindowService.shared.isAXApiAvailable()
+
+        for config in configs {
             let running = runningApps.first(where: { $0.bundleID == config.bundleID })
             let isRunning = running?.isRunning ?? false
 
-            // App 行
-            let appRow = createAppRow(config: config, runningApp: running, isRunning: isRunning)
+            let appRow = createFavoriteAppRow(config: config, runningApp: running, isRunning: isRunning)
             contentStack.addArrangedSubview(appRow)
 
-            // 窗口列表：有窗口时显示（多窗口折叠状态下不显示）
-            if let app = running, !app.windows.isEmpty,
+            // 窗口列表（运行中且有权限时显示）
+            if hasAccessibility, let app = running, !app.windows.isEmpty,
                !(app.windows.count > 1 && collapsedApps.contains(config.bundleID)) {
                 let windowList = createWindowList(windows: app.windows, bundleID: config.bundleID)
                 contentStack.addArrangedSubview(windowList)
             }
         }
+
+        if !hasAccessibility {
+            let permissionHint = createPermissionHintView()
+            contentStack.addArrangedSubview(permissionHint)
+        }
     }
 
-    // MARK: - 创建 App 行
+    // MARK: - 创建 App 行（全部 Tab 用）
 
-    private func createAppRow(config: AppConfig, runningApp: RunningApp?, isRunning: Bool) -> NSView {
+    private func createRunningAppRow(app: RunningApp) -> NSView {
+        let row = HoverableRowView()
+        row.translatesAutoresizingMaskIntoConstraints = false
+
+        let rowStack = NSStackView()
+        rowStack.orientation = .horizontal
+        rowStack.alignment = .centerY
+        rowStack.spacing = 8
+        rowStack.edgeInsets = NSEdgeInsets(top: 3, left: 12, bottom: 3, right: 12)
+        rowStack.translatesAutoresizingMaskIntoConstraints = false
+        row.addSubview(rowStack)
+
+        NSLayoutConstraint.activate([
+            rowStack.topAnchor.constraint(equalTo: row.topAnchor),
+            rowStack.bottomAnchor.constraint(equalTo: row.bottomAnchor),
+            rowStack.leadingAnchor.constraint(equalTo: row.leadingAnchor),
+            rowStack.trailingAnchor.constraint(equalTo: row.trailingAnchor),
+            row.heightAnchor.constraint(greaterThanOrEqualToConstant: Constants.Panel.appRowHeight),
+        ])
+
+        // 运行状态指示器（全部 Tab 里都是运行中）
+        let statusDot = createLabel("🟢", size: 8, color: .labelColor)
+        rowStack.addArrangedSubview(statusDot)
+
+        // App 图标 16x16
+        let iconView = NSImageView()
+        iconView.translatesAutoresizingMaskIntoConstraints = false
+        iconView.image = app.icon
+        NSLayoutConstraint.activate([
+            iconView.widthAnchor.constraint(equalToConstant: 16),
+            iconView.heightAnchor.constraint(equalToConstant: 16),
+        ])
+        rowStack.addArrangedSubview(iconView)
+
+        // App 名称
+        let nameLabel = createLabel(app.localizedName, size: 12, color: .labelColor)
+        rowStack.addArrangedSubview(nameLabel)
+
+        // 弹性空间
+        let spacer = NSView()
+        spacer.translatesAutoresizingMaskIntoConstraints = false
+        spacer.setContentHuggingPriority(.defaultLow, for: .horizontal)
+        rowStack.addArrangedSubview(spacer)
+
+        // 窗口数量（多窗口时显示）
+        if app.windows.count > 1 {
+            let countLabel = createLabel("\(app.windows.count) 个窗口", size: 11, color: .secondaryLabelColor)
+            rowStack.addArrangedSubview(countLabel)
+
+            let isCollapsed = collapsedApps.contains(app.bundleID)
+            let chevronName = isCollapsed ? "chevron.right" : "chevron.down"
+            let chevronView = NSImageView()
+            chevronView.translatesAutoresizingMaskIntoConstraints = false
+            if let chevronImage = NSImage(systemSymbolName: chevronName, accessibilityDescription: isCollapsed ? "展开" : "折叠") {
+                let symConfig = NSImage.SymbolConfiguration(pointSize: 10, weight: .medium)
+                chevronView.image = chevronImage.withSymbolConfiguration(symConfig) ?? chevronImage
+            }
+            chevronView.contentTintColor = .secondaryLabelColor
+            NSLayoutConstraint.activate([
+                chevronView.widthAnchor.constraint(equalToConstant: 14),
+                chevronView.heightAnchor.constraint(equalToConstant: 14),
+            ])
+            rowStack.addArrangedSubview(chevronView)
+        }
+
+        // 右键菜单（收藏/取消收藏）
+        let bundleID = app.bundleID
+        row.contextMenuProvider = { [weak self] in
+            self?.createAppContextMenu(bundleID: bundleID, displayName: app.localizedName)
+        }
+
+        // 点击行为
+        row.bundleID = app.bundleID
+        if app.windows.count > 1 {
+            // 多窗口 App：点击切换折叠/展开
+            row.clickHandler = { [weak self] in
+                guard let self = self else { return }
+                let wasCollapsed = self.collapsedApps.contains(bundleID)
+                if wasCollapsed {
+                    self.collapsedApps.remove(bundleID)
+                } else {
+                    self.collapsedApps.insert(bundleID)
+                }
+                self.lastWindowSnapshot = ""
+                self.reloadData()
+            }
+        } else {
+            // 单窗口或无窗口 App：点击激活
+            row.clickHandler = { [weak self] in
+                guard let self = self else { return }
+                if let runApp = AppMonitor.shared.runningApps.first(where: { $0.bundleID == bundleID }),
+                   let firstWindow = runApp.windows.first {
+                    self.highlightedWindowID = firstWindow.id
+                    WindowService.shared.activateWindow(firstWindow)
+                    self.lastWindowSnapshot = ""
+                    self.reloadData()
+                } else {
+                    WindowService.shared.activateApp(bundleID)
+                }
+            }
+        }
+
+        return row
+    }
+
+    // MARK: - 创建 App 行（收藏 Tab 用）
+
+    private func createFavoriteAppRow(config: AppConfig, runningApp: RunningApp?, isRunning: Bool) -> NSView {
         let row = HoverableRowView()
         row.translatesAutoresizingMaskIntoConstraints = false
 
@@ -481,7 +613,12 @@ final class QuickPanelView: NSView {
         if let app = runningApp {
             iconView.image = app.icon
         } else {
-            iconView.image = NSWorkspace.shared.icon(forFile: "/Applications")
+            // 未运行 App 通过 urlForApplication 获取图标
+            if let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: config.bundleID) {
+                iconView.image = NSWorkspace.shared.icon(forFile: url.path)
+            } else {
+                iconView.image = NSImage(named: NSImage.applicationIconName)!
+            }
         }
         NSLayoutConstraint.activate([
             iconView.widthAnchor.constraint(equalToConstant: 16),
@@ -504,7 +641,6 @@ final class QuickPanelView: NSView {
             let countLabel = createLabel("\(app.windows.count) 个窗口", size: 11, color: .secondaryLabelColor)
             rowStack.addArrangedSubview(countLabel)
 
-            // 折叠/展开 chevron 指示器
             let isCollapsed = collapsedApps.contains(config.bundleID)
             let chevronName = isCollapsed ? "chevron.right" : "chevron.down"
             let chevronView = NSImageView()
@@ -521,46 +657,47 @@ final class QuickPanelView: NSView {
             rowStack.addArrangedSubview(chevronView)
         }
 
+        // 右键菜单（从收藏中移除）
+        let bundleID = config.bundleID
+        row.contextMenuProvider = { [weak self] in
+            self?.createFavoriteContextMenu(bundleID: bundleID)
+        }
+
         // 点击行为
+        row.bundleID = config.bundleID
         if !isRunning {
             // 未运行 App：灰度显示，点击启动
             row.alphaValue = 0.5
             row.toolTip = "点击启动"
-            row.bundleID = config.bundleID
             row.clickHandler = { [weak self] in
                 guard let self = self else { return }
-                WindowService.shared.debugLog("QuickPanel: 启动未运行App bundleID=\(config.bundleID)")
-                self.launchApp(bundleID: config.bundleID)
+                self.launchApp(bundleID: bundleID)
             }
         } else if let app = runningApp, app.windows.count > 1 {
             // 多窗口 App：点击切换折叠/展开
-            row.bundleID = config.bundleID
             row.clickHandler = { [weak self] in
                 guard let self = self else { return }
-                let wasCollapsed = self.collapsedApps.contains(config.bundleID)
+                let wasCollapsed = self.collapsedApps.contains(bundleID)
                 if wasCollapsed {
-                    self.collapsedApps.remove(config.bundleID)
+                    self.collapsedApps.remove(bundleID)
                 } else {
-                    self.collapsedApps.insert(config.bundleID)
+                    self.collapsedApps.insert(bundleID)
                 }
-                WindowService.shared.debugLog("QuickPanel: App行折叠切换 bundleID=\(config.bundleID) \(wasCollapsed ? "展开" : "折叠")")
                 self.lastWindowSnapshot = ""
                 self.reloadData()
             }
         } else {
             // 单窗口 App：点击激活窗口
-            row.bundleID = config.bundleID
             row.clickHandler = { [weak self] in
                 guard let self = self else { return }
-                if let app = AppMonitor.shared.runningApps.first(where: { $0.bundleID == config.bundleID }),
+                if let app = AppMonitor.shared.runningApps.first(where: { $0.bundleID == bundleID }),
                    let firstWindow = app.windows.first {
-                    WindowService.shared.debugLog("QuickPanel: 点击单窗口App行 bundleID=\(config.bundleID) wid=\(firstWindow.id)")
                     self.highlightedWindowID = firstWindow.id
                     WindowService.shared.activateWindow(firstWindow)
                     self.lastWindowSnapshot = ""
                     self.reloadData()
                 } else {
-                    WindowService.shared.activateApp(config.bundleID)
+                    WindowService.shared.activateApp(bundleID)
                 }
             }
         }
@@ -668,6 +805,48 @@ final class QuickPanelView: NSView {
         }
 
         return row
+    }
+
+    // MARK: - App 右键菜单（收藏管理）
+
+    /// "全部"Tab 的 App 行右键菜单：添加/移除收藏
+    private func createAppContextMenu(bundleID: String, displayName: String) -> NSMenu {
+        let menu = NSMenu()
+        let isFav = ConfigStore.shared.isFavorite(bundleID)
+
+        if isFav {
+            let removeItem = NSMenuItem(title: "从收藏中移除", action: #selector(handleRemoveFavorite(_:)), keyEquivalent: "")
+            removeItem.target = self
+            removeItem.representedObject = bundleID
+            menu.addItem(removeItem)
+        } else {
+            let addItem = NSMenuItem(title: "添加到收藏", action: #selector(handleAddFavorite(_:)), keyEquivalent: "")
+            addItem.target = self
+            addItem.representedObject = (bundleID, displayName)
+            menu.addItem(addItem)
+        }
+
+        return menu
+    }
+
+    /// "收藏"Tab 的 App 行右键菜单：移除收藏
+    private func createFavoriteContextMenu(bundleID: String) -> NSMenu {
+        let menu = NSMenu()
+        let removeItem = NSMenuItem(title: "从收藏中移除", action: #selector(handleRemoveFavorite(_:)), keyEquivalent: "")
+        removeItem.target = self
+        removeItem.representedObject = bundleID
+        menu.addItem(removeItem)
+        return menu
+    }
+
+    @objc private func handleAddFavorite(_ sender: NSMenuItem) {
+        guard let info = sender.representedObject as? (String, String) else { return }
+        ConfigStore.shared.addApp(info.0, displayName: info.1)
+    }
+
+    @objc private func handleRemoveFavorite(_ sender: NSMenuItem) {
+        guard let bundleID = sender.representedObject as? String else { return }
+        ConfigStore.shared.removeApp(bundleID)
     }
 
     // MARK: - 窗口右键菜单（重命名）

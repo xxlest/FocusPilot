@@ -21,7 +21,7 @@ enum Constants {
         static let dismissDelay: TimeInterval = 0.5    // 离开 500ms 后收起
         static let gapToBall: CGFloat = 4              // 面板与悬浮球间距（安全区域）
         static let maxHeightRatio: CGFloat = 0.6       // 面板最大高度 = 屏幕 60%
-        static let maxApps: Int = 8                    // 快捷面板最多 8 个 App
+        static let maxApps: Int = 8                    // 收藏 App 上限（"全部"Tab 不受限）
         static let maxWindowsPerApp: Int = 10          // 每个 App 最多显示 10 个窗口
         static let appRowHeight: CGFloat = 26          // App 行高度（紧凑布局）
         static let windowRowHeight: CGFloat = 22       // 窗口行高度（紧凑布局）
@@ -31,7 +31,7 @@ enum Constants {
     // MARK: - 偏好设置范围
     static let ballSizeRange: ClosedRange<CGFloat> = 30...60
     static let ballOpacityRange: ClosedRange<CGFloat> = 0.3...1.0
-    // MARK: - App 配置
+    // MARK: - App 配置（收藏上限，"全部"Tab 不受限）
     static let maxApps: Int = Panel.maxApps
 
     // MARK: - 主看板

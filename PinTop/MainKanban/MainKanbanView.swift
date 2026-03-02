@@ -2,7 +2,7 @@ import SwiftUI
 
 /// 主看板导航项
 enum KanbanTab: String, CaseIterable {
-    case appConfig = "快捷面板配置"
+    case appConfig = "收藏管理"
     case preferences = "偏好设置"
 
     var icon: String {

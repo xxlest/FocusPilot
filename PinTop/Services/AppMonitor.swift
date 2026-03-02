@@ -9,7 +9,7 @@ class AppMonitor: ObservableObject {
     static let windowsChanged = Constants.Notifications.windowsChanged
     static let appStatusChanged = Constants.Notifications.appStatusChanged
 
-    /// 运行中的 App（仅已配置的 App，带窗口信息）
+    /// 运行中的 App（所有 regular App，带窗口信息）
     @Published var runningApps: [RunningApp] = []
 
     /// 已安装的 App 列表
@@ -92,42 +92,27 @@ class AppMonitor: ObservableObject {
 
     // MARK: - 刷新逻辑
 
-    /// 刷新运行中的 App 列表
+    /// 刷新运行中的 App 列表（遍历所有 regular App，不依赖 ConfigStore）
     func refreshRunningApps() {
-        let configs = ConfigStore.shared.appConfigs
+        let selfBundleID = Bundle.main.bundleIdentifier ?? "com.focuscopilot.FocusCopilot"
         let workspace = NSWorkspace.shared.runningApplications
+            .filter { $0.activationPolicy == .regular && $0.bundleIdentifier != nil && $0.bundleIdentifier != selfBundleID }
+            .sorted { ($0.localizedName ?? "").localizedCompare($1.localizedName ?? "") == .orderedAscending }
 
         var updated: [RunningApp] = []
 
-        for config in configs.sorted(by: { $0.order < $1.order }) {
-            if let nsApp = workspace.first(where: {
-                $0.bundleIdentifier == config.bundleID &&
-                $0.activationPolicy == .regular  // 过滤后台进程
-            }) {
-                let icon = nsApp.icon ?? NSImage(named: NSImage.applicationIconName)!
-                let windows = WindowService.shared.listWindows(for: nsApp.processIdentifier)
-                let app = RunningApp(
-                    bundleID: config.bundleID,
-                    localizedName: config.displayName,
-                    icon: icon,
-                    nsApp: nsApp,
-                    windows: windows,
-                    isRunning: true
-                )
-                updated.append(app)
-            } else {
-                // App 未运行，创建空条目（nsApp 为 nil）
-                let icon = iconForBundle(config.bundleID)
-                let app = RunningApp(
-                    bundleID: config.bundleID,
-                    localizedName: config.displayName,
-                    icon: icon,
-                    nsApp: nil,
-                    windows: [],
-                    isRunning: false
-                )
-                updated.append(app)
-            }
+        for nsApp in workspace {
+            let bundleID = nsApp.bundleIdentifier!
+            let windows = WindowService.shared.listWindows(for: nsApp.processIdentifier)
+            let app = RunningApp(
+                bundleID: bundleID,
+                localizedName: nsApp.localizedName ?? bundleID,
+                icon: nsApp.icon ?? NSImage(named: NSImage.applicationIconName)!,
+                nsApp: nsApp,
+                windows: windows,
+                isRunning: true
+            )
+            updated.append(app)
         }
 
         runningApps = updated
