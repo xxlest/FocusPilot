@@ -11,7 +11,8 @@ class ConfigStore: ObservableObject {
     @Published var onboardingCompleted: Bool = false
     @Published var windowRenames: [String: String] = [:]
     @Published var panelSize: PanelSize = .default
-    @Published var lastPanelTab: String = "all"
+    /// 快捷面板上次选择的 Tab（持久化，面板关闭再打开时恢复）
+    @Published var lastPanelTab: String = QuickPanelTab.all.rawValue
 
     /// 悬浮球可见性（运行时状态，不持久化）
     @Published var isBallVisible: Bool = true
@@ -52,7 +53,7 @@ class ConfigStore: ObservableObject {
            let size = try? decoder.decode(PanelSize.self, from: data) {
             panelSize = size
         }
-        lastPanelTab = defaults.string(forKey: Constants.Keys.lastPanelTab) ?? "all"
+        lastPanelTab = defaults.string(forKey: Constants.Keys.lastPanelTab) ?? QuickPanelTab.all.rawValue
     }
 
     // MARK: - 保存配置
@@ -204,9 +205,11 @@ class ConfigStore: ObservableObject {
 
     // MARK: - 面板 Tab 记忆
 
-    func saveLastPanelTab(_ tab: String) {
-        lastPanelTab = tab
-        defaults.set(tab, forKey: Constants.Keys.lastPanelTab)
+    /// 快速保存面板 Tab（轻量单字段写入，不触发全量 save）
+    func saveLastPanelTab(_ tab: QuickPanelTab) {
+        guard lastPanelTab != tab.rawValue else { return }
+        lastPanelTab = tab.rawValue
+        defaults.set(tab.rawValue, forKey: Constants.Keys.lastPanelTab)
     }
 
     // MARK: - 悬浮球位置

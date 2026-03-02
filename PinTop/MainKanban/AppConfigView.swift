@@ -113,28 +113,37 @@ struct AppConfigView: View {
         let _ = refreshTrigger
         let favoriteIDs = Set(configStore.appConfigs.map(\.bundleID))
 
+        // 一次性获取运行中 App bundleID 集合（替代逐个 isRunning() 系统调用）
+        let runningIDs = Set(
+            NSWorkspace.shared.runningApplications
+                .filter { $0.activationPolicy == .regular }
+                .compactMap(\.bundleIdentifier)
+        )
+        // 预构建已安装 App 字典（O(1) 查找替代 O(N) 线性扫描）
+        let installedByID = Dictionary(
+            uniqueKeysWithValues: appMonitor.installedApps.map { ($0.bundleID, $0) }
+        )
+
         var items: [AppListItem]
 
         switch currentTab {
         case .all:
             // 全部已安装 App
             items = appMonitor.installedApps.map { installed in
-                let running = appMonitor.isRunning(installed.bundleID)
-                return AppListItem(
+                AppListItem(
                     bundleID: installed.bundleID,
                     name: installed.name,
                     icon: installed.icon,
-                    isRunning: running,
+                    isRunning: runningIDs.contains(installed.bundleID),
                     isFavorite: favoriteIDs.contains(installed.bundleID)
                 )
             }
             // 补充：运行中但不在已安装列表里的 App
-            let installedIDs = Set(appMonitor.installedApps.map(\.bundleID))
             let runningNSApps = NSWorkspace.shared.runningApplications
                 .filter { $0.activationPolicy == .regular && $0.bundleIdentifier != nil }
             for nsApp in runningNSApps {
                 let bundleID = nsApp.bundleIdentifier!
-                if !installedIDs.contains(bundleID) {
+                if installedByID[bundleID] == nil {
                     items.append(AppListItem(
                         bundleID: bundleID,
                         name: nsApp.localizedName ?? bundleID,
@@ -151,7 +160,7 @@ struct AppConfigView: View {
                 .filter { $0.activationPolicy == .regular && $0.bundleIdentifier != nil }
             items = runningNSApps.map { nsApp in
                 let bundleID = nsApp.bundleIdentifier!
-                let installed = appMonitor.installedApps.first { $0.bundleID == bundleID }
+                let installed = installedByID[bundleID]
                 return AppListItem(
                     bundleID: bundleID,
                     name: installed?.name ?? nsApp.localizedName ?? bundleID,
@@ -164,8 +173,7 @@ struct AppConfigView: View {
         case .favorites:
             // 已收藏 App
             items = configStore.appConfigs.map { config in
-                let running = appMonitor.isRunning(config.bundleID)
-                let installed = appMonitor.installedApps.first { $0.bundleID == config.bundleID }
+                let installed = installedByID[config.bundleID]
                 let icon: NSImage
                 if let installedIcon = installed?.icon {
                     icon = installedIcon
@@ -178,7 +186,7 @@ struct AppConfigView: View {
                     bundleID: config.bundleID,
                     name: config.displayName,
                     icon: icon,
-                    isRunning: running,
+                    isRunning: runningIDs.contains(config.bundleID),
                     isFavorite: true
                 )
             }
