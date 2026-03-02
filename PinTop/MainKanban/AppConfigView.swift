@@ -22,11 +22,11 @@ struct AppConfigView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            // Tab 切换
+            // Tab 切换（显示各 Tab 数量）
             Picker("", selection: $currentTab) {
-                ForEach(AppConfigTab.allCases, id: \.self) { tab in
-                    Text(tab.rawValue).tag(tab)
-                }
+                Text("\(AppConfigTab.all.rawValue)(\(allCount))").tag(AppConfigTab.all)
+                Text("\(AppConfigTab.running.rawValue)(\(runningCount))").tag(AppConfigTab.running)
+                Text("\(AppConfigTab.favorites.rawValue)(\(favoriteCount))").tag(AppConfigTab.favorites)
             }
             .pickerStyle(.segmented)
             .padding(.horizontal)
@@ -97,6 +97,29 @@ struct AppConfigView: View {
     }
 
     // MARK: - 空状态文案
+
+    // MARK: - Tab 数量
+
+    private var allCount: Int {
+        let _ = refreshTrigger
+        let base = appMonitor.installedApps.count
+        let installedIDs = Set(appMonitor.installedApps.map(\.bundleID))
+        let extra = NSWorkspace.shared.runningApplications
+            .filter { $0.activationPolicy == .regular && $0.bundleIdentifier != nil && !installedIDs.contains($0.bundleIdentifier!) }
+            .count
+        return base + extra
+    }
+
+    private var runningCount: Int {
+        let _ = refreshTrigger
+        return NSWorkspace.shared.runningApplications
+            .filter { $0.activationPolicy == .regular && $0.bundleIdentifier != nil }
+            .count
+    }
+
+    private var favoriteCount: Int {
+        configStore.appConfigs.count
+    }
 
     private var emptyText: String {
         if !searchText.isEmpty { return "无匹配结果" }

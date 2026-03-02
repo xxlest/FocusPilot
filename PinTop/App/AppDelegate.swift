@@ -117,7 +117,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     @objc private func handleOpenMainKanban() {
-        showMainKanban()
+        toggleMainKanban()
     }
 
     @objc private func handleBallDragStarted() {
@@ -187,6 +187,15 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             mainKanbanWindow = MainKanbanWindow()
         }
         mainKanbanWindow?.show()
+    }
+
+    /// 切换主看板显示/隐藏
+    func toggleMainKanban() {
+        if let window = mainKanbanWindow, window.isVisible {
+            window.close()
+        } else {
+            showMainKanban()
+        }
     }
 
     // MARK: - 悬浮球显隐
