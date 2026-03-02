@@ -352,7 +352,10 @@ class WindowService {
             app.unhide()
         }
 
-        // 先激活 App（activate 返回 Bool 表示是否成功请求激活）
+        // 激活 App：先 yieldActivation 让出激活权，再 activate 目标
+        // macOS 14+ 中 activate() 要求调用方是前台 App，nonactivatingPanel 不满足此条件
+        // yieldActivation 告诉系统"我把前台权让给目标 App"，解决 activate 返回 false 的问题
+        NSApp.yieldActivation(to: app)
         let activated = app.activate()
         debugLog("activateWindow: app.activate() 返回 \(activated)")
 
@@ -363,6 +366,7 @@ class WindowService {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) { [weak self] in
             self?.raiseWindowViaAX(window)
             // 再次确保 App 处于激活状态
+            NSApp.yieldActivation(to: app)
             app.activate()
         }
 
@@ -370,6 +374,7 @@ class WindowService {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.30) { [weak self] in
             if NSWorkspace.shared.frontmostApplication?.processIdentifier != window.ownerPID {
                 self?.debugLog("activateWindow: 300ms 兜底重试 wid=\(window.id)")
+                NSApp.yieldActivation(to: app)
                 app.activate()
                 self?.raiseWindowViaAX(window)
             }
@@ -437,6 +442,7 @@ class WindowService {
         if app.isHidden {
             app.unhide()
         }
+        NSApp.yieldActivation(to: app)
         app.activate()
     }
 

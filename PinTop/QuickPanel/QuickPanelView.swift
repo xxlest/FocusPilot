@@ -588,8 +588,8 @@ final class QuickPanelView: NSView {
             stack.trailingAnchor.constraint(equalTo: container.trailingAnchor),
         ])
 
-        // 所有窗口平铺显示（无分区、无分割线）
-        for windowInfo in windows {
+        // 所有窗口平铺显示（限制最多显示 maxWindowsPerApp 个）
+        for windowInfo in windows.prefix(Constants.Panel.maxWindowsPerApp) {
             let windowRow = createWindowRow(windowInfo: windowInfo, bundleID: bundleID)
             stack.addArrangedSubview(windowRow)
         }
