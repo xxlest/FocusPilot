@@ -86,6 +86,17 @@ struct MainKanbanView: View {
                 PreferencesView()
             }
         }
+        // 移除系统默认的侧边栏按钮（右侧那个），保留自定义的固定位置按钮
         .toolbar(removing: .sidebarToggle)
+        .toolbar {
+            ToolbarItem(placement: .navigation) {
+                Button {
+                    NSApp.sendAction(#selector(NSSplitViewController.toggleSidebar(_:)), to: nil, from: nil)
+                } label: {
+                    Image(systemName: "sidebar.left")
+                }
+                .help("切换侧边栏")
+            }
+        }
     }
 }
