@@ -3,12 +3,12 @@ import SwiftUI
 /// 收藏管理页面 Tab 枚举
 private enum AppConfigTab: String, CaseIterable {
     case all = "全部"
-    case running = "已打开"
+    case running = "活跃"
     case favorites = "收藏"
 }
 
 /// 收藏管理页面
-/// 三 Tab 过滤（全部/已打开/收藏）+ 运行状态标记 + 星标收藏切换
+/// 三 Tab 过滤（全部/活跃/收藏）+ 运行状态标记 + 星标收藏切换
 struct AppConfigView: View {
     @ObservedObject private var configStore = ConfigStore.shared
     @ObservedObject private var appMonitor = AppMonitor.shared
