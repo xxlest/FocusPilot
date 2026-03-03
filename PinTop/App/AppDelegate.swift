@@ -269,11 +269,14 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             panel.alphaValue = prefs.panelOpacity
         }
 
-        // 快捷键变化时重新注册
+        // 快捷键变化时重新注册（直接传入 prefs 值，避免 @Published willSet 时序问题）
         if prefs.hotkeyBallToggle != lastBallHotkey || prefs.hotkeyPanelToggle != lastPanelHotkey {
             lastBallHotkey = prefs.hotkeyBallToggle
             lastPanelHotkey = prefs.hotkeyPanelToggle
-            HotkeyManager.shared.reregisterAll()
+            HotkeyManager.shared.reregisterAll(
+                ballToggle: prefs.hotkeyBallToggle,
+                panelToggle: prefs.hotkeyPanelToggle
+            )
         }
 
         // 颜色主题

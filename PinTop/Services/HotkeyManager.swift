@@ -1,7 +1,7 @@
 import AppKit
 import Carbon
 
-// 全局快捷键管理（支持动态注册，从偏好设置读取快捷键配置）
+// 全局快捷键管理（支持动态注册）
 class HotkeyManager {
     static let shared = HotkeyManager()
 
@@ -21,8 +21,8 @@ class HotkeyManager {
 
     // MARK: - 注册/注销
 
-    /// 从偏好设置读取快捷键配置并注册
-    func registerAll() {
+    /// 使用指定配置注册快捷键（避免从 ConfigStore 读取，防止 @Published willSet 时序问题）
+    func registerAll(ballToggle: HotkeyConfig? = nil, panelToggle: HotkeyConfig? = nil) {
         // 安装 Carbon 事件处理器
         var eventType = EventTypeSpec(eventClass: OSType(kEventClassKeyboard), eventKind: UInt32(kEventHotKeyPressed))
 
@@ -41,18 +41,20 @@ class HotkeyManager {
 
         InstallEventHandler(GetApplicationEventTarget(), handler, 1, &eventType, nil, &eventHandler)
 
-        // 从偏好设置读取快捷键配置
+        // 使用传入配置，或从 ConfigStore 读取（首次注册时）
         let prefs = ConfigStore.shared.preferences
+        let ball = ballToggle ?? prefs.hotkeyBallToggle
+        let panel = panelToggle ?? prefs.hotkeyPanelToggle
 
         // 注册悬浮球显隐快捷键
         registerHotKey(id: HotkeyAction.ballToggle.rawValue,
-                       keyCode: prefs.hotkeyBallToggle.keyCode,
-                       modifiers: prefs.hotkeyBallToggle.carbonModifiers)
+                       keyCode: ball.keyCode,
+                       modifiers: ball.carbonModifiers)
 
         // 注册快捷面板显隐快捷键
         registerHotKey(id: HotkeyAction.panelToggle.rawValue,
-                       keyCode: prefs.hotkeyPanelToggle.keyCode,
-                       modifiers: prefs.hotkeyPanelToggle.carbonModifiers)
+                       keyCode: panel.keyCode,
+                       modifiers: panel.carbonModifiers)
     }
 
     func unregisterAll() {
@@ -69,10 +71,10 @@ class HotkeyManager {
         }
     }
 
-    /// 重新注册所有快捷键（偏好设置变化时调用）
-    func reregisterAll() {
+    /// 使用指定配置重新注册所有快捷键
+    func reregisterAll(ballToggle: HotkeyConfig, panelToggle: HotkeyConfig) {
         unregisterAll()
-        registerAll()
+        registerAll(ballToggle: ballToggle, panelToggle: panelToggle)
     }
 
     // MARK: - 内部

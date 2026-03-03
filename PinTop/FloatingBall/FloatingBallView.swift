@@ -132,8 +132,8 @@ final class FloatingBallView: NSView {
         gradientOverlay.layer?.masksToBounds = true
         addSubview(gradientOverlay)
 
-        // 品牌 Logo 图标（居中，尺寸略大以覆盖圆形区域）
-        let iconSize: CGFloat = 28
+        // 品牌 Logo 图标（居中，尺寸按比例缩放）
+        let iconSize = size * 0.7
         let colors = currentGradientColors()
         iconView.image = createBrandLogo(size: iconSize, gradientColors: colors)
         iconView.frame = NSRect(
@@ -142,6 +142,9 @@ final class FloatingBallView: NSView {
             width: iconSize,
             height: iconSize
         )
+        // 圆形裁剪（去除方框）
+        iconView.layer?.cornerRadius = iconSize / 2
+        iconView.layer?.masksToBounds = true
         addSubview(iconView)
 
         // 角标（右上角偏外，药丸形状）
@@ -168,13 +171,18 @@ final class FloatingBallView: NSView {
         gradientOverlay.frame = NSRect(x: 0, y: 0, width: size, height: size)
         gradientOverlay.layer?.cornerRadius = size / 2
 
-        let iconSize: CGFloat = 28
+        // 图标按比例缩放 + 圆形裁剪 + 重绘
+        let iconSize = size * 0.7
         iconView.frame = NSRect(
             x: (size - iconSize) / 2,
             y: (size - iconSize) / 2,
             width: iconSize,
             height: iconSize
         )
+        iconView.layer?.cornerRadius = iconSize / 2
+        iconView.layer?.masksToBounds = true
+        let colors = currentGradientColors()
+        iconView.image = createBrandLogo(size: iconSize, gradientColors: colors)
 
         let badgeWidth: CGFloat = 20
         let badgeHeight: CGFloat = 16
@@ -310,7 +318,8 @@ final class FloatingBallView: NSView {
     /// 刷新悬浮球颜色（外部调用，偏好设置变化时）
     /// - Parameter gradientColors: 直接传入渐变色，避免 @Published willSet 时序问题
     func updateColorStyle(gradientColors: (light: NSColor, medium: NSColor, dark: NSColor)? = nil) {
-        let size: CGFloat = 28
+        // 图标尺寸从当前 iconView frame 取（跟随 ball size 缩放）
+        let size = iconView.frame.width > 0 ? iconView.frame.width : CGFloat(Constants.Ball.defaultSize) * 0.7
         let colors = gradientColors ?? currentGradientColors()
         iconView.image = createBrandLogo(size: size, gradientColors: colors)
     }
