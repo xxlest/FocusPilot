@@ -78,6 +78,8 @@ class PermissionManager: ObservableObject {
                     // 权限恢复，通知监听方刷新窗口列表
                     NotificationCenter.default.post(name: Constants.Notifications.accessibilityGranted, object: nil)
                     AppMonitor.shared.refreshRunningApps()
+                    // 权限已授予，停止后台轮询
+                    self.stopBackgroundCheck()
                 }
             }
         }

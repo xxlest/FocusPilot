@@ -25,6 +25,8 @@ final class FloatingBallView: NSView {
     private var isSyncMoving = false
     /// 上一帧窗口位置（用于联动面板计算增量）
     private var lastWindowOrigin: CGPoint = .zero
+    /// 上次拖拽联动通知时间（节流用）
+    private var lastDragNotifyTime: CFTimeInterval = 0
 
     // MARK: - 子视图
 
@@ -244,6 +246,27 @@ final class FloatingBallView: NSView {
             name: Constants.Notifications.panelDragMoved,
             object: nil
         )
+        // 悬浮球窗口被完全遮挡时暂停呼吸动画，节省 GPU
+        // 注意：不能用 NSApplication.didResignActive，因为本 App 的窗口都是 nonactivating
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(windowOcclusionStateChanged),
+            name: NSWindow.didChangeOcclusionStateNotification,
+            object: nil
+        )
+    }
+
+    @objc private func windowOcclusionStateChanged() {
+        guard let window = window else { return }
+        if window.occlusionState.contains(.visible) {
+            // 窗口可见：恢复呼吸动画
+            if layer?.animation(forKey: "breathingAnimation") == nil {
+                startBreathingAnimation()
+            }
+        } else {
+            // 窗口完全被遮挡：暂停呼吸动画
+            layer?.removeAnimation(forKey: "breathingAnimation")
+        }
     }
 
     @objc private func handlePanelDragMoved(_ notification: Notification) {
@@ -474,20 +497,23 @@ final class FloatingBallView: NSView {
             slideOut()
         }
 
+        // 鼠标进入时立即预热窗口数据（后续 show 不再等数据刷新）
+        AppMonitor.shared.startWindowRefresh()
+
         // hover 放大动画
         NSAnimationContext.runAnimationGroup { context in
-            context.duration = 0.2
+            context.duration = 0.15
             context.timingFunction = CAMediaTimingFunction(name: .easeOut)
             self.animator().layer?.setAffineTransform(CGAffineTransform(scaleX: 1.08, y: 1.08))
         }
         // 图标轻微放大
         NSAnimationContext.runAnimationGroup { context in
-            context.duration = 0.2
+            context.duration = 0.15
             context.timingFunction = CAMediaTimingFunction(name: .easeOut)
             self.iconView.animator().layer?.setAffineTransform(CGAffineTransform(scaleX: 1.15, y: 1.15))
         }
 
-        // 启动 300ms hover 计时器
+        // 启动 hover 计时器
         hoverTimer?.invalidate()
         hoverTimer = Timer.scheduledTimer(withTimeInterval: Constants.Ball.hoverDelay, repeats: false) { [weak self] _ in
             self?.triggerQuickPanel()
@@ -501,12 +527,12 @@ final class FloatingBallView: NSView {
 
         // 恢复原始大小
         NSAnimationContext.runAnimationGroup { context in
-            context.duration = 0.2
+            context.duration = 0.15
             context.timingFunction = CAMediaTimingFunction(name: .easeOut)
             self.animator().layer?.setAffineTransform(.identity)
         }
         NSAnimationContext.runAnimationGroup { context in
-            context.duration = 0.2
+            context.duration = 0.15
             context.timingFunction = CAMediaTimingFunction(name: .easeOut)
             self.iconView.animator().layer?.setAffineTransform(.identity)
         }
@@ -574,18 +600,41 @@ final class FloatingBallView: NSView {
         let deltaX = newOrigin.x - oldOrigin.x
         let deltaY = newOrigin.y - oldOrigin.y
 
-        // 面板钉住时，同步拖动面板
+        // 面板钉住时，同步拖动面板（16ms 节流，避免 60+ Hz 高频通知）
         if isPanelPinned {
-            NotificationCenter.default.post(
-                name: Constants.Notifications.ballDragMoved,
-                object: nil,
-                userInfo: ["deltaX": deltaX, "deltaY": deltaY]
-            )
+            let now = CACurrentMediaTime()
+            if now - lastDragNotifyTime >= 0.016 {
+                NotificationCenter.default.post(
+                    name: Constants.Notifications.ballDragMoved,
+                    object: nil,
+                    userInfo: ["deltaX": deltaX, "deltaY": deltaY]
+                )
+                lastDragNotifyTime = now
+            }
         }
     }
 
     override func mouseUp(with event: NSEvent) {
         if isDragging {
+            // 拖拽结束前发送最后一次联动通知，确保面板位置完全同步
+            if isPanelPinned, let window = window {
+                let oldOrigin = window.frame.origin
+                // 计算 snapToEdge 前的最后增量（补偿节流丢失的末帧）
+                let currentPoint = NSEvent.mouseLocation
+                let newOrigin = CGPoint(
+                    x: windowStartOrigin.x + (currentPoint.x - dragStartPoint.x),
+                    y: windowStartOrigin.y + (currentPoint.y - dragStartPoint.y)
+                )
+                let deltaX = newOrigin.x - oldOrigin.x
+                let deltaY = newOrigin.y - oldOrigin.y
+                if abs(deltaX) > 0.01 || abs(deltaY) > 0.01 {
+                    NotificationCenter.default.post(
+                        name: Constants.Notifications.ballDragMoved,
+                        object: nil,
+                        userInfo: ["deltaX": deltaX, "deltaY": deltaY]
+                    )
+                }
+            }
             // 拖拽结束：吸附到最近边缘 + 检测贴边半隐藏
             isDragging = false
             snapToEdge()
@@ -742,7 +791,7 @@ final class FloatingBallView: NSView {
         guard let window = window else { return }
         let origin = window.frame.origin
         ConfigStore.shared.ballPosition = BallPosition(x: origin.x, y: origin.y, edge: edge)
-        ConfigStore.shared.save()
+        ConfigStore.shared.saveBallPosition()
     }
 
     // MARK: - 显示/隐藏

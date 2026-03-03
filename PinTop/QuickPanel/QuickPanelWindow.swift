@@ -176,18 +176,18 @@ final class QuickPanelWindow: NSPanel {
         let panelFrame = calculatePosition(relativeTo: ballFrame)
         setFrame(panelFrame, display: false)
 
-        // 设置初始状态（从悬浮球方向滑出的起始位置）
+        // 设置初始状态（从悬浮球方向滑出的起始位置，偏移量更小更紧凑）
         alphaValue = 0
-        let slideOffset: CGFloat = 10
+        let slideOffset: CGFloat = 6
         let startFrame = offsetFrame(panelFrame, towards: ballFrame, by: slideOffset)
         setFrame(startFrame, display: false)
 
         orderFront(nil)
 
-        // 滑出动画 150ms ease-out，最终透明度使用用户设置的面板透明度
+        // 滑出动画 100ms ease-out，最终透明度使用用户设置的面板透明度
         let targetOpacity = ConfigStore.shared.preferences.panelOpacity
         NSAnimationContext.runAnimationGroup({ context in
-            context.duration = Constants.Panel.animationDuration
+            context.duration = Constants.Panel.showDuration
             context.timingFunction = CAMediaTimingFunction(name: .easeOut)
             self.animator().setFrame(panelFrame, display: true)
             self.animator().alphaValue = targetOpacity
@@ -199,9 +199,9 @@ final class QuickPanelWindow: NSPanel {
         dismissTimer?.invalidate()
         dismissTimer = nil
 
-        // 收起动画 150ms ease-in
+        // 收起动画 120ms ease-in
         NSAnimationContext.runAnimationGroup({ context in
-            context.duration = Constants.Panel.animationDuration
+            context.duration = Constants.Panel.hideDuration
             context.timingFunction = CAMediaTimingFunction(name: .easeIn)
             self.animator().alphaValue = 0
         }, completionHandler: { [weak self] in
@@ -406,7 +406,7 @@ final class QuickPanelWindow: NSPanel {
             NSCursor.arrow.set()
             // 保存面板大小
             ConfigStore.shared.panelSize = PanelSize(width: frame.width, height: frame.height)
-            ConfigStore.shared.save()
+            ConfigStore.shared.savePanelSize()
         } else {
             super.mouseUp(with: event)
         }

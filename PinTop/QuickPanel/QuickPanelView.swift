@@ -25,8 +25,13 @@ final class QuickPanelView: NSView {
     /// 多窗口 App 折叠状态（按 bundleID 跟踪）
     private var collapsedApps: Set<String> = []
 
-    /// 上次刷新时的窗口数据快照
-    private var lastWindowSnapshot: String = ""
+    /// 上次渲染时的结构快照（用于判断是否需要全量重建）
+    private var lastStructuralKey: String = ""
+
+    /// 窗口行标题 label 引用（用于内容级更新）
+    private var windowTitleLabels: [CGWindowID: NSTextField] = [:]
+    /// 窗口行视图引用（用于高亮更新）
+    private var windowRowViewMap: [CGWindowID: HoverableRowView] = [:]
 
     /// 鼠标追踪区域
     private var trackingArea: NSTrackingArea?
@@ -52,10 +57,7 @@ final class QuickPanelView: NSView {
         let btn = NSButton()
         btn.bezelStyle = .recessed
         btn.isBordered = false
-        if let img = NSImage(systemSymbolName: "gearshape", accessibilityDescription: "打开主界面") {
-            let config = NSImage.SymbolConfiguration(pointSize: 12, weight: .medium)
-            btn.image = img.withSymbolConfiguration(config) ?? img
-        }
+        btn.image = Self.cachedSymbol(name: "gearshape", size: 12, weight: .medium)
         btn.contentTintColor = .secondaryLabelColor
         btn.toolTip = "打开主界面"
         btn.target = self
@@ -88,10 +90,7 @@ final class QuickPanelView: NSView {
         let btn = NSButton()
         btn.bezelStyle = .recessed
         btn.isBordered = false
-        if let img = NSImage(systemSymbolName: "pin", accessibilityDescription: "钉住面板") {
-            let config = NSImage.SymbolConfiguration(pointSize: 12, weight: .medium)
-            btn.image = img.withSymbolConfiguration(config) ?? img
-        }
+        btn.image = Self.cachedSymbol(name: "pin", size: 12, weight: .medium)
         btn.contentTintColor = .secondaryLabelColor
         btn.target = self
         btn.action = #selector(togglePanelPin)
@@ -285,6 +284,13 @@ final class QuickPanelView: NSView {
             name: Constants.Notifications.panelPinStateChanged,
             object: nil
         )
+        // 辅助功能权限恢复（codesign 后用户重新授权）
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(accessibilityDidGrant),
+            name: Constants.Notifications.accessibilityGranted,
+            object: nil
+        )
     }
 
     @objc private func windowsDidChange() {
@@ -295,6 +301,13 @@ final class QuickPanelView: NSView {
         reloadData()
     }
 
+    @objc private func accessibilityDidGrant() {
+        // 权限恢复：清除 AX 缓存 + 强制全量重建
+        WindowService.shared.invalidateAXCache()
+        lastStructuralKey = ""
+        reloadData()
+    }
+
     @objc private func panelPinStateChanged(_ notification: Notification) {
         let isPinned = notification.userInfo?["isPinned"] as? Bool ?? false
         updatePanelPinButton(isPinned: isPinned)
@@ -302,9 +315,7 @@ final class QuickPanelView: NSView {
 
     private func updatePanelPinButton(isPinned: Bool) {
         let symbolName = isPinned ? "pin.fill" : "pin"
-        let config = NSImage.SymbolConfiguration(pointSize: 12, weight: .medium)
-        if let img = NSImage(systemSymbolName: symbolName, accessibilityDescription: isPinned ? "取消钉住" : "钉住面板") {
-            let configuredImage = img.withSymbolConfiguration(config) ?? img
+        if let configuredImage = Self.cachedSymbol(name: symbolName, size: 12, weight: .medium) {
             if isPinned {
                 panelPinButton.image = Self.rotatedPinImage(from: configuredImage)
             } else {
@@ -333,7 +344,7 @@ final class QuickPanelView: NSView {
         ConfigStore.shared.saveLastPanelTab(tab)
         highlightedWindowID = nil
         updateTabButtonStyles()
-        lastWindowSnapshot = ""
+        lastStructuralKey = ""  // 强制下次全量重建
         reloadData()
     }
 
@@ -358,25 +369,76 @@ final class QuickPanelView: NSView {
 
     // MARK: - 数据加载
 
-    /// 重新加载面板数据（带去重，避免无意义刷新导致闪烁）
+    /// 重新加载面板数据（差分更新：结构变化全量重建，仅标题变化只更新文本）
     func reloadData() {
-        // 计算当前数据快照（含运行状态，确保 App 启动/退出时触发刷新）
-        let windowKeys = AppMonitor.shared.runningApps.flatMap { app in
-            ["\(app.bundleID):\(app.isRunning)"] + app.windows.map { "\(app.bundleID):\($0.id):\($0.title)" }
-        }.joined(separator: "|")
+        let structuralKey = buildStructuralKey()
 
-        let favoriteKeys = ConfigStore.shared.appConfigs.map { $0.bundleID }.joined(separator: ",")
-        let snapshot = "\(currentTab):\(windowKeys):\(favoriteKeys):\(highlightedWindowID ?? 0)"
-        if snapshot == lastWindowSnapshot {
-            return // 数据未变化，跳过刷新
+        if structuralKey != lastStructuralKey {
+            // 结构变了 → 全量重建（清空映射 + 重建所有视图）
+            windowTitleLabels.removeAll()
+            windowRowViewMap.removeAll()
+            contentStack.arrangedSubviews.forEach { $0.removeFromSuperview() }
+            buildContent()
+            lastStructuralKey = structuralKey
+        } else {
+            // 结构没变 → 只更新窗口标题文本
+            updateWindowTitles()
         }
-        lastWindowSnapshot = snapshot
 
-        // 清空内容
-        contentStack.arrangedSubviews.forEach { $0.removeFromSuperview() }
-        buildContent()
-        // 更新面板高度
         updatePanelSize()
+    }
+
+    /// 构建结构 key（不含窗口标题，标题变化属于内容级更新）
+    private func buildStructuralKey() -> String {
+        let ax = WindowService.shared.isAXApiAvailable() ? "AX1" : "AX0"
+        var parts: [String] = [currentTab.rawValue, ax]
+
+        switch currentTab {
+        case .running:
+            let apps = AppMonitor.shared.runningApps.filter { !$0.windows.isEmpty }
+            for app in apps {
+                let windowIDs = app.windows.map { String($0.id) }.joined(separator: ",")
+                let collapsed = collapsedApps.contains(app.bundleID) ? "C" : "E"
+                parts.append("\(app.bundleID):\(app.isRunning):\(windowIDs):\(collapsed)")
+            }
+        case .favorites:
+            let configs = ConfigStore.shared.appConfigs
+            let runningApps = AppMonitor.shared.runningApps
+            for config in configs {
+                let running = runningApps.first(where: { $0.bundleID == config.bundleID })
+                let isRunning = running?.isRunning ?? false
+                let windowIDs = running?.windows.map { String($0.id) }.joined(separator: ",") ?? ""
+                let collapsed = collapsedApps.contains(config.bundleID) ? "C" : "E"
+                parts.append("\(config.bundleID):\(isRunning):\(windowIDs):\(collapsed)")
+            }
+        }
+
+        parts.append("H:\(highlightedWindowID ?? 0)")
+        return parts.joined(separator: "|")
+    }
+
+    /// 内容级更新：只刷新窗口标题文本（不重建视图）
+    private func updateWindowTitles() {
+        for app in AppMonitor.shared.runningApps {
+            for window in app.windows {
+                if let label = windowTitleLabels[window.id] {
+                    let displayTitle = resolveDisplayTitle(bundleID: app.bundleID, windowInfo: window)
+                    if label.stringValue != displayTitle {
+                        label.stringValue = displayTitle
+                    }
+                }
+            }
+        }
+    }
+
+    /// 解析窗口显示标题（优先使用自定义名称）
+    private func resolveDisplayTitle(bundleID: String, windowInfo: WindowInfo) -> String {
+        let renameKey = Self.renameKey(bundleID: bundleID, title: windowInfo.title)
+        let customName = ConfigStore.shared.windowRenames[renameKey]
+        if let custom = customName, !custom.isEmpty {
+            return custom
+        }
+        return windowInfo.title.isEmpty ? "（无标题）" : windowInfo.title
     }
 
     /// 重置面板状态（面板关闭时调用，保留 Tab 记忆）
@@ -385,7 +447,9 @@ final class QuickPanelView: NSView {
         highlightedWindowID = nil
         // 不重置 currentTab（Tab 记忆功能）
         collapsedApps.removeAll()
-        lastWindowSnapshot = ""  // 清除快照，确保下次打开时强制刷新
+        windowTitleLabels.removeAll()
+        windowRowViewMap.removeAll()
+        lastStructuralKey = ""  // 清除快照，确保下次打开时强制刷新
     }
 
     // MARK: - 内容构建
@@ -551,10 +615,7 @@ final class QuickPanelView: NSView {
             let chevronName = isCollapsed ? "chevron.right" : "chevron.down"
             let chevronView = NSImageView()
             chevronView.translatesAutoresizingMaskIntoConstraints = false
-            if let chevronImage = NSImage(systemSymbolName: chevronName, accessibilityDescription: isCollapsed ? "展开" : "折叠") {
-                let symConfig = NSImage.SymbolConfiguration(pointSize: 10, weight: .medium)
-                chevronView.image = chevronImage.withSymbolConfiguration(symConfig) ?? chevronImage
-            }
+            chevronView.image = Self.cachedSymbol(name: chevronName, size: 10, weight: .medium)
             chevronView.contentTintColor = .secondaryLabelColor
             NSLayoutConstraint.activate([
                 chevronView.widthAnchor.constraint(equalToConstant: 14),
@@ -581,7 +642,7 @@ final class QuickPanelView: NSView {
                 } else {
                     self.collapsedApps.insert(bundleID)
                 }
-                self.lastWindowSnapshot = ""
+                self.lastStructuralKey = ""
                 self.reloadData()
             }
         } else {
@@ -592,7 +653,7 @@ final class QuickPanelView: NSView {
                    let firstWindow = runApp.windows.first {
                     self.highlightedWindowID = firstWindow.id
                     WindowService.shared.activateWindow(firstWindow)
-                    self.lastWindowSnapshot = ""
+                    self.lastStructuralKey = ""
                     self.reloadData()
                 } else {
                     WindowService.shared.activateApp(bundleID)
@@ -656,13 +717,10 @@ final class QuickPanelView: NSView {
             row.heightAnchor.constraint(greaterThanOrEqualToConstant: Constants.Panel.windowRowHeight),
         ])
 
-        // 窗口图标（macwindow SF Symbol）
+        // 窗口图标（macwindow SF Symbol，使用缓存）
         let windowIconView = NSImageView()
         windowIconView.translatesAutoresizingMaskIntoConstraints = false
-        if let windowIcon = NSImage(systemSymbolName: "macwindow", accessibilityDescription: "窗口") {
-            let symConfig = NSImage.SymbolConfiguration(pointSize: 10, weight: .regular)
-            windowIconView.image = windowIcon.withSymbolConfiguration(symConfig) ?? windowIcon
-        }
+        windowIconView.image = Self.cachedSymbol(name: "macwindow", size: 10, weight: .regular)
         windowIconView.contentTintColor = .secondaryLabelColor
         NSLayoutConstraint.activate([
             windowIconView.widthAnchor.constraint(equalToConstant: 14),
@@ -671,20 +729,17 @@ final class QuickPanelView: NSView {
         rowStack.addArrangedSubview(windowIconView)
 
         // 窗口标题：优先使用自定义名称
-        let renameKey = Self.renameKey(bundleID: bundleID, title: windowInfo.title)
-        let customName = ConfigStore.shared.windowRenames[renameKey]
-        let displayTitle: String
-        if let custom = customName, !custom.isEmpty {
-            displayTitle = custom
-        } else {
-            displayTitle = windowInfo.title.isEmpty ? "（无标题）" : windowInfo.title
-        }
+        let displayTitle = resolveDisplayTitle(bundleID: bundleID, windowInfo: windowInfo)
 
         let titleLabel = createLabel(displayTitle, size: 11, color: .labelColor)
         titleLabel.lineBreakMode = .byTruncatingTail
         titleLabel.toolTip = windowInfo.title
         titleLabel.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
         rowStack.addArrangedSubview(titleLabel)
+
+        // 注册到映射（用于差分更新时直接修改标题文本）
+        windowTitleLabels[windowInfo.id] = titleLabel
+        windowRowViewMap[windowInfo.id] = row
 
         // 弹性空间
         let spacer = NSView()
@@ -712,7 +767,7 @@ final class QuickPanelView: NSView {
             self.highlightedWindowID = windowInfo.id
             WindowService.shared.activateWindow(windowInfo)
             // 刷新以更新高亮状态
-            self.lastWindowSnapshot = ""
+            self.lastStructuralKey = ""
             self.reloadData()
         }
 
@@ -755,7 +810,7 @@ final class QuickPanelView: NSView {
         WindowService.shared.closeWindow(windowInfo)
         // 短暂延迟后刷新列表（等待窗口关闭生效）
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { [weak self] in
-            self?.lastWindowSnapshot = ""
+            self?.lastStructuralKey = ""
             self?.reloadData()
         }
     }
@@ -786,13 +841,13 @@ final class QuickPanelView: NSView {
             let newName = textField.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
             if !newName.isEmpty && newName != windowInfo.title {
                 ConfigStore.shared.windowRenames[key] = newName
-                ConfigStore.shared.save()
-                lastWindowSnapshot = ""
+                ConfigStore.shared.saveWindowRenames()
+                lastStructuralKey = ""
                 reloadData()
             } else if newName == windowInfo.title {
                 ConfigStore.shared.windowRenames.removeValue(forKey: key)
-                ConfigStore.shared.save()
-                lastWindowSnapshot = ""
+                ConfigStore.shared.saveWindowRenames()
+                lastStructuralKey = ""
                 reloadData()
             }
         }
@@ -801,8 +856,8 @@ final class QuickPanelView: NSView {
     @objc private func handleClearRename(_ sender: NSMenuItem) {
         guard let key = sender.representedObject as? String else { return }
         ConfigStore.shared.windowRenames.removeValue(forKey: key)
-        ConfigStore.shared.save()
-        lastWindowSnapshot = ""
+        ConfigStore.shared.saveWindowRenames()
+        lastStructuralKey = ""
         reloadData()
     }
 
@@ -923,6 +978,21 @@ final class QuickPanelView: NSView {
         label.translatesAutoresizingMaskIntoConstraints = false
         contentStack.addArrangedSubview(label)
         label.widthAnchor.constraint(equalTo: contentStack.widthAnchor).isActive = true
+    }
+
+    // MARK: - SF Symbol 缓存
+
+    /// SF Symbol 图片缓存（避免重复创建相同配置的图片）
+    private static var symbolCache: [String: NSImage] = [:]
+
+    private static func cachedSymbol(name: String, size: CGFloat, weight: NSFont.Weight) -> NSImage? {
+        let key = "\(name)-\(Int(size))-\(Int(weight.rawValue * 100))"
+        if let cached = symbolCache[key] { return cached }
+        guard let img = NSImage(systemSymbolName: name, accessibilityDescription: nil) else { return nil }
+        let config = NSImage.SymbolConfiguration(pointSize: size, weight: weight)
+        let configured = img.withSymbolConfiguration(config) ?? img
+        symbolCache[key] = configured
+        return configured
     }
 
     /// 将 SF Symbol pin 图标旋转 45° 变竖直

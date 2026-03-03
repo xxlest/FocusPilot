@@ -212,10 +212,26 @@ class ConfigStore: ObservableObject {
         defaults.set(tab.rawValue, forKey: Constants.Keys.lastPanelTab)
     }
 
-    // MARK: - 悬浮球位置
+    // MARK: - 单字段保存（避免全量序列化）
 
-    func saveBallPosition(_ position: BallPosition) {
-        ballPosition = position
-        save()
+    /// 仅保存悬浮球位置
+    func saveBallPosition() {
+        if let data = try? encoder.encode(ballPosition) {
+            defaults.set(data, forKey: Constants.Keys.ballPosition)
+        }
+    }
+
+    /// 仅保存面板大小
+    func savePanelSize() {
+        if let data = try? encoder.encode(panelSize) {
+            defaults.set(data, forKey: Constants.Keys.panelSize)
+        }
+    }
+
+    /// 仅保存窗口重命名
+    func saveWindowRenames() {
+        if let data = try? encoder.encode(windowRenames) {
+            defaults.set(data, forKey: Constants.Keys.windowRenames)
+        }
     }
 }

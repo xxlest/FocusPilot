@@ -7,7 +7,7 @@ enum Constants {
         static let minSize: CGFloat = 30
         static let maxSize: CGFloat = 60
         static let defaultOpacity: CGFloat = 0.8
-        static let hoverDelay: TimeInterval = 0.3    // hover 300ms 后弹出
+        static let hoverDelay: TimeInterval = 0.15   // hover 150ms 后弹出
     }
 
     // MARK: - 快捷面板
@@ -17,7 +17,8 @@ enum Constants {
         static let maxWidth: CGFloat = 500             // 面板最大宽度
         static let minHeight: CGFloat = 200            // 面板最小高度
         static let cornerRadius: CGFloat = 12          // 圆角半径
-        static let animationDuration: TimeInterval = 0.15  // 弹出/收起动画 150ms
+        static let showDuration: TimeInterval = 0.1         // 弹出动画 100ms
+        static let hideDuration: TimeInterval = 0.12         // 收起动画 120ms
         static let dismissDelay: TimeInterval = 0.5    // 离开 500ms 后收起
         static let gapToBall: CGFloat = 4              // 面板与悬浮球间距（安全区域）
         static let maxHeightRatio: CGFloat = 0.6       // 面板最大高度 = 屏幕 60%

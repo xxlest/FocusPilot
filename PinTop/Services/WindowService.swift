@@ -16,6 +16,9 @@ class WindowService {
     // 窗口标题缓存：AX/CG 权限丢失时用上次成功获取的标题兜底
     private var titleCache: [CGWindowID: String] = [:]
 
+    // AX 后台工作队列（串行，避免并发访问 AX API）
+    private let axWorkQueue = DispatchQueue(label: "com.focuscopilot.ax-worker")
+
     // 日志格式化器（避免每次调用 debugLog 都创建新实例）
     private static let dateFormatter: ISO8601DateFormatter = {
         let f = ISO8601DateFormatter()
@@ -89,6 +92,11 @@ class WindowService {
         } else {
             axGetWindow = nil
         }
+    }
+
+    /// 清理已关闭窗口的标题缓存
+    func pruneCache(keeping activeIDs: Set<CGWindowID>) {
+        titleCache = titleCache.filter { activeIDs.contains($0.key) }
     }
 
     // MARK: - AX 可用性检测
@@ -239,7 +247,88 @@ class WindowService {
         return "(无标题)"
     }
 
+    // MARK: - AX 后台批量查询
+
+    /// 后台线程批量构建 AX 标题映射（不阻塞主线程）
+    /// 回调在主线程执行，返回 [PID: [CGWindowID: String]] 映射
+    func buildAXTitleMapAsync(
+        for pidWindowMap: [pid_t: [[String: Any]]],
+        completion: @escaping ([pid_t: [CGWindowID: String]]) -> Void
+    ) {
+        axWorkQueue.async { [weak self] in
+            guard let self = self else { return }
+            var result: [pid_t: [CGWindowID: String]] = [:]
+            for (pid, cgWindows) in pidWindowMap {
+                result[pid] = self.buildAXTitleMap(for: pid, cgWindows: cgWindows)
+            }
+            DispatchQueue.main.async {
+                completion(result)
+            }
+        }
+    }
+
+    /// 将 AX 标题应用到 titleCache 并返回是否有变化
+    /// 仅在主线程调用
+    func applyAXTitles(_ axMap: [pid_t: [CGWindowID: String]]) -> Bool {
+        var changed = false
+        for (_, windowMap) in axMap {
+            for (windowID, axTitle) in windowMap {
+                guard !axTitle.isEmpty else { continue }
+                if titleCache[windowID] != axTitle {
+                    titleCache[windowID] = axTitle
+                    changed = true
+                }
+            }
+        }
+        return changed
+    }
+
     // MARK: - 窗口枚举
+
+    /// 从已有的 CG 窗口数据构建指定 PID 的 WindowInfo 列表
+    /// 调用者负责提供原始 CG 数据（避免重复系统调用）
+    /// Phase 1 使用 CG 标题快速构建，标题优先级：缓存 > CG > "(无标题)"
+    func buildWindowInfo(for pid: pid_t, from cgWindows: [[String: Any]]) -> [WindowInfo] {
+        let bundleID = NSRunningApplication(processIdentifier: pid)?.bundleIdentifier ?? ""
+
+        return cgWindows.compactMap { info -> WindowInfo? in
+            guard let ownerPID = info[kCGWindowOwnerPID as String] as? pid_t,
+                  ownerPID == pid,
+                  let windowID = info[kCGWindowNumber as String] as? CGWindowID,
+                  let boundsDict = info[kCGWindowBounds as String] as? [String: CGFloat],
+                  let layer = info[kCGWindowLayer as String] as? Int,
+                  layer == 0
+            else { return nil }
+
+            let bounds = CGRect(
+                x: boundsDict["X"] ?? 0,
+                y: boundsDict["Y"] ?? 0,
+                width: boundsDict["Width"] ?? 0,
+                height: boundsDict["Height"] ?? 0
+            )
+
+            let cgTitle = info[kCGWindowName as String] as? String
+            // Phase 1 标题优先级：缓存 AX 标题 > CG 标题 > "(无标题)"
+            let title: String
+            if let cached = titleCache[windowID], !cached.isEmpty {
+                title = cached
+            } else if let cg = cgTitle, !cg.isEmpty {
+                title = cg
+            } else {
+                title = "(无标题)"
+            }
+
+            return WindowInfo(
+                id: windowID,
+                ownerBundleID: bundleID,
+                ownerPID: pid,
+                title: title,
+                bounds: bounds,
+                isMinimized: false,
+                isFullScreen: false
+            )
+        }
+    }
 
     /// 获取指定 App 的窗口列表
     func listWindows(for bundleID: String) -> [WindowInfo] {

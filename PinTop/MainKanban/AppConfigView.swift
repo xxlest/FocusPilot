@@ -136,12 +136,10 @@ struct AppConfigView: View {
         let _ = refreshTrigger
         let favoriteIDs = Set(configStore.appConfigs.map(\.bundleID))
 
-        // 一次性获取运行中 App bundleID 集合（替代逐个 isRunning() 系统调用）
-        let runningIDs = Set(
-            NSWorkspace.shared.runningApplications
-                .filter { $0.activationPolicy == .regular }
-                .compactMap(\.bundleIdentifier)
-        )
+        // 一次性获取运行中 App（避免重复系统调用）
+        let workspaceRunningApps = NSWorkspace.shared.runningApplications
+            .filter { $0.activationPolicy == .regular && $0.bundleIdentifier != nil }
+        let runningIDs = Set(workspaceRunningApps.compactMap(\.bundleIdentifier))
         // 预构建已安装 App 字典（O(1) 查找替代 O(N) 线性扫描）
         let installedByID = Dictionary(
             uniqueKeysWithValues: appMonitor.installedApps.map { ($0.bundleID, $0) }
@@ -162,9 +160,7 @@ struct AppConfigView: View {
                 )
             }
             // 补充：运行中但不在已安装列表里的 App
-            let runningNSApps = NSWorkspace.shared.runningApplications
-                .filter { $0.activationPolicy == .regular && $0.bundleIdentifier != nil }
-            for nsApp in runningNSApps {
+            for nsApp in workspaceRunningApps {
                 let bundleID = nsApp.bundleIdentifier!
                 if installedByID[bundleID] == nil {
                     items.append(AppListItem(
@@ -179,9 +175,7 @@ struct AppConfigView: View {
 
         case .running:
             // 当前运行中 App
-            let runningNSApps = NSWorkspace.shared.runningApplications
-                .filter { $0.activationPolicy == .regular && $0.bundleIdentifier != nil }
-            items = runningNSApps.map { nsApp in
+            items = workspaceRunningApps.map { nsApp in
                 let bundleID = nsApp.bundleIdentifier!
                 let installed = installedByID[bundleID]
                 return AppListItem(
