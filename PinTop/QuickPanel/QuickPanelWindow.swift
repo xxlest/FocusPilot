@@ -194,6 +194,36 @@ final class QuickPanelWindow: NSPanel {
         })
     }
 
+    /// 在指定位置显示面板（左上角对齐指定坐标，不根据悬浮球重新计算位置）
+    func showAtPosition(topLeft: CGPoint) {
+        dismissTimer?.invalidate()
+        dismissTimer = nil
+
+        // 使用已存储的面板尺寸
+        let savedSize = ConfigStore.shared.panelSize
+        // macOS 坐标系：origin 在左下角，topLeft.y 是顶部 → origin.y = topLeft.y - height
+        let panelFrame = NSRect(
+            x: topLeft.x,
+            y: topLeft.y - savedSize.height,
+            width: savedSize.width,
+            height: savedSize.height
+        )
+
+        setFrame(panelFrame, display: false)
+        panelView.reloadData()
+
+        // 淡入动画
+        alphaValue = 0
+        orderFront(nil)
+
+        let targetOpacity = ConfigStore.shared.preferences.panelOpacity
+        NSAnimationContext.runAnimationGroup({ context in
+            context.duration = Constants.Panel.showDuration
+            context.timingFunction = CAMediaTimingFunction(name: .easeOut)
+            self.animator().alphaValue = targetOpacity
+        })
+    }
+
     /// 收起面板
     func hide() {
         dismissTimer?.invalidate()

@@ -186,7 +186,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             floatingBallWindow?.orderOut(nil)
             ConfigStore.shared.isBallVisible = false
         } else {
-            // 获取鼠标位置
+            // 获取鼠标位置（面板左上角将出现在此处）
             let mouseLocation = NSEvent.mouseLocation
 
             // 确保面板已创建
@@ -194,16 +194,17 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                 quickPanelWindow = QuickPanelWindow()
             }
 
-            // 计算面板位置（左上角对齐鼠标光标）
-            let savedSize = ConfigStore.shared.panelSize
-            let panelHeight = savedSize.height
-            // macOS 坐标系：origin 在左下角，所以 top-left = (x, y - height)
-            let panelOrigin = CGPoint(x: mouseLocation.x, y: mouseLocation.y - panelHeight)
+            // 1. 显示面板（左上角对齐鼠标光标）
+            quickPanelWindow?.showAtPosition(topLeft: mouseLocation)
+            AppMonitor.shared.startWindowRefresh()
+            // 自动钉住
+            if let panel = quickPanelWindow, !panel.isPanelPinned {
+                panel.togglePanelPin()
+            }
 
-            // 显示悬浮球（面板左上角，一半在边框内一半在边框外）
+            // 2. 显示悬浮球（中心对齐面板左上角顶点）
             if let ball = floatingBallWindow {
                 let ballSize = ball.frame.size
-                // 悬浮球中心对齐面板左上角
                 let ballOrigin = CGPoint(
                     x: mouseLocation.x - ballSize.width / 2,
                     y: mouseLocation.y - ballSize.height / 2
@@ -211,16 +212,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                 ball.setFrameOrigin(ballOrigin)
                 ball.show()
                 ConfigStore.shared.isBallVisible = true
-            }
-
-            // 显示面板（使用面板的 show 方法，传入悬浮球位置）
-            if let ball = floatingBallWindow {
-                showQuickPanel(relativeTo: ball.frame)
-                AppMonitor.shared.startWindowRefresh()
-                // 自动钉住
-                if let panel = quickPanelWindow, !panel.isPanelPinned {
-                    panel.togglePanelPin()
-                }
             }
         }
     }
