@@ -18,11 +18,12 @@ enum KanbanTab: String, CaseIterable {
 struct MainKanbanView: View {
     @State private var selectedTab: KanbanTab = .appConfig
     @State private var showQuitConfirmation = false
+    @State private var sidebarVisibility: NavigationSplitViewVisibility = .all
     @ObservedObject private var configStore = ConfigStore.shared
     @ObservedObject private var appMonitor = AppMonitor.shared
 
     var body: some View {
-        NavigationSplitView {
+        NavigationSplitView(columnVisibility: $sidebarVisibility) {
             // 左侧导航栏
             List(KanbanTab.allCases, id: \.self, selection: $selectedTab) { tab in
                 Label(tab.rawValue, systemImage: tab.icon)
@@ -91,7 +92,9 @@ struct MainKanbanView: View {
         .toolbar {
             ToolbarItem(placement: .navigation) {
                 Button {
-                    NSApp.sendAction(#selector(NSSplitViewController.toggleSidebar(_:)), to: nil, from: nil)
+                    withAnimation {
+                        sidebarVisibility = sidebarVisibility == .all ? .detailOnly : .all
+                    }
                 } label: {
                     Image(systemName: "sidebar.left")
                 }
