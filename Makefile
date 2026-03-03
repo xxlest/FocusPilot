@@ -7,6 +7,11 @@ VERSION      := 2.0
 BUILD_NUM    := 1
 MIN_MACOS    := 14.0
 
+# 代码签名 identity（自签名证书 > ad-hoc）
+# 使用自签名证书时，TCC 按证书 identity 匹配权限，重新安装不会丢失辅助功能权限
+# 运行 make setup-cert 创建证书（一次性操作）
+SIGN_IDENTITY := $(shell security find-identity -v -p codesigning 2>/dev/null | grep "FocusCopilot Dev" | head -1 | sed 's/.*"\(.*\)"/\1/' || echo "")
+
 BUILD_DIR    := /tmp/focuscopilot-build
 APP_BUNDLE   := $(BUILD_DIR)/$(APP_NAME).app
 INSTALL_DIR  := /Applications
@@ -18,7 +23,7 @@ SOURCES      := $(shell find PinTop -name "*.swift" | sort)
 # VFS overlay（解决 Command Line Tools SwiftBridging module 重复定义 bug）
 VFSOVERLAY   := $(BUILD_DIR)/vfsoverlay.yaml
 
-.PHONY: all build install clean uninstall
+.PHONY: all build install clean uninstall setup-cert clean-cert
 
 all: build
 
@@ -76,11 +81,18 @@ install: build
 	@rm -rf $(INSTALL_DIR)/PinTop.app
 	@# 复制新 App
 	@cp -R $(APP_BUNDLE) $(INSTALL_APP)
-	@# 签名（ad-hoc 签名会改变 CDHash，导致 TCC 权限失效）
+	@# 签名：优先使用自签名证书（权限持久），否则降级为 ad-hoc（每次需重新授权）
+ifneq ($(SIGN_IDENTITY),)
+	@echo "🔑 使用证书签名: $(SIGN_IDENTITY)"
+	@codesign --force --deep --sign "$(SIGN_IDENTITY)" $(INSTALL_APP)
+else
+	@echo "⚠️  未找到签名证书，使用 ad-hoc 签名（每次安装需重新授权辅助功能）"
+	@echo "   运行 make setup-cert 创建证书可永久解决此问题"
 	@codesign --force --deep --sign - $(INSTALL_APP)
-	@# 重置辅助功能权限（清除旧 CDHash 对应的 TCC 条目）
+	@# ad-hoc 签名需要重置 TCC 条目
 	@-tccutil reset Accessibility $(BUNDLE_ID) 2>/dev/null
 	@-tccutil reset Accessibility com.pintop.PinTop 2>/dev/null
+endif
 	@# 触发 Spotlight 重新索引
 	@touch $(INSTALL_APP)
 	@mdimport $(INSTALL_APP)
@@ -89,6 +101,9 @@ install: build
 	@open $(INSTALL_APP)
 	@echo ""
 	@echo "✅ Focus Copilot 已安装并启动"
+ifneq ($(SIGN_IDENTITY),)
+	@echo "🔑 已使用证书签名，辅助功能权限无需重新授权"
+else
 	@echo ""
 	@echo "⚠️  重新安装后需要重新授权辅助功能权限："
 	@echo "   系统设置 → 隐私与安全性 → 辅助功能"
@@ -96,6 +111,17 @@ install: build
 	@echo ""
 	@echo "   正在打开系统设置..."
 	@open "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility"
+endif
+
+# ── 证书设置（一次性）─────────────────────────────────
+setup-cert:
+	@bash scripts/setup-cert.sh
+
+# ── 撤销证书 ──────────────────────────────────────────
+clean-cert:
+	@echo "🗑  正在删除 FocusCopilot Dev 签名证书..."
+	@-security delete-identity -c "FocusCopilot Dev" ~/Library/Keychains/login.keychain-db 2>/dev/null
+	@echo "✓ 证书已删除（如有），下次 make install 将回退到 ad-hoc 签名"
 
 # ── 清理 ──────────────────────────────────────────────
 clean:
