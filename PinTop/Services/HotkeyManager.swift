@@ -1,13 +1,14 @@
 import AppKit
 import Carbon
 
-// 全局快捷键管理
+// 全局快捷键管理（支持动态注册，从偏好设置读取快捷键配置）
 class HotkeyManager {
     static let shared = HotkeyManager()
 
     // 快捷键动作
     enum HotkeyAction: Int, CaseIterable {
-        case ballToggle = 6   // ⌘⇧B
+        case ballToggle = 1   // 悬浮球显隐
+        case panelToggle = 2  // 快捷面板显隐
     }
 
     /// 快捷键触发时的回调
@@ -20,6 +21,7 @@ class HotkeyManager {
 
     // MARK: - 注册/注销
 
+    /// 从偏好设置读取快捷键配置并注册
     func registerAll() {
         // 安装 Carbon 事件处理器
         var eventType = EventTypeSpec(eventClass: OSType(kEventClassKeyboard), eventKind: UInt32(kEventHotKeyPressed))
@@ -39,10 +41,18 @@ class HotkeyManager {
 
         InstallEventHandler(GetApplicationEventTarget(), handler, 1, &eventType, nil, &eventHandler)
 
-        // 注册各快捷键
-        // ⌘⇧B (B=0x0B)
-        registerHotKey(id: HotkeyAction.ballToggle.rawValue, keyCode: UInt32(kVK_ANSI_B),
-                       modifiers: UInt32(cmdKey | shiftKey))
+        // 从偏好设置读取快捷键配置
+        let prefs = ConfigStore.shared.preferences
+
+        // 注册悬浮球显隐快捷键
+        registerHotKey(id: HotkeyAction.ballToggle.rawValue,
+                       keyCode: prefs.hotkeyBallToggle.keyCode,
+                       modifiers: prefs.hotkeyBallToggle.carbonModifiers)
+
+        // 注册快捷面板显隐快捷键
+        registerHotKey(id: HotkeyAction.panelToggle.rawValue,
+                       keyCode: prefs.hotkeyPanelToggle.keyCode,
+                       modifiers: prefs.hotkeyPanelToggle.carbonModifiers)
     }
 
     func unregisterAll() {
@@ -57,6 +67,12 @@ class HotkeyManager {
             RemoveEventHandler(handler)
             eventHandler = nil
         }
+    }
+
+    /// 重新注册所有快捷键（偏好设置变化时调用）
+    func reregisterAll() {
+        unregisterAll()
+        registerAll()
     }
 
     // MARK: - 内部

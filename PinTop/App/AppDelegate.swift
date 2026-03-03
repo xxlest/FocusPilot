@@ -35,6 +35,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             PermissionManager.shared.startPolling()
         }
 
+        // 预创建快捷面板（避免首次点击时的创建延迟）
+        quickPanelWindow = QuickPanelWindow()
+
         // 创建并显示悬浮球
         setupFloatingBall()
 
@@ -169,6 +172,22 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             switch action {
             case .ballToggle:
                 self?.toggleFloatingBall()
+            case .panelToggle:
+                self?.toggleQuickPanelViaHotkey()
+            }
+        }
+    }
+
+    /// 快捷键切换快捷面板（显示/隐藏）
+    private func toggleQuickPanelViaHotkey() {
+        if let panel = quickPanelWindow, panel.isVisible {
+            panel.hide()
+        } else if let ball = floatingBallWindow {
+            showQuickPanel(relativeTo: ball.frame)
+            AppMonitor.shared.startWindowRefresh()
+            // 快捷键弹出时自动钉住
+            if let panel = quickPanelWindow, !panel.isPanelPinned {
+                panel.togglePanelPin()
             }
         }
     }
@@ -218,7 +237,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             }
     }
 
-    /// 将偏好设置应用到悬浮球和面板（大小、透明度、颜色主题）
+    /// 用于检测快捷键配置变化的旧值
+    private var lastBallHotkey: HotkeyConfig?
+    private var lastPanelHotkey: HotkeyConfig?
+
+    /// 将偏好设置应用到悬浮球和面板（大小、透明度、颜色主题、快捷键）
     private func applyPreferences(_ prefs: Preferences) {
         // 悬浮球大小
         floatingBallWindow?.updateSize(prefs.ballSize)
@@ -234,6 +257,13 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         // 面板透明度（仅在面板可见时直接应用，避免干扰 show/hide 动画）
         if let panel = quickPanelWindow, panel.isVisible {
             panel.alphaValue = prefs.panelOpacity
+        }
+
+        // 快捷键变化时重新注册
+        if prefs.hotkeyBallToggle != lastBallHotkey || prefs.hotkeyPanelToggle != lastPanelHotkey {
+            lastBallHotkey = prefs.hotkeyBallToggle
+            lastPanelHotkey = prefs.hotkeyPanelToggle
+            HotkeyManager.shared.reregisterAll()
         }
 
         // 颜色主题
