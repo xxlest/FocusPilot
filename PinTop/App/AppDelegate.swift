@@ -125,8 +125,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
     @objc private func handleShowQuickPanel(_ notification: Notification) {
         if let value = notification.userInfo?["ballFrame"] as? NSValue {
-            showQuickPanel(relativeTo: value.rectValue)
-            // 启动窗口刷新定时器
+            let ballFrame = value.rectValue
+            // 面板左上角对齐悬浮球中心（融合展开）
+            showPanelFromBallCenter(ballFrame: ballFrame)
             AppMonitor.shared.startWindowRefresh()
         }
     }
@@ -136,6 +137,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     @objc private func handleBallDragStarted() {
+        // 面板钉住时不关闭（悬浮球和面板融合拖动）
+        if let panel = quickPanelWindow, panel.isPanelPinned {
+            return
+        }
         quickPanelWindow?.hide()
     }
 
@@ -143,7 +148,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         toggleFloatingBall()
     }
 
-    /// 单击浮球：切换快捷面板钉住状态
+    /// 单击浮球：切换快捷面板（面板左上角对齐悬浮球中心）
     @objc private func handleToggleQuickPanel(_ notification: Notification) {
         guard let value = notification.userInfo?["ballFrame"] as? NSValue else { return }
         let ballFrame = value.rectValue
@@ -153,14 +158,12 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             panel.togglePanelPin()
             panel.hide()
         } else if let panel = quickPanelWindow, panel.isVisible, !panel.isPanelPinned {
-            // 面板已在 hover 模式下可见 → 直接钉住，避免闪烁
+            // 面板已在 hover 模式下可见 → 直接钉住
             panel.togglePanelPin()
         } else {
-            // 面板未显示 → 弹出面板 + 自动钉住
-            showQuickPanel(relativeTo: ballFrame)
-            // 启动窗口刷新定时器
+            // 面板未显示 → 面板左上角对齐悬浮球中心展开 + 自动钉住
+            showPanelFromBallCenter(ballFrame: ballFrame)
             AppMonitor.shared.startWindowRefresh()
-            // 自动钉住面板
             if let panel = quickPanelWindow, !panel.isPanelPinned {
                 panel.togglePanelPin()
             }
@@ -194,15 +197,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                 quickPanelWindow = QuickPanelWindow()
             }
 
-            // 1. 显示面板（左上角对齐鼠标光标）
-            quickPanelWindow?.showAtPosition(topLeft: mouseLocation)
-            AppMonitor.shared.startWindowRefresh()
-            // 自动钉住
-            if let panel = quickPanelWindow, !panel.isPanelPinned {
-                panel.togglePanelPin()
-            }
-
-            // 2. 显示悬浮球（中心对齐面板左上角顶点）
+            // 显示悬浮球（中心在鼠标位置）
             if let ball = floatingBallWindow {
                 let ballSize = ball.frame.size
                 let ballOrigin = CGPoint(
@@ -212,13 +207,30 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                 ball.setFrameOrigin(ballOrigin)
                 ball.show()
                 ConfigStore.shared.isBallVisible = true
+
+                // 面板从悬浮球中心展开 + 自动钉住
+                showPanelFromBallCenter(ballFrame: ball.frame)
+                AppMonitor.shared.startWindowRefresh()
+                if let panel = quickPanelWindow, !panel.isPanelPinned {
+                    panel.togglePanelPin()
+                }
             }
         }
     }
 
     // MARK: - 快捷面板
 
-    /// 显示快捷面板
+    /// 面板从悬浮球中心展开（面板左上角=悬浮球中心）
+    private func showPanelFromBallCenter(ballFrame: CGRect) {
+        if quickPanelWindow == nil {
+            quickPanelWindow = QuickPanelWindow()
+        }
+        // 悬浮球中心点即为面板左上角
+        let ballCenter = CGPoint(x: ballFrame.midX, y: ballFrame.midY)
+        quickPanelWindow?.showAtPosition(topLeft: ballCenter)
+    }
+
+    /// 显示快捷面板（旧方法保留兼容）
     func showQuickPanel(relativeTo ballFrame: CGRect) {
         if quickPanelWindow == nil {
             quickPanelWindow = QuickPanelWindow()
