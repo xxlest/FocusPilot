@@ -41,12 +41,16 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         // 创建并显示悬浮球
         setupFloatingBall()
 
+        // 注册全局快捷键并设置回调（必须在 applyPreferences 之前，避免双重注册）
+        setupHotkeys()
+
+        // 初始化快捷键变化检测基准值（防止 applyPreferences 首次调用时重复注册）
+        lastBallHotkey = ConfigStore.shared.preferences.hotkeyBallToggle
+        lastPanelHotkey = ConfigStore.shared.preferences.hotkeyPanelToggle
+
         // 应用偏好设置（大小、透明度、主题）并监听后续变化
         applyPreferences(ConfigStore.shared.preferences)
         observePreferences()
-
-        // 注册全局快捷键并设置回调
-        setupHotkeys()
 
         // 设置菜单栏图标
         setupStatusBar()
@@ -249,9 +253,15 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         // 悬浮球透明度
         floatingBallWindow?.alphaValue = prefs.ballOpacity
 
-        // 悬浮球颜色
+        // 悬浮球颜色（直接传入 prefs 中的颜色，避免 @Published willSet 时序问题）
         if let ballView = floatingBallWindow?.contentView as? FloatingBallView {
-            ballView.updateColorStyle()
+            let colors: (light: NSColor, medium: NSColor, dark: NSColor)
+            if prefs.ballColorStyle == .custom {
+                colors = BallColorStyle.customGradientColors(hex: prefs.ballCustomColorHex)
+            } else {
+                colors = prefs.ballColorStyle.gradientColors
+            }
+            ballView.updateColorStyle(gradientColors: colors)
         }
 
         // 面板透明度（仅在面板可见时直接应用，避免干扰 show/hide 动画）

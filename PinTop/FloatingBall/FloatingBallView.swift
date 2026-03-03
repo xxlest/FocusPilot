@@ -308,9 +308,10 @@ final class FloatingBallView: NSView {
     }
 
     /// 刷新悬浮球颜色（外部调用，偏好设置变化时）
-    func updateColorStyle() {
+    /// - Parameter gradientColors: 直接传入渐变色，避免 @Published willSet 时序问题
+    func updateColorStyle(gradientColors: (light: NSColor, medium: NSColor, dark: NSColor)? = nil) {
         let size: CGFloat = 28
-        let colors = currentGradientColors()
+        let colors = gradientColors ?? currentGradientColors()
         iconView.image = createBrandLogo(size: size, gradientColors: colors)
     }
 
@@ -321,13 +322,9 @@ final class FloatingBallView: NSView {
         let circleRect = NSRect(x: 0, y: 0, width: size, height: size)
         let circlePath = NSBezierPath(ovalIn: circleRect)
 
-        // 1. 圆形渐变背景（使用当前颜色风格）
-        let gradient = NSGradient(colorsAndLocations:
-            (gradientColors.light, 0.0),
-            (gradientColors.medium, 0.5),
-            (gradientColors.dark, 1.0)
-        )
-        gradient?.draw(in: circlePath, angle: 135)
+        // 1. 纯色填充背景（更显眼），3D 效果由高光/暗区 overlay 提供
+        gradientColors.medium.setFill()
+        circlePath.fill()
 
         // 2. 球形高光：左上方椭圆高光（模拟 3D 球体反射）
         NSGraphicsContext.saveGraphicsState()
