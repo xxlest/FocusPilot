@@ -45,8 +45,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         setupHotkeys()
 
         // 初始化快捷键变化检测基准值（防止 applyPreferences 首次调用时重复注册）
-        lastBallHotkey = ConfigStore.shared.preferences.hotkeyBallToggle
-        lastPanelHotkey = ConfigStore.shared.preferences.hotkeyPanelToggle
+        lastHotkey = ConfigStore.shared.preferences.hotkeyToggle
 
         // 应用偏好设置（大小、透明度、主题）并监听后续变化
         applyPreferences(ConfigStore.shared.preferences)
@@ -81,7 +80,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         AppMonitor.shared.stopMonitoring()
 
         // 注销快捷键
-        HotkeyManager.shared.unregisterAll()
+        HotkeyManager.shared.unregister()
     }
 
     // MARK: - 悬浮球
@@ -171,27 +170,56 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     // MARK: - 快捷键
 
     private func setupHotkeys() {
-        HotkeyManager.shared.registerAll()
-        HotkeyManager.shared.onAction = { [weak self] action in
-            switch action {
-            case .ballToggle:
-                self?.toggleFloatingBall()
-            case .panelToggle:
-                self?.toggleQuickPanelViaHotkey()
-            }
+        HotkeyManager.shared.register()
+        HotkeyManager.shared.onToggle = { [weak self] in
+            self?.toggleAllViaHotkey()
         }
     }
 
-    /// 快捷键切换快捷面板（显示/隐藏）
-    private func toggleQuickPanelViaHotkey() {
-        if let panel = quickPanelWindow, panel.isVisible {
-            panel.hide()
-        } else if let ball = floatingBallWindow {
-            showQuickPanel(relativeTo: ball.frame)
-            AppMonitor.shared.startWindowRefresh()
-            // 快捷键弹出时自动钉住
-            if let panel = quickPanelWindow, !panel.isPanelPinned {
-                panel.togglePanelPin()
+    /// 快捷键统一切换悬浮球+面板（面板左上角出现在鼠标光标位置）
+    private func toggleAllViaHotkey() {
+        let isVisible = quickPanelWindow?.isVisible ?? false
+
+        if isVisible {
+            // 隐藏面板+悬浮球
+            quickPanelWindow?.hide()
+            floatingBallWindow?.orderOut(nil)
+            ConfigStore.shared.isBallVisible = false
+        } else {
+            // 获取鼠标位置
+            let mouseLocation = NSEvent.mouseLocation
+
+            // 确保面板已创建
+            if quickPanelWindow == nil {
+                quickPanelWindow = QuickPanelWindow()
+            }
+
+            // 计算面板位置（左上角对齐鼠标光标）
+            let savedSize = ConfigStore.shared.panelSize
+            let panelHeight = savedSize.height
+            // macOS 坐标系：origin 在左下角，所以 top-left = (x, y - height)
+            let panelOrigin = CGPoint(x: mouseLocation.x, y: mouseLocation.y - panelHeight)
+
+            // 显示悬浮球（在面板左侧）
+            if let ball = floatingBallWindow {
+                let ballSize = ball.frame.size
+                let ballOrigin = CGPoint(
+                    x: panelOrigin.x - ballSize.width - Constants.Panel.gapToBall,
+                    y: mouseLocation.y - ballSize.height
+                )
+                ball.setFrameOrigin(ballOrigin)
+                ball.show()
+                ConfigStore.shared.isBallVisible = true
+            }
+
+            // 显示面板（使用面板的 show 方法，传入悬浮球位置）
+            if let ball = floatingBallWindow {
+                showQuickPanel(relativeTo: ball.frame)
+                AppMonitor.shared.startWindowRefresh()
+                // 自动钉住
+                if let panel = quickPanelWindow, !panel.isPanelPinned {
+                    panel.togglePanelPin()
+                }
             }
         }
     }
@@ -242,8 +270,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     /// 用于检测快捷键配置变化的旧值
-    private var lastBallHotkey: HotkeyConfig?
-    private var lastPanelHotkey: HotkeyConfig?
+    private var lastHotkey: HotkeyConfig?
 
     /// 将偏好设置应用到悬浮球和面板（大小、透明度、颜色主题、快捷键）
     private func applyPreferences(_ prefs: Preferences) {
@@ -270,13 +297,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         }
 
         // 快捷键变化时重新注册（直接传入 prefs 值，避免 @Published willSet 时序问题）
-        if prefs.hotkeyBallToggle != lastBallHotkey || prefs.hotkeyPanelToggle != lastPanelHotkey {
-            lastBallHotkey = prefs.hotkeyBallToggle
-            lastPanelHotkey = prefs.hotkeyPanelToggle
-            HotkeyManager.shared.reregisterAll(
-                ballToggle: prefs.hotkeyBallToggle,
-                panelToggle: prefs.hotkeyPanelToggle
-            )
+        if prefs.hotkeyToggle != lastHotkey {
+            lastHotkey = prefs.hotkeyToggle
+            HotkeyManager.shared.reregister(config: prefs.hotkeyToggle)
         }
 
         // 颜色主题

@@ -29,8 +29,7 @@ struct PreferencesView: View {
                 .font(.headline)
 
             VStack(spacing: 8) {
-                hotkeyRow(label: "悬浮球显隐", config: $configStore.preferences.hotkeyBallToggle)
-                hotkeyRow(label: "快捷面板显隐", config: $configStore.preferences.hotkeyPanelToggle)
+                hotkeyRow(label: "显示/隐藏", config: $configStore.preferences.hotkeyToggle)
             }
         }
     }

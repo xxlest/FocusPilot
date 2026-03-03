@@ -123,9 +123,8 @@ struct HotkeyConfig: Codable, Equatable {
     static let optionKeyFlag: UInt32 = 0x0800
     static let controlKeyFlag: UInt32 = 0x1000
 
-    // 默认值
-    static let ballToggleDefault = HotkeyConfig(keyCode: kVK_ANSI_B, carbonModifiers: cmdKeyFlag | shiftKeyFlag)
-    static let panelToggleDefault = HotkeyConfig(keyCode: kVK_Escape, carbonModifiers: cmdKeyFlag)
+    // 默认值（⌘⇧B 同时切换悬浮球+面板）
+    static let toggleDefault = HotkeyConfig(keyCode: kVK_ANSI_B, carbonModifiers: cmdKeyFlag | shiftKeyFlag)
 
     /// 显示字符串（如 "⌘⇧B"）
     var displayString: String {
@@ -207,8 +206,7 @@ struct Preferences: Codable {
     var ballColorStyle: BallColorStyle = .orange
     var ballCustomColorHex: String = "#FF8800"
     var launchAtLogin: Bool = false
-    var hotkeyBallToggle: HotkeyConfig = .ballToggleDefault
-    var hotkeyPanelToggle: HotkeyConfig = .panelToggleDefault
+    var hotkeyToggle: HotkeyConfig = .toggleDefault
 
     // 自定义解码：兼容旧数据
     init(from decoder: Decoder) throws {
@@ -220,9 +218,8 @@ struct Preferences: Codable {
         ballColorStyle = try container.decodeIfPresent(BallColorStyle.self, forKey: .ballColorStyle) ?? .orange
         ballCustomColorHex = try container.decodeIfPresent(String.self, forKey: .ballCustomColorHex) ?? "#FF8800"
         launchAtLogin = try container.decodeIfPresent(Bool.self, forKey: .launchAtLogin) ?? false
-        // 快捷键：兼容旧版本（旧版 hotkeyBallToggle 是 String 类型，解码会失败，使用默认值）
-        hotkeyBallToggle = (try? container.decode(HotkeyConfig.self, forKey: .hotkeyBallToggle)) ?? .ballToggleDefault
-        hotkeyPanelToggle = (try? container.decode(HotkeyConfig.self, forKey: .hotkeyPanelToggle)) ?? .panelToggleDefault
+        // 快捷键：兼容旧版本（旧版字段名可能不同，统一用默认值兜底）
+        hotkeyToggle = (try? container.decode(HotkeyConfig.self, forKey: .hotkeyToggle)) ?? .toggleDefault
     }
 
     init() {}
