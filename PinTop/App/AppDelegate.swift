@@ -200,12 +200,13 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             // macOS 坐标系：origin 在左下角，所以 top-left = (x, y - height)
             let panelOrigin = CGPoint(x: mouseLocation.x, y: mouseLocation.y - panelHeight)
 
-            // 显示悬浮球（在面板左侧）
+            // 显示悬浮球（面板左上角，一半在边框内一半在边框外）
             if let ball = floatingBallWindow {
                 let ballSize = ball.frame.size
+                // 悬浮球中心对齐面板左上角
                 let ballOrigin = CGPoint(
-                    x: panelOrigin.x - ballSize.width - Constants.Panel.gapToBall,
-                    y: mouseLocation.y - ballSize.height
+                    x: mouseLocation.x - ballSize.width / 2,
+                    y: mouseLocation.y - ballSize.height / 2
                 )
                 ball.setFrameOrigin(ballOrigin)
                 ball.show()
