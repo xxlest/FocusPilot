@@ -132,12 +132,14 @@ final class QuickPanelWindow: NSPanel {
 
     @objc private func handleBallDragMoved(_ notification: Notification) {
         guard isPanelPinned, !isSyncMoving else { return }
-        guard let deltaX = notification.userInfo?["deltaX"] as? CGFloat,
-              let deltaY = notification.userInfo?["deltaY"] as? CGFloat else { return }
+        guard let value = notification.userInfo?["ballFrame"] as? NSValue else { return }
         isSyncMoving = true
+        // 绝对定位：面板 top-left = 悬浮球中心（避免 delta 累积漂移）
+        let ballFrame = value.rectValue
+        let ballCenter = CGPoint(x: ballFrame.midX, y: ballFrame.midY)
         var newFrame = frame
-        newFrame.origin.x += deltaX
-        newFrame.origin.y += deltaY
+        newFrame.origin.x = ballCenter.x
+        newFrame.origin.y = ballCenter.y - newFrame.height
         setFrame(newFrame, display: true)
         isSyncMoving = false
     }

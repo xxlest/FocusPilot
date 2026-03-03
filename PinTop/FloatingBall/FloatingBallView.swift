@@ -606,14 +606,14 @@ final class FloatingBallView: NSView {
         let deltaX = newOrigin.x - oldOrigin.x
         let deltaY = newOrigin.y - oldOrigin.y
 
-        // 面板钉住时，同步拖动面板（16ms 节流，避免 60+ Hz 高频通知）
+        // 面板钉住时，同步拖动面板（绝对定位，避免 delta 累积漂移）
         if isPanelPinned {
             let now = CACurrentMediaTime()
             if now - lastDragNotifyTime >= 0.016 {
                 NotificationCenter.default.post(
                     name: Constants.Notifications.ballDragMoved,
                     object: nil,
-                    userInfo: ["deltaX": deltaX, "deltaY": deltaY]
+                    userInfo: ["ballFrame": NSValue(rect: window.frame)]
                 )
                 lastDragNotifyTime = now
             }

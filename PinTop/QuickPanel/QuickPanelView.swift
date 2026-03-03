@@ -187,8 +187,8 @@ final class QuickPanelView: NSView {
             topSeparator.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -8),
             topSeparator.topAnchor.constraint(equalTo: topBar.bottomAnchor),
 
-            // 打开主界面按钮（左侧）
-            openKanbanButton.leadingAnchor.constraint(equalTo: topBar.leadingAnchor, constant: 8),
+            // 打开主界面按钮（左侧，右移给悬浮球让位）
+            openKanbanButton.leadingAnchor.constraint(equalTo: topBar.leadingAnchor, constant: 32),
             openKanbanButton.centerYAnchor.constraint(equalTo: topBar.centerYAnchor),
 
             // Tab 按钮
