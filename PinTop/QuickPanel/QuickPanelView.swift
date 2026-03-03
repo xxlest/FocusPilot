@@ -4,12 +4,12 @@ import ApplicationServices
 // MARK: - 快捷面板 Tab 枚举
 
 enum QuickPanelTab: String {
-    case running    = "running"   // 已打开
+    case running    = "running"   // 活跃
     case favorites  = "favorites" // 收藏
 }
 
 // MARK: - 快捷面板内容视图
-// 全部/已打开/收藏三个 Tab，App 列表 + 内嵌窗口列表
+// 活跃/收藏两个 Tab，App 列表 + 内嵌窗口列表
 // 支持实时更新、钉住模式、窗口重命名、窗口行高亮+前置
 
 final class QuickPanelView: NSView {
@@ -63,9 +63,9 @@ final class QuickPanelView: NSView {
         return btn
     }()
 
-    /// 已打开 Tab 按钮
+    /// 活跃 Tab 按钮
     private lazy var runningTabButton: NSButton = {
-        let btn = NSButton(title: "已打开", target: self, action: #selector(switchToRunningTab))
+        let btn = NSButton(title: "活跃", target: self, action: #selector(switchToRunningTab))
         btn.bezelStyle = .recessed
         btn.isBordered = false
         btn.font = .systemFont(ofSize: 11)
@@ -399,12 +399,12 @@ final class QuickPanelView: NSView {
         }
     }
 
-    /// "已打开"Tab：显示有可见窗口的运行中 App
+    /// "活跃"Tab：显示有可见窗口的运行中 App
     private func buildRunningTabContent() {
-        buildRunningAppList(apps: AppMonitor.shared.runningApps.filter { !$0.windows.isEmpty }, emptyText: "没有已打开窗口的应用")
+        buildRunningAppList(apps: AppMonitor.shared.runningApps.filter { !$0.windows.isEmpty }, emptyText: "没有活跃窗口的应用")
     }
 
-    /// 通用：构建运行中 App 列表（全部/已打开 Tab 共用）
+    /// 通用：构建运行中 App 列表（活跃/收藏 Tab 共用）
     private func buildRunningAppList(apps: [RunningApp], emptyText: String) {
         if apps.isEmpty {
             addEmptyStateLabel(emptyText)
@@ -463,7 +463,7 @@ final class QuickPanelView: NSView {
         }
     }
 
-    // MARK: - 创建 App 行（全部/已打开 Tab 用）
+    // MARK: - 创建 App 行（活跃/收藏 Tab 用）
 
     private func createRunningAppRow(app: RunningApp) -> NSView {
         return createAppRow(
@@ -656,6 +656,20 @@ final class QuickPanelView: NSView {
             row.heightAnchor.constraint(greaterThanOrEqualToConstant: Constants.Panel.windowRowHeight),
         ])
 
+        // 窗口图标（macwindow SF Symbol）
+        let windowIconView = NSImageView()
+        windowIconView.translatesAutoresizingMaskIntoConstraints = false
+        if let windowIcon = NSImage(systemSymbolName: "macwindow", accessibilityDescription: "窗口") {
+            let symConfig = NSImage.SymbolConfiguration(pointSize: 10, weight: .regular)
+            windowIconView.image = windowIcon.withSymbolConfiguration(symConfig) ?? windowIcon
+        }
+        windowIconView.contentTintColor = .secondaryLabelColor
+        NSLayoutConstraint.activate([
+            windowIconView.widthAnchor.constraint(equalToConstant: 14),
+            windowIconView.heightAnchor.constraint(equalToConstant: 14),
+        ])
+        rowStack.addArrangedSubview(windowIconView)
+
         // 窗口标题：优先使用自定义名称
         let renameKey = Self.renameKey(bundleID: bundleID, title: windowInfo.title)
         let customName = ConfigStore.shared.windowRenames[renameKey]
@@ -712,6 +726,14 @@ final class QuickPanelView: NSView {
     private func createWindowContextMenu(bundleID: String, windowInfo: WindowInfo) -> NSMenu {
         let menu = NSMenu()
 
+        // 关闭窗口
+        let closeItem = NSMenuItem(title: "关闭窗口", action: #selector(handleCloseWindow(_:)), keyEquivalent: "")
+        closeItem.target = self
+        closeItem.representedObject = windowInfo
+        menu.addItem(closeItem)
+
+        menu.addItem(NSMenuItem.separator())
+
         let renameItem = NSMenuItem(title: "重命名窗口", action: #selector(handleRenameWindow(_:)), keyEquivalent: "")
         renameItem.target = self
         renameItem.representedObject = (bundleID, windowInfo)
@@ -726,6 +748,16 @@ final class QuickPanelView: NSView {
         }
 
         return menu
+    }
+
+    @objc private func handleCloseWindow(_ sender: NSMenuItem) {
+        guard let windowInfo = sender.representedObject as? WindowInfo else { return }
+        WindowService.shared.closeWindow(windowInfo)
+        // 短暂延迟后刷新列表（等待窗口关闭生效）
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { [weak self] in
+            self?.lastWindowSnapshot = ""
+            self?.reloadData()
+        }
     }
 
     @objc private func handleRenameWindow(_ sender: NSMenuItem) {
