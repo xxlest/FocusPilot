@@ -1,8 +1,8 @@
-# 验收报告 — 偏好设置外观分区重组 + 面板透明度独立控制
+# 验收报告 — 侧边栏按钮修复 + 悬浮球颜色风格配置
 
 **日期**：2026-03-03
-**版本**：V3.3
-**测试方法**：代码审查 + 编译验证
+**版本**：V3.4
+**测试方法**：代码审查 + 编译验证 + 安装运行
 
 ---
 
@@ -10,13 +10,15 @@
 
 | 用例 | 描述 | 结果 | 验证方式 | 备注 |
 |------|------|------|----------|------|
-| TC-01 | 面板透明度滑块生效 | PASS | 代码审查 | PreferencesView 绑定 panelOpacity，show() 使用 panelOpacity 作为动画目标 |
-| TC-02 | 悬浮球透明度独立 | PASS | 代码审查 | ballOpacity 和 panelOpacity 为独立字段，applyPreferences 中分别设置 |
-| TC-03 | 颜色主题默认值 | PASS | 代码审查 | Preferences.colorTheme 默认 .system（跟随系统） |
-| TC-04 | 面板动画与透明度 | PASS | 代码审查 | show: 0→panelOpacity；hide: →0，竞态保护改为 < 0.01 |
-| TC-05 | 旧数据兼容 | PASS | 代码审查 | 自定义 init(from:) 全部使用 decodeIfPresent + 默认值 |
+| TC-01 | 侧边栏仅一个切换按钮 | PASS | 代码审查 | 改用 columnVisibility 绑定 + .toolbar(removing: .sidebarToggle) |
+| TC-02 | 侧边栏切换功能正常 | PASS | 代码审查 | sidebarVisibility 在 .all 和 .detailOnly 间切换 |
+| TC-03 | 预置颜色切换 | PASS | 代码审查 | 6 个预置色（橙/蓝/绿/紫/粉/灰）正确绑定 ballColorStyle |
+| TC-04 | 自定义取色器 | PASS | 代码审查 | ColorPicker 桥接 hex 字符串，选择后自动切换为 .custom |
+| TC-05 | 悬浮球颜色实时刷新 | PASS | 代码审查 | applyPreferences 调用 updateColorStyle() 重绘 Logo |
+| TC-06 | 旧数据兼容 | PASS | 代码审查 | Preferences 解码器对 ballColorStyle/ballCustomColorHex 使用 decodeIfPresent |
+| TC-07 | 构建成功 | PASS | make build | 0 错误 |
 
-**汇总：5/5 项全部 PASS**
+**汇总：7/7 项全部 PASS**
 
 ---
 
@@ -30,31 +32,22 @@
 
 ## 3. 已知问题
 
-- (P2) 透明度范围 0.3-1.0 硬编码在 PreferencesView 中，未提取为 Constants（当前规模不需要）
-- (P2) `ballAppearanceSection` 变量名保留了旧名称（功能正确，不影响使用）
+- (P2) ballAppearanceSection 变量名保留旧名称（功能正确）
+- (P2) 预置颜色圆点未显示选中动画（仅边框高亮，无过渡效果）
 
 ---
 
-## 4. 架构符合度
-
-- 实际代码 vs 设计：完全符合
-- 模块划分：按计划修改 4 个现有文件，未创建新文件
-- 接口契约：Preferences Codable 向后兼容，通知驱动的偏好设置应用机制不变
-
-## 5. 非目标确认
-
-- 未做多余功能（无额外 UI 变更、无新文件）
-- 未修改悬浮球核心逻辑
-
-## 6. 交付物清单
+## 4. 交付物清单
 
 | 文件 | 变更 | 说明 |
 |------|------|------|
-| `Models/Models.swift` | 修改 | Preferences 新增 panelOpacity 字段 + 向后兼容解码 |
-| `MainKanban/PreferencesView.swift` | 修改 | 分区重命名为「外观」+ 新增面板透明度滑块 |
-| `App/AppDelegate.swift` | 修改 | applyPreferences 新增面板透明度应用 |
-| `QuickPanel/QuickPanelWindow.swift` | 修改 | show/hide 动画使用 panelOpacity |
+| `MainKanban/MainKanbanView.swift` | 修改 | 侧边栏改用 columnVisibility 绑定，消除多余系统按钮 |
+| `Models/Models.swift` | 新增 | BallColorStyle 枚举 + NSColor hex 扩展 + Preferences 新字段 |
+| `MainKanban/PreferencesView.swift` | 修改 | 新增悬浮球颜色选择器（预置圆点 + ColorPicker） |
+| `FloatingBall/FloatingBallView.swift` | 修改 | createBrandLogo 支持颜色参数 + updateColorStyle 方法 |
+| `App/AppDelegate.swift` | 修改 | applyPreferences 中调用悬浮球颜色刷新 |
 
-## 7. 构建验证
+## 5. 构建验证
 
-- `make build` ✅ 成功（0 错误，1 已知 warning）
+- `make build` ✅ 成功
+- `make install` ✅ 成功

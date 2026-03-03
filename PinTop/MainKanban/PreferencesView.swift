@@ -59,6 +59,42 @@ struct PreferencesView: View {
             Text("外观")
                 .font(.headline)
 
+            // 悬浮球颜色风格
+            VStack(alignment: .leading, spacing: 8) {
+                HStack {
+                    Text("悬浮球颜色")
+                        .frame(width: 100, alignment: .leading)
+
+                    // 预置颜色圆点
+                    HStack(spacing: 8) {
+                        ForEach(BallColorStyle.allCases.filter { $0 != .custom }, id: \.self) { style in
+                            Circle()
+                                .fill(Color(nsColor: style.gradientColors.medium))
+                                .frame(width: 24, height: 24)
+                                .overlay(
+                                    Circle()
+                                        .stroke(configStore.preferences.ballColorStyle == style ? Color.accentColor : Color.clear, lineWidth: 2)
+                                )
+                                .onTapGesture {
+                                    configStore.preferences.ballColorStyle = style
+                                }
+                                .help(style.rawValue)
+                        }
+
+                        // 自定义颜色：使用 ColorPicker
+                        ColorPicker("", selection: customColorBinding, supportsOpacity: false)
+                            .labelsHidden()
+                            .frame(width: 24, height: 24)
+                            .overlay(
+                                Circle()
+                                    .stroke(configStore.preferences.ballColorStyle == .custom ? Color.accentColor : Color.clear, lineWidth: 2)
+                            )
+                            .help("自定义颜色")
+                    }
+                    Spacer()
+                }
+            }
+
             // 悬浮球大小滑块
             HStack {
                 Text("悬浮球大小")
@@ -115,6 +151,24 @@ struct PreferencesView: View {
                 Spacer()
             }
         }
+    }
+
+    // MARK: - 自定义颜色绑定
+
+    private var customColorBinding: Binding<Color> {
+        Binding<Color>(
+            get: {
+                if let nsColor = NSColor.fromHex(configStore.preferences.ballCustomColorHex) {
+                    return Color(nsColor: nsColor)
+                }
+                return Color.orange
+            },
+            set: { newColor in
+                let nsColor = NSColor(newColor)
+                configStore.preferences.ballCustomColorHex = nsColor.hexString
+                configStore.preferences.ballColorStyle = .custom
+            }
+        )
     }
 
     // MARK: - 通用设置

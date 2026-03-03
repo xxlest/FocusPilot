@@ -132,7 +132,8 @@ final class FloatingBallView: NSView {
 
         // 品牌 Logo 图标（居中，尺寸略大以覆盖圆形区域）
         let iconSize: CGFloat = 28
-        iconView.image = createBrandLogo(size: iconSize)
+        let colors = currentGradientColors()
+        iconView.image = createBrandLogo(size: iconSize, gradientColors: colors)
         iconView.frame = NSRect(
             x: (size - iconSize) / 2,
             y: (size - iconSize) / 2,
@@ -274,18 +275,34 @@ final class FloatingBallView: NSView {
     /// 程序化绘制品牌 Logo：立体球形背景 + 上方白色图钉 + 下方白色 FC 文字
     /// - Parameter size: Logo 尺寸（正方形边长）
     /// - Returns: 绘制好的品牌 Logo 图片
-    private func createBrandLogo(size: CGFloat) -> NSImage {
+    /// 获取当前悬浮球颜色风格的渐变色
+    private func currentGradientColors() -> (light: NSColor, medium: NSColor, dark: NSColor) {
+        let prefs = ConfigStore.shared.preferences
+        if prefs.ballColorStyle == .custom {
+            return BallColorStyle.customGradientColors(hex: prefs.ballCustomColorHex)
+        }
+        return prefs.ballColorStyle.gradientColors
+    }
+
+    /// 刷新悬浮球颜色（外部调用，偏好设置变化时）
+    func updateColorStyle() {
+        let size: CGFloat = 28
+        let colors = currentGradientColors()
+        iconView.image = createBrandLogo(size: size, gradientColors: colors)
+    }
+
+    private func createBrandLogo(size: CGFloat, gradientColors: (light: NSColor, medium: NSColor, dark: NSColor)) -> NSImage {
         let image = NSImage(size: NSSize(width: size, height: size))
         image.lockFocus()
 
         let circleRect = NSRect(x: 0, y: 0, width: size, height: size)
         let circlePath = NSBezierPath(ovalIn: circleRect)
 
-        // 1. 圆形渐变背景（始终使用橙色渐变）
+        // 1. 圆形渐变背景（使用当前颜色风格）
         let gradient = NSGradient(colorsAndLocations:
-            (NSColor(calibratedRed: 1.0, green: 0.65, blue: 0.3, alpha: 1.0), 0.0),   // 浅橙
-            (NSColor(calibratedRed: 0.9, green: 0.45, blue: 0.1, alpha: 1.0), 0.5),   // 中橙
-            (NSColor(calibratedRed: 0.6, green: 0.25, blue: 0.05, alpha: 1.0), 1.0)   // 深橙
+            (gradientColors.light, 0.0),
+            (gradientColors.medium, 0.5),
+            (gradientColors.dark, 1.0)
         )
         gradient?.draw(in: circlePath, angle: 135)
 

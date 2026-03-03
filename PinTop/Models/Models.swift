@@ -108,6 +108,8 @@ struct Preferences: Codable {
     var ballOpacity: CGFloat = 0.8
     var panelOpacity: CGFloat = 0.9
     var colorTheme: ColorTheme = .system
+    var ballColorStyle: BallColorStyle = .orange
+    var ballCustomColorHex: String = "#FF8800"
     var launchAtLogin: Bool = false
     var hotkeyBallToggle: String = "⌘⇧B"
 
@@ -118,6 +120,8 @@ struct Preferences: Codable {
         ballOpacity = try container.decodeIfPresent(CGFloat.self, forKey: .ballOpacity) ?? 0.8
         panelOpacity = try container.decodeIfPresent(CGFloat.self, forKey: .panelOpacity) ?? 0.9
         colorTheme = try container.decodeIfPresent(ColorTheme.self, forKey: .colorTheme) ?? .system
+        ballColorStyle = try container.decodeIfPresent(BallColorStyle.self, forKey: .ballColorStyle) ?? .orange
+        ballCustomColorHex = try container.decodeIfPresent(String.self, forKey: .ballCustomColorHex) ?? "#FF8800"
         launchAtLogin = try container.decodeIfPresent(Bool.self, forKey: .launchAtLogin) ?? false
         hotkeyBallToggle = try container.decodeIfPresent(String.self, forKey: .hotkeyBallToggle) ?? "⌘⇧B"
     }
@@ -129,4 +133,95 @@ enum ColorTheme: String, Codable, CaseIterable {
     case system = "跟随系统"
     case light = "浅色"
     case dark = "深色"
+}
+
+// MARK: - 悬浮球颜色风格
+
+enum BallColorStyle: String, Codable, CaseIterable {
+    case orange = "经典橙"
+    case blue = "海洋蓝"
+    case green = "翡翠绿"
+    case purple = "星空紫"
+    case pink = "樱花粉"
+    case gray = "石墨灰"
+    case custom = "自定义"
+
+    /// 获取该风格的三级渐变色（浅、中、深）
+    var gradientColors: (light: NSColor, medium: NSColor, dark: NSColor) {
+        switch self {
+        case .orange:
+            return (
+                NSColor(calibratedRed: 1.0, green: 0.65, blue: 0.3, alpha: 1.0),
+                NSColor(calibratedRed: 0.9, green: 0.45, blue: 0.1, alpha: 1.0),
+                NSColor(calibratedRed: 0.6, green: 0.25, blue: 0.05, alpha: 1.0)
+            )
+        case .blue:
+            return (
+                NSColor(calibratedRed: 0.4, green: 0.7, blue: 1.0, alpha: 1.0),
+                NSColor(calibratedRed: 0.2, green: 0.5, blue: 0.9, alpha: 1.0),
+                NSColor(calibratedRed: 0.1, green: 0.3, blue: 0.6, alpha: 1.0)
+            )
+        case .green:
+            return (
+                NSColor(calibratedRed: 0.4, green: 0.85, blue: 0.55, alpha: 1.0),
+                NSColor(calibratedRed: 0.2, green: 0.7, blue: 0.35, alpha: 1.0),
+                NSColor(calibratedRed: 0.1, green: 0.45, blue: 0.2, alpha: 1.0)
+            )
+        case .purple:
+            return (
+                NSColor(calibratedRed: 0.7, green: 0.5, blue: 1.0, alpha: 1.0),
+                NSColor(calibratedRed: 0.5, green: 0.3, blue: 0.85, alpha: 1.0),
+                NSColor(calibratedRed: 0.3, green: 0.15, blue: 0.6, alpha: 1.0)
+            )
+        case .pink:
+            return (
+                NSColor(calibratedRed: 1.0, green: 0.6, blue: 0.7, alpha: 1.0),
+                NSColor(calibratedRed: 0.9, green: 0.4, blue: 0.55, alpha: 1.0),
+                NSColor(calibratedRed: 0.65, green: 0.2, blue: 0.35, alpha: 1.0)
+            )
+        case .gray:
+            return (
+                NSColor(calibratedRed: 0.65, green: 0.65, blue: 0.68, alpha: 1.0),
+                NSColor(calibratedRed: 0.45, green: 0.45, blue: 0.48, alpha: 1.0),
+                NSColor(calibratedRed: 0.25, green: 0.25, blue: 0.28, alpha: 1.0)
+            )
+        case .custom:
+            // custom 模式使用 customHex，这里返回默认橙色作为 fallback
+            return BallColorStyle.orange.gradientColors
+        }
+    }
+
+    /// 从自定义 hex 颜色生成三级渐变
+    static func customGradientColors(hex: String) -> (light: NSColor, medium: NSColor, dark: NSColor) {
+        let base = NSColor.fromHex(hex) ?? NSColor.orange
+        let light = base.blended(withFraction: 0.3, of: .white) ?? base
+        let dark = base.blended(withFraction: 0.4, of: .black) ?? base
+        return (light, base, dark)
+    }
+}
+
+// MARK: - NSColor Hex 扩展
+
+extension NSColor {
+    /// 从 hex 字符串创建颜色（如 "#FF8800" 或 "FF8800"）
+    static func fromHex(_ hex: String) -> NSColor? {
+        var hexString = hex.trimmingCharacters(in: .whitespacesAndNewlines)
+        if hexString.hasPrefix("#") { hexString.removeFirst() }
+        guard hexString.count == 6, let rgb = UInt64(hexString, radix: 16) else { return nil }
+        return NSColor(
+            calibratedRed: CGFloat((rgb >> 16) & 0xFF) / 255.0,
+            green: CGFloat((rgb >> 8) & 0xFF) / 255.0,
+            blue: CGFloat(rgb & 0xFF) / 255.0,
+            alpha: 1.0
+        )
+    }
+
+    /// 转为 hex 字符串
+    var hexString: String {
+        guard let rgb = usingColorSpace(.deviceRGB) else { return "#FF8800" }
+        let r = Int(rgb.redComponent * 255)
+        let g = Int(rgb.greenComponent * 255)
+        let b = Int(rgb.blueComponent * 255)
+        return String(format: "#%02X%02X%02X", r, g, b)
+    }
 }

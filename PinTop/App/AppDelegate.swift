@@ -226,6 +226,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         // 悬浮球透明度
         floatingBallWindow?.alphaValue = prefs.ballOpacity
 
+        // 悬浮球颜色
+        if let ballView = floatingBallWindow?.contentView as? FloatingBallView {
+            ballView.updateColorStyle()
+        }
+
         // 面板透明度（仅在面板可见时直接应用，避免干扰 show/hide 动画）
         if let panel = quickPanelWindow, panel.isVisible {
             panel.alphaValue = prefs.panelOpacity

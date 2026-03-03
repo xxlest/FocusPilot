@@ -169,15 +169,23 @@ struct Preferences: Codable {
     var ballOpacity: CGFloat = 0.8    // 0.3-1.0
     var panelOpacity: CGFloat = 0.9   // 0.3-1.0（快捷面板透明度）
     var colorTheme: ColorTheme = .system
+    var ballColorStyle: BallColorStyle = .orange  // 悬浮球颜色风格
+    var ballCustomColorHex: String = "#FF8800"    // 自定义颜色 hex
     var launchAtLogin: Bool = false
     var hotkeyBallToggle: String = "⌘⇧B"
-    // 自定义 init(from:) 兼容旧数据（panelOpacity 用 decodeIfPresent）
+    // 自定义 init(from:) 兼容旧数据（所有新字段用 decodeIfPresent）
 }
 
 enum ColorTheme: String, Codable, CaseIterable {
     case system = "跟随系统"
     case light = "浅色"
     case dark = "深色"
+
+enum BallColorStyle: String, Codable, CaseIterable {
+    case orange, blue, green, purple, pink, gray, custom
+    // 每个风格定义三级渐变色（浅、中、深）
+    // custom 模式从 ballCustomColorHex 生成渐变
+}
 }
 ```
 
