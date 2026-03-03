@@ -167,9 +167,11 @@ enum ScreenEdge: String, Codable {
 struct Preferences: Codable {
     var ballSize: CGFloat = 40        // 30-60px
     var ballOpacity: CGFloat = 0.8    // 0.3-1.0
+    var panelOpacity: CGFloat = 0.9   // 0.3-1.0（快捷面板透明度）
     var colorTheme: ColorTheme = .system
     var launchAtLogin: Bool = false
     var hotkeyBallToggle: String = "⌘⇧B"
+    // 自定义 init(from:) 兼容旧数据（panelOpacity 用 decodeIfPresent）
 }
 
 enum ColorTheme: String, Codable, CaseIterable {
@@ -662,7 +664,7 @@ activateWindow(window)
 | MainKanbanWindow.swift | ~51 | NSWindow 子类，主看板窗口管理 |
 | MainKanbanView.swift | ~90 | SwiftUI 根视图，侧边栏导航（收藏管理/偏好设置）+ 底部双按钮 |
 | AppConfigView.swift | ~306 | SwiftUI 收藏管理：三 Tab 过滤（全部/已打开/收藏）+ 搜索 + 星标收藏切换 |
-| PreferencesView.swift | ~124 | SwiftUI 偏好设置页面 |
+| PreferencesView.swift | ~138 | SwiftUI 偏好设置页面（外观：悬浮球大小/透明度、面板透明度、颜色主题） |
 | WindowService.swift | ~652 | 窗口枚举、AX 操作、CGS 层级、标题四级兜底、跨 App 激活、窗口关闭 |
 | AppMonitor.swift | ~195 | App 运行状态监控（不依赖 ConfigStore）、窗口刷新定时器 |
 | HotkeyManager.swift | ~72 | 全局快捷键（Carbon API），1 个动作（⌘⇧B） |

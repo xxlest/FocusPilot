@@ -218,13 +218,18 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             }
     }
 
-    /// 将偏好设置应用到悬浮球（大小、透明度、颜色主题）
+    /// 将偏好设置应用到悬浮球和面板（大小、透明度、颜色主题）
     private func applyPreferences(_ prefs: Preferences) {
         // 悬浮球大小
         floatingBallWindow?.updateSize(prefs.ballSize)
 
         // 悬浮球透明度
         floatingBallWindow?.alphaValue = prefs.ballOpacity
+
+        // 面板透明度（仅在面板可见时直接应用，避免干扰 show/hide 动画）
+        if let panel = quickPanelWindow, panel.isVisible {
+            panel.alphaValue = prefs.panelOpacity
+        }
 
         // 颜色主题
         switch prefs.colorTheme {

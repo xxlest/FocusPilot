@@ -1,39 +1,60 @@
-# V3.2 验收报告 — 三 Tab 过滤 + 快捷面板 Tab 记忆
+# 验收报告 — 偏好设置外观分区重组 + 面板透明度独立控制
 
-**日期**：2026-03-02
-**版本**：V3.2
-**测试方法**：dev agent 开发 + team lead 集成审查 + 编译验证
+**日期**：2026-03-03
+**版本**：V3.3
+**测试方法**：代码审查 + 编译验证
 
 ---
 
 ## 1. 验收用例结果
 
-| 用例 | 描述 | 结果 | 验证方式 |
-|------|------|------|---------|
-| 1 | 快捷面板三 Tab 显示 | PASS | 代码审查+编译 |
-| 2 | "已打开"Tab 只显示有窗口的 App | PASS | 代码审查 |
-| 3 | Tab 记忆：关闭面板再打开保持上次 Tab | PASS | 代码审查 |
-| 4 | Tab 记忆持久化：重启 App 后恢复 | PASS | 代码审查 |
-| 5 | 快捷面板已移除收藏右键菜单 | PASS | 代码审查 |
-| 6 | 主看板三 Tab 过滤（全部/已打开/收藏） | PASS | 代码审查+编译 |
-| 7 | 主看板三个 Tab 都支持收藏/取消 | PASS | 代码审查 |
+| 用例 | 描述 | 结果 | 验证方式 | 备注 |
+|------|------|------|----------|------|
+| TC-01 | 面板透明度滑块生效 | PASS | 代码审查 | PreferencesView 绑定 panelOpacity，show() 使用 panelOpacity 作为动画目标 |
+| TC-02 | 悬浮球透明度独立 | PASS | 代码审查 | ballOpacity 和 panelOpacity 为独立字段，applyPreferences 中分别设置 |
+| TC-03 | 颜色主题默认值 | PASS | 代码审查 | Preferences.colorTheme 默认 .system（跟随系统） |
+| TC-04 | 面板动画与透明度 | PASS | 代码审查 | show: 0→panelOpacity；hide: →0，竞态保护改为 < 0.01 |
+| TC-05 | 旧数据兼容 | PASS | 代码审查 | 自定义 init(from:) 全部使用 decodeIfPresent + 默认值 |
 
-**汇总：7/7 项全部 PASS**
+**汇总：5/5 项全部 PASS**
 
 ---
 
-## 2. 变更文件清单
+## 2. 缺陷清单
+
+| # | 级别 | 描述 | 状态 |
+|---|------|------|------|
+| - | - | 无 P0/P1 缺陷 | - |
+
+---
+
+## 3. 已知问题
+
+- (P2) 透明度范围 0.3-1.0 硬编码在 PreferencesView 中，未提取为 Constants（当前规模不需要）
+- (P2) `ballAppearanceSection` 变量名保留了旧名称（功能正确，不影响使用）
+
+---
+
+## 4. 架构符合度
+
+- 实际代码 vs 设计：完全符合
+- 模块划分：按计划修改 4 个现有文件，未创建新文件
+- 接口契约：Preferences Codable 向后兼容，通知驱动的偏好设置应用机制不变
+
+## 5. 非目标确认
+
+- 未做多余功能（无额外 UI 变更、无新文件）
+- 未修改悬浮球核心逻辑
+
+## 6. 交付物清单
 
 | 文件 | 变更 | 说明 |
 |------|------|------|
-| `Helpers/Constants.swift` | 微调 | 新增 `Keys.lastPanelTab` |
-| `Services/ConfigStore.swift` | 修改 | 新增 `lastPanelTab` 属性 + `saveLastPanelTab()` |
-| `QuickPanel/QuickPanelView.swift` | 修改 | 三 Tab（全部/已打开/收藏）+ Tab 记忆 + 移除收藏右键 |
-| `MainKanban/AppConfigView.swift` | 修改 | 三 Tab 过滤（全部/已打开/收藏）+ Picker |
+| `Models/Models.swift` | 修改 | Preferences 新增 panelOpacity 字段 + 向后兼容解码 |
+| `MainKanban/PreferencesView.swift` | 修改 | 分区重命名为「外观」+ 新增面板透明度滑块 |
+| `App/AppDelegate.swift` | 修改 | applyPreferences 新增面板透明度应用 |
+| `QuickPanel/QuickPanelWindow.swift` | 修改 | show/hide 动画使用 panelOpacity |
 
----
-
-## 3. 构建验证
+## 7. 构建验证
 
 - `make build` ✅ 成功（0 错误，1 已知 warning）
-- `make install` ✅ 成功

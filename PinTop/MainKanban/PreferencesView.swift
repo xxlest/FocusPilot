@@ -52,17 +52,17 @@ struct PreferencesView: View {
         }
     }
 
-    // MARK: - 悬浮球外观
+    // MARK: - 外观
 
     private var ballAppearanceSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("悬浮球外观")
+            Text("外观")
                 .font(.headline)
 
-            // 大小滑块
+            // 悬浮球大小滑块
             HStack {
-                Text("大小")
-                    .frame(width: 80, alignment: .leading)
+                Text("悬浮球大小")
+                    .frame(width: 100, alignment: .leading)
                 Slider(
                     value: $configStore.preferences.ballSize,
                     in: Constants.Ball.minSize...Constants.Ball.maxSize,
@@ -73,10 +73,10 @@ struct PreferencesView: View {
                     .foregroundStyle(.secondary)
             }
 
-            // 透明度滑块
+            // 悬浮球透明度滑块
             HStack {
-                Text("透明度")
-                    .frame(width: 80, alignment: .leading)
+                Text("悬浮球透明度")
+                    .frame(width: 100, alignment: .leading)
                 Slider(
                     value: $configStore.preferences.ballOpacity,
                     in: 0.3...1.0,
@@ -87,10 +87,24 @@ struct PreferencesView: View {
                     .foregroundStyle(.secondary)
             }
 
+            // 面板透明度滑块
+            HStack {
+                Text("面板透明度")
+                    .frame(width: 100, alignment: .leading)
+                Slider(
+                    value: $configStore.preferences.panelOpacity,
+                    in: 0.3...1.0,
+                    step: 0.05
+                )
+                Text("\(Int(configStore.preferences.panelOpacity * 100))%")
+                    .frame(width: 50)
+                    .foregroundStyle(.secondary)
+            }
+
             // 颜色主题
             HStack {
                 Text("颜色主题")
-                    .frame(width: 80, alignment: .leading)
+                    .frame(width: 100, alignment: .leading)
                 Picker("", selection: $configStore.preferences.colorTheme) {
                     ForEach(ColorTheme.allCases, id: \.self) { theme in
                         Text(theme.rawValue).tag(theme)

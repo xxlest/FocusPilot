@@ -106,9 +106,23 @@ struct PanelSize: Codable {
 struct Preferences: Codable {
     var ballSize: CGFloat = 40
     var ballOpacity: CGFloat = 0.8
+    var panelOpacity: CGFloat = 0.9
     var colorTheme: ColorTheme = .system
     var launchAtLogin: Bool = false
     var hotkeyBallToggle: String = "⌘⇧B"
+
+    // 自定义解码：兼容旧数据（旧版本没有 panelOpacity 字段）
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        ballSize = try container.decodeIfPresent(CGFloat.self, forKey: .ballSize) ?? 40
+        ballOpacity = try container.decodeIfPresent(CGFloat.self, forKey: .ballOpacity) ?? 0.8
+        panelOpacity = try container.decodeIfPresent(CGFloat.self, forKey: .panelOpacity) ?? 0.9
+        colorTheme = try container.decodeIfPresent(ColorTheme.self, forKey: .colorTheme) ?? .system
+        launchAtLogin = try container.decodeIfPresent(Bool.self, forKey: .launchAtLogin) ?? false
+        hotkeyBallToggle = try container.decodeIfPresent(String.self, forKey: .hotkeyBallToggle) ?? "⌘⇧B"
+    }
+
+    init() {}
 }
 
 enum ColorTheme: String, Codable, CaseIterable {

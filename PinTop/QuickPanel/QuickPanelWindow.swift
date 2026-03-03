@@ -184,12 +184,13 @@ final class QuickPanelWindow: NSPanel {
 
         orderFront(nil)
 
-        // 滑出动画 150ms ease-out
+        // 滑出动画 150ms ease-out，最终透明度使用用户设置的面板透明度
+        let targetOpacity = ConfigStore.shared.preferences.panelOpacity
         NSAnimationContext.runAnimationGroup({ context in
             context.duration = Constants.Panel.animationDuration
             context.timingFunction = CAMediaTimingFunction(name: .easeOut)
             self.animator().setFrame(panelFrame, display: true)
-            self.animator().alphaValue = 1
+            self.animator().alphaValue = targetOpacity
         })
     }
 
@@ -205,10 +206,10 @@ final class QuickPanelWindow: NSPanel {
             self.animator().alphaValue = 0
         }, completionHandler: { [weak self] in
             guard let self = self else { return }
-            // 防止 show/hide 竞态：如果动画期间又被 show()，不执行收起逻辑
-            guard self.alphaValue == 0 else { return }
+            // 防止 show/hide 竞态：如果动画期间又被 show()，不执行收起逻辑（浮点精度安全）
+            guard self.alphaValue < 0.01 else { return }
             self.orderOut(nil)
-            self.alphaValue = 1
+            self.alphaValue = ConfigStore.shared.preferences.panelOpacity
             self.isPanelPinned = false
             self.panelView.resetToNormalMode()
             AppMonitor.shared.stopWindowRefresh()
