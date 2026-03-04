@@ -23,8 +23,8 @@ final class FloatingBallView: NSView {
     private var isPanelPinned = false
     /// 防止联动拖动递归
     private var isSyncMoving = false
-    /// 钉住状态红色发光边框层
-    private var pinGlowLayer: CALayer?
+    /// 钉住状态右上角图钉角标
+    private var pinBadgeView: NSView?
     /// 上一帧窗口位置（用于联动面板计算增量）
     private var lastWindowOrigin: CGPoint = .zero
     /// 上次拖拽联动通知时间（节流用）
@@ -162,8 +162,8 @@ final class FloatingBallView: NSView {
         // 启动呼吸脉搏动画
         startBreathingAnimation()
 
-        // 设置钉住状态发光边框（初始隐藏）
-        setupPinGlowLayer()
+        // 设置钉住状态图钉角标（初始隐藏）
+        setupPinBadge()
     }
 
     // MARK: - 布局更新
@@ -196,9 +196,16 @@ final class FloatingBallView: NSView {
         // 同步更新圆形阴影路径
         layer?.shadowPath = CGPath(ellipseIn: CGRect(x: 0, y: 0, width: size, height: size), transform: nil)
 
-        // 同步更新钉住发光边框尺寸
-        pinGlowLayer?.frame = CGRect(x: 0, y: 0, width: size, height: size)
-        pinGlowLayer?.cornerRadius = size / 2
+        // 同步更新钉住角标位置（右上角）
+        if let badge = pinBadgeView {
+            let badgeSize = badge.frame.width
+            badge.frame = NSRect(
+                x: size - badgeSize + 2,
+                y: size - badgeSize + 2,
+                width: badgeSize,
+                height: badgeSize
+            )
+        }
 
         needsDisplay = true
     }
@@ -225,43 +232,49 @@ final class FloatingBallView: NSView {
         layer?.removeAnimation(forKey: "breathingAnimation")
     }
 
-    // MARK: - 钉住状态发光边框
+    // MARK: - 钉住状态图钉角标
 
-    /// 创建钉住状态红色发光 CALayer（初始隐藏）
-    private func setupPinGlowLayer() {
-        let size = CGFloat(Constants.Ball.defaultSize)
-        let glowLayer = CALayer()
-        glowLayer.frame = CGRect(x: 0, y: 0, width: size, height: size)
-        glowLayer.cornerRadius = size / 2
-        glowLayer.borderWidth = 2.5
-        glowLayer.borderColor = NSColor.systemRed.cgColor
-        glowLayer.shadowColor = NSColor.systemRed.cgColor
-        glowLayer.shadowRadius = 6
-        glowLayer.shadowOpacity = 0.8
-        glowLayer.shadowOffset = .zero
-        glowLayer.isHidden = true
-        layer?.addSublayer(glowLayer)
-        pinGlowLayer = glowLayer
+    /// 创建右上角图钉角标（红底白色 pin.fill 图标，初始隐藏）
+    private func setupPinBadge() {
+        let badgeSize: CGFloat = 16
+        let ballSize = CGFloat(Constants.Ball.defaultSize)
+
+        let badge = NSView(frame: NSRect(
+            x: ballSize - badgeSize + 2,
+            y: ballSize - badgeSize + 2,
+            width: badgeSize,
+            height: badgeSize
+        ))
+        badge.wantsLayer = true
+        badge.layer?.backgroundColor = NSColor.systemRed.cgColor
+        badge.layer?.cornerRadius = badgeSize / 2
+        badge.layer?.borderWidth = 1.5
+        badge.layer?.borderColor = NSColor.white.withAlphaComponent(0.9).cgColor
+        badge.isHidden = true
+
+        // 白色 pin.fill 图标
+        let iconSize: CGFloat = 8
+        let symbolConfig = NSImage.SymbolConfiguration(pointSize: iconSize, weight: .bold)
+        if let pinSymbol = NSImage(systemSymbolName: "pin.fill", accessibilityDescription: nil)?
+            .withSymbolConfiguration(symbolConfig) {
+            let imageView = NSImageView(frame: NSRect(
+                x: (badgeSize - pinSymbol.size.width) / 2,
+                y: (badgeSize - pinSymbol.size.height) / 2,
+                width: pinSymbol.size.width,
+                height: pinSymbol.size.height
+            ))
+            imageView.image = pinSymbol
+            imageView.contentTintColor = .white
+            badge.addSubview(imageView)
+        }
+
+        addSubview(badge)
+        pinBadgeView = badge
     }
 
-    /// 切换钉住状态发光边框的显示/隐藏
-    private func updatePinGlow(isPinned: Bool) {
-        guard let glowLayer = pinGlowLayer else { return }
-        if isPinned {
-            glowLayer.isHidden = false
-            // 添加发光脉冲动画
-            let animation = CABasicAnimation(keyPath: "shadowOpacity")
-            animation.fromValue = 0.4
-            animation.toValue = 0.9
-            animation.duration = 1.2
-            animation.autoreverses = true
-            animation.repeatCount = .infinity
-            animation.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
-            glowLayer.add(animation, forKey: "pinGlowPulse")
-        } else {
-            glowLayer.isHidden = true
-            glowLayer.removeAnimation(forKey: "pinGlowPulse")
-        }
+    /// 切换钉住角标的显示/隐藏
+    private func updatePinBadge(isPinned: Bool) {
+        pinBadgeView?.isHidden = !isPinned
     }
 
     // MARK: - 追踪区域
@@ -340,7 +353,7 @@ final class FloatingBallView: NSView {
 
     @objc private func panelPinStateChanged(_ notification: Notification) {
         isPanelPinned = notification.userInfo?["isPinned"] as? Bool ?? false
-        updatePinGlow(isPinned: isPanelPinned)
+        updatePinBadge(isPinned: isPanelPinned)
     }
 
     // MARK: - 角标
