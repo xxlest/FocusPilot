@@ -146,6 +146,8 @@ final class QuickPanelWindow: NSPanel {
 
     @objc private func ballMouseExited() {
         guard !isPanelPinned else { return }
+        // 自动回缩关闭时不触发收起
+        guard ConfigStore.shared.preferences.autoRetractOnHover else { return }
         // 如果面板可见，启动收起计时器
         if isVisible {
             startDismissTimer()

@@ -207,6 +207,7 @@ struct Preferences: Codable {
     var ballCustomColorHex: String = "#FF8800"
     var launchAtLogin: Bool = false
     var hotkeyToggle: HotkeyConfig = .toggleDefault
+    var autoRetractOnHover: Bool = true
 
     // 自定义解码：兼容旧数据
     init(from decoder: Decoder) throws {
@@ -220,6 +221,7 @@ struct Preferences: Codable {
         launchAtLogin = try container.decodeIfPresent(Bool.self, forKey: .launchAtLogin) ?? false
         // 快捷键：兼容旧版本（旧版字段名可能不同，统一用默认值兜底）
         hotkeyToggle = (try? container.decode(HotkeyConfig.self, forKey: .hotkeyToggle)) ?? .toggleDefault
+        autoRetractOnHover = try container.decodeIfPresent(Bool.self, forKey: .autoRetractOnHover) ?? true
     }
 
     init() {}

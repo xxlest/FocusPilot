@@ -23,6 +23,8 @@ final class FloatingBallView: NSView {
     private var isPanelPinned = false
     /// 防止联动拖动递归
     private var isSyncMoving = false
+    /// 钉住状态红色发光边框层
+    private var pinGlowLayer: CALayer?
     /// 上一帧窗口位置（用于联动面板计算增量）
     private var lastWindowOrigin: CGPoint = .zero
     /// 上次拖拽联动通知时间（节流用）
@@ -159,6 +161,9 @@ final class FloatingBallView: NSView {
 
         // 启动呼吸脉搏动画
         startBreathingAnimation()
+
+        // 设置钉住状态发光边框（初始隐藏）
+        setupPinGlowLayer()
     }
 
     // MARK: - 布局更新
@@ -191,6 +196,10 @@ final class FloatingBallView: NSView {
         // 同步更新圆形阴影路径
         layer?.shadowPath = CGPath(ellipseIn: CGRect(x: 0, y: 0, width: size, height: size), transform: nil)
 
+        // 同步更新钉住发光边框尺寸
+        pinGlowLayer?.frame = CGRect(x: 0, y: 0, width: size, height: size)
+        pinGlowLayer?.cornerRadius = size / 2
+
         needsDisplay = true
     }
 
@@ -214,6 +223,45 @@ final class FloatingBallView: NSView {
     /// 停止呼吸动画
     private func stopBreathingAnimation() {
         layer?.removeAnimation(forKey: "breathingAnimation")
+    }
+
+    // MARK: - 钉住状态发光边框
+
+    /// 创建钉住状态红色发光 CALayer（初始隐藏）
+    private func setupPinGlowLayer() {
+        let size = CGFloat(Constants.Ball.defaultSize)
+        let glowLayer = CALayer()
+        glowLayer.frame = CGRect(x: 0, y: 0, width: size, height: size)
+        glowLayer.cornerRadius = size / 2
+        glowLayer.borderWidth = 2.5
+        glowLayer.borderColor = NSColor.systemRed.cgColor
+        glowLayer.shadowColor = NSColor.systemRed.cgColor
+        glowLayer.shadowRadius = 6
+        glowLayer.shadowOpacity = 0.8
+        glowLayer.shadowOffset = .zero
+        glowLayer.isHidden = true
+        layer?.addSublayer(glowLayer)
+        pinGlowLayer = glowLayer
+    }
+
+    /// 切换钉住状态发光边框的显示/隐藏
+    private func updatePinGlow(isPinned: Bool) {
+        guard let glowLayer = pinGlowLayer else { return }
+        if isPinned {
+            glowLayer.isHidden = false
+            // 添加发光脉冲动画
+            let animation = CABasicAnimation(keyPath: "shadowOpacity")
+            animation.fromValue = 0.4
+            animation.toValue = 0.9
+            animation.duration = 1.2
+            animation.autoreverses = true
+            animation.repeatCount = .infinity
+            animation.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
+            glowLayer.add(animation, forKey: "pinGlowPulse")
+        } else {
+            glowLayer.isHidden = true
+            glowLayer.removeAnimation(forKey: "pinGlowPulse")
+        }
     }
 
     // MARK: - 追踪区域
@@ -292,6 +340,7 @@ final class FloatingBallView: NSView {
 
     @objc private func panelPinStateChanged(_ notification: Notification) {
         isPanelPinned = notification.userInfo?["isPinned"] as? Bool ?? false
+        updatePinGlow(isPinned: isPanelPinned)
     }
 
     // MARK: - 角标

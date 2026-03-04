@@ -85,19 +85,6 @@ final class QuickPanelView: NSView {
         return btn
     }()
 
-    /// 面板钉住按钮（顶部右侧）
-    private lazy var panelPinButton: NSButton = {
-        let btn = NSButton()
-        btn.bezelStyle = .recessed
-        btn.isBordered = false
-        btn.image = Self.cachedSymbol(name: "pin", size: 12, weight: .medium)
-        btn.contentTintColor = .secondaryLabelColor
-        btn.target = self
-        btn.action = #selector(togglePanelPin)
-        btn.toolTip = "钉住面板"
-        return btn
-    }()
-
     /// 滚动视图（包含内容区域）
     private let scrollView: NSScrollView = {
         let sv = NSScrollView()
@@ -158,7 +145,6 @@ final class QuickPanelView: NSView {
         topBar.addSubview(openKanbanButton)
         topBar.addSubview(runningTabButton)
         topBar.addSubview(favoritesTabButton)
-        topBar.addSubview(panelPinButton)
 
         // 滚动区域
         addSubview(scrollView)
@@ -169,7 +155,6 @@ final class QuickPanelView: NSView {
         openKanbanButton.translatesAutoresizingMaskIntoConstraints = false
         runningTabButton.translatesAutoresizingMaskIntoConstraints = false
         favoritesTabButton.translatesAutoresizingMaskIntoConstraints = false
-        panelPinButton.translatesAutoresizingMaskIntoConstraints = false
         scrollView.translatesAutoresizingMaskIntoConstraints = false
         contentStack.translatesAutoresizingMaskIntoConstraints = false
 
@@ -187,19 +172,15 @@ final class QuickPanelView: NSView {
             topSeparator.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -8),
             topSeparator.topAnchor.constraint(equalTo: topBar.bottomAnchor),
 
-            // 打开主界面按钮（左侧，右移给悬浮球让位）
-            openKanbanButton.leadingAnchor.constraint(equalTo: topBar.leadingAnchor, constant: 32),
+            // 打开主界面按钮（右侧）
+            openKanbanButton.trailingAnchor.constraint(equalTo: topBar.trailingAnchor, constant: -8),
             openKanbanButton.centerYAnchor.constraint(equalTo: topBar.centerYAnchor),
 
-            // Tab 按钮
-            runningTabButton.leadingAnchor.constraint(equalTo: openKanbanButton.trailingAnchor, constant: 8),
+            // Tab 按钮（左侧，留出 32px 给悬浮球让位）
+            runningTabButton.leadingAnchor.constraint(equalTo: topBar.leadingAnchor, constant: 32),
             runningTabButton.centerYAnchor.constraint(equalTo: topBar.centerYAnchor),
             favoritesTabButton.leadingAnchor.constraint(equalTo: runningTabButton.trailingAnchor, constant: 4),
             favoritesTabButton.centerYAnchor.constraint(equalTo: topBar.centerYAnchor),
-
-            // 钉住按钮（右侧）
-            panelPinButton.trailingAnchor.constraint(equalTo: topBar.trailingAnchor, constant: -8),
-            panelPinButton.centerYAnchor.constraint(equalTo: topBar.centerYAnchor),
 
             // 滚动区域（顶部栏到底部）
             scrollView.topAnchor.constraint(equalTo: topSeparator.bottomAnchor),
@@ -254,6 +235,10 @@ final class QuickPanelView: NSView {
         if let panelWindow = window as? QuickPanelWindow, panelWindow.isPanelPinned {
             return
         }
+        // 自动回缩关闭时不触发收起
+        if !ConfigStore.shared.preferences.autoRetractOnHover {
+            return
+        }
         // 鼠标离开面板：启动 500ms 收起延迟
         if let panelWindow = window as? QuickPanelWindow {
             panelWindow.startDismissTimer()
@@ -275,13 +260,6 @@ final class QuickPanelView: NSView {
             self,
             selector: #selector(appStatusDidChange),
             name: AppMonitor.appStatusChanged,
-            object: nil
-        )
-        // 面板钉住状态变化
-        NotificationCenter.default.addObserver(
-            self,
-            selector: #selector(panelPinStateChanged(_:)),
-            name: Constants.Notifications.panelPinStateChanged,
             object: nil
         )
         // 辅助功能权限恢复（codesign 后用户重新授权）
@@ -306,34 +284,6 @@ final class QuickPanelView: NSView {
         WindowService.shared.invalidateAXCache()
         lastStructuralKey = ""
         reloadData()
-    }
-
-    @objc private func panelPinStateChanged(_ notification: Notification) {
-        let isPinned = notification.userInfo?["isPinned"] as? Bool ?? false
-        updatePanelPinButton(isPinned: isPinned)
-    }
-
-    private func updatePanelPinButton(isPinned: Bool) {
-        let symbolName = isPinned ? "pin.fill" : "pin"
-        if let configuredImage = Self.cachedSymbol(name: symbolName, size: 12, weight: .medium) {
-            if isPinned {
-                panelPinButton.image = Self.rotatedPinImage(from: configuredImage)
-            } else {
-                panelPinButton.image = configuredImage
-            }
-        }
-
-        if isPinned {
-            panelPinButton.contentTintColor = .systemRed
-            panelPinButton.wantsLayer = true
-            panelPinButton.layer?.backgroundColor = NSColor.systemRed.withAlphaComponent(0.15).cgColor
-            panelPinButton.layer?.cornerRadius = 4
-            panelPinButton.toolTip = "取消钉住"
-        } else {
-            panelPinButton.contentTintColor = .secondaryLabelColor
-            panelPinButton.layer?.backgroundColor = nil
-            panelPinButton.toolTip = "钉住面板"
-        }
     }
 
     // MARK: - Tab 切换
@@ -443,7 +393,6 @@ final class QuickPanelView: NSView {
 
     /// 重置面板状态（面板关闭时调用，保留 Tab 记忆）
     func resetToNormalMode() {
-        updatePanelPinButton(isPinned: false)
         highlightedWindowID = nil
         // 不重置 currentTab（Tab 记忆功能）
         collapsedApps.removeAll()
@@ -887,12 +836,6 @@ final class QuickPanelView: NSView {
 
     // MARK: - 事件处理
 
-    @objc private func togglePanelPin() {
-        if let panelWindow = window as? QuickPanelWindow {
-            panelWindow.togglePanelPin()
-        }
-    }
-
     @objc private func openMainKanban() {
         NotificationCenter.default.post(name: Constants.Notifications.ballOpenMainKanban, object: nil)
     }
@@ -993,21 +936,6 @@ final class QuickPanelView: NSView {
         let configured = img.withSymbolConfiguration(config) ?? img
         symbolCache[key] = configured
         return configured
-    }
-
-    /// 将 SF Symbol pin 图标旋转 45° 变竖直
-    private static func rotatedPinImage(from image: NSImage) -> NSImage {
-        let rotated = NSImage(size: image.size)
-        rotated.lockFocus()
-        let transform = NSAffineTransform()
-        transform.translateX(by: image.size.width / 2, yBy: image.size.height / 2)
-        transform.rotate(byDegrees: 45)
-        transform.translateX(by: -image.size.width / 2, yBy: -image.size.height / 2)
-        transform.concat()
-        image.draw(in: NSRect(origin: .zero, size: image.size))
-        rotated.unlockFocus()
-        rotated.isTemplate = true
-        return rotated
     }
 
     private func createLabel(_ text: String, size: CGFloat, color: NSColor) -> NSTextField {

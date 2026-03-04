@@ -187,6 +187,8 @@ struct PreferencesView: View {
             Text("通用")
                 .font(.headline)
 
+            Toggle("hover 离开后自动收起面板", isOn: $configStore.preferences.autoRetractOnHover)
+
             // 开机自启动
             Toggle("开机自启动", isOn: $configStore.preferences.launchAtLogin)
                 .onChange(of: configStore.preferences.launchAtLogin) { _, newValue in

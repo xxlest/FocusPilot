@@ -1,8 +1,8 @@
 # Focus Copilot 架构设计文档
 
-> **版本**：V3.2
-> **日期**：2026-03-02
-> **基于**：PRD V3.2
+> **版本**：V3.3
+> **日期**：2026-03-04
+> **基于**：PRD V3.3
 
 ---
 
@@ -50,6 +50,16 @@ PinTop/
 
 ### 版本变更说明
 
+**V3.3 相比 V3.2 的关键变更**：
+
+- QuickPanelView：删除 `panelPinButton` 及所有关联代码（`togglePanelPin`、`updatePanelPinButton`、`rotatedPinImage`、`panelPinStateChanged` 监听）
+- QuickPanelView 顶部栏布局：`openKanbanButton` 从左侧移到右侧（`trailingAnchor - 8`），Tab 按钮成为最左侧元素（`leadingAnchor + 32`）
+- FloatingBallView：新增 `pinGlowLayer`（红色发光边框环 CALayer），通过 `panelPinStateChanged` 通知驱动显隐和脉冲动画
+- Preferences：新增 `autoRetractOnHover: Bool = true`，控制 hover 离开后是否自动收起面板
+- QuickPanelWindow.ballMouseExited()：新增 `autoRetractOnHover` 检查（钉住优先 → 回缩开关 → dismissTimer）
+- QuickPanelView.mouseExited()：同步新增 `autoRetractOnHover` 检查
+- PreferencesView：新增 Toggle "hover 离开后自动收起面板"
+
 **V3.2 相比 V3.0 的关键变更**：
 
 - QuickPanelTab 枚举：`.selected/.favorites` → `.running/.favorites`（移除 `.all`）
@@ -73,8 +83,8 @@ PinTop/
 | 模块 | 职责 | 独立变化理由 |
 |---|---|---|
 | **App/** | 应用入口、生命周期、权限管理 | 应用级初始化逻辑独立于具体 UI |
-| **FloatingBall/** | 悬浮球 UI、拖拽、贴边、hover 检测、品牌 Logo | 悬浮球交互逻辑独立变化频率高 |
-| **QuickPanel/** | 快捷面板 UI、活跃/收藏 Tab、Tab 记忆、窗口行高亮+前置+关闭 | 面板展示和交互独立于悬浮球 |
+| **FloatingBall/** | 悬浮球 UI、拖拽、贴边、hover 检测、品牌 Logo、钉住状态发光边框 | 悬浮球交互逻辑独立变化频率高 |
+| **QuickPanel/** | 快捷面板 UI、活跃/收藏 Tab、Tab 记忆、窗口行高亮+前置+关闭（V3.3：移除面板内钉住按钮） | 面板展示和交互独立于悬浮球 |
 | **MainKanban/** | 主看板 SwiftUI 界面（收藏管理 + 偏好设置 + 底部双按钮） | SwiftUI 技术栈独立，页面布局频繁调整 |
 | **Services/** | 底层服务（窗口操作+关闭、App 监控、快捷键、配置存储+Tab 记忆） | 业务逻辑层与 UI 层分离 |
 | **Models/** | 数据模型 | 数据结构被多个模块共享 |
@@ -172,6 +182,7 @@ struct Preferences: Codable {
     var ballColorStyle: BallColorStyle = .orange  // 悬浮球颜色风格
     var ballCustomColorHex: String = "#FF8800"    // 自定义颜色 hex
     var launchAtLogin: Bool = false
+    var autoRetractOnHover: Bool = true  // V3.3：hover 离开后是否自动收起面板
     var hotkeyBallToggle: String = "⌘⇧B"
     // 自定义 init(from:) 兼容旧数据（所有新字段用 decodeIfPresent）
 }
@@ -425,8 +436,10 @@ enum Constants {
 ```
 FloatingBallView                   QuickPanelWindow
      │                                │
-     │── hover 300ms ────────────────▶│ show(relativeTo: ballFrame)
-     │   (ballShowQuickPanel)         │    └── AppMonitor.startWindowRefresh()
+     │── mouseEntered ───────────────▶│ AppMonitor.startWindowRefresh()（数据预热）
+     │                                │
+     │── hover 150ms ────────────────▶│ show(relativeTo: ballFrame)
+     │   (ballShowQuickPanel)         │
      │                                │
      │── click ──────────────────────▶│ toggleQuickPanel (ballToggleQuickPanel)
      │   未显示/未钉住→show+pin        │
@@ -437,9 +450,11 @@ FloatingBallView                   QuickPanelWindow
      │                                │
      │── drag-start ────────────────▶│ hide() (ballDragStarted)
      │                                │
-     │◀── mouseExited(500ms) ────────│ hide()（钉住时跳过）
+     │◀── mouseExited(500ms) ────────│ hide()（钉住时跳过；autoRetractOnHover=false 时跳过）
      │   (ballMouseExited)            │    └── AppMonitor.stopWindowRefresh()
 ```
+
+> **性能优化**：QuickPanelWindow 在应用启动时预创建（非懒加载），mouseEntered 时立即预热窗口数据，面板弹出动画 100ms / 收起 120ms，hover 延迟 150ms。
 
 ### 3.2 QuickPanel → Services 交互
 
@@ -464,7 +479,6 @@ QuickPanelView（V3.2 交互模式）
 
 QuickPanelWindow
      │
-     │── 顶部钉住按钮 ─────────▶ togglePanelPin()
      │── 顶部拖拽区域（24px）──▶ handlePanelDrag()（钉住时联动悬浮球）
      │── 边缘拖拽 resize ──────▶ ConfigStore.panelSize + save()
      │── hide() ────────────────▶ resetToNormalMode()（highlightedWindowID = nil，保留 Tab 记忆）
@@ -500,8 +514,9 @@ AppConfigView（收藏管理页面）
 
 | 当前状态 | 触发条件 | 目标状态 | 副作用 |
 |---|---|---|---|
-| 正常显示 | hover 300ms | 正常显示 + 快捷面板弹出 | QuickPanel.show()（面板已钉住时跳过） |
-| 正常显示 | 单击 | 正常显示 | 切换面板钉住状态 |
+| 正常显示 | mouseEntered | 正常显示 | AppMonitor.startWindowRefresh()（数据预热） |
+| 正常显示 | hover 150ms | 正常显示 + 快捷面板弹出 | QuickPanel.show()（面板已钉住时跳过） |
+| 正常显示 | 单击 | 正常显示 | 切换面板钉住状态 + 悬浮球红色发光边框（V3.3） |
 | 正常显示 | 双击 | 正常显示 | 切换主看板显示/隐藏 |
 | 正常显示 | 拖拽开始 | 拖拽中 | 关闭快捷面板 |
 | 拖拽中 | 拖拽结束 | 正常显示 | 吸附到最近边缘 + 保存位置 |
@@ -514,9 +529,10 @@ AppConfigView（收藏管理页面）
 
 | 当前状态 | 触发条件 | 目标状态 | 副作用 |
 |---|---|---|---|
-| 隐藏 | 悬浮球 hover 300ms | 显示（未钉住） | startWindowRefresh()，恢复 lastPanelTab |
+| 隐藏 | 悬浮球 hover 150ms | 显示（未钉住） | startWindowRefresh()（已由 mouseEntered 预热），恢复 lastPanelTab |
 | 隐藏 | 悬浮球单击 | 显示（钉住） | startWindowRefresh()，恢复 lastPanelTab |
-| 显示（未钉住） | 鼠标离开 500ms | 隐藏 | stopWindowRefresh()，highlightedWindowID = nil |
+| 显示（未钉住） | 鼠标离开 500ms（autoRetractOnHover=true） | 隐藏 | stopWindowRefresh()，highlightedWindowID = nil |
+| 显示（未钉住） | 鼠标离开（autoRetractOnHover=false） | 显示（未钉住） | 面板保持显示，不触发 dismissTimer |
 | 显示（未钉住） | 悬浮球拖拽 | 隐藏 | stopWindowRefresh() |
 | 显示（未钉住） | 点击钉住按钮 | 显示（钉住） | 取消 dismissTimer |
 | 显示（钉住） | 悬浮球单击 | 隐藏 | 取消钉住，stopWindowRefresh() |
@@ -548,6 +564,7 @@ AppConfigView（收藏管理页面）
 | 未运行 App（收藏 Tab） | 灰度显示，点击调用 NSWorkspace.openApplication 启动 |
 | codesign 导致权限失效 | PermissionManager 后台轮询检测，自动恢复 |
 | 面板关闭后重新打开 | 恢复上次 Tab 选择（Tab 记忆） |
+| autoRetractOnHover=false 且未钉住 | hover 离开不收起面板，面板保持显示直到主动关闭 |
 
 ### 4.3 跨 App 窗口激活（V3.2）
 
@@ -666,13 +683,13 @@ activateWindow(window)
 | AppDelegate.swift | ~342 | 应用生命周期、窗口管理、菜单栏图标、Dock 图标 |
 | PermissionManager.swift | ~90 | 辅助功能权限检测、引导、后台轮询 |
 | FloatingBallWindow.swift | ~98 | NSPanel 子类，窗口层级、贴边 |
-| FloatingBallView.swift | ~779 | 悬浮球视图、品牌 Logo、hover/click/drag 检测 |
+| FloatingBallView.swift | ~800 | 悬浮球视图、品牌 Logo、hover/click/drag 检测、钉住状态红色发光边框 |
 | QuickPanelWindow.swift | ~483 | NSPanel 子类，面板位置、钉住、resize、drag、联动 |
 | QuickPanelView.swift | ~1069 | 面板内容：活跃/收藏 Tab、Tab 记忆、窗口行高亮+前置+关闭 |
 | MainKanbanWindow.swift | ~51 | NSWindow 子类，主看板窗口管理 |
 | MainKanbanView.swift | ~90 | SwiftUI 根视图，侧边栏导航（收藏管理/偏好设置）+ 底部双按钮 |
 | AppConfigView.swift | ~306 | SwiftUI 收藏管理：三 Tab 过滤（全部/活跃/收藏）+ 搜索 + 星标收藏切换 |
-| PreferencesView.swift | ~138 | SwiftUI 偏好设置页面（外观：悬浮球大小/透明度、面板透明度、颜色主题） |
+| PreferencesView.swift | ~140 | SwiftUI 偏好设置页面（外观、颜色主题、hover 回缩开关） |
 | WindowService.swift | ~652 | 窗口枚举、AX 操作、CGS 层级、标题四级兜底、跨 App 激活、窗口关闭 |
 | AppMonitor.swift | ~195 | App 运行状态监控（不依赖 ConfigStore）、窗口刷新定时器 |
 | HotkeyManager.swift | ~72 | 全局快捷键（Carbon API），1 个动作（⌘⇧B） |
