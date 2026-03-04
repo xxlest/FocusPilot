@@ -1,5 +1,10 @@
 import AppKit
 import ApplicationServices
+import ObjectiveC
+
+// 关联对象 Key（星号收藏按钮存储 bundleID 和 displayName）
+private var bundleIDKey: UInt8 = 0
+private var displayNameKey: UInt8 = 0
 
 // MARK: - 快捷面板 Tab 枚举
 
@@ -349,7 +354,8 @@ final class QuickPanelView: NSView {
             for app in apps {
                 let windowIDs = app.windows.map { String($0.id) }.joined(separator: ",")
                 let collapsed = collapsedApps.contains(app.bundleID) ? "C" : "E"
-                parts.append("\(app.bundleID):\(app.isRunning):\(windowIDs):\(collapsed)")
+                let fav = ConfigStore.shared.isFavorite(app.bundleID) ? "F" : ""
+                parts.append("\(app.bundleID):\(app.isRunning):\(windowIDs):\(collapsed):\(fav)")
             }
         case .favorites:
             let configs = ConfigStore.shared.appConfigs
@@ -544,6 +550,27 @@ final class QuickPanelView: NSView {
             iconView.heightAnchor.constraint(equalToConstant: 16),
         ])
         rowStack.addArrangedSubview(iconView)
+
+        // 星号收藏按钮（仅活跃 Tab 显示）
+        if currentTab == .running {
+            let isFav = ConfigStore.shared.isFavorite(bundleID)
+            let starButton = NSButton()
+            starButton.bezelStyle = .recessed
+            starButton.isBordered = false
+            starButton.image = Self.cachedSymbol(name: isFav ? "star.fill" : "star", size: 11, weight: .regular)
+            starButton.contentTintColor = isFav ? .systemYellow : .tertiaryLabelColor
+            starButton.toolTip = isFav ? "取消收藏" : "添加到收藏"
+            starButton.target = self
+            starButton.action = #selector(handleToggleFavorite(_:))
+            objc_setAssociatedObject(starButton, &bundleIDKey, bundleID, .OBJC_ASSOCIATION_RETAIN)
+            objc_setAssociatedObject(starButton, &displayNameKey, name, .OBJC_ASSOCIATION_RETAIN)
+            starButton.translatesAutoresizingMaskIntoConstraints = false
+            NSLayoutConstraint.activate([
+                starButton.widthAnchor.constraint(equalToConstant: 18),
+                starButton.heightAnchor.constraint(equalToConstant: 18),
+            ])
+            rowStack.addArrangedSubview(starButton)
+        }
 
         // App 名称
         let nameLabel = createLabel(name, size: 12, color: isRunning ? .labelColor : .tertiaryLabelColor)
@@ -840,6 +867,19 @@ final class QuickPanelView: NSView {
         NotificationCenter.default.post(name: Constants.Notifications.ballOpenMainKanban, object: nil)
     }
 
+    /// 星号收藏按钮点击：切换收藏/取消收藏
+    @objc private func handleToggleFavorite(_ sender: NSButton) {
+        guard let bundleID = objc_getAssociatedObject(sender, &bundleIDKey) as? String else { return }
+        let name = objc_getAssociatedObject(sender, &displayNameKey) as? String ?? ""
+
+        if ConfigStore.shared.isFavorite(bundleID) {
+            ConfigStore.shared.removeApp(bundleID)
+        } else {
+            ConfigStore.shared.addApp(bundleID, displayName: name)
+        }
+        lastStructuralKey = ""
+        reloadData()
+    }
 
     /// 启动未运行的 App
     private func launchApp(bundleID: String) {

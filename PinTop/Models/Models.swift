@@ -126,6 +126,9 @@ struct HotkeyConfig: Codable, Equatable {
     // 默认值（⌘⇧B 同时切换悬浮球+面板）
     static let toggleDefault = HotkeyConfig(keyCode: kVK_ANSI_B, carbonModifiers: cmdKeyFlag | shiftKeyFlag)
 
+    // 主看板快捷键默认值（⌘Esc）
+    static let kanbanDefault = HotkeyConfig(keyCode: kVK_Escape, carbonModifiers: cmdKeyFlag)
+
     /// 显示字符串（如 "⌘⇧B"）
     var displayString: String {
         var parts: [String] = []
@@ -199,28 +202,30 @@ struct HotkeyConfig: Codable, Equatable {
 // MARK: - 偏好设置（持久化）
 
 struct Preferences: Codable {
-    var ballSize: CGFloat = 40
+    var ballSize: CGFloat = 35
     var ballOpacity: CGFloat = 0.8
     var panelOpacity: CGFloat = 0.9
     var colorTheme: ColorTheme = .system
-    var ballColorStyle: BallColorStyle = .orange
+    var ballColorStyle: BallColorStyle = .blue
     var ballCustomColorHex: String = "#FF8800"
     var launchAtLogin: Bool = false
     var hotkeyToggle: HotkeyConfig = .toggleDefault
+    var hotkeyKanban: HotkeyConfig = .kanbanDefault
     var autoRetractOnHover: Bool = true
 
     // 自定义解码：兼容旧数据
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
-        ballSize = try container.decodeIfPresent(CGFloat.self, forKey: .ballSize) ?? 40
+        ballSize = try container.decodeIfPresent(CGFloat.self, forKey: .ballSize) ?? 35
         ballOpacity = try container.decodeIfPresent(CGFloat.self, forKey: .ballOpacity) ?? 0.8
         panelOpacity = try container.decodeIfPresent(CGFloat.self, forKey: .panelOpacity) ?? 0.9
         colorTheme = try container.decodeIfPresent(ColorTheme.self, forKey: .colorTheme) ?? .system
-        ballColorStyle = try container.decodeIfPresent(BallColorStyle.self, forKey: .ballColorStyle) ?? .orange
+        ballColorStyle = try container.decodeIfPresent(BallColorStyle.self, forKey: .ballColorStyle) ?? .blue
         ballCustomColorHex = try container.decodeIfPresent(String.self, forKey: .ballCustomColorHex) ?? "#FF8800"
         launchAtLogin = try container.decodeIfPresent(Bool.self, forKey: .launchAtLogin) ?? false
         // 快捷键：兼容旧版本（旧版字段名可能不同，统一用默认值兜底）
         hotkeyToggle = (try? container.decode(HotkeyConfig.self, forKey: .hotkeyToggle)) ?? .toggleDefault
+        hotkeyKanban = (try? container.decode(HotkeyConfig.self, forKey: .hotkeyKanban)) ?? .kanbanDefault
         autoRetractOnHover = try container.decodeIfPresent(Bool.self, forKey: .autoRetractOnHover) ?? true
     }
 
@@ -236,8 +241,8 @@ enum ColorTheme: String, Codable, CaseIterable {
 // MARK: - 悬浮球颜色风格
 
 enum BallColorStyle: String, Codable, CaseIterable {
-    case orange = "经典橙"
     case blue = "海洋蓝"
+    case orange = "经典橙"
     case green = "翡翠绿"
     case purple = "星空紫"
     case pink = "樱花粉"

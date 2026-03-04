@@ -31,7 +31,7 @@ PinTop/
 │   ├── Services/
 │   │   ├── WindowService.swift        # 窗口枚举、AX 操作、层级控制、关闭窗口、诊断日志
 │   │   ├── AppMonitor.swift           # 监听 App 启动/退出，维护运行列表（不依赖 ConfigStore）
-│   │   ├── HotkeyManager.swift        # 全局快捷键注册（Carbon API）
+│   │   ├── HotkeyManager.swift        # 全局快捷键注册（Carbon API，支持多快捷键）
 │   │   └── ConfigStore.swift          # 用户配置持久化（UserDefaults）、收藏管理、Tab 记忆
 │   ├── Models/
 │   │   └── Models.swift               # 数据模型定义
@@ -692,7 +692,7 @@ activateWindow(window)
 | PreferencesView.swift | ~140 | SwiftUI 偏好设置页面（外观、颜色主题、hover 回缩开关） |
 | WindowService.swift | ~652 | 窗口枚举、AX 操作、CGS 层级、标题四级兜底、跨 App 激活、窗口关闭 |
 | AppMonitor.swift | ~195 | App 运行状态监控（不依赖 ConfigStore）、窗口刷新定时器 |
-| HotkeyManager.swift | ~72 | 全局快捷键（Carbon API），1 个动作（⌘⇧B） |
+| HotkeyManager.swift | ~101 | 全局快捷键（Carbon API），2 个动作（⌘⇧B 悬浮球显隐、⌘Esc 主看板显隐） |
 | ConfigStore.swift | ~221 | UserDefaults 持久化（含迁移逻辑、收藏管理、Tab 记忆） |
 | Models.swift | ~118 | 数据模型定义（AppConfig 无 isFavorite、QuickPanelTab 枚举在 QuickPanelView.swift 中） |
 | Constants.swift | ~84 | 全局常量、13 个通知名、7 个 UserDefaults Keys |

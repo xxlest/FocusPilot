@@ -46,6 +46,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
         // 初始化快捷键变化检测基准值（防止 applyPreferences 首次调用时重复注册）
         lastHotkey = ConfigStore.shared.preferences.hotkeyToggle
+        lastKanbanHotkey = ConfigStore.shared.preferences.hotkeyKanban
 
         // 应用偏好设置（大小、透明度、主题）并监听后续变化
         applyPreferences(ConfigStore.shared.preferences)
@@ -173,10 +174,14 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     // MARK: - 快捷键
 
     private func setupHotkeys() {
-        HotkeyManager.shared.register()
         HotkeyManager.shared.onToggle = { [weak self] in
             self?.toggleAllViaHotkey()
         }
+        HotkeyManager.shared.onKanbanToggle = { [weak self] in
+            self?.toggleMainKanban()
+        }
+        HotkeyManager.shared.register()
+        HotkeyManager.shared.registerKanban()
     }
 
     /// 快捷键统一切换悬浮球+面板（面板左上角出现在鼠标光标位置）
@@ -275,6 +280,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
     /// 用于检测快捷键配置变化的旧值
     private var lastHotkey: HotkeyConfig?
+    private var lastKanbanHotkey: HotkeyConfig?
 
     /// 将偏好设置应用到悬浮球和面板（大小、透明度、颜色主题、快捷键）
     private func applyPreferences(_ prefs: Preferences) {
@@ -304,6 +310,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         if prefs.hotkeyToggle != lastHotkey {
             lastHotkey = prefs.hotkeyToggle
             HotkeyManager.shared.reregister(config: prefs.hotkeyToggle)
+        }
+        if prefs.hotkeyKanban != lastKanbanHotkey {
+            lastKanbanHotkey = prefs.hotkeyKanban
+            HotkeyManager.shared.reregisterKanban(config: prefs.hotkeyKanban)
         }
 
         // 颜色主题
