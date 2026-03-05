@@ -1,8 +1,8 @@
 # Focus Copilot 架构设计文档
 
-> **版本**：V3.3
-> **日期**：2026-03-04
-> **基于**：PRD V3.3
+> **版本**：V3.5
+> **日期**：2026-03-05
+> **基于**：PRD V3.5
 
 ---
 
@@ -218,7 +218,7 @@ class ConfigStore: ObservableObject {
     // Onboarding 是否已完成
     @Published var onboardingCompleted: Bool
 
-    // 窗口重命名映射（key="{bundleID}::{原标题}", value=自定义名称）
+    // 窗口重命名映射（key="{bundleID}::{CGWindowID}", value=自定义名称）
     @Published var windowRenames: [String: String]
 
     // 面板大小（拖拽 resize 后持久化）
@@ -469,7 +469,7 @@ QuickPanelView（V3.2 交互模式）
      │── 点击窗口行✕按钮 ──────▶ NSAlert 确认 → WindowService.closeWindow(window)
      │── 点击未运行 App ──────▶ NSWorkspace.openApplication(at:configuration:)
      │── 右键窗口行 ──────────▶ 窗口重命名（NSAlert+NSTextField）
-     │                         └── ConfigStore.windowRenames["{bundleID}::{title}"]
+     │                         └── ConfigStore.windowRenames["{bundleID}::{CGWindowID}"]
      │── 点击顶部主界面按钮 ──▶ ballOpenMainKanban 通知（切换主看板显示/隐藏）
      │
      │── 读取数据 ─────────────▶ AppMonitor.runningApps（活跃 Tab：有窗口的 App）
@@ -665,7 +665,7 @@ activateWindow(window)
 
 当前版本**不做**以下功能：
 
-- 不实现收藏 Tab 独立排序（沿用 order）
+- 收藏 Tab 支持拖拽排序（mouseDown/mouseDragged/mouseUp 手势，通过 HoverableRowView 的 dragEnabled + handler 闭包组实现，持久化到 ConfigStore.reorderApps）
 - 不添加快捷面板搜索框
 - 不添加窗口缩略图预览
 - 不实现窗口分组
