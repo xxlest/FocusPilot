@@ -20,6 +20,9 @@ struct AppConfigView: View {
     // 刷新触发器（App 启动/退出时递增）
     @State private var refreshTrigger = 0
 
+    /// 当前主题颜色（便捷访问）
+    private var themeColors: ThemeColors { configStore.currentThemeColors }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             // Tab 切换（显示各 Tab 数量）
@@ -36,21 +39,22 @@ struct AppConfigView: View {
             // 搜索框
             HStack {
                 Image(systemName: "magnifyingglass")
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(themeColors.swTextTertiary)
                 TextField("搜索应用...", text: $searchText)
                     .textFieldStyle(.plain)
+                    .foregroundStyle(themeColors.swTextPrimary)
                 if !searchText.isEmpty {
                     Button {
                         searchText = ""
                     } label: {
                         Image(systemName: "xmark.circle.fill")
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(themeColors.swTextTertiary)
                     }
                     .buttonStyle(.borderless)
                 }
             }
             .padding(8)
-            .background(RoundedRectangle(cornerRadius: 8).fill(.quaternary))
+            .background(RoundedRectangle(cornerRadius: 8).fill(themeColors.swSeparator.opacity(0.4)))
             .padding(.horizontal)
             .padding(.bottom, 8)
 
@@ -59,14 +63,15 @@ struct AppConfigView: View {
             let themeKey = configStore.preferences.appTheme.rawValue
             if apps.isEmpty {
                 Text(emptyText)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(themeColors.swTextSecondary)
                     .frame(maxWidth: .infinity, minHeight: 100)
             } else {
                 ScrollView {
                     LazyVStack(spacing: 0) {
                         ForEach(apps, id: \.bundleID) { app in
                             appRow(app)
-                            Divider()
+                            themeColors.swSeparator
+                                .frame(height: 1)
                                 .padding(.leading, 52)
                         }
                     }
@@ -82,11 +87,12 @@ struct AppConfigView: View {
                 Spacer()
                 Text("收藏数量: \(configStore.appConfigs.count)/\(Constants.maxApps)")
                     .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(themeColors.swTextTertiary)
             }
             .padding(.horizontal)
             .padding(.vertical, 8)
         }
+        .background(themeColors.swBackground)
         .navigationTitle("")
         .onReceive(NotificationCenter.default.publisher(for: Constants.Notifications.appStatusChanged)) { _ in
             refreshTrigger += 1
@@ -258,6 +264,7 @@ struct AppConfigView: View {
 
             // App 名称
             Text(app.name)
+                .foregroundStyle(themeColors.swTextPrimary)
                 .lineLimit(1)
 
             Spacer()

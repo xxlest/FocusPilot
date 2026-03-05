@@ -22,17 +22,21 @@ struct MainKanbanView: View {
     @ObservedObject private var configStore = ConfigStore.shared
     @ObservedObject private var appMonitor = AppMonitor.shared
 
+    /// 当前主题颜色（便捷访问）
+    private var themeColors: ThemeColors { configStore.currentThemeColors }
+
     var body: some View {
         HStack(spacing: 0) {
             // 左侧导航栏
             if showSidebar {
                 sidebar
                     .frame(width: 180)
-                Divider()
+                themeColors.swSeparator.frame(width: 1)
             }
             // 右侧内容区
             detailView
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .background(themeColors.swBackground)
         }
         .toolbar {
             ToolbarItem(placement: .navigation) {
@@ -60,14 +64,31 @@ struct MainKanbanView: View {
 
     private var sidebar: some View {
         VStack(spacing: 0) {
-            // 导航列表
-            List(KanbanTab.allCases, id: \.self, selection: $selectedTab) { tab in
-                Label(tab.rawValue, systemImage: tab.icon)
-                    .tag(tab)
+            // 导航列表（自定义实现，避免系统 List 覆盖主题背景色）
+            VStack(spacing: 2) {
+                ForEach(KanbanTab.allCases, id: \.self) { tab in
+                    Button {
+                        selectedTab = tab
+                    } label: {
+                        Label(tab.rawValue, systemImage: tab.icon)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(.vertical, 6)
+                            .padding(.horizontal, 8)
+                            .foregroundStyle(selectedTab == tab ? themeColors.swAccent : themeColors.swTextPrimary)
+                            .background(
+                                RoundedRectangle(cornerRadius: 6)
+                                    .fill(selectedTab == tab ? themeColors.swAccent.opacity(0.12) : Color.clear)
+                            )
+                    }
+                    .buttonStyle(.plain)
+                }
             }
-            .listStyle(.sidebar)
+            .padding(.horizontal, 8)
+            .padding(.top, 8)
 
-            Divider()
+            Spacer()
+
+            themeColors.swSeparator.frame(height: 1)
 
             // 底部双按钮：左=悬浮球显隐，右=退出
             HStack(spacing: 0) {
@@ -83,12 +104,13 @@ struct MainKanbanView: View {
                         Text(configStore.isBallVisible ? "悬浮球 隐藏" : "悬浮球 显示")
                     }
                     .font(.callout)
+                    .foregroundStyle(themeColors.swTextSecondary)
                     .frame(maxWidth: .infinity)
                 }
                 .buttonStyle(.plain)
                 .padding(.vertical, 8)
 
-                Divider().frame(height: 16)
+                themeColors.swSeparator.frame(width: 1, height: 16)
 
                 // 右半：退出
                 Button(action: { showQuitConfirmation = true }) {
@@ -106,7 +128,7 @@ struct MainKanbanView: View {
             .padding(.horizontal, 8)
             .padding(.bottom, 4)
         }
-        .background(configStore.currentThemeColors.swBackground)
+        .background(themeColors.swSidebarBackground)
     }
 
     // MARK: - 内容区

@@ -276,6 +276,7 @@ enum AppTheme: String, Codable, CaseIterable {
         case .defaultWhite:
             return ThemeColors(
                 background: NSColor(calibratedRed: 1.0, green: 1.0, blue: 1.0, alpha: 1.0),
+                sidebarBackground: NSColor(calibratedRed: 0.965, green: 0.965, blue: 0.965, alpha: 1.0), // #F7F7F7
                 accent: NSColor(calibratedRed: 0.137, green: 0.514, blue: 0.886, alpha: 1.0), // #2383E2
                 textPrimary: NSColor(calibratedRed: 0.145, green: 0.145, blue: 0.145, alpha: 1.0),
                 textSecondary: NSColor(calibratedRed: 0.455, green: 0.455, blue: 0.455, alpha: 1.0),
@@ -287,6 +288,7 @@ enum AppTheme: String, Codable, CaseIterable {
         case .warmIvory:
             return ThemeColors(
                 background: NSColor(calibratedRed: 0.984, green: 0.973, blue: 0.957, alpha: 1.0), // #FBF8F4
+                sidebarBackground: NSColor(calibratedRed: 0.957, green: 0.941, blue: 0.918, alpha: 1.0), // #F4F0EA
                 accent: NSColor(calibratedRed: 0.851, green: 0.467, blue: 0.024, alpha: 1.0), // #D97706
                 textPrimary: NSColor(calibratedRed: 0.18, green: 0.16, blue: 0.14, alpha: 1.0),
                 textSecondary: NSColor(calibratedRed: 0.48, green: 0.44, blue: 0.40, alpha: 1.0),
@@ -298,6 +300,7 @@ enum AppTheme: String, Codable, CaseIterable {
         case .mintGreen:
             return ThemeColors(
                 background: NSColor(calibratedRed: 0.941, green: 0.992, blue: 0.957, alpha: 1.0), // #F0FDF4
+                sidebarBackground: NSColor(calibratedRed: 0.906, green: 0.965, blue: 0.925, alpha: 1.0), // #E7F6EC
                 accent: NSColor(calibratedRed: 0.086, green: 0.639, blue: 0.290, alpha: 1.0), // #16A34A
                 textPrimary: NSColor(calibratedRed: 0.10, green: 0.18, blue: 0.12, alpha: 1.0),
                 textSecondary: NSColor(calibratedRed: 0.30, green: 0.44, blue: 0.34, alpha: 1.0),
@@ -309,6 +312,7 @@ enum AppTheme: String, Codable, CaseIterable {
         case .lightBlue:
             return ThemeColors(
                 background: NSColor(calibratedRed: 0.937, green: 0.965, blue: 1.0, alpha: 1.0), // #EFF6FF
+                sidebarBackground: NSColor(calibratedRed: 0.902, green: 0.933, blue: 0.973, alpha: 1.0), // #E6EEF8
                 accent: NSColor(calibratedRed: 0.145, green: 0.388, blue: 0.922, alpha: 1.0), // #2563EB
                 textPrimary: NSColor(calibratedRed: 0.10, green: 0.14, blue: 0.22, alpha: 1.0),
                 textSecondary: NSColor(calibratedRed: 0.30, green: 0.38, blue: 0.50, alpha: 1.0),
@@ -320,6 +324,7 @@ enum AppTheme: String, Codable, CaseIterable {
         case .classicDark:
             return ThemeColors(
                 background: NSColor(calibratedRed: 0.098, green: 0.098, blue: 0.098, alpha: 1.0), // #191919
+                sidebarBackground: NSColor(calibratedRed: 0.075, green: 0.075, blue: 0.075, alpha: 1.0), // #131313
                 accent: NSColor(calibratedRed: 0.322, green: 0.612, blue: 0.792, alpha: 1.0), // #529CCA
                 textPrimary: NSColor(calibratedRed: 0.90, green: 0.90, blue: 0.90, alpha: 1.0),
                 textSecondary: NSColor(calibratedRed: 0.60, green: 0.60, blue: 0.60, alpha: 1.0),
@@ -331,6 +336,7 @@ enum AppTheme: String, Codable, CaseIterable {
         case .deepOcean:
             return ThemeColors(
                 background: NSColor(calibratedRed: 0.059, green: 0.106, blue: 0.176, alpha: 1.0), // #0F1B2D
+                sidebarBackground: NSColor(calibratedRed: 0.043, green: 0.082, blue: 0.145, alpha: 1.0), // #0B1525
                 accent: NSColor(calibratedRed: 0.376, green: 0.647, blue: 0.980, alpha: 1.0), // #60A5FA
                 textPrimary: NSColor(calibratedRed: 0.88, green: 0.92, blue: 0.96, alpha: 1.0),
                 textSecondary: NSColor(calibratedRed: 0.50, green: 0.58, blue: 0.68, alpha: 1.0),
@@ -342,6 +348,7 @@ enum AppTheme: String, Codable, CaseIterable {
         case .inkGreen:
             return ThemeColors(
                 background: NSColor(calibratedRed: 0.051, green: 0.122, blue: 0.090, alpha: 1.0), // #0D1F17
+                sidebarBackground: NSColor(calibratedRed: 0.035, green: 0.094, blue: 0.067, alpha: 1.0), // #091811
                 accent: NSColor(calibratedRed: 0.290, green: 0.871, blue: 0.502, alpha: 1.0), // #4ADE80
                 textPrimary: NSColor(calibratedRed: 0.88, green: 0.95, blue: 0.90, alpha: 1.0),
                 textSecondary: NSColor(calibratedRed: 0.50, green: 0.62, blue: 0.54, alpha: 1.0),
@@ -353,6 +360,7 @@ enum AppTheme: String, Codable, CaseIterable {
         case .pureBlack:
             return ThemeColors(
                 background: NSColor(calibratedRed: 0.0, green: 0.0, blue: 0.0, alpha: 1.0), // #000000
+                sidebarBackground: NSColor(calibratedRed: 0.035, green: 0.035, blue: 0.04, alpha: 1.0), // #090909
                 accent: NSColor(calibratedRed: 0.655, green: 0.545, blue: 0.980, alpha: 1.0), // #A78BFA
                 textPrimary: NSColor(calibratedRed: 0.92, green: 0.92, blue: 0.95, alpha: 1.0),
                 textSecondary: NSColor(calibratedRed: 0.58, green: 0.58, blue: 0.63, alpha: 1.0),
@@ -396,6 +404,7 @@ enum AppTheme: String, Codable, CaseIterable {
 
 struct ThemeColors {
     let nsBackground: NSColor
+    let nsSidebarBackground: NSColor
     let nsAccent: NSColor
     let nsTextPrimary: NSColor
     let nsTextSecondary: NSColor
@@ -404,9 +413,10 @@ struct ThemeColors {
     let nsSeparator: NSColor
     let nsFavoriteStar: NSColor
 
-    init(background: NSColor, accent: NSColor, textPrimary: NSColor, textSecondary: NSColor,
+    init(background: NSColor, sidebarBackground: NSColor, accent: NSColor, textPrimary: NSColor, textSecondary: NSColor,
          textTertiary: NSColor, rowHighlight: NSColor, separator: NSColor, favoriteStar: NSColor) {
         self.nsBackground = background
+        self.nsSidebarBackground = sidebarBackground
         self.nsAccent = accent
         self.nsTextPrimary = textPrimary
         self.nsTextSecondary = textSecondary
@@ -423,6 +433,7 @@ import SwiftUI
 
 extension ThemeColors {
     var swBackground: Color { Color(nsColor: nsBackground) }
+    var swSidebarBackground: Color { Color(nsColor: nsSidebarBackground) }
     var swAccent: Color { Color(nsColor: nsAccent) }
     var swTextPrimary: Color { Color(nsColor: nsTextPrimary) }
     var swTextSecondary: Color { Color(nsColor: nsTextSecondary) }

@@ -6,6 +6,9 @@ import ServiceManagement
 struct PreferencesView: View {
     @ObservedObject private var configStore = ConfigStore.shared
 
+    /// 当前主题颜色（便捷访问）
+    private var themeColors: ThemeColors { configStore.currentThemeColors }
+
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 24) {
@@ -16,6 +19,7 @@ struct PreferencesView: View {
             }
             .padding()
         }
+        .background(themeColors.swBackground)
         .navigationTitle("")
         .onDisappear {
             configStore.save()
@@ -28,6 +32,7 @@ struct PreferencesView: View {
         VStack(alignment: .leading, spacing: 12) {
             Text("快捷键")
                 .font(.headline)
+                .foregroundStyle(themeColors.swTextPrimary)
 
             VStack(spacing: 8) {
                 hotkeyRow(label: "显示/隐藏", config: $configStore.preferences.hotkeyToggle)
@@ -40,6 +45,7 @@ struct PreferencesView: View {
     private func hotkeyRow(label: String, config: Binding<HotkeyConfig>) -> some View {
         HStack {
             Text(label)
+                .foregroundStyle(themeColors.swTextSecondary)
                 .frame(width: 120, alignment: .leading)
 
             HotkeyRecorderButton(config: config)
@@ -54,11 +60,12 @@ struct PreferencesView: View {
         VStack(alignment: .leading, spacing: 12) {
             Text("主题")
                 .font(.headline)
+                .foregroundStyle(themeColors.swTextPrimary)
 
             // 浅色主题
             Text("浅色")
                 .font(.subheadline)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(themeColors.swTextSecondary)
 
             LazyVGrid(columns: [GridItem(.adaptive(minimum: 120), spacing: 12)], spacing: 12) {
                 ForEach(AppTheme.lightThemes, id: \.self) { theme in
@@ -69,7 +76,7 @@ struct PreferencesView: View {
             // 深色主题
             Text("深色")
                 .font(.subheadline)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(themeColors.swTextSecondary)
 
             LazyVGrid(columns: [GridItem(.adaptive(minimum: 120), spacing: 12)], spacing: 12) {
                 ForEach(AppTheme.darkThemes, id: \.self) { theme in
@@ -138,61 +145,70 @@ struct PreferencesView: View {
         VStack(alignment: .leading, spacing: 12) {
             Text("外观")
                 .font(.headline)
+                .foregroundStyle(themeColors.swTextPrimary)
 
             // 悬浮球大小滑块
             HStack {
                 Text("悬浮球大小")
+                    .foregroundStyle(themeColors.swTextSecondary)
                     .frame(width: 100, alignment: .leading)
                 Slider(
                     value: $configStore.preferences.ballSize,
                     in: Constants.Ball.minSize...Constants.Ball.maxSize,
                     step: 1
                 )
+                .tint(themeColors.swAccent)
                 Text("\(Int(configStore.preferences.ballSize))px")
                     .frame(width: 50)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(themeColors.swTextTertiary)
             }
 
             // 悬浮球透明度滑块
             HStack {
                 Text("悬浮球透明度")
+                    .foregroundStyle(themeColors.swTextSecondary)
                     .frame(width: 100, alignment: .leading)
                 Slider(
                     value: $configStore.preferences.ballOpacity,
                     in: 0.3...1.0,
                     step: 0.05
                 )
+                .tint(themeColors.swAccent)
                 Text("\(Int(configStore.preferences.ballOpacity * 100))%")
                     .frame(width: 50)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(themeColors.swTextTertiary)
             }
 
             // 面板透明度滑块
             HStack {
                 Text("面板透明度")
+                    .foregroundStyle(themeColors.swTextSecondary)
                     .frame(width: 100, alignment: .leading)
                 Slider(
                     value: $configStore.preferences.panelOpacity,
                     in: 0.3...1.0,
                     step: 0.05
                 )
+                .tint(themeColors.swAccent)
                 Text("\(Int(configStore.preferences.panelOpacity * 100))%")
                     .frame(width: 50)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(themeColors.swTextTertiary)
             }
 
             // 面板弹出动画速度滑块
             HStack {
                 Text("弹出动画")
+                    .foregroundStyle(themeColors.swTextSecondary)
                     .frame(width: 100, alignment: .leading)
                 Slider(
                     value: $configStore.preferences.panelAnimationSpeed,
                     in: 0.1...0.6,
                     step: 0.05
                 )
+                .tint(themeColors.swAccent)
                 Text("\(Int(configStore.preferences.panelAnimationSpeed * 1000))ms")
                     .frame(width: 50)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(themeColors.swTextTertiary)
             }
         }
     }
@@ -203,11 +219,14 @@ struct PreferencesView: View {
         VStack(alignment: .leading, spacing: 12) {
             Text("通用")
                 .font(.headline)
+                .foregroundStyle(themeColors.swTextPrimary)
 
             Toggle("hover 离开后自动收起面板", isOn: $configStore.preferences.autoRetractOnHover)
+                .tint(themeColors.swAccent)
 
             // 开机自启动
             Toggle("开机自启动", isOn: $configStore.preferences.launchAtLogin)
+                .tint(themeColors.swAccent)
                 .onChange(of: configStore.preferences.launchAtLogin) { _, newValue in
                     if newValue {
                         try? SMAppService.mainApp.register()

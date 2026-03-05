@@ -270,9 +270,12 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     // MARK: - 偏好设置应用
 
     /// 监听偏好设置变化，实时应用到悬浮球
+    /// 注意：@Published 在 willSet 阶段发布，此时 ConfigStore.shared.preferences 仍为旧值。
+    /// 使用 receive(on:) 延迟到下一个 RunLoop 迭代，确保下游代码从 ConfigStore.shared 读取到新值。
     private func observePreferences() {
         preferencesObserver = ConfigStore.shared.$preferences
             .dropFirst() // 跳过初始值（已在 applyPreferences 中处理）
+            .receive(on: DispatchQueue.main)
             .sink { [weak self] prefs in
                 self?.applyPreferences(prefs)
             }
