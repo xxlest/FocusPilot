@@ -205,31 +205,231 @@ struct Preferences: Codable {
     var ballSize: CGFloat = 35
     var ballOpacity: CGFloat = 0.8
     var panelOpacity: CGFloat = 0.9
-    var colorTheme: ColorTheme = .system
-    var ballColorStyle: BallColorStyle = .blue
-    var ballCustomColorHex: String = "#FF8800"
+    var appTheme: AppTheme = .defaultWhite
     var launchAtLogin: Bool = false
     var hotkeyToggle: HotkeyConfig = .toggleDefault
     var hotkeyKanban: HotkeyConfig = .kanbanDefault
     var autoRetractOnHover: Bool = true
+    var panelAnimationSpeed: CGFloat = 0.25  // 面板弹出动画时长（秒），0.1-0.6
 
-    // 自定义解码：兼容旧数据
+    // 自定义解码：兼容旧数据（保留旧字段 CodingKey 以避免解码崩溃）
+    private enum CodingKeys: String, CodingKey {
+        case ballSize, ballOpacity, panelOpacity, appTheme
+        case launchAtLogin, hotkeyToggle, hotkeyKanban
+        case autoRetractOnHover, panelAnimationSpeed
+        // 旧字段（解码时忽略，兼容升级）
+        case colorTheme, ballColorStyle, ballCustomColorHex
+    }
+
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         ballSize = try container.decodeIfPresent(CGFloat.self, forKey: .ballSize) ?? 35
         ballOpacity = try container.decodeIfPresent(CGFloat.self, forKey: .ballOpacity) ?? 0.8
         panelOpacity = try container.decodeIfPresent(CGFloat.self, forKey: .panelOpacity) ?? 0.9
-        colorTheme = try container.decodeIfPresent(ColorTheme.self, forKey: .colorTheme) ?? .system
-        ballColorStyle = try container.decodeIfPresent(BallColorStyle.self, forKey: .ballColorStyle) ?? .blue
-        ballCustomColorHex = try container.decodeIfPresent(String.self, forKey: .ballCustomColorHex) ?? "#FF8800"
+        appTheme = try container.decodeIfPresent(AppTheme.self, forKey: .appTheme) ?? .defaultWhite
         launchAtLogin = try container.decodeIfPresent(Bool.self, forKey: .launchAtLogin) ?? false
-        // 快捷键：兼容旧版本（旧版字段名可能不同，统一用默认值兜底）
         hotkeyToggle = (try? container.decode(HotkeyConfig.self, forKey: .hotkeyToggle)) ?? .toggleDefault
         hotkeyKanban = (try? container.decode(HotkeyConfig.self, forKey: .hotkeyKanban)) ?? .kanbanDefault
         autoRetractOnHover = try container.decodeIfPresent(Bool.self, forKey: .autoRetractOnHover) ?? true
+        panelAnimationSpeed = try container.decodeIfPresent(CGFloat.self, forKey: .panelAnimationSpeed) ?? 0.25
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(ballSize, forKey: .ballSize)
+        try container.encode(ballOpacity, forKey: .ballOpacity)
+        try container.encode(panelOpacity, forKey: .panelOpacity)
+        try container.encode(appTheme, forKey: .appTheme)
+        try container.encode(launchAtLogin, forKey: .launchAtLogin)
+        try container.encode(hotkeyToggle, forKey: .hotkeyToggle)
+        try container.encode(hotkeyKanban, forKey: .hotkeyKanban)
+        try container.encode(autoRetractOnHover, forKey: .autoRetractOnHover)
+        try container.encode(panelAnimationSpeed, forKey: .panelAnimationSpeed)
     }
 
     init() {}
+}
+
+// MARK: - Notion 风格主题
+
+enum AppTheme: String, Codable, CaseIterable {
+    case defaultWhite = "默认白"
+    case warmIvory    = "暖象牙"
+    case mintGreen    = "薄荷绿"
+    case lightBlue    = "淡天蓝"
+    case classicDark  = "经典深"
+    case deepOcean    = "深海蓝"
+    case inkGreen     = "墨绿"
+    case pureBlack    = "纯黑"
+
+    /// 该主题是否为深色
+    var isDark: Bool {
+        switch self {
+        case .defaultWhite, .warmIvory, .mintGreen, .lightBlue: return false
+        case .classicDark, .deepOcean, .inkGreen, .pureBlack:   return true
+        }
+    }
+
+    /// 主题颜色集
+    var colors: ThemeColors {
+        switch self {
+        case .defaultWhite:
+            return ThemeColors(
+                background: NSColor(calibratedRed: 1.0, green: 1.0, blue: 1.0, alpha: 1.0),
+                accent: NSColor(calibratedRed: 0.137, green: 0.514, blue: 0.886, alpha: 1.0), // #2383E2
+                textPrimary: NSColor(calibratedRed: 0.145, green: 0.145, blue: 0.145, alpha: 1.0),
+                textSecondary: NSColor(calibratedRed: 0.455, green: 0.455, blue: 0.455, alpha: 1.0),
+                textTertiary: NSColor(calibratedRed: 0.627, green: 0.627, blue: 0.627, alpha: 1.0),
+                rowHighlight: NSColor(calibratedRed: 0.137, green: 0.514, blue: 0.886, alpha: 0.08),
+                separator: NSColor(calibratedRed: 0.878, green: 0.878, blue: 0.878, alpha: 1.0),
+                favoriteStar: NSColor(calibratedRed: 0.95, green: 0.77, blue: 0.06, alpha: 1.0)
+            )
+        case .warmIvory:
+            return ThemeColors(
+                background: NSColor(calibratedRed: 0.984, green: 0.973, blue: 0.957, alpha: 1.0), // #FBF8F4
+                accent: NSColor(calibratedRed: 0.851, green: 0.467, blue: 0.024, alpha: 1.0), // #D97706
+                textPrimary: NSColor(calibratedRed: 0.18, green: 0.16, blue: 0.14, alpha: 1.0),
+                textSecondary: NSColor(calibratedRed: 0.48, green: 0.44, blue: 0.40, alpha: 1.0),
+                textTertiary: NSColor(calibratedRed: 0.65, green: 0.60, blue: 0.56, alpha: 1.0),
+                rowHighlight: NSColor(calibratedRed: 0.851, green: 0.467, blue: 0.024, alpha: 0.08),
+                separator: NSColor(calibratedRed: 0.88, green: 0.85, blue: 0.80, alpha: 1.0),
+                favoriteStar: NSColor(calibratedRed: 0.95, green: 0.77, blue: 0.06, alpha: 1.0)
+            )
+        case .mintGreen:
+            return ThemeColors(
+                background: NSColor(calibratedRed: 0.941, green: 0.992, blue: 0.957, alpha: 1.0), // #F0FDF4
+                accent: NSColor(calibratedRed: 0.086, green: 0.639, blue: 0.290, alpha: 1.0), // #16A34A
+                textPrimary: NSColor(calibratedRed: 0.10, green: 0.18, blue: 0.12, alpha: 1.0),
+                textSecondary: NSColor(calibratedRed: 0.30, green: 0.44, blue: 0.34, alpha: 1.0),
+                textTertiary: NSColor(calibratedRed: 0.48, green: 0.60, blue: 0.52, alpha: 1.0),
+                rowHighlight: NSColor(calibratedRed: 0.086, green: 0.639, blue: 0.290, alpha: 0.08),
+                separator: NSColor(calibratedRed: 0.80, green: 0.90, blue: 0.84, alpha: 1.0),
+                favoriteStar: NSColor(calibratedRed: 0.95, green: 0.77, blue: 0.06, alpha: 1.0)
+            )
+        case .lightBlue:
+            return ThemeColors(
+                background: NSColor(calibratedRed: 0.937, green: 0.965, blue: 1.0, alpha: 1.0), // #EFF6FF
+                accent: NSColor(calibratedRed: 0.145, green: 0.388, blue: 0.922, alpha: 1.0), // #2563EB
+                textPrimary: NSColor(calibratedRed: 0.10, green: 0.14, blue: 0.22, alpha: 1.0),
+                textSecondary: NSColor(calibratedRed: 0.30, green: 0.38, blue: 0.50, alpha: 1.0),
+                textTertiary: NSColor(calibratedRed: 0.48, green: 0.55, blue: 0.65, alpha: 1.0),
+                rowHighlight: NSColor(calibratedRed: 0.145, green: 0.388, blue: 0.922, alpha: 0.08),
+                separator: NSColor(calibratedRed: 0.82, green: 0.87, blue: 0.94, alpha: 1.0),
+                favoriteStar: NSColor(calibratedRed: 0.95, green: 0.77, blue: 0.06, alpha: 1.0)
+            )
+        case .classicDark:
+            return ThemeColors(
+                background: NSColor(calibratedRed: 0.098, green: 0.098, blue: 0.098, alpha: 1.0), // #191919
+                accent: NSColor(calibratedRed: 0.322, green: 0.612, blue: 0.792, alpha: 1.0), // #529CCA
+                textPrimary: NSColor(calibratedRed: 0.90, green: 0.90, blue: 0.90, alpha: 1.0),
+                textSecondary: NSColor(calibratedRed: 0.60, green: 0.60, blue: 0.60, alpha: 1.0),
+                textTertiary: NSColor(calibratedRed: 0.42, green: 0.42, blue: 0.42, alpha: 1.0),
+                rowHighlight: NSColor(calibratedRed: 0.322, green: 0.612, blue: 0.792, alpha: 0.12),
+                separator: NSColor(calibratedRed: 0.22, green: 0.22, blue: 0.22, alpha: 1.0),
+                favoriteStar: NSColor(calibratedRed: 0.95, green: 0.77, blue: 0.06, alpha: 1.0)
+            )
+        case .deepOcean:
+            return ThemeColors(
+                background: NSColor(calibratedRed: 0.059, green: 0.106, blue: 0.176, alpha: 1.0), // #0F1B2D
+                accent: NSColor(calibratedRed: 0.376, green: 0.647, blue: 0.980, alpha: 1.0), // #60A5FA
+                textPrimary: NSColor(calibratedRed: 0.88, green: 0.92, blue: 0.96, alpha: 1.0),
+                textSecondary: NSColor(calibratedRed: 0.50, green: 0.58, blue: 0.68, alpha: 1.0),
+                textTertiary: NSColor(calibratedRed: 0.35, green: 0.42, blue: 0.52, alpha: 1.0),
+                rowHighlight: NSColor(calibratedRed: 0.376, green: 0.647, blue: 0.980, alpha: 0.12),
+                separator: NSColor(calibratedRed: 0.14, green: 0.20, blue: 0.30, alpha: 1.0),
+                favoriteStar: NSColor(calibratedRed: 0.95, green: 0.77, blue: 0.06, alpha: 1.0)
+            )
+        case .inkGreen:
+            return ThemeColors(
+                background: NSColor(calibratedRed: 0.051, green: 0.122, blue: 0.090, alpha: 1.0), // #0D1F17
+                accent: NSColor(calibratedRed: 0.290, green: 0.871, blue: 0.502, alpha: 1.0), // #4ADE80
+                textPrimary: NSColor(calibratedRed: 0.88, green: 0.95, blue: 0.90, alpha: 1.0),
+                textSecondary: NSColor(calibratedRed: 0.50, green: 0.62, blue: 0.54, alpha: 1.0),
+                textTertiary: NSColor(calibratedRed: 0.35, green: 0.46, blue: 0.40, alpha: 1.0),
+                rowHighlight: NSColor(calibratedRed: 0.290, green: 0.871, blue: 0.502, alpha: 0.12),
+                separator: NSColor(calibratedRed: 0.12, green: 0.22, blue: 0.16, alpha: 1.0),
+                favoriteStar: NSColor(calibratedRed: 0.95, green: 0.77, blue: 0.06, alpha: 1.0)
+            )
+        case .pureBlack:
+            return ThemeColors(
+                background: NSColor(calibratedRed: 0.0, green: 0.0, blue: 0.0, alpha: 1.0), // #000000
+                accent: NSColor(calibratedRed: 0.655, green: 0.545, blue: 0.980, alpha: 1.0), // #A78BFA
+                textPrimary: NSColor(calibratedRed: 0.92, green: 0.92, blue: 0.95, alpha: 1.0),
+                textSecondary: NSColor(calibratedRed: 0.58, green: 0.58, blue: 0.63, alpha: 1.0),
+                textTertiary: NSColor(calibratedRed: 0.40, green: 0.40, blue: 0.44, alpha: 1.0),
+                rowHighlight: NSColor(calibratedRed: 0.655, green: 0.545, blue: 0.980, alpha: 0.12),
+                separator: NSColor(calibratedRed: 0.16, green: 0.16, blue: 0.18, alpha: 1.0),
+                favoriteStar: NSColor(calibratedRed: 0.95, green: 0.77, blue: 0.06, alpha: 1.0)
+            )
+        }
+    }
+
+    /// 悬浮球渐变色（从 accent 自动派生）
+    var ballGradientColors: (light: NSColor, medium: NSColor, dark: NSColor) {
+        let accent = colors.nsAccent
+        let light = accent.blended(withFraction: 0.3, of: .white) ?? accent
+        let dark = accent.blended(withFraction: 0.4, of: .black) ?? accent
+        return (light, accent, dark)
+    }
+
+    /// 面板毛玻璃材质
+    var panelMaterial: Int {
+        // NSVisualEffectView.Material 的 rawValue: .light=1, .dark=2
+        isDark ? 2 : 1
+    }
+
+    /// 显示名称
+    var displayName: String { rawValue }
+
+    /// 浅色主题列表
+    static var lightThemes: [AppTheme] {
+        [.defaultWhite, .warmIvory, .mintGreen, .lightBlue]
+    }
+
+    /// 深色主题列表
+    static var darkThemes: [AppTheme] {
+        [.classicDark, .deepOcean, .inkGreen, .pureBlack]
+    }
+}
+
+// MARK: - 主题颜色集
+
+struct ThemeColors {
+    let nsBackground: NSColor
+    let nsAccent: NSColor
+    let nsTextPrimary: NSColor
+    let nsTextSecondary: NSColor
+    let nsTextTertiary: NSColor
+    let nsRowHighlight: NSColor
+    let nsSeparator: NSColor
+    let nsFavoriteStar: NSColor
+
+    init(background: NSColor, accent: NSColor, textPrimary: NSColor, textSecondary: NSColor,
+         textTertiary: NSColor, rowHighlight: NSColor, separator: NSColor, favoriteStar: NSColor) {
+        self.nsBackground = background
+        self.nsAccent = accent
+        self.nsTextPrimary = textPrimary
+        self.nsTextSecondary = textSecondary
+        self.nsTextTertiary = textTertiary
+        self.nsRowHighlight = rowHighlight
+        self.nsSeparator = separator
+        self.nsFavoriteStar = favoriteStar
+    }
+}
+
+// MARK: - ThemeColors SwiftUI 扩展
+
+import SwiftUI
+
+extension ThemeColors {
+    var swBackground: Color { Color(nsColor: nsBackground) }
+    var swAccent: Color { Color(nsColor: nsAccent) }
+    var swTextPrimary: Color { Color(nsColor: nsTextPrimary) }
+    var swTextSecondary: Color { Color(nsColor: nsTextSecondary) }
+    var swTextTertiary: Color { Color(nsColor: nsTextTertiary) }
+    var swRowHighlight: Color { Color(nsColor: nsRowHighlight) }
+    var swSeparator: Color { Color(nsColor: nsSeparator) }
+    var swFavoriteStar: Color { Color(nsColor: nsFavoriteStar) }
 }
 
 enum ColorTheme: String, Codable, CaseIterable {

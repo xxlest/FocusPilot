@@ -1,8 +1,8 @@
 # Focus Copilot 架构设计文档
 
-> **版本**：V3.5
+> **版本**：V3.7
 > **日期**：2026-03-05
-> **基于**：PRD V3.5
+> **基于**：PRD V3.7
 
 ---
 
@@ -49,6 +49,29 @@ FocusPilot/
 ```
 
 ### 版本变更说明
+
+**V3.7 相比 V3.6 的关键变更**：
+
+- Models.swift：新增 `AppTheme`（8 个 Notion 风格主题枚举）和 `ThemeColors`（8 色槽结构体，ns* + sw* 双套属性）
+- Preferences：新增 `appTheme: AppTheme = .defaultWhite`，移除 `colorTheme`/`ballColorStyle`/`ballCustomColorHex`（保留旧 CodingKey 兼容解码）
+- Constants：新增 `themeChanged` 通知名
+- ConfigStore：新增 `currentThemeColors` 便捷属性
+- QuickPanelWindow：新增 `effectView`/`bgOverlayView` 实例属性 + `applyTheme()` 方法，背景色叠加半透明主题层
+- QuickPanelView：所有 `.labelColor`/`.secondaryLabelColor`/`.controlAccentColor` 替换为 `colors.nsTextPrimary`/`nsTextSecondary`/`nsAccent`，新增 `applyTheme()` 方法
+- QuickPanelRowBuilder：`.systemYellow` → `colors.nsFavoriteStar`，运行状态点改为 NSView 圆点（主题色）替代 emoji
+- FloatingBallView：`currentGradientColors()` 改为读取 `appTheme.ballGradientColors`，不再依赖 BallColorStyle
+- PreferencesView：移除"悬浮球颜色"6 色圆点 + 自定义取色器 + "颜色主题" Picker，新增浅色 4 卡片 + 深色 4 卡片的主题选择网格
+- AppConfigView：运行状态点 → `swAccent`，收藏星标 → `swFavoriteStar`
+- MainKanbanView：侧边栏背景 → `swBackground`
+- AppDelegate.applyPreferences：设置 `NSApp.appearance`（浅色/深色），调用 `quickPanelWindow.applyTheme()`，发送 `themeChanged` 通知
+
+**主题切换刷新链路**：
+```
+PreferencesView → @Published → AppDelegate.applyPreferences()
+  → NSApp.appearance 更新 → ballView.updateColorStyle()
+  → quickPanelWindow.applyTheme() → panelView.forceReload()
+  → post themeChanged 通知
+```
 
 **V3.3 相比 V3.2 的关键变更**：
 
@@ -175,29 +198,36 @@ enum ScreenEdge: String, Codable {
 
 // 偏好设置（持久化）
 struct Preferences: Codable {
-    var ballSize: CGFloat = 40        // 30-60px
+    var ballSize: CGFloat = 35        // 30-60px
     var ballOpacity: CGFloat = 0.8    // 0.3-1.0
     var panelOpacity: CGFloat = 0.9   // 0.3-1.0（快捷面板透明度）
-    var colorTheme: ColorTheme = .system
-    var ballColorStyle: BallColorStyle = .orange  // 悬浮球颜色风格
-    var ballCustomColorHex: String = "#FF8800"    // 自定义颜色 hex
+    var appTheme: AppTheme = .defaultWhite  // V3.7：Notion 风格主题
     var launchAtLogin: Bool = false
     var autoRetractOnHover: Bool = true  // V3.3：hover 离开后是否自动收起面板
-    var hotkeyBallToggle: String = "⌘⇧B"
-    // 自定义 init(from:) 兼容旧数据（所有新字段用 decodeIfPresent）
+    var hotkeyToggle: HotkeyConfig
+    var hotkeyKanban: HotkeyConfig
+    var panelAnimationSpeed: CGFloat = 0.25
+    // 自定义 CodingKeys 保留旧字段（colorTheme/ballColorStyle/ballCustomColorHex）兼容解码
 }
 
-enum ColorTheme: String, Codable, CaseIterable {
-    case system = "跟随系统"
-    case light = "浅色"
-    case dark = "深色"
+// V3.7：Notion 风格主题（8 种预设）
+enum AppTheme: String, Codable, CaseIterable {
+    case defaultWhite, warmIvory, mintGreen, lightBlue  // 浅色
+    case classicDark, deepOcean, inkGreen, pureBlack    // 深色
+    var colors: ThemeColors       // 8 色槽（background, accent, textPrimary, ...)
+    var isDark: Bool
+    var ballGradientColors        // 从 accent 自动派生
+    var panelMaterial: Int        // .light=1 / .dark=2
+}
 
-enum BallColorStyle: String, Codable, CaseIterable {
-    case orange, blue, green, purple, pink, gray, custom
-    // 每个风格定义三级渐变色（浅、中、深）
-    // custom 模式从 ballCustomColorHex 生成渐变
+struct ThemeColors {
+    // NSColor 属性：nsBackground, nsAccent, nsTextPrimary, nsTextSecondary, nsTextTertiary, nsRowHighlight, nsSeparator, nsFavoriteStar
+    // SwiftUI 扩展：swBackground, swAccent, swTextPrimary, ...
 }
-}
+
+// 旧枚举保留定义不删（兼容），新代码不再引用
+enum ColorTheme: String, Codable, CaseIterable { ... }
+enum BallColorStyle: String, Codable, CaseIterable { ... }
 ```
 
 ### 2.2 ConfigStore 契约
@@ -472,7 +502,7 @@ QuickPanelView（V3.2 交互模式）
      │                         └── ConfigStore.windowRenames["{bundleID}::{CGWindowID}"]
      │── 点击顶部主界面按钮 ──▶ ballOpenMainKanban 通知（切换主看板显示/隐藏）
      │
-     │── 读取数据 ─────────────▶ AppMonitor.runningApps（活跃 Tab：有窗口的 App）
+     │── 读取数据 ─────────────▶ AppMonitor.runningApps（活跃 Tab：有窗口的 App，收藏优先排序）
      │                       ▶ ConfigStore.appConfigs（收藏 Tab）
      │                       ▶ ConfigStore.windowRenames
      │                       ▶ ConfigStore.lastPanelTab（Tab 记忆恢复）
@@ -529,7 +559,7 @@ AppConfigView（收藏管理页面）
 
 | 当前状态 | 触发条件 | 目标状态 | 副作用 |
 |---|---|---|---|
-| 隐藏 | 悬浮球 hover 150ms | 显示（未钉住） | startWindowRefresh()（已由 mouseEntered 预热），恢复 lastPanelTab |
+| 隐藏 | 悬浮球 hover 150ms | 显示（未钉住） | startWindowRefresh()（已由 mouseEntered 预热），恢复 lastPanelTab，活跃 Tab 收藏优先排序 |
 | 隐藏 | 悬浮球单击 | 显示（钉住） | startWindowRefresh()，恢复 lastPanelTab |
 | 显示（未钉住） | 鼠标离开 500ms（autoRetractOnHover=true） | 隐藏 | stopWindowRefresh()，highlightedWindowID = nil |
 | 显示（未钉住） | 鼠标离开（autoRetractOnHover=false） | 显示（未钉住） | 面板保持显示，不触发 dismissTimer |

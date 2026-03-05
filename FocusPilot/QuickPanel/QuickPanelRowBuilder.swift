@@ -45,7 +45,7 @@ extension QuickPanelView {
 
     /// 添加居中空状态提示文案到 contentStack
     func addEmptyStateLabel(_ text: String) {
-        let label = createLabel(text, size: 13, color: .secondaryLabelColor)
+        let label = createLabel(text, size: 13, color: ConfigStore.shared.currentThemeColors.nsTextSecondary)
         label.alignment = .center
         label.translatesAutoresizingMaskIntoConstraints = false
         contentStack.addArrangedSubview(label)
@@ -98,6 +98,7 @@ extension QuickPanelView {
     // MARK: - 创建 App 行（统一实现）
 
     func createAppRow(bundleID: String, name: String, icon: NSImage, isRunning: Bool, windows: [WindowInfo]) -> NSView {
+        let colors = ConfigStore.shared.currentThemeColors
         let row = HoverableRowView()
         row.translatesAutoresizingMaskIntoConstraints = false
 
@@ -124,7 +125,7 @@ extension QuickPanelView {
             starButton.bezelStyle = .recessed
             starButton.isBordered = false
             starButton.image = Self.cachedSymbol(name: isFav ? "star.fill" : "star", size: 11, weight: .regular)
-            starButton.contentTintColor = isFav ? .systemYellow : .tertiaryLabelColor
+            starButton.contentTintColor = isFav ? colors.nsFavoriteStar : colors.nsTextTertiary
             starButton.toolTip = isFav ? "取消收藏" : "添加到收藏"
             starButton.target = self
             starButton.action = #selector(handleToggleFavorite(_:))
@@ -138,9 +139,17 @@ extension QuickPanelView {
             rowStack.addArrangedSubview(starButton)
         }
 
-        // 运行状态指示器
-        let statusDot = createLabel(isRunning ? "🟢" : "⚪", size: 8, color: .labelColor)
-        rowStack.addArrangedSubview(statusDot)
+        // 运行状态指示器（使用主题 accent 色圆点替代 emoji）
+        let statusDotView = NSView()
+        statusDotView.wantsLayer = true
+        statusDotView.layer?.cornerRadius = 4
+        statusDotView.layer?.backgroundColor = (isRunning ? colors.nsAccent : colors.nsTextTertiary.withAlphaComponent(0.4)).cgColor
+        statusDotView.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            statusDotView.widthAnchor.constraint(equalToConstant: 8),
+            statusDotView.heightAnchor.constraint(equalToConstant: 8),
+        ])
+        rowStack.addArrangedSubview(statusDotView)
 
         // App 图标 16x16
         let iconView = NSImageView()
@@ -153,7 +162,7 @@ extension QuickPanelView {
         rowStack.addArrangedSubview(iconView)
 
         // App 名称
-        let nameLabel = createLabel(name, size: 12, color: isRunning ? .labelColor : .tertiaryLabelColor)
+        let nameLabel = createLabel(name, size: 12, color: isRunning ? colors.nsTextPrimary : colors.nsTextTertiary)
         rowStack.addArrangedSubview(nameLabel)
 
         // 弹性空间
@@ -161,7 +170,7 @@ extension QuickPanelView {
 
         // 窗口数量 + 折叠/展开指示器（有窗口时显示）
         if !windows.isEmpty {
-            let countLabel = createLabel("\(windows.count) 个窗口", size: 11, color: .secondaryLabelColor)
+            let countLabel = createLabel("\(windows.count) 个窗口", size: 11, color: colors.nsTextSecondary)
             rowStack.addArrangedSubview(countLabel)
 
             let isCollapsed = collapsedApps.contains(bundleID)
@@ -169,7 +178,7 @@ extension QuickPanelView {
             let chevronView = NSImageView()
             chevronView.translatesAutoresizingMaskIntoConstraints = false
             chevronView.image = Self.cachedSymbol(name: chevronName, size: 10, weight: .medium)
-            chevronView.contentTintColor = .secondaryLabelColor
+            chevronView.contentTintColor = colors.nsTextSecondary
             NSLayoutConstraint.activate([
                 chevronView.widthAnchor.constraint(equalToConstant: 14),
                 chevronView.heightAnchor.constraint(equalToConstant: 14),
@@ -252,6 +261,7 @@ extension QuickPanelView {
     // MARK: - 创建窗口行
 
     func createWindowRow(windowInfo: WindowInfo, bundleID: String) -> NSView {
+        let colors = ConfigStore.shared.currentThemeColors
         let row = HoverableRowView()
         row.translatesAutoresizingMaskIntoConstraints = false
         row.windowID = windowInfo.id
@@ -277,7 +287,7 @@ extension QuickPanelView {
         let windowIconView = NSImageView()
         windowIconView.translatesAutoresizingMaskIntoConstraints = false
         windowIconView.image = Self.cachedSymbol(name: "macwindow", size: 10, weight: .regular)
-        windowIconView.contentTintColor = .secondaryLabelColor
+        windowIconView.contentTintColor = colors.nsTextSecondary
         NSLayoutConstraint.activate([
             windowIconView.widthAnchor.constraint(equalToConstant: 14),
             windowIconView.heightAnchor.constraint(equalToConstant: 14),
@@ -294,7 +304,7 @@ extension QuickPanelView {
             displayTitle = windowInfo.title.isEmpty ? "（无标题）" : windowInfo.title
         }
 
-        let titleLabel = createLabel(displayTitle, size: 11, color: .labelColor)
+        let titleLabel = createLabel(displayTitle, size: 11, color: colors.nsTextPrimary)
         titleLabel.lineBreakMode = .byTruncatingTail
         titleLabel.toolTip = windowInfo.title
         titleLabel.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
@@ -311,7 +321,7 @@ extension QuickPanelView {
         if highlightedWindowID == windowInfo.id {
             row.isHighlighted = true
             row.wantsLayer = true
-            row.layer?.backgroundColor = NSColor.controlAccentColor.withAlphaComponent(0.15).cgColor
+            row.layer?.backgroundColor = colors.nsAccent.withAlphaComponent(0.15).cgColor
             row.layer?.cornerRadius = 4
         }
 
@@ -363,15 +373,16 @@ extension QuickPanelView {
             separator.trailingAnchor.constraint(equalTo: stack.trailingAnchor),
         ])
 
-        let lockLabel = createLabel("🔒", size: 16, color: .labelColor)
+        let colors = ConfigStore.shared.currentThemeColors
+        let lockLabel = createLabel("🔒", size: 16, color: colors.nsTextPrimary)
         lockLabel.alignment = .center
         stack.addArrangedSubview(lockLabel)
 
-        let hintLabel = createLabel("需要辅助功能权限", size: 12, color: .secondaryLabelColor)
+        let hintLabel = createLabel("需要辅助功能权限", size: 12, color: colors.nsTextSecondary)
         hintLabel.alignment = .center
         stack.addArrangedSubview(hintLabel)
 
-        let detailLabel = createLabel("窗口管理功能需要此权限才能正常工作", size: 10, color: .tertiaryLabelColor)
+        let detailLabel = createLabel("窗口管理功能需要此权限才能正常工作", size: 10, color: colors.nsTextTertiary)
         detailLabel.alignment = .center
         stack.addArrangedSubview(detailLabel)
 

@@ -17,7 +17,7 @@ enum Constants {
         static let maxWidth: CGFloat = 500             // 面板最大宽度
         static let minHeight: CGFloat = 200            // 面板最小高度
         static let cornerRadius: CGFloat = 12          // 圆角半径
-        static let showDuration: TimeInterval = 0.1         // 弹出动画 100ms
+        static let showDuration: TimeInterval = 0.25        // 弹出动画 250ms（缩放+滑出+淡入）
         static let hideDuration: TimeInterval = 0.12         // 收起动画 120ms
         static let dismissDelay: TimeInterval = 0.5    // 离开 500ms 后收起
         static let gapToBall: CGFloat = 4              // 面板与悬浮球间距（安全区域）
@@ -81,5 +81,8 @@ enum Constants {
         // 快捷面板通知
         static let panelPinStateChanged = Notification.Name("QuickPanel.pinStateChanged")
         static let panelDragMoved = Notification.Name("QuickPanel.dragMoved")
+
+        // 主题变更通知
+        static let themeChanged = Notification.Name("FocusCopilot.themeChanged")
     }
 }

@@ -368,13 +368,9 @@ final class FloatingBallView: NSView {
     /// 程序化绘制品牌 Logo：立体球形背景 + 上方白色图钉 + 下方白色 FC 文字
     /// - Parameter size: Logo 尺寸（正方形边长）
     /// - Returns: 绘制好的品牌 Logo 图片
-    /// 获取当前悬浮球颜色风格的渐变色
+    /// 获取当前悬浮球颜色风格的渐变色（从主题 accent 派生）
     private func currentGradientColors() -> (light: NSColor, medium: NSColor, dark: NSColor) {
-        let prefs = ConfigStore.shared.preferences
-        if prefs.ballColorStyle == .custom {
-            return BallColorStyle.customGradientColors(hex: prefs.ballCustomColorHex)
-        }
-        return prefs.ballColorStyle.gradientColors
+        return ConfigStore.shared.preferences.appTheme.ballGradientColors
     }
 
     /// 刷新悬浮球颜色（外部调用，偏好设置变化时）

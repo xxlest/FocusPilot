@@ -2,7 +2,7 @@ import SwiftUI
 import ServiceManagement
 
 /// 偏好设置页面
-/// 快捷键配置、外观设置、通用设置
+/// 快捷键配置、主题选择、外观设置、通用设置
 struct PreferencesView: View {
     @ObservedObject private var configStore = ConfigStore.shared
 
@@ -10,6 +10,7 @@ struct PreferencesView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 24) {
                 hotkeySection
+                themeSection
                 ballAppearanceSection
                 generalSection
             }
@@ -47,63 +48,96 @@ struct PreferencesView: View {
         }
     }
 
+    // MARK: - 主题选择
+
+    private var themeSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("主题")
+                .font(.headline)
+
+            // 浅色主题
+            Text("浅色")
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+
+            LazyVGrid(columns: [GridItem(.adaptive(minimum: 120), spacing: 12)], spacing: 12) {
+                ForEach(AppTheme.lightThemes, id: \.self) { theme in
+                    themeCard(theme)
+                }
+            }
+
+            // 深色主题
+            Text("深色")
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+
+            LazyVGrid(columns: [GridItem(.adaptive(minimum: 120), spacing: 12)], spacing: 12) {
+                ForEach(AppTheme.darkThemes, id: \.self) { theme in
+                    themeCard(theme)
+                }
+            }
+        }
+    }
+
+    /// 主题卡片预览
+    private func themeCard(_ theme: AppTheme) -> some View {
+        let isSelected = configStore.preferences.appTheme == theme
+        let colors = theme.colors
+
+        return VStack(spacing: 0) {
+            // 预览区域
+            VStack(alignment: .leading, spacing: 4) {
+                // 模拟文本行
+                RoundedRectangle(cornerRadius: 2)
+                    .fill(colors.swTextPrimary)
+                    .frame(width: 60, height: 4)
+                RoundedRectangle(cornerRadius: 2)
+                    .fill(colors.swTextSecondary)
+                    .frame(width: 45, height: 3)
+                RoundedRectangle(cornerRadius: 2)
+                    .fill(colors.swTextTertiary)
+                    .frame(width: 35, height: 3)
+
+                HStack(spacing: 4) {
+                    // 强调色圆点
+                    Circle()
+                        .fill(colors.swAccent)
+                        .frame(width: 8, height: 8)
+                    // 收藏星标色
+                    Image(systemName: "star.fill")
+                        .font(.system(size: 8))
+                        .foregroundStyle(colors.swFavoriteStar)
+                }
+            }
+            .padding(10)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(colors.swBackground)
+
+            // 主题名称
+            Text(theme.displayName)
+                .font(.caption)
+                .foregroundStyle(.primary)
+                .padding(.vertical, 4)
+        }
+        .clipShape(RoundedRectangle(cornerRadius: 8))
+        .overlay(
+            RoundedRectangle(cornerRadius: 8)
+                .stroke(isSelected ? colors.swAccent : Color.secondary.opacity(0.2), lineWidth: isSelected ? 2 : 1)
+        )
+        .shadow(color: isSelected ? colors.swAccent.opacity(0.3) : .clear, radius: 4)
+        .scaleEffect(isSelected ? 1.02 : 1.0)
+        .animation(.easeInOut(duration: 0.15), value: isSelected)
+        .onTapGesture {
+            configStore.preferences.appTheme = theme
+        }
+    }
+
     // MARK: - 外观
 
     private var ballAppearanceSection: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("外观")
                 .font(.headline)
-
-            // 悬浮球颜色风格
-            HStack {
-                Text("悬浮球颜色")
-                    .frame(width: 100, alignment: .leading)
-
-                // 预置颜色圆点 + 自定义
-                HStack(spacing: 6) {
-                    ForEach(BallColorStyle.allCases.filter { $0 != .custom }, id: \.self) { style in
-                        let isSelected = configStore.preferences.ballColorStyle == style
-                        Circle()
-                            .fill(Color(nsColor: style.gradientColors.medium))
-                            .frame(width: 26, height: 26)
-                            .overlay(
-                                Circle()
-                                    .stroke(isSelected ? Color.white : Color.clear, lineWidth: 2)
-                            )
-                            .overlay(
-                                Circle()
-                                    .stroke(isSelected ? Color.accentColor : Color.clear, lineWidth: 2)
-                                    .padding(2)
-                            )
-                            .shadow(color: isSelected ? Color.accentColor.opacity(0.5) : .clear, radius: 3)
-                            .scaleEffect(isSelected ? 1.1 : 1.0)
-                            .animation(.easeInOut(duration: 0.15), value: isSelected)
-                            .onTapGesture {
-                                configStore.preferences.ballColorStyle = style
-                            }
-                            .help(style.rawValue)
-                    }
-
-                    // 自定义颜色：圆形色块 + 点击弹出取色器
-                    let isCustomSelected = configStore.preferences.ballColorStyle == .custom
-                    ColorPicker("", selection: customColorBinding, supportsOpacity: false)
-                        .labelsHidden()
-                        .frame(width: 26, height: 26)
-                        .clipShape(Circle())
-                        .overlay(
-                            Circle()
-                                .stroke(isCustomSelected ? Color.white : Color.clear, lineWidth: 2)
-                        )
-                        .overlay(
-                            Circle()
-                                .stroke(isCustomSelected ? Color.accentColor : Color.clear, lineWidth: 2)
-                                .padding(2)
-                        )
-                        .shadow(color: isCustomSelected ? Color.accentColor.opacity(0.5) : .clear, radius: 3)
-                        .help("自定义颜色")
-                }
-                Spacer()
-            }
 
             // 悬浮球大小滑块
             HStack {
@@ -147,38 +181,20 @@ struct PreferencesView: View {
                     .foregroundStyle(.secondary)
             }
 
-            // 颜色主题
+            // 面板弹出动画速度滑块
             HStack {
-                Text("颜色主题")
+                Text("弹出动画")
                     .frame(width: 100, alignment: .leading)
-                Picker("", selection: $configStore.preferences.colorTheme) {
-                    ForEach(ColorTheme.allCases, id: \.self) { theme in
-                        Text(theme.rawValue).tag(theme)
-                    }
-                }
-                .pickerStyle(.segmented)
-                .frame(width: 240)
-                Spacer()
+                Slider(
+                    value: $configStore.preferences.panelAnimationSpeed,
+                    in: 0.1...0.6,
+                    step: 0.05
+                )
+                Text("\(Int(configStore.preferences.panelAnimationSpeed * 1000))ms")
+                    .frame(width: 50)
+                    .foregroundStyle(.secondary)
             }
         }
-    }
-
-    // MARK: - 自定义颜色绑定
-
-    private var customColorBinding: Binding<Color> {
-        Binding<Color>(
-            get: {
-                if let nsColor = NSColor.fromHex(configStore.preferences.ballCustomColorHex) {
-                    return Color(nsColor: nsColor)
-                }
-                return Color.orange
-            },
-            set: { newColor in
-                let nsColor = NSColor(newColor)
-                configStore.preferences.ballCustomColorHex = nsColor.hexString
-                configStore.preferences.ballColorStyle = .custom
-            }
-        )
     }
 
     // MARK: - 通用设置

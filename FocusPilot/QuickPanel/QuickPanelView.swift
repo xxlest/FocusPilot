@@ -57,7 +57,7 @@ final class QuickPanelView: NSView {
         btn.bezelStyle = .recessed
         btn.isBordered = false
         btn.image = Self.cachedSymbol(name: "gearshape", size: 12, weight: .medium)
-        btn.contentTintColor = .secondaryLabelColor
+        btn.contentTintColor = ConfigStore.shared.currentThemeColors.nsTextSecondary
         btn.toolTip = "打开主界面"
         btn.target = self
         btn.action = #selector(openMainKanban)
@@ -70,7 +70,7 @@ final class QuickPanelView: NSView {
         btn.bezelStyle = .recessed
         btn.isBordered = false
         btn.font = .systemFont(ofSize: 11)
-        btn.contentTintColor = .secondaryLabelColor
+        btn.contentTintColor = ConfigStore.shared.currentThemeColors.nsTextSecondary
         return btn
     }()
 
@@ -80,7 +80,7 @@ final class QuickPanelView: NSView {
         btn.bezelStyle = .recessed
         btn.isBordered = false
         btn.font = .systemFont(ofSize: 11)
-        btn.contentTintColor = .secondaryLabelColor
+        btn.contentTintColor = ConfigStore.shared.currentThemeColors.nsTextSecondary
         return btn
     }()
 
@@ -300,10 +300,11 @@ final class QuickPanelView: NSView {
     @objc private func switchToFavoritesTab() { switchTab(.favorites) }
 
     private func updateTabButtonStyles() {
+        let colors = ConfigStore.shared.currentThemeColors
         // 先全部重置为未选中样式
         for btn in [runningTabButton, favoritesTabButton] {
             btn.font = .systemFont(ofSize: 11)
-            btn.contentTintColor = .secondaryLabelColor
+            btn.contentTintColor = colors.nsTextSecondary
         }
         // 设置选中 Tab 样式
         let selectedButton: NSButton
@@ -312,7 +313,15 @@ final class QuickPanelView: NSView {
         case .favorites: selectedButton = favoritesTabButton
         }
         selectedButton.font = .systemFont(ofSize: 11, weight: .medium)
-        selectedButton.contentTintColor = .controlAccentColor
+        selectedButton.contentTintColor = colors.nsAccent
+    }
+
+    /// 应用主题（外部调用）
+    func applyTheme() {
+        let colors = ConfigStore.shared.currentThemeColors
+        openKanbanButton.contentTintColor = colors.nsTextSecondary
+        updateTabButtonStyles()
+        forceReload()
     }
 
     // MARK: - 数据加载
@@ -417,9 +426,16 @@ final class QuickPanelView: NSView {
         }
     }
 
-    /// "活跃"Tab：显示有可见窗口的运行中 App
+    /// "活跃"Tab：显示有可见窗口的运行中 App（收藏的排在前面）
     private func buildRunningTabContent() {
-        buildRunningAppList(apps: AppMonitor.shared.runningApps.filter { !$0.windows.isEmpty }, emptyText: "没有活跃窗口的应用")
+        let activeApps = AppMonitor.shared.runningApps.filter { !$0.windows.isEmpty }
+        let sorted = activeApps.sorted { a, b in
+            let aFav = ConfigStore.shared.isFavorite(a.bundleID)
+            let bFav = ConfigStore.shared.isFavorite(b.bundleID)
+            if aFav != bFav { return aFav }
+            return false // 同组内保持原有顺序
+        }
+        buildRunningAppList(apps: sorted, emptyText: "没有活跃窗口的应用")
     }
 
     /// 通用：构建运行中 App 列表（活跃/收藏 Tab 共用）
@@ -561,7 +577,7 @@ final class HoverableRowView: NSView {
         isHovered = true
         // hover 高亮不覆盖选中高亮（选中高亮由 QuickPanelView 在构建行时设置）
         if !isHighlighted {
-            layer?.backgroundColor = NSColor.labelColor.withAlphaComponent(0.08).cgColor
+            layer?.backgroundColor = ConfigStore.shared.currentThemeColors.nsTextPrimary.withAlphaComponent(0.08).cgColor
             layer?.cornerRadius = 4
         }
     }

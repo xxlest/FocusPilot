@@ -232,7 +232,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         }
         // 悬浮球中心点即为面板左上角
         let ballCenter = CGPoint(x: ballFrame.midX, y: ballFrame.midY)
-        quickPanelWindow?.showAtPosition(topLeft: ballCenter)
+        quickPanelWindow?.showAtPosition(topLeft: ballCenter, ballFrame: ballFrame)
     }
 
     /// 显示快捷面板（旧方法保留兼容）
@@ -282,7 +282,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     private var lastHotkey: HotkeyConfig?
     private var lastKanbanHotkey: HotkeyConfig?
 
-    /// 将偏好设置应用到悬浮球和面板（大小、透明度、颜色主题、快捷键）
+    /// 上次应用的主题（用于检测主题变化）
+    private var lastTheme: AppTheme?
+
+    /// 将偏好设置应用到悬浮球和面板（大小、透明度、主题、快捷键）
     private func applyPreferences(_ prefs: Preferences) {
         // 悬浮球大小
         floatingBallWindow?.updateSize(prefs.ballSize)
@@ -290,15 +293,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         // 悬浮球透明度
         floatingBallWindow?.alphaValue = prefs.ballOpacity
 
-        // 悬浮球颜色（直接传入 prefs 中的颜色，避免 @Published willSet 时序问题）
+        // 悬浮球颜色（从主题 accent 派生渐变色）
         if let ballView = floatingBallWindow?.contentView as? FloatingBallView {
-            let colors: (light: NSColor, medium: NSColor, dark: NSColor)
-            if prefs.ballColorStyle == .custom {
-                colors = BallColorStyle.customGradientColors(hex: prefs.ballCustomColorHex)
-            } else {
-                colors = prefs.ballColorStyle.gradientColors
-            }
-            ballView.updateColorStyle(gradientColors: colors)
+            ballView.updateColorStyle(gradientColors: prefs.appTheme.ballGradientColors)
         }
 
         // 面板透明度（仅在面板可见时直接应用，避免干扰 show/hide 动画）
@@ -316,14 +313,21 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             HotkeyManager.shared.reregisterKanban(config: prefs.hotkeyKanban)
         }
 
-        // 颜色主题
-        switch prefs.colorTheme {
-        case .system:
-            NSApp.appearance = nil
-        case .light:
-            NSApp.appearance = NSAppearance(named: .aqua)
-        case .dark:
-            NSApp.appearance = NSAppearance(named: .darkAqua)
+        // 主题变化时：更新 NSApp.appearance + 刷新 QuickPanel + 发送通知
+        let theme = prefs.appTheme
+        if theme != lastTheme {
+            lastTheme = theme
+
+            // 设置系统外观（SwiftUI 自动适配）
+            NSApp.appearance = theme.isDark
+                ? NSAppearance(named: .darkAqua)
+                : NSAppearance(named: .aqua)
+
+            // 刷新快捷面板主题
+            quickPanelWindow?.applyTheme()
+
+            // 发送主题变更通知
+            NotificationCenter.default.post(name: Constants.Notifications.themeChanged, object: nil)
         }
     }
 

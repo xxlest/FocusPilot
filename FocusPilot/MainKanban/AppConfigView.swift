@@ -235,7 +235,7 @@ struct AppConfigView: View {
         return HStack(spacing: 8) {
             // 运行状态指示器
             Circle()
-                .fill(app.isRunning ? Color.green : Color.gray.opacity(0.4))
+                .fill(app.isRunning ? configStore.currentThemeColors.swAccent : configStore.currentThemeColors.swTextTertiary.opacity(0.4))
                 .frame(width: 8, height: 8)
 
             // 收藏星标按钮
@@ -243,7 +243,7 @@ struct AppConfigView: View {
                 toggleFavorite(app)
             } label: {
                 Image(systemName: app.isFavorite ? "star.fill" : "star")
-                    .foregroundStyle(app.isFavorite ? .yellow : .secondary)
+                    .foregroundStyle(app.isFavorite ? configStore.currentThemeColors.swFavoriteStar : .secondary)
                     .font(.system(size: 14))
             }
             .buttonStyle(.borderless)

@@ -64,6 +64,11 @@ final class QuickPanelWindow: NSPanel {
         NotificationCenter.default.removeObserver(self)
     }
 
+    // MARK: - 毛玻璃 + 背景色叠加
+
+    private var effectView: NSVisualEffectView!
+    private var bgOverlayView: NSView!
+
     // MARK: - 窗口配置
 
     private func configureWindow() {
@@ -90,25 +95,45 @@ final class QuickPanelWindow: NSPanel {
         acceptsMouseMovedEvents = true
 
         // 毛玻璃背景视图
-        let effectView = NSVisualEffectView()
-        effectView.material = .menu
+        let theme = ConfigStore.shared.preferences.appTheme
+        effectView = NSVisualEffectView()
+        effectView.material = NSVisualEffectView.Material(rawValue: theme.panelMaterial) ?? .menu
         effectView.state = .active
         effectView.blendingMode = .behindWindow
         effectView.wantsLayer = true
         effectView.layer?.cornerRadius = Constants.Panel.cornerRadius
         effectView.layer?.masksToBounds = true
 
+        // 半透明主题背景色叠加层（增强主题感）
+        bgOverlayView = NSView()
+        bgOverlayView.wantsLayer = true
+        bgOverlayView.layer?.backgroundColor = theme.colors.nsBackground.withAlphaComponent(0.6).cgColor
+        bgOverlayView.translatesAutoresizingMaskIntoConstraints = false
+
         // 把面板内容视图添加到毛玻璃背景上
         contentView = effectView
+        effectView.addSubview(bgOverlayView)
         panelView.translatesAutoresizingMaskIntoConstraints = false
         effectView.addSubview(panelView)
 
         NSLayoutConstraint.activate([
+            bgOverlayView.topAnchor.constraint(equalTo: effectView.topAnchor),
+            bgOverlayView.bottomAnchor.constraint(equalTo: effectView.bottomAnchor),
+            bgOverlayView.leadingAnchor.constraint(equalTo: effectView.leadingAnchor),
+            bgOverlayView.trailingAnchor.constraint(equalTo: effectView.trailingAnchor),
             panelView.topAnchor.constraint(equalTo: effectView.topAnchor),
             panelView.bottomAnchor.constraint(equalTo: effectView.bottomAnchor),
             panelView.leadingAnchor.constraint(equalTo: effectView.leadingAnchor),
             panelView.trailingAnchor.constraint(equalTo: effectView.trailingAnchor),
         ])
+    }
+
+    /// 应用主题（外部调用）
+    func applyTheme() {
+        let theme = ConfigStore.shared.preferences.appTheme
+        effectView.material = NSVisualEffectView.Material(rawValue: theme.panelMaterial) ?? .menu
+        bgOverlayView.layer?.backgroundColor = theme.colors.nsBackground.withAlphaComponent(0.6).cgColor
+        panelView.applyTheme()
     }
 
     // MARK: - 通知监听
@@ -180,18 +205,19 @@ final class QuickPanelWindow: NSPanel {
         let panelFrame = calculatePosition(relativeTo: ballFrame)
         setFrame(panelFrame, display: false)
 
-        // 设置初始状态（从悬浮球方向滑出的起始位置，偏移量更小更紧凑）
+        // 设置初始状态：从悬浮球方向"生长"出来（缩小 frame + 偏移 + 透明）
         alphaValue = 0
-        let slideOffset: CGFloat = 6
-        let startFrame = offsetFrame(panelFrame, towards: ballFrame, by: slideOffset)
+        let scaleFactor: CGFloat = 0.6
+        let startFrame = scaledFrame(panelFrame, towards: ballFrame, scale: scaleFactor)
         setFrame(startFrame, display: false)
 
         orderFront(nil)
 
-        // 滑出动画 100ms ease-out，最终透明度使用用户设置的面板透明度
+        // 生长动画：frame 从小变大 + 淡入，时长由用户偏好设置控制
         let targetOpacity = ConfigStore.shared.preferences.panelOpacity
+        let duration = Double(ConfigStore.shared.preferences.panelAnimationSpeed)
         NSAnimationContext.runAnimationGroup({ context in
-            context.duration = Constants.Panel.showDuration
+            context.duration = duration
             context.timingFunction = CAMediaTimingFunction(name: .easeOut)
             self.animator().setFrame(panelFrame, display: true)
             self.animator().alphaValue = targetOpacity
@@ -199,7 +225,7 @@ final class QuickPanelWindow: NSPanel {
     }
 
     /// 在指定位置显示面板（左上角对齐指定坐标，不根据悬浮球重新计算位置）
-    func showAtPosition(topLeft: CGPoint) {
+    func showAtPosition(topLeft: CGPoint, ballFrame: CGRect? = nil) {
         dismissTimer?.invalidate()
         dismissTimer = nil
 
@@ -216,14 +242,22 @@ final class QuickPanelWindow: NSPanel {
         setFrame(panelFrame, display: false)
         panelView.reloadData()
 
-        // 淡入动画
+        // 设置初始状态：从悬浮球方向"生长"出来（缩小 frame + 透明）
         alphaValue = 0
+        let effectiveBallFrame = ballFrame ?? NSRect(x: topLeft.x, y: topLeft.y, width: 0, height: 0)
+        let scaleFactor: CGFloat = 0.6
+        let startFrame = scaledFrame(panelFrame, towards: effectiveBallFrame, scale: scaleFactor)
+        setFrame(startFrame, display: false)
+
         orderFront(nil)
 
+        // 生长动画：frame 从小变大 + 淡入
         let targetOpacity = ConfigStore.shared.preferences.panelOpacity
+        let duration = Double(ConfigStore.shared.preferences.panelAnimationSpeed)
         NSAnimationContext.runAnimationGroup({ context in
-            context.duration = Constants.Panel.showDuration
+            context.duration = duration
             context.timingFunction = CAMediaTimingFunction(name: .easeOut)
+            self.animator().setFrame(panelFrame, display: true)
             self.animator().alphaValue = targetOpacity
         })
     }
@@ -233,9 +267,10 @@ final class QuickPanelWindow: NSPanel {
         dismissTimer?.invalidate()
         dismissTimer = nil
 
-        // 收起动画 120ms ease-in
+        // 收起动画 ease-in（时长为弹出速度的一半，最少 100ms）
+        let hideDuration = max(0.1, Double(ConfigStore.shared.preferences.panelAnimationSpeed) * 0.5)
         NSAnimationContext.runAnimationGroup({ context in
-            context.duration = Constants.Panel.hideDuration
+            context.duration = hideDuration
             context.timingFunction = CAMediaTimingFunction(name: .easeIn)
             self.animator().alphaValue = 0
         }, completionHandler: { [weak self] in
@@ -527,5 +562,33 @@ final class QuickPanelWindow: NSPanel {
             shifted.origin.x += offset
         }
         return shifted
+    }
+
+    /// 计算生长动画的缩小起始 frame（以靠近悬浮球的边缘为锚点缩小）
+    private func scaledFrame(_ target: NSRect, towards ballFrame: CGRect, scale: CGFloat) -> NSRect {
+        let newWidth = target.width * scale
+        let newHeight = target.height * scale
+
+        var origin = target.origin
+
+        // 水平方向：以靠近悬浮球的一侧为锚点
+        if target.midX > ballFrame.midX {
+            // 面板在球右侧，左边缘（靠近球的一侧）固定
+            // origin.x 不变
+        } else {
+            // 面板在球左侧，右边缘（靠近球的一侧）固定
+            origin.x = target.maxX - newWidth
+        }
+
+        // 垂直方向：以靠近悬浮球的一侧为锚点（macOS 坐标系 y 轴向上）
+        if ballFrame.midY > target.midY {
+            // 球在面板上方，顶边（maxY）固定，向下生长
+            origin.y = target.maxY - newHeight
+        } else {
+            // 球在面板下方，底边（minY）固定，向上生长
+            // origin.y 不变
+        }
+
+        return NSRect(x: origin.x, y: origin.y, width: newWidth, height: newHeight)
     }
 }

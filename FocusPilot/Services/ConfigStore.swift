@@ -17,6 +17,11 @@ class ConfigStore: ObservableObject {
     /// 悬浮球可见性（运行时状态，不持久化）
     @Published var isBallVisible: Bool = true
 
+    /// 当前主题颜色集（便捷访问）
+    var currentThemeColors: ThemeColors {
+        preferences.appTheme.colors
+    }
+
     private let defaults = UserDefaults.standard
     private let encoder = JSONEncoder()
     private let decoder = JSONDecoder()
