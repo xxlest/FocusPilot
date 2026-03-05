@@ -106,7 +106,7 @@ struct MainKanbanView: View {
             .padding(.horizontal, 8)
             .padding(.bottom, 4)
         }
-        .background(ConfigStore.shared.currentThemeColors.swBackground)
+        .background(configStore.currentThemeColors.swBackground)
     }
 
     // MARK: - 内容区

@@ -56,6 +56,7 @@ struct AppConfigView: View {
 
             // App 列表
             let apps = filteredApps
+            let themeKey = configStore.preferences.appTheme.rawValue
             if apps.isEmpty {
                 Text(emptyText)
                     .foregroundStyle(.secondary)
@@ -71,6 +72,7 @@ struct AppConfigView: View {
                     }
                     .padding(.horizontal)
                 }
+                .id(themeKey)
             }
 
             Spacer(minLength: 0)

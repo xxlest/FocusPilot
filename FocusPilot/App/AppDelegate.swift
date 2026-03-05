@@ -323,10 +323,13 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                 ? NSAppearance(named: .darkAqua)
                 : NSAppearance(named: .aqua)
 
+            // 主看板窗口同步 appearance
+            mainKanbanWindow?.appearance = NSApp.appearance
+
             // 刷新快捷面板主题
             quickPanelWindow?.applyTheme()
 
-            // 发送主题变更通知
+            // 发送主题变更通知（SwiftUI 视图可监听此通知作为刷新后备）
             NotificationCenter.default.post(name: Constants.Notifications.themeChanged, object: nil)
         }
     }
