@@ -41,23 +41,9 @@ final class QuickPanelView: NSView {
     /// 鼠标追踪区域
     private var trackingArea: NSTrackingArea?
 
-    // MARK: - 拖拽排序状态
-
-    /// 拖拽进行中标志（抑制 reloadData 全量重建）
-    private var isDragging = false
-
     /// 活跃 Tab 运行时排序（bundleID 数组，不持久化）
     /// 为空时使用 AppMonitor 原始顺序；有值时按此顺序渲染
     private var runtimeOrder: [String] = []
-
-    /// 收藏 Tab 拖拽：源行索引
-    private var favDragSourceIndex: Int?
-    /// 收藏 Tab 拖拽：浮动快照视图
-    private var favDragSnapshot: NSView?
-    /// 收藏 Tab 拖拽：当前收藏 App 行视图数组（用于位置计算）
-    private var favDragAppRows: [HoverableRowView] = []
-    /// 收藏 Tab 拖拽：当前排序的 bundleID 数组（拖拽中实时更新）
-    private var favDragOrder: [String] = []
 
     // MARK: - 子视图
 
@@ -126,6 +112,7 @@ final class QuickPanelView: NSView {
         stack.orientation = .vertical
         stack.alignment = .leading
         stack.spacing = 0
+        stack.wantsLayer = true  // 拖拽排序需要 CALayer 支持
         stack.edgeInsets = NSEdgeInsets(top: 8, left: 0, bottom: 0, right: 0)
         return stack
     }()
@@ -254,8 +241,6 @@ final class QuickPanelView: NSView {
     }
 
     override func mouseExited(with event: NSEvent) {
-        // 拖拽中不触发收起
-        if isDragging { return }
         // 钉住模式下不触发收起
         if let panelWindow = window as? QuickPanelWindow, panelWindow.isPanelPinned {
             return
@@ -346,9 +331,6 @@ final class QuickPanelView: NSView {
 
     /// 重新加载面板数据（差分更新：结构变化全量重建，仅标题变化只更新文本）
     func reloadData() {
-        // 拖拽进行中：跳过刷新，防止拖拽被打断
-        if isDragging { return }
-
         let structuralKey = buildStructuralKey()
 
         if structuralKey != lastStructuralKey {
@@ -428,16 +410,6 @@ final class QuickPanelView: NSView {
         windowTitleLabels.removeAll()
         windowRowViewMap.removeAll()
         lastStructuralKey = ""  // 清除快照，确保下次打开时强制刷新
-
-        // 清理拖拽状态（防止面板关闭时 mouseUp 丢失导致 isDragging 永久为 true）
-        if isDragging {
-            isDragging = false
-            favDragSnapshot?.removeFromSuperview()
-            favDragSnapshot = nil
-            favDragSourceIndex = nil
-            favDragAppRows.removeAll()
-            favDragOrder.removeAll()
-        }
     }
 
     // MARK: - 内容构建
@@ -493,7 +465,6 @@ final class QuickPanelView: NSView {
         }
 
         let hasAccessibility = WindowService.shared.isAXApiAvailable()
-        favDragAppRows = []
 
         for config in configs {
             let running = runningApps.first(where: { $0.bundleID == config.bundleID })
@@ -501,9 +472,6 @@ final class QuickPanelView: NSView {
 
             let appRow = createFavoriteAppRow(config: config, runningApp: running, isRunning: isRunning)
             contentStack.addArrangedSubview(appRow)
-            if let hoverRow = appRow as? HoverableRowView {
-                favDragAppRows.append(hoverRow)
-            }
 
             // 窗口列表（运行中且有权限时显示）
             if hasAccessibility, let app = running, !app.windows.isEmpty,
@@ -551,19 +519,11 @@ final class QuickPanelView: NSView {
             windows: runningApp?.windows ?? []
         )
 
-        // 启用拖拽排序
+        // 右键菜单：置顶
         if let hoverRow = row as? HoverableRowView {
-            hoverRow.dragEnabled = true
-            hoverRow.dragStartHandler = { [weak self] point in
-                guard let self = self,
-                      let idx = self.favDragAppRows.firstIndex(where: { $0 === hoverRow }) else { return }
-                self.handleFavDragStart(at: point, sourceRow: hoverRow, sourceIndex: idx)
-            }
-            hoverRow.dragMoveHandler = { [weak self] point in
-                self?.handleFavDragMove(to: point)
-            }
-            hoverRow.dragEndHandler = { [weak self] point in
-                self?.handleFavDragEnd(at: point)
+            let bundleID = config.bundleID
+            hoverRow.contextMenuProvider = { [weak self] in
+                self?.createFavoriteContextMenu(bundleID: bundleID)
             }
         }
 
@@ -898,135 +858,43 @@ final class QuickPanelView: NSView {
         return "\(bundleID)::\(windowID)"
     }
 
-    // MARK: - 收藏 Tab 拖拽排序
+    // MARK: - 收藏右键菜单
 
-    /// 收藏拖拽开始
-    private func handleFavDragStart(at point: NSPoint, sourceRow: NSView, sourceIndex: Int) {
-        isDragging = true
-        favDragSourceIndex = sourceIndex
-        favDragOrder = ConfigStore.shared.appConfigs.map { $0.bundleID }
+    private func createFavoriteContextMenu(bundleID: String) -> NSMenu {
+        let menu = NSMenu()
 
-        // 创建浮动快照
-        guard let bitmapRep = sourceRow.bitmapImageRepForCachingDisplay(in: sourceRow.bounds) else {
-            isDragging = false
-            return
+        // 置顶操作（已经在第一位时不显示）
+        let configs = ConfigStore.shared.appConfigs
+        if configs.first?.bundleID != bundleID {
+            let pinItem = NSMenuItem(title: "置顶", action: #selector(handlePinToTop(_:)), keyEquivalent: "")
+            pinItem.target = self
+            pinItem.representedObject = bundleID
+            menu.addItem(pinItem)
         }
-        sourceRow.cacheDisplay(in: sourceRow.bounds, to: bitmapRep)
-        let snapshot = NSView(frame: sourceRow.frame)
-        snapshot.wantsLayer = true
-        snapshot.layer?.contents = bitmapRep.cgImage
-        snapshot.alphaValue = Constants.Panel.dragSnapshotAlpha
-        snapshot.layer?.transform = CATransform3DMakeScale(
-            Constants.Panel.dragSnapshotScale,
-            Constants.Panel.dragSnapshotScale,
-            1.0
-        )
-        snapshot.layer?.shadowColor = NSColor.black.cgColor
-        snapshot.layer?.shadowOpacity = 0.2
-        snapshot.layer?.shadowRadius = 4
-        snapshot.layer?.shadowOffset = CGSize(width: 0, height: -2)
 
-        // 将快照添加到 contentStack 的父视图（scrollView.documentView）
-        let rowFrameInContent = sourceRow.convert(sourceRow.bounds, to: contentStack.superview)
-        snapshot.frame = rowFrameInContent
-        contentStack.superview?.addSubview(snapshot)
-        favDragSnapshot = snapshot
+        // 取消收藏
+        let removeItem = NSMenuItem(title: "取消收藏", action: #selector(handleRemoveFavorite(_:)), keyEquivalent: "")
+        removeItem.target = self
+        removeItem.representedObject = bundleID
+        menu.addItem(removeItem)
 
-        // 隐藏源行
-        sourceRow.alphaValue = 0
+        return menu
     }
 
-    /// 收藏拖拽移动
-    private func handleFavDragMove(to point: NSPoint) {
-        guard let snapshot = favDragSnapshot,
-              let sourceIndex = favDragSourceIndex else { return }
-
-        // 移动快照位置（将窗口坐标转换到 contentStack 的父视图坐标）
-        let localPoint = contentStack.superview?.convert(point, from: nil) ?? point
-        snapshot.frame.origin.y = localPoint.y - snapshot.frame.height / 2
-
-        // 计算目标插入索引（基于 App 行的中点位置）
-        var targetIndex = sourceIndex
-        for (i, row) in favDragAppRows.enumerated() {
-            let rowMid = row.convert(CGPoint(x: 0, y: row.bounds.midY), to: contentStack.superview)
-            if localPoint.y < rowMid.y && i < sourceIndex {
-                targetIndex = i
-                break
-            } else if localPoint.y > rowMid.y && i > sourceIndex {
-                targetIndex = i
-            }
-        }
-
-        // 如果索引变化，执行行交换
-        if targetIndex != sourceIndex {
-            // 更新 favDragOrder
-            let movedID = favDragOrder.remove(at: sourceIndex)
-            favDragOrder.insert(movedID, at: targetIndex)
-
-            // 交换 favDragAppRows 中的引用
-            let movedRow = favDragAppRows.remove(at: sourceIndex)
-            favDragAppRows.insert(movedRow, at: targetIndex)
-
-            // 动画移动 contentStack 中的视图
-            // 需要移动 App 行以及其下方的窗口列表
-            NSAnimationContext.runAnimationGroup { context in
-                context.duration = 0.2
-                context.allowsImplicitAnimation = true
-
-                // 重建 contentStack 排序
-                let allViews = contentStack.arrangedSubviews
-                allViews.forEach { contentStack.removeArrangedSubview($0); $0.removeFromSuperview() }
-
-                // 按新顺序重新添加
-                let runningApps = AppMonitor.shared.runningApps
-                let hasAccessibility = WindowService.shared.isAXApiAvailable()
-
-                for bundleID in favDragOrder {
-                    // 找到对应的 App 行
-                    if let row = favDragAppRows.first(where: { $0.bundleID == bundleID }) {
-                        contentStack.addArrangedSubview(row)
-
-                        // 如果有窗口列表，也重新添加
-                        if hasAccessibility,
-                           let running = runningApps.first(where: { $0.bundleID == bundleID }),
-                           !running.windows.isEmpty,
-                           !collapsedApps.contains(bundleID) {
-                            let windowList = createWindowList(windows: running.windows, bundleID: bundleID)
-                            contentStack.addArrangedSubview(windowList)
-                        }
-                    }
-                }
-
-                contentStack.layoutSubtreeIfNeeded()
-            }
-
-            favDragSourceIndex = targetIndex
-        }
+    @objc private func handlePinToTop(_ sender: NSMenuItem) {
+        guard let bundleID = sender.representedObject as? String else { return }
+        var order = ConfigStore.shared.appConfigs.map { $0.bundleID }
+        guard let idx = order.firstIndex(of: bundleID), idx > 0 else { return }
+        order.remove(at: idx)
+        order.insert(bundleID, at: 0)
+        ConfigStore.shared.reorderApps(order)
+        lastStructuralKey = ""
+        reloadData()
     }
 
-    /// 收藏拖拽结束
-    private func handleFavDragEnd(at point: NSPoint) {
-        // 持久化新排序
-        ConfigStore.shared.reorderApps(favDragOrder)
-
-        // 清理拖拽状态
-        favDragSnapshot?.removeFromSuperview()
-        favDragSnapshot = nil
-
-        // 恢复源行可见性（未运行 App 为 0.5 灰度，运行中为 1.0）
-        for row in favDragAppRows {
-            let isRunning = row.bundleID.flatMap { bid in
-                AppMonitor.shared.runningApps.contains { $0.bundleID == bid && $0.isRunning }
-            } ?? false
-            row.alphaValue = isRunning ? 1.0 : 0.5
-        }
-
-        favDragSourceIndex = nil
-        favDragAppRows = []
-        favDragOrder = []
-        isDragging = false
-
-        // 强制全量重建
+    @objc private func handleRemoveFavorite(_ sender: NSMenuItem) {
+        guard let bundleID = sender.representedObject as? String else { return }
+        ConfigStore.shared.removeApp(bundleID)
         lastStructuralKey = ""
         reloadData()
     }
@@ -1193,19 +1061,6 @@ final class HoverableRowView: NSView {
     /// 点击处理闭包
     var clickHandler: (() -> Void)?
 
-    /// 是否启用拖拽排序（仅收藏 Tab 的 App 行启用）
-    var dragEnabled = false
-    /// 拖拽开始回调
-    var dragStartHandler: ((NSPoint) -> Void)?
-    /// 拖拽移动回调
-    var dragMoveHandler: ((NSPoint) -> Void)?
-    /// 拖拽结束回调
-    var dragEndHandler: ((NSPoint) -> Void)?
-    /// 鼠标按下位置（用于拖拽阈值判断）
-    private var mouseDownPoint: NSPoint?
-    /// 拖拽是否已激活（超过阈值）
-    private var isDragActive = false
-
     private var trackingArea: NSTrackingArea?
     private var isHovered = false
     /// 标记该行是否处于选中高亮状态（由外部设置）
@@ -1265,53 +1120,9 @@ final class HoverableRowView: NSView {
         }
     }
 
-    // MARK: - 点击与拖拽处理
-
-    override func mouseDown(with event: NSEvent) {
-        if dragEnabled {
-            mouseDownPoint = event.locationInWindow
-            isDragActive = false
-        } else {
-            super.mouseDown(with: event)
-        }
-    }
-
-    override func mouseDragged(with event: NSEvent) {
-        guard dragEnabled, let downPoint = mouseDownPoint else {
-            super.mouseDragged(with: event)
-            return
-        }
-
-        let currentPoint = event.locationInWindow
-        let dx = currentPoint.x - downPoint.x
-        let dy = currentPoint.y - downPoint.y
-        let distance = sqrt(dx * dx + dy * dy)
-
-        if !isDragActive {
-            if distance >= Constants.Panel.dragThreshold {
-                isDragActive = true
-                dragStartHandler?(currentPoint)
-            }
-        }
-
-        if isDragActive {
-            dragMoveHandler?(currentPoint)
-        }
-    }
+    // MARK: - 点击处理
 
     override func mouseUp(with event: NSEvent) {
-        if dragEnabled && isDragActive {
-            // 拖拽结束
-            isDragActive = false
-            mouseDownPoint = nil
-            dragEndHandler?(event.locationInWindow)
-            return
-        }
-
-        // 清理拖拽状态
-        mouseDownPoint = nil
-        isDragActive = false
-
         let location = convert(event.locationInWindow, from: nil)
         if let hitView = hitTest(location), hitView is NSButton || hitView.superview is NSButton {
             super.mouseUp(with: event)

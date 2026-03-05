@@ -74,6 +74,7 @@ make clean      # 清理
 - 使用 **Teams**（多 Agent 协作）进行开发和修复
 - **每次修改功能，都要更新 PRD（docs/PRD.md）和架构设计（docs/Architecture.md）**
 - **每完成一个功能或大修改，自动使用 `/commit` skill 提交并推送到远程仓库**
+- **每次修复或新开发完成后，必须执行 `make install` 安装到本地**
 
 ## ⚠️ 高频 Bug 防范：窗口标题"无标题"
 
