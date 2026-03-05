@@ -44,11 +44,20 @@ final class QuickPanelView: NSView {
         return view
     }()
 
-    /// 顶部分割线
-    private let topSeparator: NSBox = {
-        let box = NSBox()
-        box.boxType = .separator
-        return box
+    /// 顶部分割线（手动颜色，确保主题下可见）
+    private let topSeparator: NSView = {
+        let view = NSView()
+        view.wantsLayer = true
+        view.layer?.backgroundColor = ConfigStore.shared.currentThemeColors.nsSeparator.cgColor
+        return view
+    }()
+
+    /// Tab 按钮之间的竖线分隔符
+    private let tabSeparator: NSView = {
+        let view = NSView()
+        view.wantsLayer = true
+        view.layer?.backgroundColor = ConfigStore.shared.currentThemeColors.nsSeparator.cgColor
+        return view
     }()
 
     /// 打开主界面按钮（顶部左侧）
@@ -144,6 +153,7 @@ final class QuickPanelView: NSView {
         addSubview(topSeparator)
         topBar.addSubview(openKanbanButton)
         topBar.addSubview(runningTabButton)
+        topBar.addSubview(tabSeparator)
         topBar.addSubview(favoritesTabButton)
 
         // 滚动区域
@@ -154,6 +164,7 @@ final class QuickPanelView: NSView {
         topSeparator.translatesAutoresizingMaskIntoConstraints = false
         openKanbanButton.translatesAutoresizingMaskIntoConstraints = false
         runningTabButton.translatesAutoresizingMaskIntoConstraints = false
+        tabSeparator.translatesAutoresizingMaskIntoConstraints = false
         favoritesTabButton.translatesAutoresizingMaskIntoConstraints = false
         scrollView.translatesAutoresizingMaskIntoConstraints = false
         contentStack.translatesAutoresizingMaskIntoConstraints = false
@@ -167,10 +178,11 @@ final class QuickPanelView: NSView {
             topBar.trailingAnchor.constraint(equalTo: trailingAnchor),
             topBar.heightAnchor.constraint(equalToConstant: topBarHeight),
 
-            // 顶部分割线
+            // 顶部分割线（固定 1px 高度）
             topSeparator.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 8),
             topSeparator.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -8),
             topSeparator.topAnchor.constraint(equalTo: topBar.bottomAnchor),
+            topSeparator.heightAnchor.constraint(equalToConstant: 1),
 
             // 打开主界面按钮（右侧）
             openKanbanButton.trailingAnchor.constraint(equalTo: topBar.trailingAnchor, constant: -8),
@@ -179,7 +191,14 @@ final class QuickPanelView: NSView {
             // Tab 按钮（左侧，留出 32px 给悬浮球让位）
             runningTabButton.leadingAnchor.constraint(equalTo: topBar.leadingAnchor, constant: 32),
             runningTabButton.centerYAnchor.constraint(equalTo: topBar.centerYAnchor),
-            favoritesTabButton.leadingAnchor.constraint(equalTo: runningTabButton.trailingAnchor, constant: 4),
+
+            // Tab 竖线分隔符
+            tabSeparator.leadingAnchor.constraint(equalTo: runningTabButton.trailingAnchor, constant: 5),
+            tabSeparator.centerYAnchor.constraint(equalTo: topBar.centerYAnchor),
+            tabSeparator.widthAnchor.constraint(equalToConstant: 1),
+            tabSeparator.heightAnchor.constraint(equalToConstant: 12),
+
+            favoritesTabButton.leadingAnchor.constraint(equalTo: tabSeparator.trailingAnchor, constant: 5),
             favoritesTabButton.centerYAnchor.constraint(equalTo: topBar.centerYAnchor),
 
             // 滚动区域（顶部栏到底部）
@@ -320,6 +339,8 @@ final class QuickPanelView: NSView {
     func applyTheme() {
         let colors = ConfigStore.shared.currentThemeColors
         openKanbanButton.contentTintColor = colors.nsTextSecondary
+        topSeparator.layer?.backgroundColor = colors.nsSeparator.cgColor
+        tabSeparator.layer?.backgroundColor = colors.nsSeparator.cgColor
         updateTabButtonStyles()
         forceReload()
     }

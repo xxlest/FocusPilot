@@ -564,19 +564,6 @@ final class FloatingBallView: NSView {
         // 鼠标进入时立即预热窗口数据（后续 show 不再等数据刷新）
         AppMonitor.shared.startWindowRefresh()
 
-        // hover 放大动画
-        NSAnimationContext.runAnimationGroup { context in
-            context.duration = 0.15
-            context.timingFunction = CAMediaTimingFunction(name: .easeOut)
-            self.animator().layer?.setAffineTransform(CGAffineTransform(scaleX: 1.08, y: 1.08))
-        }
-        // 图标轻微放大
-        NSAnimationContext.runAnimationGroup { context in
-            context.duration = 0.15
-            context.timingFunction = CAMediaTimingFunction(name: .easeOut)
-            self.iconView.animator().layer?.setAffineTransform(CGAffineTransform(scaleX: 1.15, y: 1.15))
-        }
-
         // 启动 hover 计时器
         hoverTimer?.invalidate()
         hoverTimer = Timer.scheduledTimer(withTimeInterval: Constants.Ball.hoverDelay, repeats: false) { [weak self] _ in
@@ -588,18 +575,6 @@ final class FloatingBallView: NSView {
         // 取消 hover 计时器
         hoverTimer?.invalidate()
         hoverTimer = nil
-
-        // 恢复原始大小
-        NSAnimationContext.runAnimationGroup { context in
-            context.duration = 0.15
-            context.timingFunction = CAMediaTimingFunction(name: .easeOut)
-            self.animator().layer?.setAffineTransform(.identity)
-        }
-        NSAnimationContext.runAnimationGroup { context in
-            context.duration = 0.15
-            context.timingFunction = CAMediaTimingFunction(name: .easeOut)
-            self.iconView.animator().layer?.setAffineTransform(.identity)
-        }
 
         // 通知快捷面板鼠标已离开悬浮球
         NotificationCenter.default.post(

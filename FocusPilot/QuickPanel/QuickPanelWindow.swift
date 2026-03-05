@@ -205,21 +205,18 @@ final class QuickPanelWindow: NSPanel {
         let panelFrame = calculatePosition(relativeTo: ballFrame)
         setFrame(panelFrame, display: false)
 
-        // 设置初始状态：从悬浮球方向"生长"出来（缩小 frame + 偏移 + 透明）
+        // 设置初始状态：最终位置 + 透明
         alphaValue = 0
-        let scaleFactor: CGFloat = 0.6
-        let startFrame = scaledFrame(panelFrame, towards: ballFrame, scale: scaleFactor)
-        setFrame(startFrame, display: false)
+        setFrame(panelFrame, display: false)
 
         orderFront(nil)
 
-        // 生长动画：frame 从小变大 + 淡入，时长由用户偏好设置控制
+        // 淡入动画，时长由用户偏好设置控制
         let targetOpacity = ConfigStore.shared.preferences.panelOpacity
         let duration = Double(ConfigStore.shared.preferences.panelAnimationSpeed)
         NSAnimationContext.runAnimationGroup({ context in
             context.duration = duration
             context.timingFunction = CAMediaTimingFunction(name: .easeOut)
-            self.animator().setFrame(panelFrame, display: true)
             self.animator().alphaValue = targetOpacity
         })
     }
