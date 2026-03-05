@@ -428,6 +428,16 @@ final class QuickPanelView: NSView {
         windowTitleLabels.removeAll()
         windowRowViewMap.removeAll()
         lastStructuralKey = ""  // 清除快照，确保下次打开时强制刷新
+
+        // 清理拖拽状态（防止面板关闭时 mouseUp 丢失导致 isDragging 永久为 true）
+        if isDragging {
+            isDragging = false
+            favDragSnapshot?.removeFromSuperview()
+            favDragSnapshot = nil
+            favDragSourceIndex = nil
+            favDragAppRows.removeAll()
+            favDragOrder.removeAll()
+        }
     }
 
     // MARK: - 内容构建
@@ -897,7 +907,10 @@ final class QuickPanelView: NSView {
         favDragOrder = ConfigStore.shared.appConfigs.map { $0.bundleID }
 
         // 创建浮动快照
-        let bitmapRep = sourceRow.bitmapImageRepForCachingDisplay(in: sourceRow.bounds)!
+        guard let bitmapRep = sourceRow.bitmapImageRepForCachingDisplay(in: sourceRow.bounds) else {
+            isDragging = false
+            return
+        }
         sourceRow.cacheDisplay(in: sourceRow.bounds, to: bitmapRep)
         let snapshot = NSView(frame: sourceRow.frame)
         snapshot.wantsLayer = true
