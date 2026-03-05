@@ -27,6 +27,9 @@ enum Constants {
         static let appRowHeight: CGFloat = 26          // App 行高度（紧凑布局）
         static let windowRowHeight: CGFloat = 22       // 窗口行高度（紧凑布局）
         static let windowIndent: CGFloat = 28          // 窗口列表缩进
+        static let dragThreshold: CGFloat = 5            // 拖拽识别阈值（px）
+        static let dragSnapshotAlpha: CGFloat = 0.8      // 浮动快照透明度
+        static let dragSnapshotScale: CGFloat = 1.02     // 浮动快照缩放比例
     }
 
     // MARK: - 偏好设置范围

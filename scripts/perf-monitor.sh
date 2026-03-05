@@ -5,7 +5,7 @@
  # @LastEditors: xxl
  # @LastEditTime: 2026-03-03 22:11:58
  # @Description: 
- # @FilePath: /PinTop/scripts/perf-monitor.sh
+ # @FilePath: /FocusPilot/scripts/perf-monitor.sh
 ### 
 # Focus Copilot 长时间性能监控脚本
 # 用法: ./scripts/perf-monitor.sh [采样次数] [间隔秒数]

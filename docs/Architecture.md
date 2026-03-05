@@ -11,11 +11,11 @@
 ### 总览
 
 ```
-PinTop/
-├── PinTop/
+FocusPilot/
+├── FocusPilot/
 │   ├── App/
 │   │   ├── AppDelegate.swift          # 应用生命周期、窗口管理、菜单栏图标
-│   │   ├── PinTopApp.swift            # @main 入口
+│   │   ├── FocusPilotApp.swift        # @main 入口
 │   │   └── PermissionManager.swift    # 辅助功能权限检测与引导
 │   ├── FloatingBall/
 │   │   ├── FloatingBallWindow.swift   # 悬浮球窗口（NSPanel）
@@ -40,9 +40,9 @@ PinTop/
 │   │   └── Constants.swift            # 全局常量、通知名、窗口层级、UserDefaults Keys
 │   ├── Resources/
 │   │   ├── Assets.xcassets/           # 图标资源
-│   │   └── PinTop.entitlements        # 权限配置
+│   │   └── FocusPilot.entitlements     # 权限配置
 │   └── Info.plist
-├── PinTop.xcodeproj/
+├── FocusPilot.xcodeproj/
 └── docs/
     ├── PRD.md
     └── Architecture.md
@@ -679,7 +679,7 @@ activateWindow(window)
 
 | 文件 | 行数 | 职责 |
 |---|---|---|
-| PinTopApp.swift | ~16 | @main 入口，初始化 AppDelegate |
+| FocusPilotApp.swift | ~16 | @main 入口，初始化 AppDelegate |
 | AppDelegate.swift | ~342 | 应用生命周期、窗口管理、菜单栏图标、Dock 图标 |
 | PermissionManager.swift | ~90 | 辅助功能权限检测、引导、后台轮询 |
 | FloatingBallWindow.swift | ~98 | NSPanel 子类，窗口层级、贴边 |

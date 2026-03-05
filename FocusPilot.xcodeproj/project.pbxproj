@@ -13,7 +13,7 @@
 		362E1C964D78B184D4A36797 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 49B5CB65AC70CD464D2F5C4D /* Assets.xcassets */; };
 		3FC97BC3AF423D634F6E8C5D /* AppMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4E92BF2D27098C5BDB257F5 /* AppMonitor.swift */; };
 		47C3265FCEBC380667B0FE16 /* FloatingBallView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8F93286D01C141DFFC1FB577 /* FloatingBallView.swift */; };
-		49CF290C50B9A3C9315CCE2B /* PinTopApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 578F527924A9131FE21B0CBB /* PinTopApp.swift */; };
+		49CF290C50B9A3C9315CCE2B /* FocusPilotApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 578F527924A9131FE21B0CBB /* FocusPilotApp.swift */; };
 		49D0BCCBF2041E31CFAEFB07 /* AppConfigView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00C2E84D0EB4866ADB180906 /* AppConfigView.swift */; };
 		61BE2F834612998254FCBD36 /* QuickPanelWindow.swift in Sources */ = {isa = PBXBuildFile; fileRef = D325E61F2E46D9F3C32FA570 /* QuickPanelWindow.swift */; };
 		695FE633262FD14FC567167B /* ConfigStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = E08C4EC35C81F8106955C68C /* ConfigStore.swift */; };
@@ -30,13 +30,13 @@
 /* Begin PBXFileReference section */
 		00C2E84D0EB4866ADB180906 /* AppConfigView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppConfigView.swift; sourceTree = "<group>"; };
 		0C2A16952E5720B30C20145B /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
-		2C91510AA4C1CAB2D30C4228 /* PinTop.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = PinTop.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		2C91510AA4C1CAB2D30C4228 /* FocusPilot.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = FocusPilot.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		3E1D987B30198EF49787BEE9 /* PreferencesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreferencesView.swift; sourceTree = "<group>"; };
 		49B5CB65AC70CD464D2F5C4D /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		4BFEF4D96623A05F37826052 /* MainKanbanWindow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainKanbanWindow.swift; sourceTree = "<group>"; };
-		578F527924A9131FE21B0CBB /* PinTopApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PinTopApp.swift; sourceTree = "<group>"; };
+		578F527924A9131FE21B0CBB /* FocusPilotApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FocusPilotApp.swift; sourceTree = "<group>"; };
 		654D90AC10B3141530F22C4E /* HotkeyManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HotkeyManager.swift; sourceTree = "<group>"; };
-		656FDE2081298840E613E1E7 /* PinTop-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "PinTop-Bridging-Header.h"; sourceTree = "<group>"; };
+		656FDE2081298840E613E1E7 /* FocusPilot-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "FocusPilot-Bridging-Header.h"; sourceTree = "<group>"; };
 		7FF14F1A5D8E31189DDF7D51 /* FloatingBallWindow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FloatingBallWindow.swift; sourceTree = "<group>"; };
 		81DFD476B580D87DE839B719 /* MainKanbanView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainKanbanView.swift; sourceTree = "<group>"; };
 		8F93286D01C141DFFC1FB577 /* FloatingBallView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FloatingBallView.swift; sourceTree = "<group>"; };
@@ -65,7 +65,7 @@
 		3A1D77E2C061F0D8F6543324 = {
 			isa = PBXGroup;
 			children = (
-				9B1742C567347353DE8B7539 /* PinTop */,
+				9B1742C567347353DE8B7539 /* FocusPilot */,
 				61BAC581296AF03E016B5652 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -84,7 +84,7 @@
 		61BAC581296AF03E016B5652 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				2C91510AA4C1CAB2D30C4228 /* PinTop.app */,
+				2C91510AA4C1CAB2D30C4228 /* FocusPilot.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -94,7 +94,7 @@
 			children = (
 				D964B9EA262CB12568904D90 /* AppDelegate.swift */,
 				C3DCDC5F4D4A8F4D97A099BF /* PermissionManager.swift */,
-				578F527924A9131FE21B0CBB /* PinTopApp.swift */,
+				578F527924A9131FE21B0CBB /* FocusPilotApp.swift */,
 			);
 			path = App;
 			sourceTree = "<group>";
@@ -107,7 +107,7 @@
 			path = Models;
 			sourceTree = "<group>";
 		};
-		9B1742C567347353DE8B7539 /* PinTop */ = {
+		9B1742C567347353DE8B7539 /* FocusPilot */ = {
 			isa = PBXGroup;
 			children = (
 				7A0D63435A9032FAA46EAD8E /* App */,
@@ -119,7 +119,7 @@
 				FDEF6FF5E569DE98FFBA91E5 /* Resources */,
 				51C21F99D8F3883415697114 /* Services */,
 			);
-			path = PinTop;
+			path = FocusPilot;
 			sourceTree = "<group>";
 		};
 		B834B760C470BC3E4DB4E3D0 /* QuickPanel */ = {
@@ -136,7 +136,7 @@
 			children = (
 				A2F3CFEC288ECAB40E4D0EBC /* CGSPrivate.h */,
 				F32128E1B3B8C027228EE34C /* Constants.swift */,
-				656FDE2081298840E613E1E7 /* PinTop-Bridging-Header.h */,
+				656FDE2081298840E613E1E7 /* FocusPilot-Bridging-Header.h */,
 			);
 			path = Helpers;
 			sourceTree = "<group>";
@@ -164,9 +164,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		F3867D4A3BE8F50D4E34DA37 /* PinTop */ = {
+		F3867D4A3BE8F50D4E34DA37 /* FocusPilot */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 1AB5BB7FAEC02277853AD4DD /* Build configuration list for PBXNativeTarget "PinTop" */;
+			buildConfigurationList = 1AB5BB7FAEC02277853AD4DD /* Build configuration list for PBXNativeTarget "FocusPilot" */;
 			buildPhases = (
 				E007A1131E95745CE4C90D9B /* Sources */,
 				47E93C48DD0FA2282E7CFCC2 /* Resources */,
@@ -175,11 +175,11 @@
 			);
 			dependencies = (
 			);
-			name = PinTop;
+			name = FocusPilot;
 			packageProductDependencies = (
 			);
-			productName = PinTop;
-			productReference = 2C91510AA4C1CAB2D30C4228 /* PinTop.app */;
+			productName = FocusCopilot;
+			productReference = 2C91510AA4C1CAB2D30C4228 /* FocusPilot.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -191,7 +191,7 @@
 				BuildIndependentTargetsInParallel = YES;
 				LastUpgradeCheck = 1600;
 			};
-			buildConfigurationList = A289C7C9E9FB4DA0D523274F /* Build configuration list for PBXProject "PinTop" */;
+			buildConfigurationList = A289C7C9E9FB4DA0D523274F /* Build configuration list for PBXProject "FocusPilot" */;
 			compatibilityVersion = "Xcode 14.0";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
@@ -205,7 +205,7 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				F3867D4A3BE8F50D4E34DA37 /* PinTop */,
+				F3867D4A3BE8F50D4E34DA37 /* FocusPilot */,
 			);
 		};
 /* End PBXProject section */
@@ -238,7 +238,7 @@
 				F274C86B8856696EB070161B /* MainKanbanWindow.swift in Sources */,
 				0409B6953395291BECE2C360 /* Models.swift in Sources */,
 				9561BA67B7EEBB13E18A4069 /* PermissionManager.swift in Sources */,
-				49CF290C50B9A3C9315CCE2B /* PinTopApp.swift in Sources */,
+				49CF290C50B9A3C9315CCE2B /* FocusPilotApp.swift in Sources */,
 				C0D3240A782C567269950416 /* PreferencesView.swift in Sources */,
 				E58DCC761B887004A31FE0D9 /* QuickPanelView.swift in Sources */,
 				61BE2F834612998254FCBD36 /* QuickPanelWindow.swift in Sources */,
@@ -255,13 +255,13 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				COMBINE_HIDPI_IMAGES = YES;
 				GENERATE_INFOPLIST_FILE = NO;
-				INFOPLIST_FILE = PinTop/Resources/Info.plist;
+				INFOPLIST_FILE = FocusPilot/Resources/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.pintop.PinTop;
-				PRODUCT_NAME = PinTop;
+				PRODUCT_BUNDLE_IDENTIFIER = com.focuscopilot.FocusCopilot;
+				PRODUCT_NAME = FocusCopilot;
 				SDKROOT = macosx;
 			};
 			name = Debug;
@@ -299,7 +299,7 @@
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
-				CODE_SIGN_ENTITLEMENTS = PinTop/Resources/PinTop.entitlements;
+				CODE_SIGN_ENTITLEMENTS = FocusPilot/Resources/FocusPilot.entitlements;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				ENABLE_HARDENED_RUNTIME = YES;
@@ -326,7 +326,7 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
-				SWIFT_OBJC_BRIDGING_HEADER = "PinTop/Helpers/PinTop-Bridging-Header.h";
+				SWIFT_OBJC_BRIDGING_HEADER = "FocusPilot/Helpers/FocusPilot-Bridging-Header.h";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.9;
 			};
@@ -365,7 +365,7 @@
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
-				CODE_SIGN_ENTITLEMENTS = PinTop/Resources/PinTop.entitlements;
+				CODE_SIGN_ENTITLEMENTS = FocusPilot/Resources/FocusPilot.entitlements;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				ENABLE_HARDENED_RUNTIME = YES;
@@ -385,7 +385,7 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
 				SWIFT_COMPILATION_MODE = wholemodule;
-				SWIFT_OBJC_BRIDGING_HEADER = "PinTop/Helpers/PinTop-Bridging-Header.h";
+				SWIFT_OBJC_BRIDGING_HEADER = "FocusPilot/Helpers/FocusPilot-Bridging-Header.h";
 				SWIFT_OPTIMIZATION_LEVEL = "-O";
 				SWIFT_VERSION = 5.9;
 			};
@@ -397,13 +397,13 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				COMBINE_HIDPI_IMAGES = YES;
 				GENERATE_INFOPLIST_FILE = NO;
-				INFOPLIST_FILE = PinTop/Resources/Info.plist;
+				INFOPLIST_FILE = FocusPilot/Resources/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.pintop.PinTop;
-				PRODUCT_NAME = PinTop;
+				PRODUCT_BUNDLE_IDENTIFIER = com.focuscopilot.FocusCopilot;
+				PRODUCT_NAME = FocusCopilot;
 				SDKROOT = macosx;
 			};
 			name = Release;
@@ -411,7 +411,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		1AB5BB7FAEC02277853AD4DD /* Build configuration list for PBXNativeTarget "PinTop" */ = {
+		1AB5BB7FAEC02277853AD4DD /* Build configuration list for PBXNativeTarget "FocusPilot" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				0FA69881E66DB84EA5B43FC1 /* Debug */,
@@ -420,7 +420,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;
 		};
-		A289C7C9E9FB4DA0D523274F /* Build configuration list for PBXProject "PinTop" */ = {
+		A289C7C9E9FB4DA0D523274F /* Build configuration list for PBXProject "FocusPilot" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				B9010EFB693B7A6E7AE52BEB /* Debug */,

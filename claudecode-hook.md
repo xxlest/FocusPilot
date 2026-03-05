@@ -4,7 +4,7 @@
  * @LastEditors: xxl
  * @LastEditTime: 2026-03-03 21:49:25
  * @Description:
- * @FilePath: /PinTop/claudecode-hook.md
+ * @FilePath: /FocusPilot/claudecode-hook.md
 -->
 
 Claude Code的Hook机制主要可以从两个维度进行分类：按事件类型分类和按功能类型分类。

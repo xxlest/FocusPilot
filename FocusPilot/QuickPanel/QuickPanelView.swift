@@ -41,6 +41,15 @@ final class QuickPanelView: NSView {
     /// 鼠标追踪区域
     private var trackingArea: NSTrackingArea?
 
+    // MARK: - 拖拽排序状态
+
+    /// 拖拽进行中标志（抑制 reloadData 全量重建）
+    private var isDragging = false
+
+    /// 活跃 Tab 运行时排序（bundleID 数组，不持久化）
+    /// 为空时使用 AppMonitor 原始顺序；有值时按此顺序渲染
+    private var runtimeOrder: [String] = []
+
     // MARK: - 子视图
 
     /// 顶部栏
@@ -236,6 +245,8 @@ final class QuickPanelView: NSView {
     }
 
     override func mouseExited(with event: NSEvent) {
+        // 拖拽中不触发收起
+        if isDragging { return }
         // 钉住模式下不触发收起
         if let panelWindow = window as? QuickPanelWindow, panelWindow.isPanelPinned {
             return
@@ -326,6 +337,9 @@ final class QuickPanelView: NSView {
 
     /// 重新加载面板数据（差分更新：结构变化全量重建，仅标题变化只更新文本）
     func reloadData() {
+        // 拖拽进行中：跳过刷新，防止拖拽被打断
+        if isDragging { return }
+
         let structuralKey = buildStructuralKey()
 
         if structuralKey != lastStructuralKey {
@@ -541,17 +555,7 @@ final class QuickPanelView: NSView {
         let statusDot = createLabel(isRunning ? "🟢" : "⚪", size: 8, color: .labelColor)
         rowStack.addArrangedSubview(statusDot)
 
-        // App 图标 16x16
-        let iconView = NSImageView()
-        iconView.translatesAutoresizingMaskIntoConstraints = false
-        iconView.image = icon
-        NSLayoutConstraint.activate([
-            iconView.widthAnchor.constraint(equalToConstant: 16),
-            iconView.heightAnchor.constraint(equalToConstant: 16),
-        ])
-        rowStack.addArrangedSubview(iconView)
-
-        // 星号收藏按钮（仅活跃 Tab 显示）
+        // 星号收藏按钮（仅活跃 Tab 显示，位于图标之前）
         if currentTab == .running {
             let isFav = ConfigStore.shared.isFavorite(bundleID)
             let starButton = NSButton()
@@ -571,6 +575,16 @@ final class QuickPanelView: NSView {
             ])
             rowStack.addArrangedSubview(starButton)
         }
+
+        // App 图标 16x16
+        let iconView = NSImageView()
+        iconView.translatesAutoresizingMaskIntoConstraints = false
+        iconView.image = icon
+        NSLayoutConstraint.activate([
+            iconView.widthAnchor.constraint(equalToConstant: 16),
+            iconView.heightAnchor.constraint(equalToConstant: 16),
+        ])
+        rowStack.addArrangedSubview(iconView)
 
         // App 名称
         let nameLabel = createLabel(name, size: 12, color: isRunning ? .labelColor : .tertiaryLabelColor)

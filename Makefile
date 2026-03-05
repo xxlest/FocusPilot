@@ -18,7 +18,7 @@ INSTALL_DIR  := /Applications
 INSTALL_APP  := $(INSTALL_DIR)/$(APP_NAME).app
 
 SDK          := $(shell xcrun --show-sdk-path)
-SOURCES      := $(shell find PinTop -name "*.swift" | sort)
+SOURCES      := $(shell find FocusPilot -name "*.swift" | sort)
 
 # VFS overlay（解决 Command Line Tools SwiftBridging module 重复定义 bug）
 VFSOVERLAY   := $(BUILD_DIR)/vfsoverlay.yaml
@@ -53,14 +53,14 @@ $(APP_BUNDLE)/Contents/MacOS/$(APP_NAME): $(SOURCES) $(VFSOVERLAY)
 		-O $(SOURCES)
 	@echo "✓ 编译完成"
 
-$(APP_BUNDLE)/Contents/Info.plist: PinTop/Resources/Info.plist
+$(APP_BUNDLE)/Contents/Info.plist: FocusPilot/Resources/Info.plist
 	@mkdir -p $(APP_BUNDLE)/Contents
 	@sed \
 		-e 's/$$(DEVELOPMENT_LANGUAGE)/zh_CN/g' \
 		-e 's/$$(EXECUTABLE_NAME)/$(APP_NAME)/g' \
 		-e 's/$$(PRODUCT_BUNDLE_IDENTIFIER)/$(BUNDLE_ID)/g' \
 		-e 's/$$(PRODUCT_NAME)/Focus Copilot/g' \
-		PinTop/Resources/Info.plist > $@
+		FocusPilot/Resources/Info.plist > $@
 	@# 追加运行时所需的 key（源 plist 中没有的）
 	@/usr/libexec/PlistBuddy -c "Add :LSMinimumSystemVersion string $(MIN_MACOS)" $@ 2>/dev/null || true
 	@# LSUIElement 已移除，App 显示在 Dock 中
@@ -75,10 +75,10 @@ $(APP_BUNDLE)/Contents/PkgInfo:
 # ── 安装 ──────────────────────────────────────────────
 install: build
 	@# 关闭正在运行的旧进程（兼容新旧名称）
-	@-pkill -x $(APP_NAME) 2>/dev/null; pkill -x PinTop 2>/dev/null; sleep 1
+	@-pkill -x $(APP_NAME) 2>/dev/null; pkill -x FocusPilot 2>/dev/null; sleep 1
 	@# 删除旧 App（确保 Spotlight 刷新）
 	@rm -rf $(INSTALL_APP)
-	@rm -rf $(INSTALL_DIR)/PinTop.app
+	@rm -rf $(INSTALL_DIR)/FocusPilot.app
 	@# 复制新 App
 	@cp -R $(APP_BUNDLE) $(INSTALL_APP)
 	@# 签名：优先使用自签名证书（权限持久），否则降级为 ad-hoc（每次需重新授权）
@@ -131,7 +131,7 @@ clean:
 # ── 卸载 ──────────────────────────────────────────────
 uninstall:
 	@pkill -x $(APP_NAME) 2>/dev/null || true
-	@pkill -x PinTop 2>/dev/null || true
+	@pkill -x FocusPilot 2>/dev/null || true
 	@rm -rf $(INSTALL_APP)
-	@rm -rf $(INSTALL_DIR)/PinTop.app
+	@rm -rf $(INSTALL_DIR)/FocusPilot.app
 	@echo "✓ 已卸载 $(APP_NAME)"

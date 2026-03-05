@@ -4,7 +4,7 @@ import SwiftUI
 /// 使用 NSApplicationDelegateAdaptor 连接 AppDelegate，主要逻辑在 AppDelegate 中
 /// 不显示主窗口，悬浮球通过 AppDelegate 手动创建
 @main
-struct PinTopApp: App {
+struct FocusPilotApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
 
     var body: some Scene {
