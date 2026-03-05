@@ -1,10 +1,4 @@
 import AppKit
-import ApplicationServices
-import ObjectiveC
-
-// 关联对象 Key（星号收藏按钮存储 bundleID 和 displayName）
-private var bundleIDKey: UInt8 = 0
-private var displayNameKey: UInt8 = 0
 
 // MARK: - 快捷面板 Tab 枚举
 
@@ -19,31 +13,27 @@ enum QuickPanelTab: String {
 
 final class QuickPanelView: NSView {
 
-    // MARK: - 状态
+    // MARK: - 状态（跨文件 extension 需访问，使用 internal）
 
     /// 当前 Tab 页（setupView 中从 ConfigStore 恢复）
-    private var currentTab: QuickPanelTab = .running
+    var currentTab: QuickPanelTab = .running
 
     /// 当前高亮的窗口行 ID（同一时间只有一个）
-    private var highlightedWindowID: CGWindowID?
+    var highlightedWindowID: CGWindowID?
 
     /// 多窗口 App 折叠状态（按 bundleID 跟踪）
-    private var collapsedApps: Set<String> = []
+    var collapsedApps: Set<String> = []
 
     /// 上次渲染时的结构快照（用于判断是否需要全量重建）
     private var lastStructuralKey: String = ""
 
     /// 窗口行标题 label 引用（用于内容级更新）
-    private var windowTitleLabels: [CGWindowID: NSTextField] = [:]
+    var windowTitleLabels: [CGWindowID: NSTextField] = [:]
     /// 窗口行视图引用（用于高亮更新）
-    private var windowRowViewMap: [CGWindowID: HoverableRowView] = [:]
+    var windowRowViewMap: [CGWindowID: HoverableRowView] = [:]
 
     /// 鼠标追踪区域
     private var trackingArea: NSTrackingArea?
-
-    /// 活跃 Tab 运行时排序（bundleID 数组，不持久化）
-    /// 为空时使用 AppMonitor 原始顺序；有值时按此顺序渲染
-    private var runtimeOrder: [String] = []
 
     // MARK: - 子视图
 
@@ -107,12 +97,12 @@ final class QuickPanelView: NSView {
     }()
 
     /// 内容列表容器
-    private let contentStack: NSStackView = {
+    let contentStack: NSStackView = {
         let stack = NSStackView()
         stack.orientation = .vertical
         stack.alignment = .leading
         stack.spacing = 0
-        stack.wantsLayer = true  // 拖拽排序需要 CALayer 支持
+        stack.wantsLayer = true
         stack.edgeInsets = NSEdgeInsets(top: 8, left: 0, bottom: 0, right: 0)
         return stack
     }()
@@ -292,8 +282,7 @@ final class QuickPanelView: NSView {
     @objc private func accessibilityDidGrant() {
         // 权限恢复：清除 AX 缓存 + 强制全量重建
         WindowService.shared.invalidateAXCache()
-        lastStructuralKey = ""
-        reloadData()
+        forceReload()
     }
 
     // MARK: - Tab 切换
@@ -304,8 +293,7 @@ final class QuickPanelView: NSView {
         ConfigStore.shared.saveLastPanelTab(tab)
         highlightedWindowID = nil
         updateTabButtonStyles()
-        lastStructuralKey = ""  // 强制下次全量重建
-        reloadData()
+        forceReload()
     }
 
     @objc private func switchToRunningTab() { switchTab(.running) }
@@ -328,6 +316,12 @@ final class QuickPanelView: NSView {
     }
 
     // MARK: - 数据加载
+
+    /// 强制全量重建 UI（清除差分缓存）
+    func forceReload() {
+        lastStructuralKey = ""
+        reloadData()
+    }
 
     /// 重新加载面板数据（差分更新：结构变化全量重建，仅标题变化只更新文本）
     func reloadData() {
@@ -487,418 +481,6 @@ final class QuickPanelView: NSView {
         }
     }
 
-    // MARK: - 创建 App 行（活跃/收藏 Tab 用）
-
-    private func createRunningAppRow(app: RunningApp) -> NSView {
-        return createAppRow(
-            bundleID: app.bundleID,
-            name: app.localizedName,
-            icon: app.icon,
-            isRunning: true,
-            windows: app.windows
-        )
-    }
-
-    // MARK: - 创建 App 行（收藏 Tab 用）
-
-    private func createFavoriteAppRow(config: AppConfig, runningApp: RunningApp?, isRunning: Bool) -> NSView {
-        // 未运行 App 图标：通过 urlForApplication 获取
-        let icon: NSImage
-        if let app = runningApp {
-            icon = app.icon
-        } else if let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: config.bundleID) {
-            icon = NSWorkspace.shared.icon(forFile: url.path)
-        } else {
-            icon = NSImage(named: NSImage.applicationIconName)!
-        }
-        let row = createAppRow(
-            bundleID: config.bundleID,
-            name: config.displayName,
-            icon: icon,
-            isRunning: isRunning,
-            windows: runningApp?.windows ?? []
-        )
-
-        // 右键菜单：置顶
-        if let hoverRow = row as? HoverableRowView {
-            let bundleID = config.bundleID
-            hoverRow.contextMenuProvider = { [weak self] in
-                self?.createFavoriteContextMenu(bundleID: bundleID)
-            }
-        }
-
-        return row
-    }
-
-    // MARK: - 创建 App 行（统一实现）
-
-    private func createAppRow(bundleID: String, name: String, icon: NSImage, isRunning: Bool, windows: [WindowInfo]) -> NSView {
-        let row = HoverableRowView()
-        row.translatesAutoresizingMaskIntoConstraints = false
-
-        let rowStack = NSStackView()
-        rowStack.orientation = .horizontal
-        rowStack.alignment = .centerY
-        rowStack.spacing = 8
-        rowStack.edgeInsets = NSEdgeInsets(top: 3, left: 12, bottom: 3, right: 12)
-        rowStack.translatesAutoresizingMaskIntoConstraints = false
-        row.addSubview(rowStack)
-
-        NSLayoutConstraint.activate([
-            rowStack.topAnchor.constraint(equalTo: row.topAnchor),
-            rowStack.bottomAnchor.constraint(equalTo: row.bottomAnchor),
-            rowStack.leadingAnchor.constraint(equalTo: row.leadingAnchor),
-            rowStack.trailingAnchor.constraint(equalTo: row.trailingAnchor),
-            row.heightAnchor.constraint(greaterThanOrEqualToConstant: Constants.Panel.appRowHeight),
-        ])
-
-        // 星号收藏按钮（仅活跃 Tab 显示，位于最左侧）
-        if currentTab == .running {
-            let isFav = ConfigStore.shared.isFavorite(bundleID)
-            let starButton = NSButton()
-            starButton.bezelStyle = .recessed
-            starButton.isBordered = false
-            starButton.image = Self.cachedSymbol(name: isFav ? "star.fill" : "star", size: 11, weight: .regular)
-            starButton.contentTintColor = isFav ? .systemYellow : .tertiaryLabelColor
-            starButton.toolTip = isFav ? "取消收藏" : "添加到收藏"
-            starButton.target = self
-            starButton.action = #selector(handleToggleFavorite(_:))
-            objc_setAssociatedObject(starButton, &bundleIDKey, bundleID, .OBJC_ASSOCIATION_RETAIN)
-            objc_setAssociatedObject(starButton, &displayNameKey, name, .OBJC_ASSOCIATION_RETAIN)
-            starButton.translatesAutoresizingMaskIntoConstraints = false
-            NSLayoutConstraint.activate([
-                starButton.widthAnchor.constraint(equalToConstant: 18),
-                starButton.heightAnchor.constraint(equalToConstant: 18),
-            ])
-            rowStack.addArrangedSubview(starButton)
-        }
-
-        // 运行状态指示器
-        let statusDot = createLabel(isRunning ? "🟢" : "⚪", size: 8, color: .labelColor)
-        rowStack.addArrangedSubview(statusDot)
-
-        // App 图标 16x16
-        let iconView = NSImageView()
-        iconView.translatesAutoresizingMaskIntoConstraints = false
-        iconView.image = icon
-        NSLayoutConstraint.activate([
-            iconView.widthAnchor.constraint(equalToConstant: 16),
-            iconView.heightAnchor.constraint(equalToConstant: 16),
-        ])
-        rowStack.addArrangedSubview(iconView)
-
-        // App 名称
-        let nameLabel = createLabel(name, size: 12, color: isRunning ? .labelColor : .tertiaryLabelColor)
-        rowStack.addArrangedSubview(nameLabel)
-
-        // 弹性空间
-        let spacer = NSView()
-        spacer.translatesAutoresizingMaskIntoConstraints = false
-        spacer.setContentHuggingPriority(.defaultLow, for: .horizontal)
-        rowStack.addArrangedSubview(spacer)
-
-        // 窗口数量 + 折叠/展开指示器（有窗口时显示）
-        if !windows.isEmpty {
-            let countLabel = createLabel("\(windows.count) 个窗口", size: 11, color: .secondaryLabelColor)
-            rowStack.addArrangedSubview(countLabel)
-
-            let isCollapsed = collapsedApps.contains(bundleID)
-            let chevronName = isCollapsed ? "chevron.right" : "chevron.down"
-            let chevronView = NSImageView()
-            chevronView.translatesAutoresizingMaskIntoConstraints = false
-            chevronView.image = Self.cachedSymbol(name: chevronName, size: 10, weight: .medium)
-            chevronView.contentTintColor = .secondaryLabelColor
-            NSLayoutConstraint.activate([
-                chevronView.widthAnchor.constraint(equalToConstant: 14),
-                chevronView.heightAnchor.constraint(equalToConstant: 14),
-            ])
-            rowStack.addArrangedSubview(chevronView)
-        }
-
-        // 点击行为：所有运行中 App 统一为折叠/展开（窗口激活通过点击窗口行）
-        row.bundleID = bundleID
-        if !isRunning {
-            // 未运行 App：灰度显示，点击启动
-            row.alphaValue = 0.5
-            row.toolTip = "点击启动"
-            row.clickHandler = { [weak self] in
-                self?.launchApp(bundleID: bundleID)
-            }
-        } else if !windows.isEmpty {
-            // 运行中 App（有窗口）：点击切换折叠/展开
-            row.clickHandler = { [weak self] in
-                guard let self = self else { return }
-                if self.collapsedApps.contains(bundleID) {
-                    self.collapsedApps.remove(bundleID)
-                } else {
-                    self.collapsedApps.insert(bundleID)
-                }
-                self.lastStructuralKey = ""
-                self.reloadData()
-            }
-        } else {
-            // 运行中但无窗口 App：点击激活 App
-            row.clickHandler = { [weak self] in
-                guard let self = self else { return }
-                if let runApp = AppMonitor.shared.runningApps.first(where: { $0.bundleID == bundleID }),
-                   let firstWindow = runApp.windows.first {
-                    self.highlightedWindowID = firstWindow.id
-                    WindowService.shared.activateWindow(firstWindow)
-                    self.lastStructuralKey = ""
-                    self.reloadData()
-                } else {
-                    WindowService.shared.activateApp(bundleID)
-                }
-            }
-        }
-
-        return row
-    }
-
-    // MARK: - 创建窗口列表
-
-    private func createWindowList(windows: [WindowInfo], bundleID: String) -> NSView {
-        let container = NSView()
-        container.translatesAutoresizingMaskIntoConstraints = false
-
-        let stack = NSStackView()
-        stack.orientation = .vertical
-        stack.alignment = .leading
-        stack.spacing = 0
-        stack.translatesAutoresizingMaskIntoConstraints = false
-        container.addSubview(stack)
-
-        NSLayoutConstraint.activate([
-            stack.topAnchor.constraint(equalTo: container.topAnchor),
-            stack.bottomAnchor.constraint(equalTo: container.bottomAnchor),
-            stack.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: Constants.Panel.windowIndent),
-            stack.trailingAnchor.constraint(equalTo: container.trailingAnchor),
-        ])
-
-        // 所有窗口平铺显示（限制最多显示 maxWindowsPerApp 个）
-        for windowInfo in windows.prefix(Constants.Panel.maxWindowsPerApp) {
-            let windowRow = createWindowRow(windowInfo: windowInfo, bundleID: bundleID)
-            stack.addArrangedSubview(windowRow)
-        }
-
-        return container
-    }
-
-    // MARK: - 创建窗口行
-
-    private func createWindowRow(windowInfo: WindowInfo, bundleID: String) -> NSView {
-        let row = HoverableRowView()
-        row.translatesAutoresizingMaskIntoConstraints = false
-        row.windowID = windowInfo.id
-        row.windowInfo = windowInfo
-
-        let rowStack = NSStackView()
-        rowStack.orientation = .horizontal
-        rowStack.alignment = .centerY
-        rowStack.spacing = 6
-        rowStack.edgeInsets = NSEdgeInsets(top: 2, left: 8, bottom: 2, right: 12)
-        rowStack.translatesAutoresizingMaskIntoConstraints = false
-        row.addSubview(rowStack)
-
-        NSLayoutConstraint.activate([
-            rowStack.topAnchor.constraint(equalTo: row.topAnchor),
-            rowStack.bottomAnchor.constraint(equalTo: row.bottomAnchor),
-            rowStack.leadingAnchor.constraint(equalTo: row.leadingAnchor),
-            rowStack.trailingAnchor.constraint(equalTo: row.trailingAnchor),
-            row.heightAnchor.constraint(greaterThanOrEqualToConstant: Constants.Panel.windowRowHeight),
-        ])
-
-        // 窗口图标（macwindow SF Symbol，使用缓存）
-        let windowIconView = NSImageView()
-        windowIconView.translatesAutoresizingMaskIntoConstraints = false
-        windowIconView.image = Self.cachedSymbol(name: "macwindow", size: 10, weight: .regular)
-        windowIconView.contentTintColor = .secondaryLabelColor
-        NSLayoutConstraint.activate([
-            windowIconView.widthAnchor.constraint(equalToConstant: 14),
-            windowIconView.heightAnchor.constraint(equalToConstant: 14),
-        ])
-        rowStack.addArrangedSubview(windowIconView)
-
-        // 窗口标题：优先使用自定义名称
-        let displayTitle = resolveDisplayTitle(bundleID: bundleID, windowInfo: windowInfo)
-
-        let titleLabel = createLabel(displayTitle, size: 11, color: .labelColor)
-        titleLabel.lineBreakMode = .byTruncatingTail
-        titleLabel.toolTip = windowInfo.title
-        titleLabel.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
-        rowStack.addArrangedSubview(titleLabel)
-
-        // 注册到映射（用于差分更新时直接修改标题文本）
-        windowTitleLabels[windowInfo.id] = titleLabel
-        windowRowViewMap[windowInfo.id] = row
-
-        // 弹性空间
-        let spacer = NSView()
-        spacer.translatesAutoresizingMaskIntoConstraints = false
-        spacer.setContentHuggingPriority(.defaultLow, for: .horizontal)
-        rowStack.addArrangedSubview(spacer)
-
-        // 选中高亮状态
-        if highlightedWindowID == windowInfo.id {
-            row.isHighlighted = true
-            row.wantsLayer = true
-            row.layer?.backgroundColor = NSColor.controlAccentColor.withAlphaComponent(0.15).cgColor
-            row.layer?.cornerRadius = 4
-        }
-
-        // 设置右键菜单
-        row.contextMenuProvider = { [weak self] in
-            self?.createWindowContextMenu(bundleID: bundleID, windowInfo: windowInfo)
-        }
-
-        // 点击窗口行：高亮 + 前置窗口
-        row.clickHandler = { [weak self] in
-            guard let self = self else { return }
-            WindowService.shared.debugLog("QuickPanel: 点击窗口行 wid=\(windowInfo.id) title=\(windowInfo.title)")
-            self.highlightedWindowID = windowInfo.id
-            WindowService.shared.activateWindow(windowInfo)
-            // 刷新以更新高亮状态
-            self.lastStructuralKey = ""
-            self.reloadData()
-        }
-
-        return row
-    }
-
-    // MARK: - 关闭窗口
-
-    // MARK: - 窗口右键菜单（重命名）
-
-    private func createWindowContextMenu(bundleID: String, windowInfo: WindowInfo) -> NSMenu {
-        let menu = NSMenu()
-
-        // 关闭窗口
-        let closeItem = NSMenuItem(title: "关闭窗口", action: #selector(handleCloseWindow(_:)), keyEquivalent: "")
-        closeItem.target = self
-        closeItem.representedObject = windowInfo
-        menu.addItem(closeItem)
-
-        menu.addItem(NSMenuItem.separator())
-
-        let renameItem = NSMenuItem(title: "重命名窗口", action: #selector(handleRenameWindow(_:)), keyEquivalent: "")
-        renameItem.target = self
-        renameItem.representedObject = (bundleID, windowInfo)
-        menu.addItem(renameItem)
-
-        let key = Self.renameKey(bundleID: bundleID, windowID: windowInfo.id)
-        if ConfigStore.shared.windowRenames[key] != nil {
-            let clearItem = NSMenuItem(title: "清除自定义名称", action: #selector(handleClearRename(_:)), keyEquivalent: "")
-            clearItem.target = self
-            clearItem.representedObject = key
-            menu.addItem(clearItem)
-        }
-
-        return menu
-    }
-
-    @objc private func handleCloseWindow(_ sender: NSMenuItem) {
-        guard let windowInfo = sender.representedObject as? WindowInfo else { return }
-        WindowService.shared.closeWindow(windowInfo)
-        // 短暂延迟后刷新列表（等待窗口关闭生效）
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { [weak self] in
-            self?.lastStructuralKey = ""
-            self?.reloadData()
-        }
-    }
-
-    @objc private func handleRenameWindow(_ sender: NSMenuItem) {
-        guard let info = sender.representedObject as? (String, WindowInfo) else { return }
-        let bundleID = info.0
-        let windowInfo = info.1
-        let key = Self.renameKey(bundleID: bundleID, windowID: windowInfo.id)
-        let currentName = ConfigStore.shared.windowRenames[key] ?? windowInfo.title
-
-        let alert = NSAlert()
-        alert.messageText = "重命名窗口"
-        alert.informativeText = "原始标题：\(windowInfo.title)"
-        alert.addButton(withTitle: "确定")
-        alert.addButton(withTitle: "取消")
-
-        let textField = NSTextField(frame: NSRect(x: 0, y: 0, width: 240, height: 24))
-        textField.stringValue = currentName
-        textField.isEditable = true
-        textField.isBezeled = true
-        textField.bezelStyle = .roundedBezel
-        alert.accessoryView = textField
-        alert.window.initialFirstResponder = textField
-
-        let response = alert.runModal()
-        if response == .alertFirstButtonReturn {
-            let newName = textField.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
-            if !newName.isEmpty && newName != windowInfo.title {
-                ConfigStore.shared.windowRenames[key] = newName
-                ConfigStore.shared.saveWindowRenames()
-                lastStructuralKey = ""
-                reloadData()
-            } else if newName == windowInfo.title {
-                ConfigStore.shared.windowRenames.removeValue(forKey: key)
-                ConfigStore.shared.saveWindowRenames()
-                lastStructuralKey = ""
-                reloadData()
-            }
-        }
-    }
-
-    @objc private func handleClearRename(_ sender: NSMenuItem) {
-        guard let key = sender.representedObject as? String else { return }
-        ConfigStore.shared.windowRenames.removeValue(forKey: key)
-        ConfigStore.shared.saveWindowRenames()
-        lastStructuralKey = ""
-        reloadData()
-    }
-
-    // MARK: - 重命名 Key 工具方法
-
-    static func renameKey(bundleID: String, windowID: CGWindowID) -> String {
-        return "\(bundleID)::\(windowID)"
-    }
-
-    // MARK: - 收藏右键菜单
-
-    private func createFavoriteContextMenu(bundleID: String) -> NSMenu {
-        let menu = NSMenu()
-
-        // 置顶操作（已经在第一位时不显示）
-        let configs = ConfigStore.shared.appConfigs
-        if configs.first?.bundleID != bundleID {
-            let pinItem = NSMenuItem(title: "置顶", action: #selector(handlePinToTop(_:)), keyEquivalent: "")
-            pinItem.target = self
-            pinItem.representedObject = bundleID
-            menu.addItem(pinItem)
-        }
-
-        // 取消收藏
-        let removeItem = NSMenuItem(title: "取消收藏", action: #selector(handleRemoveFavorite(_:)), keyEquivalent: "")
-        removeItem.target = self
-        removeItem.representedObject = bundleID
-        menu.addItem(removeItem)
-
-        return menu
-    }
-
-    @objc private func handlePinToTop(_ sender: NSMenuItem) {
-        guard let bundleID = sender.representedObject as? String else { return }
-        var order = ConfigStore.shared.appConfigs.map { $0.bundleID }
-        guard let idx = order.firstIndex(of: bundleID), idx > 0 else { return }
-        order.remove(at: idx)
-        order.insert(bundleID, at: 0)
-        ConfigStore.shared.reorderApps(order)
-        lastStructuralKey = ""
-        reloadData()
-    }
-
-    @objc private func handleRemoveFavorite(_ sender: NSMenuItem) {
-        guard let bundleID = sender.representedObject as? String else { return }
-        ConfigStore.shared.removeApp(bundleID)
-        lastStructuralKey = ""
-        reloadData()
-    }
-
     // MARK: - 面板高度计算
 
     private func updatePanelSize() {
@@ -915,134 +497,6 @@ final class QuickPanelView: NSView {
         frame.size.height = clampedHeight
         frame.origin.y -= heightDiff
         panelWindow.setFrame(frame, display: true)
-    }
-
-    // MARK: - 事件处理
-
-    @objc private func openMainKanban() {
-        NotificationCenter.default.post(name: Constants.Notifications.ballOpenMainKanban, object: nil)
-    }
-
-    /// 星号收藏按钮点击：切换收藏/取消收藏
-    @objc private func handleToggleFavorite(_ sender: NSButton) {
-        guard let bundleID = objc_getAssociatedObject(sender, &bundleIDKey) as? String else { return }
-        let name = objc_getAssociatedObject(sender, &displayNameKey) as? String ?? ""
-
-        if ConfigStore.shared.isFavorite(bundleID) {
-            ConfigStore.shared.removeApp(bundleID)
-        } else {
-            ConfigStore.shared.addApp(bundleID, displayName: name)
-        }
-        lastStructuralKey = ""
-        reloadData()
-    }
-
-    /// 启动未运行的 App
-    private func launchApp(bundleID: String) {
-        guard let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleID) else {
-            WindowService.shared.debugLog("QuickPanel: 找不到 App URL bundleID=\(bundleID)")
-            return
-        }
-        let configuration = NSWorkspace.OpenConfiguration()
-        NSWorkspace.shared.openApplication(at: url, configuration: configuration) { app, error in
-            if let error = error {
-                WindowService.shared.debugLog("QuickPanel: 启动 App 失败 bundleID=\(bundleID) error=\(error)")
-            } else {
-                WindowService.shared.debugLog("QuickPanel: App 已启动 bundleID=\(bundleID) pid=\(app?.processIdentifier ?? -1)")
-            }
-        }
-    }
-
-    // MARK: - 权限引导视图
-
-    private func createPermissionHintView() -> NSView {
-        let container = NSView()
-        container.translatesAutoresizingMaskIntoConstraints = false
-
-        let stack = NSStackView()
-        stack.orientation = .vertical
-        stack.alignment = .centerX
-        stack.spacing = 6
-        stack.edgeInsets = NSEdgeInsets(top: 12, left: 16, bottom: 12, right: 16)
-        stack.translatesAutoresizingMaskIntoConstraints = false
-        container.addSubview(stack)
-
-        NSLayoutConstraint.activate([
-            stack.topAnchor.constraint(equalTo: container.topAnchor),
-            stack.bottomAnchor.constraint(equalTo: container.bottomAnchor),
-            stack.leadingAnchor.constraint(equalTo: container.leadingAnchor),
-            stack.trailingAnchor.constraint(equalTo: container.trailingAnchor),
-        ])
-
-        let separator = NSBox()
-        separator.boxType = .separator
-        separator.translatesAutoresizingMaskIntoConstraints = false
-        stack.addArrangedSubview(separator)
-        NSLayoutConstraint.activate([
-            separator.leadingAnchor.constraint(equalTo: stack.leadingAnchor),
-            separator.trailingAnchor.constraint(equalTo: stack.trailingAnchor),
-        ])
-
-        let lockLabel = createLabel("🔒", size: 16, color: .labelColor)
-        lockLabel.alignment = .center
-        stack.addArrangedSubview(lockLabel)
-
-        let hintLabel = createLabel("需要辅助功能权限", size: 12, color: .secondaryLabelColor)
-        hintLabel.alignment = .center
-        stack.addArrangedSubview(hintLabel)
-
-        let detailLabel = createLabel("窗口管理功能需要此权限才能正常工作", size: 10, color: .tertiaryLabelColor)
-        detailLabel.alignment = .center
-        stack.addArrangedSubview(detailLabel)
-
-        let settingsButton = NSButton(title: "前往系统设置", target: self, action: #selector(openAccessibilitySettings))
-        settingsButton.bezelStyle = .recessed
-        settingsButton.controlSize = .small
-        settingsButton.translatesAutoresizingMaskIntoConstraints = false
-        stack.addArrangedSubview(settingsButton)
-
-        return container
-    }
-
-    @objc private func openAccessibilitySettings() {
-        NSWorkspace.shared.open(URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility")!)
-    }
-
-    // MARK: - 工具方法
-
-    /// 添加居中空状态提示文案到 contentStack
-    private func addEmptyStateLabel(_ text: String) {
-        let label = createLabel(text, size: 13, color: .secondaryLabelColor)
-        label.alignment = .center
-        label.translatesAutoresizingMaskIntoConstraints = false
-        contentStack.addArrangedSubview(label)
-        label.widthAnchor.constraint(equalTo: contentStack.widthAnchor).isActive = true
-    }
-
-    // MARK: - SF Symbol 缓存
-
-    /// SF Symbol 图片缓存（避免重复创建相同配置的图片）
-    private static var symbolCache: [String: NSImage] = [:]
-
-    private static func cachedSymbol(name: String, size: CGFloat, weight: NSFont.Weight) -> NSImage? {
-        let key = "\(name)-\(Int(size))-\(Int(weight.rawValue * 100))"
-        if let cached = symbolCache[key] { return cached }
-        guard let img = NSImage(systemSymbolName: name, accessibilityDescription: nil) else { return nil }
-        let config = NSImage.SymbolConfiguration(pointSize: size, weight: weight)
-        let configured = img.withSymbolConfiguration(config) ?? img
-        symbolCache[key] = configured
-        return configured
-    }
-
-    private func createLabel(_ text: String, size: CGFloat, color: NSColor) -> NSTextField {
-        let label = NSTextField(labelWithString: text)
-        label.font = .systemFont(ofSize: size)
-        label.textColor = color
-        label.isEditable = false
-        label.isBezeled = false
-        label.drawsBackground = false
-        label.translatesAutoresizingMaskIntoConstraints = false
-        return label
     }
 }
 
