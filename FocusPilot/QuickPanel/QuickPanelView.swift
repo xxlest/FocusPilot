@@ -50,6 +50,15 @@ final class QuickPanelView: NSView {
     /// 为空时使用 AppMonitor 原始顺序；有值时按此顺序渲染
     private var runtimeOrder: [String] = []
 
+    /// 收藏 Tab 拖拽：源行索引
+    private var favDragSourceIndex: Int?
+    /// 收藏 Tab 拖拽：浮动快照视图
+    private var favDragSnapshot: NSView?
+    /// 收藏 Tab 拖拽：当前收藏 App 行视图数组（用于位置计算）
+    private var favDragAppRows: [HoverableRowView] = []
+    /// 收藏 Tab 拖拽：当前排序的 bundleID 数组（拖拽中实时更新）
+    private var favDragOrder: [String] = []
+
     // MARK: - 子视图
 
     /// 顶部栏
@@ -403,7 +412,7 @@ final class QuickPanelView: NSView {
 
     /// 解析窗口显示标题（优先使用自定义名称）
     private func resolveDisplayTitle(bundleID: String, windowInfo: WindowInfo) -> String {
-        let renameKey = Self.renameKey(bundleID: bundleID, title: windowInfo.title)
+        let renameKey = Self.renameKey(bundleID: bundleID, windowID: windowInfo.id)
         let customName = ConfigStore.shared.windowRenames[renameKey]
         if let custom = customName, !custom.isEmpty {
             return custom
@@ -474,6 +483,7 @@ final class QuickPanelView: NSView {
         }
 
         let hasAccessibility = WindowService.shared.isAXApiAvailable()
+        favDragAppRows = []
 
         for config in configs {
             let running = runningApps.first(where: { $0.bundleID == config.bundleID })
@@ -481,6 +491,9 @@ final class QuickPanelView: NSView {
 
             let appRow = createFavoriteAppRow(config: config, runningApp: running, isRunning: isRunning)
             contentStack.addArrangedSubview(appRow)
+            if let hoverRow = appRow as? HoverableRowView {
+                favDragAppRows.append(hoverRow)
+            }
 
             // 窗口列表（运行中且有权限时显示）
             if hasAccessibility, let app = running, !app.windows.isEmpty,
@@ -520,13 +533,31 @@ final class QuickPanelView: NSView {
         } else {
             icon = NSImage(named: NSImage.applicationIconName)!
         }
-        return createAppRow(
+        let row = createAppRow(
             bundleID: config.bundleID,
             name: config.displayName,
             icon: icon,
             isRunning: isRunning,
             windows: runningApp?.windows ?? []
         )
+
+        // 启用拖拽排序
+        if let hoverRow = row as? HoverableRowView {
+            hoverRow.dragEnabled = true
+            hoverRow.dragStartHandler = { [weak self] point in
+                guard let self = self,
+                      let idx = self.favDragAppRows.firstIndex(where: { $0 === hoverRow }) else { return }
+                self.handleFavDragStart(at: point, sourceRow: hoverRow, sourceIndex: idx)
+            }
+            hoverRow.dragMoveHandler = { [weak self] point in
+                self?.handleFavDragMove(to: point)
+            }
+            hoverRow.dragEndHandler = { [weak self] point in
+                self?.handleFavDragEnd(at: point)
+            }
+        }
+
+        return row
     }
 
     // MARK: - 创建 App 行（统一实现）
@@ -551,11 +582,7 @@ final class QuickPanelView: NSView {
             row.heightAnchor.constraint(greaterThanOrEqualToConstant: Constants.Panel.appRowHeight),
         ])
 
-        // 运行状态指示器
-        let statusDot = createLabel(isRunning ? "🟢" : "⚪", size: 8, color: .labelColor)
-        rowStack.addArrangedSubview(statusDot)
-
-        // 星号收藏按钮（仅活跃 Tab 显示，位于图标之前）
+        // 星号收藏按钮（仅活跃 Tab 显示，位于最左侧）
         if currentTab == .running {
             let isFav = ConfigStore.shared.isFavorite(bundleID)
             let starButton = NSButton()
@@ -575,6 +602,10 @@ final class QuickPanelView: NSView {
             ])
             rowStack.addArrangedSubview(starButton)
         }
+
+        // 运行状态指示器
+        let statusDot = createLabel(isRunning ? "🟢" : "⚪", size: 8, color: .labelColor)
+        rowStack.addArrangedSubview(statusDot)
 
         // App 图标 16x16
         let iconView = NSImageView()
@@ -784,7 +815,7 @@ final class QuickPanelView: NSView {
         renameItem.representedObject = (bundleID, windowInfo)
         menu.addItem(renameItem)
 
-        let key = Self.renameKey(bundleID: bundleID, title: windowInfo.title)
+        let key = Self.renameKey(bundleID: bundleID, windowID: windowInfo.id)
         if ConfigStore.shared.windowRenames[key] != nil {
             let clearItem = NSMenuItem(title: "清除自定义名称", action: #selector(handleClearRename(_:)), keyEquivalent: "")
             clearItem.target = self
@@ -809,7 +840,7 @@ final class QuickPanelView: NSView {
         guard let info = sender.representedObject as? (String, WindowInfo) else { return }
         let bundleID = info.0
         let windowInfo = info.1
-        let key = Self.renameKey(bundleID: bundleID, title: windowInfo.title)
+        let key = Self.renameKey(bundleID: bundleID, windowID: windowInfo.id)
         let currentName = ConfigStore.shared.windowRenames[key] ?? windowInfo.title
 
         let alert = NSAlert()
@@ -853,8 +884,138 @@ final class QuickPanelView: NSView {
 
     // MARK: - 重命名 Key 工具方法
 
-    static func renameKey(bundleID: String, title: String) -> String {
-        return "\(bundleID)::\(title)"
+    static func renameKey(bundleID: String, windowID: CGWindowID) -> String {
+        return "\(bundleID)::\(windowID)"
+    }
+
+    // MARK: - 收藏 Tab 拖拽排序
+
+    /// 收藏拖拽开始
+    private func handleFavDragStart(at point: NSPoint, sourceRow: NSView, sourceIndex: Int) {
+        isDragging = true
+        favDragSourceIndex = sourceIndex
+        favDragOrder = ConfigStore.shared.appConfigs.map { $0.bundleID }
+
+        // 创建浮动快照
+        let bitmapRep = sourceRow.bitmapImageRepForCachingDisplay(in: sourceRow.bounds)!
+        sourceRow.cacheDisplay(in: sourceRow.bounds, to: bitmapRep)
+        let snapshot = NSView(frame: sourceRow.frame)
+        snapshot.wantsLayer = true
+        snapshot.layer?.contents = bitmapRep.cgImage
+        snapshot.alphaValue = Constants.Panel.dragSnapshotAlpha
+        snapshot.layer?.transform = CATransform3DMakeScale(
+            Constants.Panel.dragSnapshotScale,
+            Constants.Panel.dragSnapshotScale,
+            1.0
+        )
+        snapshot.layer?.shadowColor = NSColor.black.cgColor
+        snapshot.layer?.shadowOpacity = 0.2
+        snapshot.layer?.shadowRadius = 4
+        snapshot.layer?.shadowOffset = CGSize(width: 0, height: -2)
+
+        // 将快照添加到 contentStack 的父视图（scrollView.documentView）
+        let rowFrameInContent = sourceRow.convert(sourceRow.bounds, to: contentStack.superview)
+        snapshot.frame = rowFrameInContent
+        contentStack.superview?.addSubview(snapshot)
+        favDragSnapshot = snapshot
+
+        // 隐藏源行
+        sourceRow.alphaValue = 0
+    }
+
+    /// 收藏拖拽移动
+    private func handleFavDragMove(to point: NSPoint) {
+        guard let snapshot = favDragSnapshot,
+              let sourceIndex = favDragSourceIndex else { return }
+
+        // 移动快照位置（将窗口坐标转换到 contentStack 的父视图坐标）
+        let localPoint = contentStack.superview?.convert(point, from: nil) ?? point
+        snapshot.frame.origin.y = localPoint.y - snapshot.frame.height / 2
+
+        // 计算目标插入索引（基于 App 行的中点位置）
+        var targetIndex = sourceIndex
+        for (i, row) in favDragAppRows.enumerated() {
+            let rowMid = row.convert(CGPoint(x: 0, y: row.bounds.midY), to: contentStack.superview)
+            if localPoint.y < rowMid.y && i < sourceIndex {
+                targetIndex = i
+                break
+            } else if localPoint.y > rowMid.y && i > sourceIndex {
+                targetIndex = i
+            }
+        }
+
+        // 如果索引变化，执行行交换
+        if targetIndex != sourceIndex {
+            // 更新 favDragOrder
+            let movedID = favDragOrder.remove(at: sourceIndex)
+            favDragOrder.insert(movedID, at: targetIndex)
+
+            // 交换 favDragAppRows 中的引用
+            let movedRow = favDragAppRows.remove(at: sourceIndex)
+            favDragAppRows.insert(movedRow, at: targetIndex)
+
+            // 动画移动 contentStack 中的视图
+            // 需要移动 App 行以及其下方的窗口列表
+            NSAnimationContext.runAnimationGroup { context in
+                context.duration = 0.2
+                context.allowsImplicitAnimation = true
+
+                // 重建 contentStack 排序
+                let allViews = contentStack.arrangedSubviews
+                allViews.forEach { contentStack.removeArrangedSubview($0); $0.removeFromSuperview() }
+
+                // 按新顺序重新添加
+                let runningApps = AppMonitor.shared.runningApps
+                let hasAccessibility = WindowService.shared.isAXApiAvailable()
+
+                for bundleID in favDragOrder {
+                    // 找到对应的 App 行
+                    if let row = favDragAppRows.first(where: { $0.bundleID == bundleID }) {
+                        contentStack.addArrangedSubview(row)
+
+                        // 如果有窗口列表，也重新添加
+                        if hasAccessibility,
+                           let running = runningApps.first(where: { $0.bundleID == bundleID }),
+                           !running.windows.isEmpty,
+                           !collapsedApps.contains(bundleID) {
+                            let windowList = createWindowList(windows: running.windows, bundleID: bundleID)
+                            contentStack.addArrangedSubview(windowList)
+                        }
+                    }
+                }
+
+                contentStack.layoutSubtreeIfNeeded()
+            }
+
+            favDragSourceIndex = targetIndex
+        }
+    }
+
+    /// 收藏拖拽结束
+    private func handleFavDragEnd(at point: NSPoint) {
+        // 持久化新排序
+        ConfigStore.shared.reorderApps(favDragOrder)
+
+        // 清理拖拽状态
+        favDragSnapshot?.removeFromSuperview()
+        favDragSnapshot = nil
+
+        // 恢复源行可见性（未运行 App 为 0.5 灰度，运行中为 1.0）
+        for row in favDragAppRows {
+            let isRunning = row.bundleID.flatMap { bid in
+                AppMonitor.shared.runningApps.contains { $0.bundleID == bid && $0.isRunning }
+            } ?? false
+            row.alphaValue = isRunning ? 1.0 : 0.5
+        }
+
+        favDragSourceIndex = nil
+        favDragAppRows = []
+        favDragOrder = []
+        isDragging = false
+
+        // 强制全量重建
+        lastStructuralKey = ""
+        reloadData()
     }
 
     // MARK: - 面板高度计算
@@ -1019,6 +1180,19 @@ final class HoverableRowView: NSView {
     /// 点击处理闭包
     var clickHandler: (() -> Void)?
 
+    /// 是否启用拖拽排序（仅收藏 Tab 的 App 行启用）
+    var dragEnabled = false
+    /// 拖拽开始回调
+    var dragStartHandler: ((NSPoint) -> Void)?
+    /// 拖拽移动回调
+    var dragMoveHandler: ((NSPoint) -> Void)?
+    /// 拖拽结束回调
+    var dragEndHandler: ((NSPoint) -> Void)?
+    /// 鼠标按下位置（用于拖拽阈值判断）
+    private var mouseDownPoint: NSPoint?
+    /// 拖拽是否已激活（超过阈值）
+    private var isDragActive = false
+
     private var trackingArea: NSTrackingArea?
     private var isHovered = false
     /// 标记该行是否处于选中高亮状态（由外部设置）
@@ -1078,9 +1252,53 @@ final class HoverableRowView: NSView {
         }
     }
 
-    // MARK: - 点击处理
+    // MARK: - 点击与拖拽处理
+
+    override func mouseDown(with event: NSEvent) {
+        if dragEnabled {
+            mouseDownPoint = event.locationInWindow
+            isDragActive = false
+        } else {
+            super.mouseDown(with: event)
+        }
+    }
+
+    override func mouseDragged(with event: NSEvent) {
+        guard dragEnabled, let downPoint = mouseDownPoint else {
+            super.mouseDragged(with: event)
+            return
+        }
+
+        let currentPoint = event.locationInWindow
+        let dx = currentPoint.x - downPoint.x
+        let dy = currentPoint.y - downPoint.y
+        let distance = sqrt(dx * dx + dy * dy)
+
+        if !isDragActive {
+            if distance >= Constants.Panel.dragThreshold {
+                isDragActive = true
+                dragStartHandler?(currentPoint)
+            }
+        }
+
+        if isDragActive {
+            dragMoveHandler?(currentPoint)
+        }
+    }
 
     override func mouseUp(with event: NSEvent) {
+        if dragEnabled && isDragActive {
+            // 拖拽结束
+            isDragActive = false
+            mouseDownPoint = nil
+            dragEndHandler?(event.locationInWindow)
+            return
+        }
+
+        // 清理拖拽状态
+        mouseDownPoint = nil
+        isDragActive = false
+
         let location = convert(event.locationInWindow, from: nil)
         if let hitView = hitTest(location), hitView is NSButton || hitView.superview is NSButton {
             super.mouseUp(with: event)
