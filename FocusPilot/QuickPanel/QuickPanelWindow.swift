@@ -104,15 +104,21 @@ final class QuickPanelWindow: NSPanel {
         effectView.layer?.cornerRadius = Constants.Panel.cornerRadius
         effectView.layer?.masksToBounds = true
 
-        // 半透明主题背景色叠加层（增强主题感）
+        // 半透明主题背景色叠加层（增强主题感，圆角匹配面板）
+        let cr = Constants.Panel.cornerRadius
         bgOverlayView = NSView()
         bgOverlayView.wantsLayer = true
         bgOverlayView.layer?.backgroundColor = theme.colors.nsBackground.withAlphaComponent(0.6).cgColor
+        bgOverlayView.layer?.cornerRadius = cr
+        bgOverlayView.layer?.masksToBounds = true
         bgOverlayView.translatesAutoresizingMaskIntoConstraints = false
 
         // 把面板内容视图添加到毛玻璃背景上
         contentView = effectView
         effectView.addSubview(bgOverlayView)
+        panelView.wantsLayer = true
+        panelView.layer?.cornerRadius = cr
+        panelView.layer?.masksToBounds = true
         panelView.translatesAutoresizingMaskIntoConstraints = false
         effectView.addSubview(panelView)
 

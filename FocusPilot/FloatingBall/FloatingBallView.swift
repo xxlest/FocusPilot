@@ -116,6 +116,9 @@ final class FloatingBallView: NSView {
         wantsLayer = true
         let size = CGFloat(Constants.Ball.defaultSize)
 
+        // 确保视图自身图层透明（避免方形背景）
+        layer?.backgroundColor = NSColor.clear.cgColor
+
         // 外层投影光晕
         layer?.shadowColor = NSColor.black.withAlphaComponent(0.3).cgColor
         layer?.shadowRadius = 6
