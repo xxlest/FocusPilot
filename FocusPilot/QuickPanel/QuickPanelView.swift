@@ -37,10 +37,11 @@ final class QuickPanelView: NSView {
 
     // MARK: - 子视图
 
-    /// 顶部栏
+    /// 顶部栏（带微妙背景底色，与列表区形成层次）
     private let topBar: NSView = {
         let view = NSView()
         view.wantsLayer = true
+        view.layer?.backgroundColor = ConfigStore.shared.currentThemeColors.nsTextPrimary.withAlphaComponent(0.04).cgColor
         return view
     }()
 
@@ -79,6 +80,8 @@ final class QuickPanelView: NSView {
         btn.bezelStyle = .recessed
         btn.isBordered = false
         btn.font = .systemFont(ofSize: 11)
+        btn.wantsLayer = true
+        btn.layer?.cornerRadius = 4
         btn.contentTintColor = ConfigStore.shared.currentThemeColors.nsTextSecondary
         return btn
     }()
@@ -89,6 +92,8 @@ final class QuickPanelView: NSView {
         btn.bezelStyle = .recessed
         btn.isBordered = false
         btn.font = .systemFont(ofSize: 11)
+        btn.wantsLayer = true
+        btn.layer?.cornerRadius = 4
         btn.contentTintColor = ConfigStore.shared.currentThemeColors.nsTextSecondary
         return btn
     }()
@@ -178,9 +183,9 @@ final class QuickPanelView: NSView {
             topBar.trailingAnchor.constraint(equalTo: trailingAnchor),
             topBar.heightAnchor.constraint(equalToConstant: topBarHeight),
 
-            // 顶部分割线（固定 1px 高度）
-            topSeparator.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 8),
-            topSeparator.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -8),
+            // 顶部分割线（全宽，固定 1px 高度）
+            topSeparator.leadingAnchor.constraint(equalTo: leadingAnchor),
+            topSeparator.trailingAnchor.constraint(equalTo: trailingAnchor),
             topSeparator.topAnchor.constraint(equalTo: topBar.bottomAnchor),
             topSeparator.heightAnchor.constraint(equalToConstant: 1),
 
@@ -320,24 +325,27 @@ final class QuickPanelView: NSView {
 
     private func updateTabButtonStyles() {
         let colors = ConfigStore.shared.currentThemeColors
-        // 先全部重置为未选中样式
+        // 先全部重置为未选中样式（清除胶囊背景）
         for btn in [runningTabButton, favoritesTabButton] {
             btn.font = .systemFont(ofSize: 11)
             btn.contentTintColor = colors.nsTextSecondary
+            btn.layer?.backgroundColor = NSColor.clear.cgColor
         }
-        // 设置选中 Tab 样式
+        // 设置选中 Tab 样式（胶囊背景 + 加粗 + 强调色）
         let selectedButton: NSButton
         switch currentTab {
         case .running:   selectedButton = runningTabButton
         case .favorites: selectedButton = favoritesTabButton
         }
-        selectedButton.font = .systemFont(ofSize: 11, weight: .medium)
+        selectedButton.font = .systemFont(ofSize: 11, weight: .semibold)
         selectedButton.contentTintColor = colors.nsAccent
+        selectedButton.layer?.backgroundColor = colors.nsAccent.withAlphaComponent(0.12).cgColor
     }
 
     /// 应用主题（外部调用）
     func applyTheme() {
         let colors = ConfigStore.shared.currentThemeColors
+        topBar.layer?.backgroundColor = colors.nsTextPrimary.withAlphaComponent(0.04).cgColor
         openKanbanButton.contentTintColor = colors.nsTextSecondary
         topSeparator.layer?.backgroundColor = colors.nsSeparator.cgColor
         tabSeparator.layer?.backgroundColor = colors.nsSeparator.cgColor
