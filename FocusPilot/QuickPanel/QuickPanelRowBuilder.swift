@@ -55,16 +55,26 @@ extension QuickPanelView {
     // MARK: - 创建 App 行（活跃 Tab 用）
 
     func createRunningAppRow(app: RunningApp) -> NSView {
-        return createAppRow(
+        let row = createAppRow(
             bundleID: app.bundleID,
             name: app.localizedName,
             icon: app.icon,
             isRunning: true,
             windows: app.windows
         )
+
+        // 右键菜单：关闭应用
+        if let hoverRow = row as? HoverableRowView {
+            let bundleID = app.bundleID
+            hoverRow.contextMenuProvider = { [weak self] in
+                self?.createRunningAppContextMenu(bundleID: bundleID)
+            }
+        }
+
+        return row
     }
 
-    // MARK: - 创建 App 行（收藏 Tab 用）
+    // MARK: - 创建 App 行（关注 Tab 用）
 
     func createFavoriteAppRow(config: AppConfig, runningApp: RunningApp?, isRunning: Bool) -> NSView {
         // 未运行 App 图标：通过 urlForApplication 获取
@@ -84,11 +94,11 @@ extension QuickPanelView {
             windows: runningApp?.windows ?? []
         )
 
-        // 右键菜单：置顶、取消收藏
+        // 右键菜单：置顶、取消关注
         if let hoverRow = row as? HoverableRowView {
             let bundleID = config.bundleID
             hoverRow.contextMenuProvider = { [weak self] in
-                self?.createFavoriteContextMenu(bundleID: bundleID)
+                self?.createFavoriteContextMenu(bundleID: bundleID, isRunning: isRunning)
             }
         }
 
@@ -118,7 +128,7 @@ extension QuickPanelView {
             row.heightAnchor.constraint(greaterThanOrEqualToConstant: Constants.Panel.appRowHeight),
         ])
 
-        // 星号收藏按钮（仅活跃 Tab 显示，位于最左侧）
+        // 星号关注按钮（仅活跃 Tab 显示，位于最左侧）
         if currentTab == .running {
             let isFav = ConfigStore.shared.isFavorite(bundleID)
             let starButton = NSButton()
@@ -126,7 +136,7 @@ extension QuickPanelView {
             starButton.isBordered = false
             starButton.image = Self.cachedSymbol(name: isFav ? "star.fill" : "star", size: 11, weight: .regular)
             starButton.contentTintColor = isFav ? colors.nsFavoriteStar : colors.nsTextTertiary
-            starButton.toolTip = isFav ? "取消收藏" : "添加到收藏"
+            starButton.toolTip = isFav ? "取消关注" : "添加到关注"
             starButton.target = self
             starButton.action = #selector(handleToggleFavorite(_:))
             objc_setAssociatedObject(starButton, &bundleIDKey, bundleID, .OBJC_ASSOCIATION_RETAIN)

@@ -1,12 +1,12 @@
 import AppKit
 import ObjectiveC
 
-// 关联对象 Key（星号收藏按钮存储 bundleID 和 displayName）
+// 关联对象 Key（星号关注按钮存储 bundleID 和 displayName）
 var bundleIDKey: UInt8 = 0
 var displayNameKey: UInt8 = 0
 
 // MARK: - 菜单与事件处理（extension QuickPanelView）
-// 从 QuickPanelView 主文件提取的菜单、收藏操作、App 启动等事件处理逻辑
+// 从 QuickPanelView 主文件提取的菜单、关注操作、App 启动等事件处理逻辑
 
 extension QuickPanelView {
 
@@ -109,9 +109,9 @@ extension QuickPanelView {
         forceReload()
     }
 
-    // MARK: - 收藏右键菜单
+    // MARK: - 关注右键菜单
 
-    func createFavoriteContextMenu(bundleID: String) -> NSMenu {
+    func createFavoriteContextMenu(bundleID: String, isRunning: Bool) -> NSMenu {
         let menu = NSMenu()
 
         // 置顶操作（已经在第一位时不显示）
@@ -123,13 +123,48 @@ extension QuickPanelView {
             menu.addItem(pinItem)
         }
 
-        // 取消收藏
-        let removeItem = NSMenuItem(title: "取消收藏", action: #selector(handleRemoveFavorite(_:)), keyEquivalent: "")
+        // 关闭应用（仅运行中时显示）
+        if isRunning {
+            menu.addItem(NSMenuItem.separator())
+            let terminateItem = NSMenuItem(title: "关闭应用", action: #selector(handleTerminateApp(_:)), keyEquivalent: "")
+            terminateItem.target = self
+            terminateItem.representedObject = bundleID
+            menu.addItem(terminateItem)
+        }
+
+        menu.addItem(NSMenuItem.separator())
+
+        // 取消关注
+        let removeItem = NSMenuItem(title: "取消关注", action: #selector(handleRemoveFavorite(_:)), keyEquivalent: "")
         removeItem.target = self
         removeItem.representedObject = bundleID
         menu.addItem(removeItem)
 
         return menu
+    }
+
+    // MARK: - 活跃 App 右键菜单
+
+    func createRunningAppContextMenu(bundleID: String) -> NSMenu {
+        let menu = NSMenu()
+
+        let terminateItem = NSMenuItem(title: "关闭应用", action: #selector(handleTerminateApp(_:)), keyEquivalent: "")
+        terminateItem.target = self
+        terminateItem.representedObject = bundleID
+        menu.addItem(terminateItem)
+
+        return menu
+    }
+
+    @objc func handleTerminateApp(_ sender: NSMenuItem) {
+        guard let bundleID = sender.representedObject as? String else { return }
+        let runningApps = NSWorkspace.shared.runningApplications.filter { $0.bundleIdentifier == bundleID }
+        for app in runningApps {
+            app.terminate()
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
+            self?.forceReload()
+        }
     }
 
     @objc func handlePinToTop(_ sender: NSMenuItem) {
@@ -148,9 +183,9 @@ extension QuickPanelView {
         ConfigStore.shared.removeApp(bundleID)
     }
 
-    // MARK: - 星号收藏切换
+    // MARK: - 星号关注切换
 
-    /// 星号收藏按钮点击：切换收藏/取消收藏
+    /// 星号关注按钮点击：切换关注/取消关注
     /// P1-#4：不再显式调用 forceReload，依赖 addApp/removeApp 内部的通知机制
     @objc func handleToggleFavorite(_ sender: NSButton) {
         guard let bundleID = objc_getAssociatedObject(sender, &bundleIDKey) as? String else { return }
