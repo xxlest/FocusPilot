@@ -30,6 +30,11 @@ final class FloatingBallView: NSView {
     /// 上次拖拽联动通知时间（节流用）
     private var lastDragNotifyTime: CFTimeInterval = 0
 
+    /// FocusByTime 进度环图层
+    private var progressRingLayer: CAShapeLayer?
+    /// 进度环背景轨道图层
+    private var progressTrackLayer: CAShapeLayer?
+
     // MARK: - 子视图
 
     /// 毛玻璃背景
@@ -119,11 +124,12 @@ final class FloatingBallView: NSView {
         // 确保视图自身图层透明（避免方形背景）
         layer?.backgroundColor = NSColor.clear.cgColor
 
-        // 外层投影光晕
-        layer?.shadowColor = NSColor.black.withAlphaComponent(0.3).cgColor
-        layer?.shadowRadius = 6
-        layer?.shadowOffset = CGSize(width: 0, height: -2)
-        layer?.shadowOpacity = 0.5
+        // 外层投影光晕（使用主题 accent 色发光）
+        let accentColor = ConfigStore.shared.preferences.appTheme.colors.nsAccent
+        layer?.shadowColor = accentColor.withAlphaComponent(0.6).cgColor
+        layer?.shadowRadius = 8
+        layer?.shadowOffset = CGSize(width: 0, height: -1)
+        layer?.shadowOpacity = 0.4
         // 圆形阴影路径（避免方框阴影）
         layer?.shadowPath = CGPath(ellipseIn: CGRect(x: 0, y: 0, width: size, height: size), transform: nil)
 
@@ -167,6 +173,9 @@ final class FloatingBallView: NSView {
 
         // 设置钉住状态图钉角标（初始隐藏）
         setupPinBadge()
+
+        // 设置 FocusByTime 进度环（初始隐藏）
+        setupProgressRing(size: size)
     }
 
     // MARK: - 布局更新
@@ -199,6 +208,9 @@ final class FloatingBallView: NSView {
         // 同步更新圆形阴影路径
         layer?.shadowPath = CGPath(ellipseIn: CGRect(x: 0, y: 0, width: size, height: size), transform: nil)
 
+        // 同步更新进度环尺寸
+        updateProgressRingSize(size: size)
+
         // 同步更新钉住角标位置（右上角）
         if let badge = pinBadgeView {
             let badgeSize = badge.frame.width
@@ -215,19 +227,26 @@ final class FloatingBallView: NSView {
 
     // MARK: - 呼吸脉搏动画
 
-    /// 启动 idle 状态下的呼吸光晕动画
+    /// 启动 idle 状态下的呼吸光晕动画（双属性联动：shadowOpacity + shadowRadius）
     private func startBreathingAnimation() {
         guard let layer = layer else { return }
         layer.removeAnimation(forKey: "breathingAnimation")
 
-        let animation = CABasicAnimation(keyPath: "shadowOpacity")
-        animation.fromValue = layer.shadowOpacity
-        animation.toValue = max(layer.shadowOpacity - 0.2, 0.15)
-        animation.duration = 2.0
-        animation.autoreverses = true
-        animation.repeatCount = .infinity
-        animation.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
-        layer.add(animation, forKey: "breathingAnimation")
+        let opacityAnim = CABasicAnimation(keyPath: "shadowOpacity")
+        opacityAnim.fromValue = 0.4
+        opacityAnim.toValue = 0.15
+
+        let radiusAnim = CABasicAnimation(keyPath: "shadowRadius")
+        radiusAnim.fromValue = 8.0
+        radiusAnim.toValue = 4.0
+
+        let group = CAAnimationGroup()
+        group.animations = [opacityAnim, radiusAnim]
+        group.duration = 2.2
+        group.autoreverses = true
+        group.repeatCount = .infinity
+        group.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
+        layer.add(group, forKey: "breathingAnimation")
     }
 
     /// 停止呼吸动画
@@ -280,6 +299,92 @@ final class FloatingBallView: NSView {
         pinBadgeView?.isHidden = !isPinned
     }
 
+    // MARK: - FocusByTime 进度环
+
+    /// 创建进度环图层（弧形，从顶部 12 点钟方向顺时针）
+    private func setupProgressRing(size: CGFloat) {
+        let center = CGPoint(x: size / 2, y: size / 2)
+        let radius = size / 2 - 2  // 距离边缘 2px
+        let lineWidth: CGFloat = 2.5
+        let startAngle = CGFloat.pi / 2        // 12 点钟（macOS 坐标系）
+        let endAngle = startAngle + CGFloat.pi * 2
+
+        let ringPath = CGMutablePath()
+        ringPath.addArc(center: center, radius: radius, startAngle: startAngle, endAngle: endAngle, clockwise: false)
+
+        // 背景轨道（半透明白色）
+        let track = CAShapeLayer()
+        track.path = ringPath
+        track.fillColor = nil
+        track.strokeColor = NSColor.white.withAlphaComponent(0.15).cgColor
+        track.lineWidth = lineWidth
+        track.isHidden = true
+        layer?.addSublayer(track)
+        progressTrackLayer = track
+
+        // 前景进度（accent 色）
+        let ring = CAShapeLayer()
+        ring.path = ringPath
+        ring.fillColor = nil
+        ring.strokeColor = ConfigStore.shared.preferences.appTheme.colors.nsAccent.cgColor
+        ring.lineWidth = lineWidth
+        ring.lineCap = .round
+        ring.strokeStart = 0
+        ring.strokeEnd = 0
+        ring.isHidden = true
+        layer?.addSublayer(ring)
+        progressRingLayer = ring
+    }
+
+    /// 更新进度环 + 悬浮球整体视觉状态（由通知触发）
+    private func updateProgressRing() {
+        let timer = FocusTimerService.shared
+        let isActive = timer.status != .idle
+        let accentColor = ConfigStore.shared.preferences.appTheme.colors.nsAccent
+
+        progressTrackLayer?.isHidden = !isActive
+        progressRingLayer?.isHidden = !isActive
+
+        if isActive {
+            // 进度值
+            progressRingLayer?.strokeEnd = timer.progress
+
+            // 颜色：工作=accent，休息=绿色
+            let phaseColor: NSColor = timer.phase == .work ? accentColor : .systemGreen
+            progressRingLayer?.strokeColor = phaseColor.cgColor
+
+            // 进度环加粗（更醒目）
+            progressTrackLayer?.lineWidth = 3.0
+            progressRingLayer?.lineWidth = 3.0
+
+            // 悬浮球光晕颜色跟随阶段（工作=accent，休息=绿色）
+            layer?.shadowColor = phaseColor.withAlphaComponent(0.7).cgColor
+            layer?.shadowRadius = 10
+            layer?.shadowOpacity = 0.5
+        } else {
+            // idle 状态：恢复默认 accent 光晕
+            progressTrackLayer?.lineWidth = 2.5
+            progressRingLayer?.lineWidth = 2.5
+            layer?.shadowColor = accentColor.withAlphaComponent(0.6).cgColor
+            layer?.shadowRadius = 8
+            layer?.shadowOpacity = 0.4
+        }
+    }
+
+    /// 更新进度环尺寸（ball size 变化时调用）
+    private func updateProgressRingSize(size: CGFloat) {
+        let center = CGPoint(x: size / 2, y: size / 2)
+        let radius = size / 2 - 2
+        let startAngle = CGFloat.pi / 2
+        let endAngle = startAngle + CGFloat.pi * 2
+
+        let ringPath = CGMutablePath()
+        ringPath.addArc(center: center, radius: radius, startAngle: startAngle, endAngle: endAngle, clockwise: false)
+
+        progressTrackLayer?.path = ringPath
+        progressRingLayer?.path = ringPath
+    }
+
     // MARK: - 追踪区域
 
     override func updateTrackingAreas() {
@@ -326,6 +431,19 @@ final class FloatingBallView: NSView {
             name: NSWindow.didChangeOcclusionStateNotification,
             object: nil
         )
+        // FocusByTime 计时器状态变化 → 更新进度环
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(handleFocusTimerChanged),
+            name: Constants.Notifications.focusTimerChanged,
+            object: nil
+        )
+    }
+
+    @objc private func handleFocusTimerChanged() {
+        DispatchQueue.main.async { [weak self] in
+            self?.updateProgressRing()
+        }
     }
 
     @objc private func windowOcclusionStateChanged() {
@@ -383,6 +501,9 @@ final class FloatingBallView: NSView {
         let size = iconView.frame.width > 0 ? iconView.frame.width : CGFloat(Constants.Ball.defaultSize) * 0.7
         let colors = gradientColors ?? currentGradientColors()
         iconView.image = createBrandLogo(size: size, gradientColors: colors)
+        // 同步更新光晕颜色（跟随主题 accent）
+        let accentColor = ConfigStore.shared.preferences.appTheme.colors.nsAccent
+        layer?.shadowColor = accentColor.withAlphaComponent(0.6).cgColor
     }
 
     private func createBrandLogo(size: CGFloat, gradientColors: (light: NSColor, medium: NSColor, dark: NSColor)) -> NSImage {
@@ -391,24 +512,24 @@ final class FloatingBallView: NSView {
 
         let circleRect = NSRect(x: 0, y: 0, width: size, height: size)
         let circlePath = NSBezierPath(ovalIn: circleRect)
+        let center = CGPoint(x: size / 2, y: size / 2)
 
-        // 1. 纯色填充背景（更显眼），3D 效果由高光/暗区 overlay 提供
-        gradientColors.medium.setFill()
-        circlePath.fill()
+        // 1. 径向渐变背景（从中心亮到边缘暗，更立体）
+        let bgGradient = NSGradient(colorsAndLocations:
+            (gradientColors.light, 0.0),
+            (gradientColors.medium, 0.5),
+            (gradientColors.dark, 1.0)
+        )
+        bgGradient?.draw(in: circlePath, relativeCenterPosition: NSPoint(x: -0.15, y: 0.2))
 
         // 2. 球形高光：左上方椭圆高光（模拟 3D 球体反射）
         NSGraphicsContext.saveGraphicsState()
         circlePath.addClip()
-        let highlightRect = NSRect(
-            x: size * 0.08,
-            y: size * 0.45,
-            width: size * 0.55,
-            height: size * 0.50
-        )
+        let highlightRect = NSRect(x: size * 0.08, y: size * 0.45, width: size * 0.55, height: size * 0.50)
         let highlightPath = NSBezierPath(ovalIn: highlightRect)
         let highlightGradient = NSGradient(colorsAndLocations:
-            (NSColor.white.withAlphaComponent(0.35), 0.0),
-            (NSColor.white.withAlphaComponent(0.08), 0.6),
+            (NSColor.white.withAlphaComponent(0.30), 0.0),
+            (NSColor.white.withAlphaComponent(0.06), 0.6),
             (NSColor.clear, 1.0)
         )
         highlightGradient?.draw(in: highlightPath, angle: 90)
@@ -417,15 +538,10 @@ final class FloatingBallView: NSView {
         // 3. 底部暗区（增强球形立体感）
         NSGraphicsContext.saveGraphicsState()
         circlePath.addClip()
-        let shadowRect = NSRect(
-            x: size * 0.1,
-            y: -size * 0.15,
-            width: size * 0.8,
-            height: size * 0.45
-        )
+        let shadowRect = NSRect(x: size * 0.1, y: -size * 0.15, width: size * 0.8, height: size * 0.45)
         let shadowPath = NSBezierPath(ovalIn: shadowRect)
         let shadowGradient = NSGradient(colorsAndLocations:
-            (NSColor.black.withAlphaComponent(0.2), 0.0),
+            (NSColor.black.withAlphaComponent(0.18), 0.0),
             (NSColor.clear, 1.0)
         )
         shadowGradient?.draw(in: shadowPath, angle: 90)
@@ -437,67 +553,66 @@ final class FloatingBallView: NSView {
         innerGlow.lineWidth = 0.8
         innerGlow.stroke()
 
-        // 5. 绘制白色 pin.fill 图标（上半部分，带轻微投影）
-        let pinSize = size * 0.35
-        let symbolConfig = NSImage.SymbolConfiguration(pointSize: pinSize, weight: .semibold)
-        if let pinSymbol = NSImage(systemSymbolName: "pin.fill", accessibilityDescription: nil),
-           let configured = pinSymbol.withSymbolConfiguration(symbolConfig) {
-            // 将 SF Symbol 渲染为白色
-            let tinted = NSImage(size: configured.size)
-            tinted.lockFocus()
-            NSColor.white.set()
-            let symbolRect = NSRect(origin: .zero, size: configured.size)
-            configured.draw(in: symbolRect)
-            symbolRect.fill(using: .sourceIn)
-            tinted.unlockFocus()
+        // 5. 聚焦准星符号（替代 pin.fill + FC）
+        NSGraphicsContext.saveGraphicsState()
+        circlePath.addClip()
 
-            let symbolX = (size - tinted.size.width) / 2
-            let symbolY = size * 0.85 - tinted.size.height
+        let white = NSColor.white
+        let whiteMain = white.withAlphaComponent(0.92)
+        let whiteSub = white.withAlphaComponent(0.55)
 
-            // 图标投影（增加深度感）
-            let shadowTinted = NSImage(size: configured.size)
-            shadowTinted.lockFocus()
-            NSColor.black.withAlphaComponent(0.3).set()
-            configured.draw(in: symbolRect)
-            symbolRect.fill(using: .sourceIn)
-            shadowTinted.unlockFocus()
-            shadowTinted.draw(
-                in: NSRect(x: symbolX + 0.5, y: symbolY - 0.5, width: tinted.size.width, height: tinted.size.height),
-                from: .zero,
-                operation: .sourceOver,
-                fraction: 1.0
-            )
+        // 5a. 外环（细线）
+        let outerRadius = size * 0.36
+        let outerRing = NSBezierPath(ovalIn: NSRect(
+            x: center.x - outerRadius,
+            y: center.y - outerRadius,
+            width: outerRadius * 2,
+            height: outerRadius * 2
+        ))
+        whiteSub.setStroke()
+        outerRing.lineWidth = size * 0.028
+        outerRing.stroke()
 
-            tinted.draw(
-                in: NSRect(x: symbolX, y: symbolY, width: tinted.size.width, height: tinted.size.height),
-                from: .zero,
-                operation: .sourceOver,
-                fraction: 1.0
-            )
+        // 5b. 内环（稍粗）
+        let innerRadius = size * 0.18
+        let innerRing = NSBezierPath(ovalIn: NSRect(
+            x: center.x - innerRadius,
+            y: center.y - innerRadius,
+            width: innerRadius * 2,
+            height: innerRadius * 2
+        ))
+        whiteMain.setStroke()
+        innerRing.lineWidth = size * 0.04
+        innerRing.stroke()
+
+        // 5c. 中心实心圆点
+        let dotRadius = size * 0.06
+        let dotPath = NSBezierPath(ovalIn: NSRect(
+            x: center.x - dotRadius,
+            y: center.y - dotRadius,
+            width: dotRadius * 2,
+            height: dotRadius * 2
+        ))
+        whiteMain.setFill()
+        dotPath.fill()
+
+        // 5d. 四向刻度线（上下左右短线段，准星感）
+        let tickInner = outerRadius + size * 0.02  // 刻度起点（外环外侧）
+        let tickOuter = outerRadius + size * 0.12  // 刻度终点
+        let tickWidth = size * 0.032
+
+        whiteSub.setStroke()
+        let directions: [(CGFloat, CGFloat)] = [(1,0), (-1,0), (0,1), (0,-1)]
+        for (dx, dy) in directions {
+            let tick = NSBezierPath()
+            tick.move(to: NSPoint(x: center.x + dx * tickInner, y: center.y + dy * tickInner))
+            tick.line(to: NSPoint(x: center.x + dx * tickOuter, y: center.y + dy * tickOuter))
+            tick.lineWidth = tickWidth
+            tick.lineCapStyle = .round
+            tick.stroke()
         }
 
-        // 6. 绘制白色 "FC" 文字（下半部分，带轻微投影）
-        let fontSize = size * 0.30
-        let fcFont = NSFont.systemFont(ofSize: fontSize, weight: .bold)
-
-        // 文字投影
-        let shadowFcAttributes: [NSAttributedString.Key: Any] = [
-            .font: fcFont,
-            .foregroundColor: NSColor.black.withAlphaComponent(0.3),
-        ]
-        let shadowFcString = NSAttributedString(string: "FC", attributes: shadowFcAttributes)
-        let fcTextSize = shadowFcString.size()
-        let fcX = (size - fcTextSize.width) / 2
-        let fcY = size * 0.05
-        shadowFcString.draw(at: NSPoint(x: fcX + 0.5, y: fcY - 0.5))
-
-        // 文字主体
-        let fcAttributes: [NSAttributedString.Key: Any] = [
-            .font: fcFont,
-            .foregroundColor: NSColor.white,
-        ]
-        let fcString = NSAttributedString(string: "FC", attributes: fcAttributes)
-        fcString.draw(at: NSPoint(x: fcX, y: fcY))
+        NSGraphicsContext.restoreGraphicsState()
 
         image.unlockFocus()
         return image
@@ -564,6 +679,15 @@ final class FloatingBallView: NSView {
             slideOut()
         }
 
+        // hover 缩放反馈 + 光晕增强
+        NSAnimationContext.runAnimationGroup { context in
+            context.duration = 0.15
+            context.timingFunction = CAMediaTimingFunction(name: .easeOut)
+            self.layer?.setAffineTransform(CGAffineTransform(scaleX: 1.08, y: 1.08))
+            self.layer?.shadowOpacity = 0.65
+            self.layer?.shadowRadius = 12
+        }
+
         // 鼠标进入时立即预热窗口数据（后续 show 不再等数据刷新）
         AppMonitor.shared.startWindowRefresh()
 
@@ -578,6 +702,15 @@ final class FloatingBallView: NSView {
         // 取消 hover 计时器
         hoverTimer?.invalidate()
         hoverTimer = nil
+
+        // 恢复 hover 缩放 + 光晕
+        NSAnimationContext.runAnimationGroup { context in
+            context.duration = 0.2
+            context.timingFunction = CAMediaTimingFunction(name: .easeOut)
+            self.layer?.setAffineTransform(.identity)
+            self.layer?.shadowOpacity = 0.4
+            self.layer?.shadowRadius = 8
+        }
 
         // 通知快捷面板鼠标已离开悬浮球
         NotificationCenter.default.post(

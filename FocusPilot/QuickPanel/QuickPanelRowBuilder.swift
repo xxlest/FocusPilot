@@ -149,25 +149,34 @@ extension QuickPanelView {
             rowStack.addArrangedSubview(starButton)
         }
 
-        // 运行状态指示器（使用主题 accent 色圆点替代 emoji）
+        // 运行状态指示器（6px 圆点 + 运行中带外发光效果）
         let statusDotView = NSView()
         statusDotView.wantsLayer = true
-        statusDotView.layer?.cornerRadius = 4
-        statusDotView.layer?.backgroundColor = (isRunning ? colors.nsAccent : colors.nsTextTertiary.withAlphaComponent(0.4)).cgColor
+        statusDotView.layer?.cornerRadius = 3
+        statusDotView.layer?.backgroundColor = (isRunning ? colors.nsAccent : colors.nsTextTertiary.withAlphaComponent(0.3)).cgColor
+        if isRunning {
+            statusDotView.layer?.shadowColor = colors.nsAccent.cgColor
+            statusDotView.layer?.shadowRadius = 3
+            statusDotView.layer?.shadowOpacity = 0.5
+            statusDotView.layer?.shadowOffset = .zero
+        }
         statusDotView.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
-            statusDotView.widthAnchor.constraint(equalToConstant: 8),
-            statusDotView.heightAnchor.constraint(equalToConstant: 8),
+            statusDotView.widthAnchor.constraint(equalToConstant: 6),
+            statusDotView.heightAnchor.constraint(equalToConstant: 6),
         ])
         rowStack.addArrangedSubview(statusDotView)
 
-        // App 图标 16x16
+        // App 图标 20x20（圆角 4px）
         let iconView = NSImageView()
         iconView.translatesAutoresizingMaskIntoConstraints = false
         iconView.image = icon
+        iconView.wantsLayer = true
+        iconView.layer?.cornerRadius = 4
+        iconView.layer?.masksToBounds = true
         NSLayoutConstraint.activate([
-            iconView.widthAnchor.constraint(equalToConstant: 16),
-            iconView.heightAnchor.constraint(equalToConstant: 16),
+            iconView.widthAnchor.constraint(equalToConstant: 20),
+            iconView.heightAnchor.constraint(equalToConstant: 20),
         ])
         rowStack.addArrangedSubview(iconView)
 
@@ -293,10 +302,10 @@ extension QuickPanelView {
             row.heightAnchor.constraint(greaterThanOrEqualToConstant: Constants.Panel.windowRowHeight),
         ])
 
-        // 窗口图标（macwindow SF Symbol，使用缓存）
+        // 窗口图标（层叠矩形 SF Symbol，使用缓存）
         let windowIconView = NSImageView()
         windowIconView.translatesAutoresizingMaskIntoConstraints = false
-        windowIconView.image = Self.cachedSymbol(name: "macwindow", size: 10, weight: .regular)
+        windowIconView.image = Self.cachedSymbol(name: "rectangle.on.rectangle", size: 11, weight: .regular)
         windowIconView.contentTintColor = colors.nsTextSecondary
         NSLayoutConstraint.activate([
             windowIconView.widthAnchor.constraint(equalToConstant: 14),
@@ -332,7 +341,7 @@ extension QuickPanelView {
             row.isHighlighted = true
             row.wantsLayer = true
             row.layer?.backgroundColor = colors.nsAccent.withAlphaComponent(0.15).cgColor
-            row.layer?.cornerRadius = 4
+            row.layer?.cornerRadius = 6
         }
 
         // 设置右键菜单

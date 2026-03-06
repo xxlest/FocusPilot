@@ -59,6 +59,7 @@ enum Constants {
         static let windowRenames = "FocusCopilot.windowRenames"
         static let panelSize = "FocusCopilot.panelSize"
         static let lastPanelTab = "FocusCopilot.lastPanelTab"
+        static let focusTimerSettings = "FocusCopilot.focusTimerSettings"
     }
 
     // MARK: - 通知名称
@@ -84,5 +85,12 @@ enum Constants {
 
         // 主题变更通知
         static let themeChanged = Notification.Name("FocusCopilot.themeChanged")
+
+        // FocusByTime 计时器通知
+        static let focusTimerChanged = Notification.Name("FocusCopilot.focusTimerChanged")
+        /// 工作阶段结束 → 需要弹对话框提示休息
+        static let focusWorkCompleted = Notification.Name("FocusCopilot.focusWorkCompleted")
+        /// 休息阶段结束 → 需要弹对话框提示开始工作
+        static let focusRestCompleted = Notification.Name("FocusCopilot.focusRestCompleted")
     }
 }

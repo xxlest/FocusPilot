@@ -66,7 +66,7 @@ final class QuickPanelView: NSView {
         let btn = NSButton()
         btn.bezelStyle = .recessed
         btn.isBordered = false
-        btn.image = Self.cachedSymbol(name: "gearshape", size: 12, weight: .medium)
+        btn.image = Self.cachedSymbol(name: "slider.horizontal.3", size: 11, weight: .medium)
         btn.contentTintColor = ConfigStore.shared.currentThemeColors.nsTextSecondary
         btn.toolTip = "打开主界面"
         btn.target = self
@@ -95,6 +95,195 @@ final class QuickPanelView: NSView {
         btn.wantsLayer = true
         btn.layer?.cornerRadius = 4
         btn.contentTintColor = ConfigStore.shared.currentThemeColors.nsTextSecondary
+        return btn
+    }()
+
+    /// Tab 选中下划线指示条（活跃）
+    private let runningTabIndicator: NSView = {
+        let view = NSView()
+        view.wantsLayer = true
+        view.layer?.cornerRadius = 1
+        return view
+    }()
+
+    /// Tab 选中下划线指示条（关注）
+    private let favoritesTabIndicator: NSView = {
+        let view = NSView()
+        view.wantsLayer = true
+        view.layer?.cornerRadius = 1
+        return view
+    }()
+
+    // MARK: - FocusByTime 底部计时器栏
+
+    /// 底部分割线
+    private let bottomSeparator: NSView = {
+        let view = NSView()
+        view.wantsLayer = true
+        view.layer?.backgroundColor = ConfigStore.shared.currentThemeColors.nsSeparator.cgColor
+        return view
+    }()
+
+    /// 底部计时器栏容器
+    private let timerBar: NSView = {
+        let view = NSView()
+        view.wantsLayer = true
+        view.layer?.backgroundColor = ConfigStore.shared.currentThemeColors.nsTextPrimary.withAlphaComponent(0.03).cgColor
+        return view
+    }()
+
+    /// 阶段标签（"工作中" / "休息中" / 时钟图标）
+    private let timerPhaseLabel: NSTextField = {
+        let label = NSTextField(labelWithString: "")
+        label.font = .systemFont(ofSize: 10, weight: .medium)
+        label.textColor = ConfigStore.shared.currentThemeColors.nsTextSecondary
+        label.isEditable = false
+        label.isBezeled = false
+        label.drawsBackground = false
+        return label
+    }()
+
+    /// 时间显示 "MM:SS"
+    private let timerTimeLabel: NSTextField = {
+        let label = NSTextField(labelWithString: "")
+        label.font = .monospacedDigitSystemFont(ofSize: 16, weight: .semibold)
+        label.textColor = ConfigStore.shared.currentThemeColors.nsTextPrimary
+        label.isEditable = false
+        label.isBezeled = false
+        label.drawsBackground = false
+        return label
+    }()
+
+    /// 进度条背景
+    private let timerProgressBg: NSView = {
+        let view = NSView()
+        view.wantsLayer = true
+        view.layer?.cornerRadius = 2
+        view.layer?.backgroundColor = ConfigStore.shared.currentThemeColors.nsTextPrimary.withAlphaComponent(0.08).cgColor
+        return view
+    }()
+
+    /// 进度条填充
+    private let timerProgressFill: NSView = {
+        let view = NSView()
+        view.wantsLayer = true
+        view.layer?.cornerRadius = 2
+        return view
+    }()
+
+    /// 进度条填充宽度约束
+    private var timerProgressFillWidth: NSLayoutConstraint?
+
+    /// 工作时长减按钮
+    private lazy var workMinusBtn: NSButton = {
+        let btn = NSButton(title: "-", target: self, action: #selector(decreaseWork))
+        btn.bezelStyle = .recessed
+        btn.isBordered = false
+        btn.font = .systemFont(ofSize: 12, weight: .bold)
+        btn.contentTintColor = ConfigStore.shared.currentThemeColors.nsTextSecondary
+        return btn
+    }()
+
+    /// 工作时长显示
+    private let workMinLabel: NSTextField = {
+        let label = NSTextField(labelWithString: "25")
+        label.font = .monospacedDigitSystemFont(ofSize: 11, weight: .medium)
+        label.textColor = ConfigStore.shared.currentThemeColors.nsTextPrimary
+        label.alignment = .center
+        label.isEditable = false
+        label.isBezeled = false
+        label.drawsBackground = false
+        return label
+    }()
+
+    /// 工作时长加按钮
+    private lazy var workPlusBtn: NSButton = {
+        let btn = NSButton(title: "+", target: self, action: #selector(increaseWork))
+        btn.bezelStyle = .recessed
+        btn.isBordered = false
+        btn.font = .systemFont(ofSize: 12, weight: .bold)
+        btn.contentTintColor = ConfigStore.shared.currentThemeColors.nsTextSecondary
+        return btn
+    }()
+
+    /// "工作" 标签
+    private let workLabel: NSTextField = {
+        let label = NSTextField(labelWithString: "工作")
+        label.font = .systemFont(ofSize: 9)
+        label.textColor = ConfigStore.shared.currentThemeColors.nsTextTertiary
+        label.isEditable = false
+        label.isBezeled = false
+        label.drawsBackground = false
+        return label
+    }()
+
+    /// 休息时长减按钮
+    private lazy var restMinusBtn: NSButton = {
+        let btn = NSButton(title: "-", target: self, action: #selector(decreaseRest))
+        btn.bezelStyle = .recessed
+        btn.isBordered = false
+        btn.font = .systemFont(ofSize: 12, weight: .bold)
+        btn.contentTintColor = ConfigStore.shared.currentThemeColors.nsTextSecondary
+        return btn
+    }()
+
+    /// 休息时长显示
+    private let restMinLabel: NSTextField = {
+        let label = NSTextField(labelWithString: "5")
+        label.font = .monospacedDigitSystemFont(ofSize: 11, weight: .medium)
+        label.textColor = ConfigStore.shared.currentThemeColors.nsTextPrimary
+        label.alignment = .center
+        label.isEditable = false
+        label.isBezeled = false
+        label.drawsBackground = false
+        return label
+    }()
+
+    /// 休息时长加按钮
+    private lazy var restPlusBtn: NSButton = {
+        let btn = NSButton(title: "+", target: self, action: #selector(increaseRest))
+        btn.bezelStyle = .recessed
+        btn.isBordered = false
+        btn.font = .systemFont(ofSize: 12, weight: .bold)
+        btn.contentTintColor = ConfigStore.shared.currentThemeColors.nsTextSecondary
+        return btn
+    }()
+
+    /// "休息" 标签
+    private let restLabel: NSTextField = {
+        let label = NSTextField(labelWithString: "休息")
+        label.font = .systemFont(ofSize: 9)
+        label.textColor = ConfigStore.shared.currentThemeColors.nsTextTertiary
+        label.isEditable = false
+        label.isBezeled = false
+        label.drawsBackground = false
+        return label
+    }()
+
+    /// 开始/暂停按钮
+    private lazy var timerActionBtn: NSButton = {
+        let btn = NSButton()
+        btn.bezelStyle = .recessed
+        btn.isBordered = false
+        btn.image = Self.cachedSymbol(name: "play.fill", size: 12, weight: .medium)
+        btn.contentTintColor = ConfigStore.shared.currentThemeColors.nsAccent
+        btn.target = self
+        btn.action = #selector(timerActionTapped)
+        btn.toolTip = "开始"
+        return btn
+    }()
+
+    /// 重置按钮
+    private lazy var timerResetBtn: NSButton = {
+        let btn = NSButton()
+        btn.bezelStyle = .recessed
+        btn.isBordered = false
+        btn.image = Self.cachedSymbol(name: "stop.fill", size: 10, weight: .medium)
+        btn.contentTintColor = ConfigStore.shared.currentThemeColors.nsTextTertiary
+        btn.target = self
+        btn.action = #selector(timerResetTapped)
+        btn.toolTip = "重置"
+        btn.isHidden = true
         return btn
     }()
 
@@ -160,9 +349,29 @@ final class QuickPanelView: NSView {
         topBar.addSubview(runningTabButton)
         topBar.addSubview(tabSeparator)
         topBar.addSubview(favoritesTabButton)
+        topBar.addSubview(runningTabIndicator)
+        topBar.addSubview(favoritesTabIndicator)
 
         // 滚动区域
         addSubview(scrollView)
+
+        // 底部计时器栏
+        addSubview(bottomSeparator)
+        addSubview(timerBar)
+        timerBar.addSubview(timerPhaseLabel)
+        timerBar.addSubview(timerTimeLabel)
+        timerBar.addSubview(timerProgressBg)
+        timerProgressBg.addSubview(timerProgressFill)
+        timerBar.addSubview(workMinusBtn)
+        timerBar.addSubview(workMinLabel)
+        timerBar.addSubview(workPlusBtn)
+        timerBar.addSubview(workLabel)
+        timerBar.addSubview(restMinusBtn)
+        timerBar.addSubview(restMinLabel)
+        timerBar.addSubview(restPlusBtn)
+        timerBar.addSubview(restLabel)
+        timerBar.addSubview(timerActionBtn)
+        timerBar.addSubview(timerResetBtn)
 
         // Auto Layout
         topBar.translatesAutoresizingMaskIntoConstraints = false
@@ -173,8 +382,26 @@ final class QuickPanelView: NSView {
         favoritesTabButton.translatesAutoresizingMaskIntoConstraints = false
         scrollView.translatesAutoresizingMaskIntoConstraints = false
         contentStack.translatesAutoresizingMaskIntoConstraints = false
+        runningTabIndicator.translatesAutoresizingMaskIntoConstraints = false
+        favoritesTabIndicator.translatesAutoresizingMaskIntoConstraints = false
+        bottomSeparator.translatesAutoresizingMaskIntoConstraints = false
+        timerBar.translatesAutoresizingMaskIntoConstraints = false
+        timerPhaseLabel.translatesAutoresizingMaskIntoConstraints = false
+        timerTimeLabel.translatesAutoresizingMaskIntoConstraints = false
+        timerProgressBg.translatesAutoresizingMaskIntoConstraints = false
+        timerProgressFill.translatesAutoresizingMaskIntoConstraints = false
+        workMinusBtn.translatesAutoresizingMaskIntoConstraints = false
+        workMinLabel.translatesAutoresizingMaskIntoConstraints = false
+        workPlusBtn.translatesAutoresizingMaskIntoConstraints = false
+        workLabel.translatesAutoresizingMaskIntoConstraints = false
+        restMinusBtn.translatesAutoresizingMaskIntoConstraints = false
+        restMinLabel.translatesAutoresizingMaskIntoConstraints = false
+        restPlusBtn.translatesAutoresizingMaskIntoConstraints = false
+        restLabel.translatesAutoresizingMaskIntoConstraints = false
+        timerActionBtn.translatesAutoresizingMaskIntoConstraints = false
+        timerResetBtn.translatesAutoresizingMaskIntoConstraints = false
 
-        let topBarHeight: CGFloat = 24
+        let topBarHeight: CGFloat = 28
 
         NSLayoutConstraint.activate([
             // 顶部栏
@@ -206,17 +433,106 @@ final class QuickPanelView: NSView {
             favoritesTabButton.leadingAnchor.constraint(equalTo: tabSeparator.trailingAnchor, constant: 5),
             favoritesTabButton.centerYAnchor.constraint(equalTo: topBar.centerYAnchor),
 
-            // 滚动区域（顶部栏到底部）
+            // Tab 下划线指示条
+            runningTabIndicator.leadingAnchor.constraint(equalTo: runningTabButton.leadingAnchor, constant: 2),
+            runningTabIndicator.trailingAnchor.constraint(equalTo: runningTabButton.trailingAnchor, constant: -2),
+            runningTabIndicator.bottomAnchor.constraint(equalTo: topBar.bottomAnchor, constant: -1),
+            runningTabIndicator.heightAnchor.constraint(equalToConstant: 2),
+
+            favoritesTabIndicator.leadingAnchor.constraint(equalTo: favoritesTabButton.leadingAnchor, constant: 2),
+            favoritesTabIndicator.trailingAnchor.constraint(equalTo: favoritesTabButton.trailingAnchor, constant: -2),
+            favoritesTabIndicator.bottomAnchor.constraint(equalTo: topBar.bottomAnchor, constant: -1),
+            favoritesTabIndicator.heightAnchor.constraint(equalToConstant: 2),
+
+            // 滚动区域（顶部栏到底部计时器栏之上）
             scrollView.topAnchor.constraint(equalTo: topSeparator.bottomAnchor),
             scrollView.leadingAnchor.constraint(equalTo: leadingAnchor),
             scrollView.trailingAnchor.constraint(equalTo: trailingAnchor),
-            scrollView.bottomAnchor.constraint(equalTo: bottomAnchor),
+            scrollView.bottomAnchor.constraint(equalTo: bottomSeparator.topAnchor),
 
             // contentStack 宽度跟随 scrollView
             contentStack.leadingAnchor.constraint(equalTo: scrollView.contentView.leadingAnchor),
             contentStack.trailingAnchor.constraint(equalTo: scrollView.contentView.trailingAnchor),
             contentStack.topAnchor.constraint(equalTo: scrollView.contentView.topAnchor),
+
+            // 底部分割线
+            bottomSeparator.leadingAnchor.constraint(equalTo: leadingAnchor),
+            bottomSeparator.trailingAnchor.constraint(equalTo: trailingAnchor),
+            bottomSeparator.bottomAnchor.constraint(equalTo: timerBar.topAnchor),
+            bottomSeparator.heightAnchor.constraint(equalToConstant: 1),
+
+            // 底部计时器栏（固定 44px 高度）
+            timerBar.leadingAnchor.constraint(equalTo: leadingAnchor),
+            timerBar.trailingAnchor.constraint(equalTo: trailingAnchor),
+            timerBar.bottomAnchor.constraint(equalTo: bottomAnchor),
+            timerBar.heightAnchor.constraint(equalToConstant: 44),
+
+            // 开始/暂停按钮（右侧）
+            timerActionBtn.trailingAnchor.constraint(equalTo: timerBar.trailingAnchor, constant: -8),
+            timerActionBtn.centerYAnchor.constraint(equalTo: timerBar.centerYAnchor),
+            timerActionBtn.widthAnchor.constraint(equalToConstant: 24),
+            timerActionBtn.heightAnchor.constraint(equalToConstant: 24),
+
+            // 重置按钮（开始按钮左侧）
+            timerResetBtn.trailingAnchor.constraint(equalTo: timerActionBtn.leadingAnchor, constant: -2),
+            timerResetBtn.centerYAnchor.constraint(equalTo: timerBar.centerYAnchor),
+            timerResetBtn.widthAnchor.constraint(equalToConstant: 20),
+            timerResetBtn.heightAnchor.constraint(equalToConstant: 20),
+
+            // 阶段标签（左侧）
+            timerPhaseLabel.leadingAnchor.constraint(equalTo: timerBar.leadingAnchor, constant: 12),
+            timerPhaseLabel.topAnchor.constraint(equalTo: timerBar.topAnchor, constant: 5),
+
+            // 时间显示（阶段标签右侧）
+            timerTimeLabel.leadingAnchor.constraint(equalTo: timerPhaseLabel.trailingAnchor, constant: 6),
+            timerTimeLabel.centerYAnchor.constraint(equalTo: timerPhaseLabel.centerYAnchor),
+
+            // 进度条（第二行）
+            timerProgressBg.leadingAnchor.constraint(equalTo: timerBar.leadingAnchor, constant: 12),
+            timerProgressBg.trailingAnchor.constraint(equalTo: timerResetBtn.leadingAnchor, constant: -8),
+            timerProgressBg.bottomAnchor.constraint(equalTo: timerBar.bottomAnchor, constant: -8),
+            timerProgressBg.heightAnchor.constraint(equalToConstant: 4),
+
+            // 进度条填充
+            timerProgressFill.leadingAnchor.constraint(equalTo: timerProgressBg.leadingAnchor),
+            timerProgressFill.topAnchor.constraint(equalTo: timerProgressBg.topAnchor),
+            timerProgressFill.bottomAnchor.constraint(equalTo: timerProgressBg.bottomAnchor),
+
+            // 工作时长控件组（idle 模式 - 左侧）
+            workLabel.leadingAnchor.constraint(equalTo: timerBar.leadingAnchor, constant: 12),
+            workLabel.topAnchor.constraint(equalTo: timerBar.topAnchor, constant: 4),
+            workMinusBtn.leadingAnchor.constraint(equalTo: timerBar.leadingAnchor, constant: 8),
+            workMinusBtn.topAnchor.constraint(equalTo: workLabel.bottomAnchor, constant: -2),
+            workMinusBtn.widthAnchor.constraint(equalToConstant: 18),
+            workMinusBtn.heightAnchor.constraint(equalToConstant: 18),
+            workMinLabel.leadingAnchor.constraint(equalTo: workMinusBtn.trailingAnchor),
+            workMinLabel.centerYAnchor.constraint(equalTo: workMinusBtn.centerYAnchor),
+            workMinLabel.widthAnchor.constraint(equalToConstant: 24),
+            workPlusBtn.leadingAnchor.constraint(equalTo: workMinLabel.trailingAnchor),
+            workPlusBtn.centerYAnchor.constraint(equalTo: workMinusBtn.centerYAnchor),
+            workPlusBtn.widthAnchor.constraint(equalToConstant: 18),
+            workPlusBtn.heightAnchor.constraint(equalToConstant: 18),
+
+            // 休息时长控件组（idle 模式 - 中间）
+            restLabel.leadingAnchor.constraint(equalTo: workPlusBtn.trailingAnchor, constant: 10),
+            restLabel.topAnchor.constraint(equalTo: workLabel.topAnchor),
+            restMinusBtn.leadingAnchor.constraint(equalTo: restLabel.leadingAnchor, constant: -4),
+            restMinusBtn.topAnchor.constraint(equalTo: workMinusBtn.topAnchor),
+            restMinusBtn.widthAnchor.constraint(equalToConstant: 18),
+            restMinusBtn.heightAnchor.constraint(equalToConstant: 18),
+            restMinLabel.leadingAnchor.constraint(equalTo: restMinusBtn.trailingAnchor),
+            restMinLabel.centerYAnchor.constraint(equalTo: restMinusBtn.centerYAnchor),
+            restMinLabel.widthAnchor.constraint(equalToConstant: 24),
+            restPlusBtn.leadingAnchor.constraint(equalTo: restMinLabel.trailingAnchor),
+            restPlusBtn.centerYAnchor.constraint(equalTo: restMinusBtn.centerYAnchor),
+            restPlusBtn.widthAnchor.constraint(equalToConstant: 18),
+            restPlusBtn.heightAnchor.constraint(equalToConstant: 18),
         ])
+
+        // 进度条填充宽度约束（初始为 0）
+        let fillWidth = timerProgressFill.widthAnchor.constraint(equalToConstant: 0)
+        fillWidth.isActive = true
+        timerProgressFillWidth = fillWidth
 
         // 鼠标追踪
         updateTrackingArea()
@@ -224,6 +540,9 @@ final class QuickPanelView: NSView {
         // 从 ConfigStore 恢复上次选择的 Tab
         currentTab = QuickPanelTab(rawValue: ConfigStore.shared.lastPanelTab) ?? .running
         updateTabButtonStyles()
+
+        // 初始化计时器 UI
+        updateTimerUI()
     }
 
     // MARK: - 追踪区域（收起逻辑）
@@ -293,6 +612,27 @@ final class QuickPanelView: NSView {
             name: Constants.Notifications.accessibilityGranted,
             object: nil
         )
+        // FocusByTime 计时器状态变化
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(focusTimerDidChange),
+            name: Constants.Notifications.focusTimerChanged,
+            object: nil
+        )
+        // 工作阶段结束 → 弹对话框提示休息
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(handleWorkCompleted),
+            name: Constants.Notifications.focusWorkCompleted,
+            object: nil
+        )
+        // 休息阶段结束 → 弹对话框提示开始工作
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(handleRestCompleted),
+            name: Constants.Notifications.focusRestCompleted,
+            object: nil
+        )
     }
 
     @objc private func windowsDidChange() {
@@ -307,6 +647,181 @@ final class QuickPanelView: NSView {
         // 权限恢复：清除 AX 缓存 + 强制全量重建
         WindowService.shared.invalidateAXCache()
         forceReload()
+    }
+
+    @objc private func focusTimerDidChange() {
+        DispatchQueue.main.async { [weak self] in
+            self?.updateTimerUI()
+        }
+    }
+
+    // MARK: - FocusByTime UI 更新
+
+    private func updateTimerUI() {
+        let timer = FocusTimerService.shared
+        let colors = ConfigStore.shared.currentThemeColors
+        let isIdle = timer.status == .idle
+
+        // idle 模式：显示时长设置控件，隐藏计时显示
+        workLabel.isHidden = !isIdle
+        workMinusBtn.isHidden = !isIdle
+        workMinLabel.isHidden = !isIdle
+        workPlusBtn.isHidden = !isIdle
+        restLabel.isHidden = !isIdle
+        restMinusBtn.isHidden = !isIdle
+        restMinLabel.isHidden = !isIdle
+        restPlusBtn.isHidden = !isIdle
+
+        // 运行模式：显示阶段、时间、进度条
+        timerPhaseLabel.isHidden = isIdle
+        timerTimeLabel.isHidden = isIdle
+        timerProgressBg.isHidden = isIdle
+        timerProgressFill.isHidden = isIdle
+        timerResetBtn.isHidden = isIdle
+
+        // 计时器栏大面积颜色变化（工作=accent 底色，休息=绿色底色，idle=透明）
+        if isIdle {
+            timerBar.layer?.backgroundColor = colors.nsTextPrimary.withAlphaComponent(0.03).cgColor
+            bottomSeparator.layer?.backgroundColor = colors.nsSeparator.cgColor
+        } else if timer.phase == .work {
+            timerBar.layer?.backgroundColor = colors.nsAccent.withAlphaComponent(0.12).cgColor
+            bottomSeparator.layer?.backgroundColor = colors.nsAccent.withAlphaComponent(0.3).cgColor
+        } else {
+            timerBar.layer?.backgroundColor = NSColor.systemGreen.withAlphaComponent(0.12).cgColor
+            bottomSeparator.layer?.backgroundColor = NSColor.systemGreen.withAlphaComponent(0.3).cgColor
+        }
+
+        if isIdle {
+            // 更新时长显示
+            workMinLabel.stringValue = "\(timer.workMinutes)"
+            restMinLabel.stringValue = "\(timer.restMinutes)"
+            // 开始按钮
+            timerActionBtn.image = Self.cachedSymbol(name: "play.fill", size: 12, weight: .medium)
+            timerActionBtn.contentTintColor = colors.nsAccent
+            timerActionBtn.toolTip = "开始"
+        } else {
+            // 阶段标签
+            timerPhaseLabel.stringValue = timer.phaseLabel
+            let phaseColor = timer.phase == .work ? colors.nsAccent : NSColor.systemGreen
+            timerPhaseLabel.textColor = phaseColor
+
+            // 时间（大号醒目）
+            timerTimeLabel.stringValue = timer.displayTime
+            timerTimeLabel.textColor = colors.nsTextPrimary
+
+            // 进度条
+            timerProgressFill.layer?.backgroundColor = phaseColor.cgColor
+            let progressWidth = timerProgressBg.bounds.width * timer.progress
+            timerProgressFillWidth?.constant = max(0, progressWidth)
+            timerProgressBg.layoutSubtreeIfNeeded()
+
+            // 暂停/继续按钮
+            if timer.status == .running {
+                timerActionBtn.image = Self.cachedSymbol(name: "pause.fill", size: 12, weight: .medium)
+                timerActionBtn.contentTintColor = colors.nsTextSecondary
+                timerActionBtn.toolTip = "暂停"
+            } else {
+                timerActionBtn.image = Self.cachedSymbol(name: "play.fill", size: 12, weight: .medium)
+                timerActionBtn.contentTintColor = colors.nsAccent
+                timerActionBtn.toolTip = "继续"
+            }
+        }
+    }
+
+    // MARK: - FocusByTime 对话框
+
+    @objc private func handleWorkCompleted() {
+        DispatchQueue.main.async {
+            NSApp.activate(ignoringOtherApps: true)
+            let timer = FocusTimerService.shared
+            let alert = NSAlert()
+            alert.messageText = "工作完成！"
+            alert.informativeText = "已完成 \(timer.workMinutes) 分钟工作，现在休息 \(timer.restMinutes) 分钟吧。"
+            alert.alertStyle = .informational
+            alert.addButton(withTitle: "开始休息")
+            alert.addButton(withTitle: "直接结束")
+            if alert.runModal() == .alertFirstButtonReturn {
+                timer.startRestPhase()
+            } else {
+                timer.reset()
+            }
+        }
+    }
+
+    @objc private func handleRestCompleted() {
+        DispatchQueue.main.async {
+            NSApp.activate(ignoringOtherApps: true)
+            let timer = FocusTimerService.shared
+            let alert = NSAlert()
+            alert.messageText = "休息结束！"
+            alert.informativeText = "已休息完毕，准备好开始下一轮 \(timer.workMinutes) 分钟工作了吗？"
+            alert.alertStyle = .informational
+            alert.addButton(withTitle: "开始工作")
+            alert.addButton(withTitle: "稍后再说")
+            if alert.runModal() == .alertFirstButtonReturn {
+                timer.start()
+            }
+        }
+    }
+
+    // MARK: - FocusByTime 按钮事件
+
+    @objc private func timerActionTapped() {
+        let timer = FocusTimerService.shared
+        switch timer.status {
+        case .idle:
+            // 开始前确认
+            let alert = NSAlert()
+            alert.messageText = "开始工作"
+            alert.informativeText = "即将开始 \(timer.workMinutes) 分钟工作，\(timer.restMinutes) 分钟休息。"
+            alert.alertStyle = .informational
+            alert.addButton(withTitle: "开始")
+            alert.addButton(withTitle: "取消")
+            if alert.runModal() == .alertFirstButtonReturn {
+                timer.start()
+            }
+        case .running:
+            timer.pause()
+        case .paused:
+            timer.resume()
+        }
+    }
+
+    @objc private func timerResetTapped() {
+        let timer = FocusTimerService.shared
+        let alert = NSAlert()
+        alert.messageText = "停止计时"
+        alert.informativeText = "确定要停止当前计时吗？进度将被重置。"
+        alert.alertStyle = .warning
+        alert.addButton(withTitle: "停止")
+        alert.addButton(withTitle: "取消")
+        if alert.runModal() == .alertFirstButtonReturn {
+            timer.reset()
+        }
+    }
+
+    @objc private func decreaseWork() {
+        let timer = FocusTimerService.shared
+        timer.setWorkMinutes(timer.workMinutes - 5)
+        updateTimerUI()
+    }
+
+    @objc private func increaseWork() {
+        let timer = FocusTimerService.shared
+        timer.setWorkMinutes(timer.workMinutes + 5)
+        updateTimerUI()
+    }
+
+    @objc private func decreaseRest() {
+        let timer = FocusTimerService.shared
+        timer.setRestMinutes(timer.restMinutes - 1)
+        updateTimerUI()
+    }
+
+    @objc private func increaseRest() {
+        let timer = FocusTimerService.shared
+        timer.setRestMinutes(timer.restMinutes + 1)
+        updateTimerUI()
     }
 
     // MARK: - Tab 切换
@@ -325,21 +840,30 @@ final class QuickPanelView: NSView {
 
     private func updateTabButtonStyles() {
         let colors = ConfigStore.shared.currentThemeColors
-        // 先全部重置为未选中样式（清除胶囊背景）
+        // 先全部重置为未选中样式
         for btn in [runningTabButton, favoritesTabButton] {
             btn.font = .systemFont(ofSize: 11)
-            btn.contentTintColor = colors.nsTextSecondary
+            btn.contentTintColor = colors.nsTextTertiary
             btn.layer?.backgroundColor = NSColor.clear.cgColor
         }
-        // 设置选中 Tab 样式（胶囊背景 + 加粗 + 强调色）
+        // 隐藏所有指示条
+        runningTabIndicator.layer?.backgroundColor = NSColor.clear.cgColor
+        favoritesTabIndicator.layer?.backgroundColor = NSColor.clear.cgColor
+
+        // 设置选中 Tab 样式（加粗 + 强调色 + 底部指示条）
         let selectedButton: NSButton
+        let selectedIndicator: NSView
         switch currentTab {
-        case .running:   selectedButton = runningTabButton
-        case .favorites: selectedButton = favoritesTabButton
+        case .running:
+            selectedButton = runningTabButton
+            selectedIndicator = runningTabIndicator
+        case .favorites:
+            selectedButton = favoritesTabButton
+            selectedIndicator = favoritesTabIndicator
         }
         selectedButton.font = .systemFont(ofSize: 11, weight: .semibold)
         selectedButton.contentTintColor = colors.nsAccent
-        selectedButton.layer?.backgroundColor = colors.nsAccent.withAlphaComponent(0.12).cgColor
+        selectedIndicator.layer?.backgroundColor = colors.nsAccent.cgColor
     }
 
     /// 应用主题（外部调用）
@@ -349,7 +873,11 @@ final class QuickPanelView: NSView {
         openKanbanButton.contentTintColor = colors.nsTextSecondary
         topSeparator.layer?.backgroundColor = colors.nsSeparator.cgColor
         tabSeparator.layer?.backgroundColor = colors.nsSeparator.cgColor
+        bottomSeparator.layer?.backgroundColor = colors.nsSeparator.cgColor
+        timerBar.layer?.backgroundColor = colors.nsTextPrimary.withAlphaComponent(0.03).cgColor
+        timerProgressBg.layer?.backgroundColor = colors.nsTextPrimary.withAlphaComponent(0.08).cgColor
         updateTabButtonStyles()
+        updateTimerUI()
         forceReload()
     }
 
@@ -606,8 +1134,8 @@ final class HoverableRowView: NSView {
         isHovered = true
         // hover 高亮不覆盖选中高亮（选中高亮由 QuickPanelView 在构建行时设置）
         if !isHighlighted {
-            layer?.backgroundColor = ConfigStore.shared.currentThemeColors.nsTextPrimary.withAlphaComponent(0.08).cgColor
-            layer?.cornerRadius = 4
+            layer?.backgroundColor = ConfigStore.shared.currentThemeColors.nsTextPrimary.withAlphaComponent(0.06).cgColor
+            layer?.cornerRadius = 6
         }
     }
 
