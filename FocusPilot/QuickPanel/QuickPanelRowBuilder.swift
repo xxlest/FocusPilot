@@ -172,7 +172,7 @@ extension QuickPanelView {
         iconView.translatesAutoresizingMaskIntoConstraints = false
         iconView.image = icon
         iconView.wantsLayer = true
-        iconView.layer?.cornerRadius = 4
+        iconView.layer?.cornerRadius = 5
         iconView.layer?.masksToBounds = true
         NSLayoutConstraint.activate([
             iconView.widthAnchor.constraint(equalToConstant: 20),
@@ -196,7 +196,7 @@ extension QuickPanelView {
             let chevronName = isCollapsed ? "chevron.right" : "chevron.down"
             let chevronView = NSImageView()
             chevronView.translatesAutoresizingMaskIntoConstraints = false
-            chevronView.image = Self.cachedSymbol(name: chevronName, size: 10, weight: .medium)
+            chevronView.image = Self.cachedSymbol(name: chevronName, size: 9, weight: .medium)
             chevronView.contentTintColor = colors.nsTextSecondary
             NSLayoutConstraint.activate([
                 chevronView.widthAnchor.constraint(equalToConstant: 14),
@@ -306,7 +306,7 @@ extension QuickPanelView {
         let windowIconView = NSImageView()
         windowIconView.translatesAutoresizingMaskIntoConstraints = false
         windowIconView.image = Self.cachedSymbol(name: "rectangle.on.rectangle", size: 11, weight: .regular)
-        windowIconView.contentTintColor = colors.nsTextSecondary
+        windowIconView.contentTintColor = colors.nsTextTertiary
         NSLayoutConstraint.activate([
             windowIconView.widthAnchor.constraint(equalToConstant: 14),
             windowIconView.heightAnchor.constraint(equalToConstant: 14),

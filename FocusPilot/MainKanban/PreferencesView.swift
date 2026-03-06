@@ -11,7 +11,7 @@ struct PreferencesView: View {
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 24) {
+            VStack(alignment: .leading, spacing: 28) {
                 hotkeySection
                 themeSection
                 ballAppearanceSection
@@ -129,9 +129,9 @@ struct PreferencesView: View {
         .clipShape(RoundedRectangle(cornerRadius: 8))
         .overlay(
             RoundedRectangle(cornerRadius: 8)
-                .stroke(isSelected ? colors.swAccent : Color.secondary.opacity(0.2), lineWidth: isSelected ? 2 : 1)
+                .stroke(isSelected ? colors.swAccent : Color(nsColor: .separatorColor).opacity(0.3), lineWidth: isSelected ? 2 : 1)
         )
-        .shadow(color: isSelected ? colors.swAccent.opacity(0.3) : .clear, radius: 4)
+        .shadow(color: isSelected ? colors.swAccent.opacity(0.3) : .clear, radius: 6)
         .scaleEffect(isSelected ? 1.02 : 1.0)
         .animation(.easeInOut(duration: 0.15), value: isSelected)
         .onTapGesture {
@@ -151,7 +151,7 @@ struct PreferencesView: View {
             HStack {
                 Text("悬浮球大小")
                     .foregroundStyle(themeColors.swTextSecondary)
-                    .frame(width: 100, alignment: .leading)
+                    .frame(width: 110, alignment: .leading)
                 Slider(
                     value: $configStore.preferences.ballSize,
                     in: Constants.Ball.minSize...Constants.Ball.maxSize,
@@ -167,7 +167,7 @@ struct PreferencesView: View {
             HStack {
                 Text("悬浮球透明度")
                     .foregroundStyle(themeColors.swTextSecondary)
-                    .frame(width: 100, alignment: .leading)
+                    .frame(width: 110, alignment: .leading)
                 Slider(
                     value: $configStore.preferences.ballOpacity,
                     in: 0.3...1.0,
@@ -183,7 +183,7 @@ struct PreferencesView: View {
             HStack {
                 Text("面板透明度")
                     .foregroundStyle(themeColors.swTextSecondary)
-                    .frame(width: 100, alignment: .leading)
+                    .frame(width: 110, alignment: .leading)
                 Slider(
                     value: $configStore.preferences.panelOpacity,
                     in: 0.3...1.0,
@@ -199,7 +199,7 @@ struct PreferencesView: View {
             HStack {
                 Text("弹出动画")
                     .foregroundStyle(themeColors.swTextSecondary)
-                    .frame(width: 100, alignment: .leading)
+                    .frame(width: 110, alignment: .leading)
                 Slider(
                     value: $configStore.preferences.panelAnimationSpeed,
                     in: 0.1...0.6,

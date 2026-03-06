@@ -41,7 +41,7 @@ final class QuickPanelView: NSView {
     private let topBar: NSView = {
         let view = NSView()
         view.wantsLayer = true
-        view.layer?.backgroundColor = ConfigStore.shared.currentThemeColors.nsTextPrimary.withAlphaComponent(0.04).cgColor
+        view.layer?.backgroundColor = ConfigStore.shared.currentThemeColors.nsTextPrimary.withAlphaComponent(0.03).cgColor
         return view
     }()
 
@@ -49,7 +49,7 @@ final class QuickPanelView: NSView {
     private let topSeparator: NSView = {
         let view = NSView()
         view.wantsLayer = true
-        view.layer?.backgroundColor = ConfigStore.shared.currentThemeColors.nsSeparator.cgColor
+        view.layer?.backgroundColor = ConfigStore.shared.currentThemeColors.nsSeparator.withAlphaComponent(0.5).cgColor
         return view
     }()
 
@@ -57,7 +57,7 @@ final class QuickPanelView: NSView {
     private let tabSeparator: NSView = {
         let view = NSView()
         view.wantsLayer = true
-        view.layer?.backgroundColor = ConfigStore.shared.currentThemeColors.nsSeparator.cgColor
+        view.layer?.backgroundColor = ConfigStore.shared.currentThemeColors.nsSeparator.withAlphaComponent(0.5).cgColor
         return view
     }()
 
@@ -120,7 +120,7 @@ final class QuickPanelView: NSView {
     private let bottomSeparator: NSView = {
         let view = NSView()
         view.wantsLayer = true
-        view.layer?.backgroundColor = ConfigStore.shared.currentThemeColors.nsSeparator.cgColor
+        view.layer?.backgroundColor = ConfigStore.shared.currentThemeColors.nsSeparator.withAlphaComponent(0.6).cgColor
         return view
     }()
 
@@ -146,7 +146,7 @@ final class QuickPanelView: NSView {
     /// 时间显示 "MM:SS"
     private let timerTimeLabel: NSTextField = {
         let label = NSTextField(labelWithString: "")
-        label.font = .monospacedDigitSystemFont(ofSize: 16, weight: .semibold)
+        label.font = .monospacedDigitSystemFont(ofSize: 15, weight: .medium)
         label.textColor = ConfigStore.shared.currentThemeColors.nsTextPrimary
         label.isEditable = false
         label.isBezeled = false
@@ -158,8 +158,8 @@ final class QuickPanelView: NSView {
     private let timerProgressBg: NSView = {
         let view = NSView()
         view.wantsLayer = true
-        view.layer?.cornerRadius = 2
-        view.layer?.backgroundColor = ConfigStore.shared.currentThemeColors.nsTextPrimary.withAlphaComponent(0.08).cgColor
+        view.layer?.cornerRadius = 1.5
+        view.layer?.backgroundColor = ConfigStore.shared.currentThemeColors.nsTextPrimary.withAlphaComponent(0.06).cgColor
         return view
     }()
 
@@ -167,7 +167,7 @@ final class QuickPanelView: NSView {
     private let timerProgressFill: NSView = {
         let view = NSView()
         view.wantsLayer = true
-        view.layer?.cornerRadius = 2
+        view.layer?.cornerRadius = 1.5
         return view
     }()
 
@@ -327,7 +327,7 @@ final class QuickPanelView: NSView {
         timerActionBtn.translatesAutoresizingMaskIntoConstraints = false
         timerResetBtn.translatesAutoresizingMaskIntoConstraints = false
 
-        let topBarHeight: CGFloat = 28
+        let topBarHeight: CGFloat = 32
 
         NSLayoutConstraint.activate([
             // 顶部栏
@@ -391,7 +391,7 @@ final class QuickPanelView: NSView {
             timerBar.leadingAnchor.constraint(equalTo: leadingAnchor),
             timerBar.trailingAnchor.constraint(equalTo: trailingAnchor),
             timerBar.bottomAnchor.constraint(equalTo: bottomAnchor),
-            timerBar.heightAnchor.constraint(equalToConstant: 44),
+            timerBar.heightAnchor.constraint(equalToConstant: 46),
 
             // 开始/暂停按钮（右侧）
             timerActionBtn.trailingAnchor.constraint(equalTo: timerBar.trailingAnchor, constant: -8),
@@ -417,7 +417,7 @@ final class QuickPanelView: NSView {
             timerProgressBg.leadingAnchor.constraint(equalTo: timerBar.leadingAnchor, constant: 12),
             timerProgressBg.trailingAnchor.constraint(equalTo: timerResetBtn.leadingAnchor, constant: -8),
             timerProgressBg.bottomAnchor.constraint(equalTo: timerBar.bottomAnchor, constant: -8),
-            timerProgressBg.heightAnchor.constraint(equalToConstant: 4),
+            timerProgressBg.heightAnchor.constraint(equalToConstant: 3),
 
             // 进度条填充
             timerProgressFill.leadingAnchor.constraint(equalTo: timerProgressBg.leadingAnchor),
@@ -621,7 +621,7 @@ final class QuickPanelView: NSView {
         // 计时器栏大面积颜色变化（工作=accent 底色，休息=绿色底色，idle=透明）
         if isIdle {
             timerBar.layer?.backgroundColor = colors.nsTextPrimary.withAlphaComponent(0.03).cgColor
-            bottomSeparator.layer?.backgroundColor = colors.nsSeparator.cgColor
+            bottomSeparator.layer?.backgroundColor = colors.nsSeparator.withAlphaComponent(0.6).cgColor
         } else if timer.phase == .work {
             timerBar.layer?.backgroundColor = colors.nsAccent.withAlphaComponent(0.12).cgColor
             bottomSeparator.layer?.backgroundColor = colors.nsAccent.withAlphaComponent(0.3).cgColor
@@ -1029,13 +1029,13 @@ final class QuickPanelView: NSView {
     /// 应用主题（外部调用）
     func applyTheme() {
         let colors = ConfigStore.shared.currentThemeColors
-        topBar.layer?.backgroundColor = colors.nsTextPrimary.withAlphaComponent(0.04).cgColor
+        topBar.layer?.backgroundColor = colors.nsTextPrimary.withAlphaComponent(0.03).cgColor
         openKanbanButton.contentTintColor = colors.nsTextSecondary
-        topSeparator.layer?.backgroundColor = colors.nsSeparator.cgColor
-        tabSeparator.layer?.backgroundColor = colors.nsSeparator.cgColor
-        bottomSeparator.layer?.backgroundColor = colors.nsSeparator.cgColor
+        topSeparator.layer?.backgroundColor = colors.nsSeparator.withAlphaComponent(0.5).cgColor
+        tabSeparator.layer?.backgroundColor = colors.nsSeparator.withAlphaComponent(0.5).cgColor
+        bottomSeparator.layer?.backgroundColor = colors.nsSeparator.withAlphaComponent(0.6).cgColor
         timerBar.layer?.backgroundColor = colors.nsTextPrimary.withAlphaComponent(0.03).cgColor
-        timerProgressBg.layer?.backgroundColor = colors.nsTextPrimary.withAlphaComponent(0.08).cgColor
+        timerProgressBg.layer?.backgroundColor = colors.nsTextPrimary.withAlphaComponent(0.06).cgColor
         updateTabButtonStyles()
         updateTimerUI()
         forceReload()

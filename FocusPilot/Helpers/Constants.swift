@@ -16,7 +16,7 @@ enum Constants {
         static let minWidth: CGFloat = 220             // 面板最小宽度
         static let maxWidth: CGFloat = 500             // 面板最大宽度
         static let minHeight: CGFloat = 200            // 面板最小高度
-        static let cornerRadius: CGFloat = 12          // 圆角半径
+        static let cornerRadius: CGFloat = 14          // 圆角半径（对齐 macOS 15 系统面板）
         static let showDuration: TimeInterval = 0.25        // 弹出动画 250ms（缩放+滑出+淡入）
         static let hideDuration: TimeInterval = 0.12         // 收起动画 120ms
         static let dismissDelay: TimeInterval = 0.5    // 离开 500ms 后收起
@@ -24,9 +24,33 @@ enum Constants {
         static let maxHeightRatio: CGFloat = 0.6       // 面板最大高度 = 屏幕 60%
         static let maxApps: Int = 8                    // 关注 App 上限（"全部"Tab 不受限）
         static let maxWindowsPerApp: Int = 10          // 每个 App 最多显示 10 个窗口
-        static let appRowHeight: CGFloat = 26          // App 行高度（紧凑布局）
-        static let windowRowHeight: CGFloat = 22       // 窗口行高度（紧凑布局）
+        static let appRowHeight: CGFloat = 28          // App 行高度（宽松布局）
+        static let windowRowHeight: CGFloat = 24       // 窗口行高度（宽松布局）
         static let windowIndent: CGFloat = 28          // 窗口列表缩进
+        static let topBarHeight: CGFloat = 32          // 顶部栏高度
+        static let timerBarHeight: CGFloat = 46        // 计时器栏高度
+    }
+
+    // MARK: - 设计 Token（间距/圆角/阴影/动画统一基准）
+    enum Design {
+        enum Spacing {
+            static let xs: CGFloat = 4
+            static let sm: CGFloat = 8
+            static let md: CGFloat = 12
+            static let lg: CGFloat = 16
+            static let xl: CGFloat = 24
+        }
+        enum Corner {
+            static let sm: CGFloat = 4      // 图标、小元素
+            static let md: CGFloat = 6      // 行、按钮
+            static let lg: CGFloat = 10     // 卡片、弹窗内组件
+            static let xl: CGFloat = 14     // 面板、窗口
+        }
+        enum Anim {
+            static let micro: TimeInterval = 0.1      // hover 色变
+            static let fast: TimeInterval = 0.15      // 缩放反馈
+            static let normal: TimeInterval = 0.25    // 展开/收起
+        }
     }
 
     // MARK: - 偏好设置范围
@@ -36,8 +60,8 @@ enum Constants {
     static let maxApps: Int = Panel.maxApps
 
     // MARK: - 主看板
-    static let kanbanWidth: CGFloat = 800
-    static let kanbanHeight: CGFloat = 600
+    static let kanbanWidth: CGFloat = 840
+    static let kanbanHeight: CGFloat = 620
     static let kanbanMinWidth: CGFloat = 640
     static let kanbanMinHeight: CGFloat = 480
     static let sidebarWidth: CGFloat = 180

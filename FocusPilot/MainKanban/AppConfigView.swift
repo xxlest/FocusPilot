@@ -54,7 +54,8 @@ struct AppConfigView: View {
                 }
             }
             .padding(8)
-            .background(RoundedRectangle(cornerRadius: 8).fill(themeColors.swSeparator.opacity(0.4)))
+            .background(RoundedRectangle(cornerRadius: 8).fill(themeColors.swTextPrimary.opacity(0.04)))
+            .overlay(RoundedRectangle(cornerRadius: 8).stroke(themeColors.swSeparator.opacity(0.15), lineWidth: 1))
             .padding(.horizontal)
             .padding(.bottom, 8)
 
@@ -72,7 +73,7 @@ struct AppConfigView: View {
                             appRow(app)
                             themeColors.swSeparator
                                 .frame(height: 1)
-                                .padding(.leading, 52)
+                                .padding(.leading, 44)
                         }
                     }
                     .padding(.horizontal)
@@ -252,7 +253,7 @@ struct AppConfigView: View {
             } label: {
                 Image(systemName: app.isFavorite ? "star.fill" : "star")
                     .foregroundStyle(app.isFavorite ? configStore.currentThemeColors.swFavoriteStar : .secondary)
-                    .font(.system(size: 14))
+                    .font(.system(size: 13))
             }
             .buttonStyle(.borderless)
             .disabled(!app.isFavorite && atLimit)

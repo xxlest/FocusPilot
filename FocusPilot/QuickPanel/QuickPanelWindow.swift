@@ -79,6 +79,13 @@ final class QuickPanelWindow: NSPanel {
         titlebarAppearsTransparent = true
         titleVisibility = .hidden
         hasShadow = true
+        // 自定义柔和投影（替代系统默认阴影）
+        if let shadowLayer = contentView?.superview?.layer ?? contentView?.layer {
+            shadowLayer.shadowColor = NSColor.black.withAlphaComponent(0.12).cgColor
+            shadowLayer.shadowRadius = 16
+            shadowLayer.shadowOffset = CGSize(width: 0, height: -6)
+            shadowLayer.shadowOpacity = 1.0
+        }
         isOpaque = false
         backgroundColor = .clear
 
@@ -108,7 +115,7 @@ final class QuickPanelWindow: NSPanel {
         let cr = Constants.Panel.cornerRadius
         bgOverlayView = NSView()
         bgOverlayView.wantsLayer = true
-        bgOverlayView.layer?.backgroundColor = theme.colors.nsBackground.withAlphaComponent(0.6).cgColor
+        bgOverlayView.layer?.backgroundColor = theme.colors.nsBackground.withAlphaComponent(0.72).cgColor
         bgOverlayView.layer?.cornerRadius = cr
         bgOverlayView.layer?.masksToBounds = true
         bgOverlayView.translatesAutoresizingMaskIntoConstraints = false
@@ -138,7 +145,7 @@ final class QuickPanelWindow: NSPanel {
     func applyTheme() {
         let theme = ConfigStore.shared.preferences.appTheme
         effectView.material = NSVisualEffectView.Material(rawValue: theme.panelMaterial) ?? .menu
-        bgOverlayView.layer?.backgroundColor = theme.colors.nsBackground.withAlphaComponent(0.6).cgColor
+        bgOverlayView.layer?.backgroundColor = theme.colors.nsBackground.withAlphaComponent(0.72).cgColor
         panelView.applyTheme()
     }
 

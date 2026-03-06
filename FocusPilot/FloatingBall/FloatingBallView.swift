@@ -126,9 +126,9 @@ final class FloatingBallView: NSView {
 
         // 外层投影光晕（使用主题 accent 色发光）
         let accentColor = ConfigStore.shared.preferences.appTheme.colors.nsAccent
-        layer?.shadowColor = accentColor.withAlphaComponent(0.6).cgColor
-        layer?.shadowRadius = 8
-        layer?.shadowOffset = CGSize(width: 0, height: -1)
+        layer?.shadowColor = accentColor.withAlphaComponent(0.4).cgColor
+        layer?.shadowRadius = 10
+        layer?.shadowOffset = CGSize(width: 0, height: -1.5)
         layer?.shadowOpacity = 0.4
         // 圆形阴影路径（避免方框阴影）
         layer?.shadowPath = CGPath(ellipseIn: CGRect(x: 0, y: 0, width: size, height: size), transform: nil)
@@ -233,16 +233,16 @@ final class FloatingBallView: NSView {
         layer.removeAnimation(forKey: "breathingAnimation")
 
         let opacityAnim = CABasicAnimation(keyPath: "shadowOpacity")
-        opacityAnim.fromValue = 0.4
-        opacityAnim.toValue = 0.15
+        opacityAnim.fromValue = 0.35
+        opacityAnim.toValue = 0.12
 
         let radiusAnim = CABasicAnimation(keyPath: "shadowRadius")
-        radiusAnim.fromValue = 8.0
-        radiusAnim.toValue = 4.0
+        radiusAnim.fromValue = 10.0
+        radiusAnim.toValue = 5.0
 
         let group = CAAnimationGroup()
         group.animations = [opacityAnim, radiusAnim]
-        group.duration = 2.2
+        group.duration = 2.5
         group.autoreverses = true
         group.repeatCount = .infinity
         group.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
@@ -305,7 +305,7 @@ final class FloatingBallView: NSView {
     private func setupProgressRing(size: CGFloat) {
         let center = CGPoint(x: size / 2, y: size / 2)
         let radius = size / 2 - 2  // 距离边缘 2px
-        let lineWidth: CGFloat = 2.5
+        let lineWidth: CGFloat = 2.0
         let startAngle = CGFloat.pi / 2        // 12 点钟（macOS 坐标系）
         let endAngle = startAngle + CGFloat.pi * 2
 
@@ -316,7 +316,7 @@ final class FloatingBallView: NSView {
         let track = CAShapeLayer()
         track.path = ringPath
         track.fillColor = nil
-        track.strokeColor = NSColor.white.withAlphaComponent(0.15).cgColor
+        track.strokeColor = NSColor.white.withAlphaComponent(0.10).cgColor
         track.lineWidth = lineWidth
         track.isHidden = true
         layer?.addSublayer(track)
@@ -354,8 +354,8 @@ final class FloatingBallView: NSView {
             progressRingLayer?.strokeColor = phaseColor.cgColor
 
             // 进度环加粗（更醒目）
-            progressTrackLayer?.lineWidth = 3.0
-            progressRingLayer?.lineWidth = 3.0
+            progressTrackLayer?.lineWidth = 2.5
+            progressRingLayer?.lineWidth = 2.5
 
             // 悬浮球光晕颜色跟随阶段（工作=accent，休息=绿色）
             layer?.shadowColor = phaseColor.withAlphaComponent(0.7).cgColor
@@ -363,10 +363,10 @@ final class FloatingBallView: NSView {
             layer?.shadowOpacity = 0.5
         } else {
             // idle 状态：恢复默认 accent 光晕
-            progressTrackLayer?.lineWidth = 2.5
-            progressRingLayer?.lineWidth = 2.5
-            layer?.shadowColor = accentColor.withAlphaComponent(0.6).cgColor
-            layer?.shadowRadius = 8
+            progressTrackLayer?.lineWidth = 2.0
+            progressRingLayer?.lineWidth = 2.0
+            layer?.shadowColor = accentColor.withAlphaComponent(0.4).cgColor
+            layer?.shadowRadius = 10
             layer?.shadowOpacity = 0.4
         }
     }
@@ -503,7 +503,7 @@ final class FloatingBallView: NSView {
         iconView.image = createBrandLogo(size: size, gradientColors: colors)
         // 同步更新光晕颜色（跟随主题 accent）
         let accentColor = ConfigStore.shared.preferences.appTheme.colors.nsAccent
-        layer?.shadowColor = accentColor.withAlphaComponent(0.6).cgColor
+        layer?.shadowColor = accentColor.withAlphaComponent(0.4).cgColor
     }
 
     private func createBrandLogo(size: CGFloat, gradientColors: (light: NSColor, medium: NSColor, dark: NSColor)) -> NSImage {
@@ -528,7 +528,7 @@ final class FloatingBallView: NSView {
         let highlightRect = NSRect(x: size * 0.08, y: size * 0.45, width: size * 0.55, height: size * 0.50)
         let highlightPath = NSBezierPath(ovalIn: highlightRect)
         let highlightGradient = NSGradient(colorsAndLocations:
-            (NSColor.white.withAlphaComponent(0.30), 0.0),
+            (NSColor.white.withAlphaComponent(0.22), 0.0),
             (NSColor.white.withAlphaComponent(0.06), 0.6),
             (NSColor.clear, 1.0)
         )
@@ -541,7 +541,7 @@ final class FloatingBallView: NSView {
         let shadowRect = NSRect(x: size * 0.1, y: -size * 0.15, width: size * 0.8, height: size * 0.45)
         let shadowPath = NSBezierPath(ovalIn: shadowRect)
         let shadowGradient = NSGradient(colorsAndLocations:
-            (NSColor.black.withAlphaComponent(0.18), 0.0),
+            (NSColor.black.withAlphaComponent(0.12), 0.0),
             (NSColor.clear, 1.0)
         )
         shadowGradient?.draw(in: shadowPath, angle: 90)
@@ -549,8 +549,8 @@ final class FloatingBallView: NSView {
 
         // 4. 内边缘光（薄白色描边增强质感）
         let innerGlow = NSBezierPath(ovalIn: NSRect(x: 0.5, y: 0.5, width: size - 1, height: size - 1))
-        NSColor.white.withAlphaComponent(0.2).setStroke()
-        innerGlow.lineWidth = 0.8
+        NSColor.white.withAlphaComponent(0.15).setStroke()
+        innerGlow.lineWidth = 0.5
         innerGlow.stroke()
 
         // 5. 聚焦准星符号（替代 pin.fill + FC）
@@ -558,23 +558,11 @@ final class FloatingBallView: NSView {
         circlePath.addClip()
 
         let white = NSColor.white
-        let whiteMain = white.withAlphaComponent(0.92)
-        let whiteSub = white.withAlphaComponent(0.55)
+        let whiteMain = white.withAlphaComponent(0.85)
+        let whiteSub = white.withAlphaComponent(0.85)
 
-        // 5a. 外环（细线）
-        let outerRadius = size * 0.36
-        let outerRing = NSBezierPath(ovalIn: NSRect(
-            x: center.x - outerRadius,
-            y: center.y - outerRadius,
-            width: outerRadius * 2,
-            height: outerRadius * 2
-        ))
-        whiteSub.setStroke()
-        outerRing.lineWidth = size * 0.028
-        outerRing.stroke()
-
-        // 5b. 内环（稍粗）
-        let innerRadius = size * 0.18
+        // 5b. 内环
+        let innerRadius = size * 0.22
         let innerRing = NSBezierPath(ovalIn: NSRect(
             x: center.x - innerRadius,
             y: center.y - innerRadius,
@@ -582,11 +570,11 @@ final class FloatingBallView: NSView {
             height: innerRadius * 2
         ))
         whiteMain.setStroke()
-        innerRing.lineWidth = size * 0.04
+        innerRing.lineWidth = size * 0.038
         innerRing.stroke()
 
         // 5c. 中心实心圆点
-        let dotRadius = size * 0.06
+        let dotRadius = size * 0.065
         let dotPath = NSBezierPath(ovalIn: NSRect(
             x: center.x - dotRadius,
             y: center.y - dotRadius,
@@ -597,11 +585,11 @@ final class FloatingBallView: NSView {
         dotPath.fill()
 
         // 5d. 四向刻度线（上下左右短线段，准星感）
-        let tickInner = outerRadius + size * 0.02  // 刻度起点（外环外侧）
-        let tickOuter = outerRadius + size * 0.12  // 刻度终点
-        let tickWidth = size * 0.032
+        let tickInner = innerRadius + size * 0.04  // 刻度起点（内环外侧）
+        let tickOuter = innerRadius + size * 0.16  // 刻度终点
+        let tickWidth = size * 0.035
 
-        whiteSub.setStroke()
+        whiteMain.setStroke()
         let directions: [(CGFloat, CGFloat)] = [(1,0), (-1,0), (0,1), (0,-1)]
         for (dx, dy) in directions {
             let tick = NSBezierPath()
@@ -683,9 +671,9 @@ final class FloatingBallView: NSView {
         NSAnimationContext.runAnimationGroup { context in
             context.duration = 0.15
             context.timingFunction = CAMediaTimingFunction(name: .easeOut)
-            self.layer?.setAffineTransform(CGAffineTransform(scaleX: 1.08, y: 1.08))
-            self.layer?.shadowOpacity = 0.65
-            self.layer?.shadowRadius = 12
+            self.layer?.setAffineTransform(CGAffineTransform(scaleX: 1.06, y: 1.06))
+            self.layer?.shadowOpacity = 0.50
+            self.layer?.shadowRadius = 14
         }
 
         // 鼠标进入时立即预热窗口数据（后续 show 不再等数据刷新）
@@ -709,7 +697,7 @@ final class FloatingBallView: NSView {
             context.timingFunction = CAMediaTimingFunction(name: .easeOut)
             self.layer?.setAffineTransform(.identity)
             self.layer?.shadowOpacity = 0.4
-            self.layer?.shadowRadius = 8
+            self.layer?.shadowRadius = 10
         }
 
         // 通知快捷面板鼠标已离开悬浮球

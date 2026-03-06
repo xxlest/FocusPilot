@@ -65,19 +65,19 @@ struct MainKanbanView: View {
     private var sidebar: some View {
         VStack(spacing: 0) {
             // 导航列表（自定义实现，避免系统 List 覆盖主题背景色）
-            VStack(spacing: 2) {
+            VStack(spacing: 3) {
                 ForEach(KanbanTab.allCases, id: \.self) { tab in
                     Button {
                         selectedTab = tab
                     } label: {
                         Label(tab.rawValue, systemImage: tab.icon)
                             .frame(maxWidth: .infinity, alignment: .leading)
-                            .padding(.vertical, 6)
-                            .padding(.horizontal, 8)
+                            .padding(.vertical, 7)
+                            .padding(.horizontal, 10)
                             .foregroundStyle(selectedTab == tab ? themeColors.swAccent : themeColors.swTextPrimary)
                             .background(
-                                RoundedRectangle(cornerRadius: 6)
-                                    .fill(selectedTab == tab ? themeColors.swAccent.opacity(0.12) : Color.clear)
+                                RoundedRectangle(cornerRadius: 7)
+                                    .fill(selectedTab == tab ? themeColors.swAccent.opacity(0.10) : Color.clear)
                             )
                     }
                     .buttonStyle(.plain)

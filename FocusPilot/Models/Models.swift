@@ -282,7 +282,7 @@ enum AppTheme: String, Codable, CaseIterable {
                 textSecondary: NSColor(calibratedRed: 0.455, green: 0.455, blue: 0.455, alpha: 1.0),
                 textTertiary: NSColor(calibratedRed: 0.627, green: 0.627, blue: 0.627, alpha: 1.0),
                 rowHighlight: NSColor(calibratedRed: 0.898, green: 0.224, blue: 0.208, alpha: 0.08),
-                separator: NSColor(calibratedRed: 0.878, green: 0.878, blue: 0.878, alpha: 1.0),
+                separator: NSColor(calibratedRed: 0.898, green: 0.898, blue: 0.898, alpha: 1.0), // #E5E5E5
                 favoriteStar: NSColor(calibratedRed: 0.95, green: 0.77, blue: 0.06, alpha: 1.0)
             )
         case .warmIvory:
@@ -323,7 +323,7 @@ enum AppTheme: String, Codable, CaseIterable {
             )
         case .classicDark:
             return ThemeColors(
-                background: NSColor(calibratedRed: 0.098, green: 0.098, blue: 0.098, alpha: 1.0), // #191919
+                background: NSColor(calibratedRed: 0.110, green: 0.110, blue: 0.118, alpha: 1.0), // #1C1C1E
                 sidebarBackground: NSColor(calibratedRed: 0.075, green: 0.075, blue: 0.075, alpha: 1.0), // #131313
                 accent: NSColor(calibratedRed: 0.322, green: 0.612, blue: 0.792, alpha: 1.0), // #529CCA
                 textPrimary: NSColor(calibratedRed: 0.90, green: 0.90, blue: 0.90, alpha: 1.0),
@@ -360,7 +360,7 @@ enum AppTheme: String, Codable, CaseIterable {
         case .pureBlack:
             return ThemeColors(
                 background: NSColor(calibratedRed: 0.0, green: 0.0, blue: 0.0, alpha: 1.0), // #000000
-                sidebarBackground: NSColor(calibratedRed: 0.035, green: 0.035, blue: 0.04, alpha: 1.0), // #090909
+                sidebarBackground: NSColor(calibratedRed: 0.047, green: 0.047, blue: 0.047, alpha: 1.0), // #0C0C0C
                 accent: NSColor(calibratedRed: 0.655, green: 0.545, blue: 0.980, alpha: 1.0), // #A78BFA
                 textPrimary: NSColor(calibratedRed: 0.92, green: 0.92, blue: 0.95, alpha: 1.0),
                 textSecondary: NSColor(calibratedRed: 0.58, green: 0.58, blue: 0.63, alpha: 1.0),
