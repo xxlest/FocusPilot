@@ -57,6 +57,15 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
         // 设置 Dock 品牌图标
         setupDockIcon()
+
+        // 启动时自动展开快捷面板并钉住
+        if let ball = floatingBallWindow {
+            showPanelFromBallCenter(ballFrame: ball.frame)
+            AppMonitor.shared.startWindowRefresh()
+            if let panel = quickPanelWindow, !panel.isPanelPinned {
+                panel.togglePanelPin()
+            }
+        }
     }
 
     /// 点击 Dock 图标时的行为
