@@ -797,13 +797,33 @@ final class QuickPanelView: NSView {
 
     @objc private func timerResetTapped() {
         let timer = FocusTimerService.shared
+
+        NSApp.activate(ignoringOtherApps: true)
+
         let alert = NSAlert()
         alert.messageText = "停止计时"
         alert.informativeText = "确定要停止当前计时吗？进度将被重置。"
         alert.alertStyle = .warning
         alert.addButton(withTitle: "停止")
         alert.addButton(withTitle: "取消")
-        if alert.runModal() == .alertFirstButtonReturn {
+
+        // 失焦自动关闭（等同取消，不执行停止操作）
+        var resignObserver: NSObjectProtocol?
+        resignObserver = NotificationCenter.default.addObserver(
+            forName: NSApplication.didResignActiveNotification,
+            object: nil, queue: .main
+        ) { _ in
+            NSApp.abortModal()
+            alert.window.close()
+        }
+
+        let result = alert.runModal()
+
+        if let observer = resignObserver {
+            NotificationCenter.default.removeObserver(observer)
+        }
+
+        if result == .alertFirstButtonReturn {
             timer.reset()
         }
     }
