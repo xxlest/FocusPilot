@@ -39,7 +39,7 @@ FocusPilot/
 │   ├── WindowService.swift         # 窗口枚举(CGWindowList+AX)、两阶段刷新、AX 后台队列、titleCache
 │   ├── AppMonitor.swift            # App 运行监控、自适应刷新（1s→3s）、scanInstalledApps 后台线程
 │   ├── HotkeyManager.swift         # Carbon 全局快捷键（⌘⇧B 悬浮球显隐、⌘Esc 主看板显隐）
-│   └── FocusTimerService.swift     # FocusByTime 番茄钟服务（状态机、计时、阶段切换通知、时长持久化）
+│   └── FocusTimerService.swift     # FocusByTime 番茄钟服务（状态机、计时、阶段切换通知、时长持久化、FocusPendingAction）
 └── Helpers/
     └── Constants.swift             # Ball, Panel, Keys, Notifications 常量
 ```
@@ -59,7 +59,7 @@ FocusPilot/
 - **Notion 风格主题系统**：AppTheme 枚举 8 种预设 → ThemeColors 8 色槽（ns* + sw* 双套），覆盖全 UI
 - **主题刷新链路**：PreferencesView → @Published → AppDelegate.applyPreferences → NSApp.appearance + quickPanelWindow.applyTheme + themeChanged 通知
 - **FocusByTime 番茄钟**：FocusTimerService 单例管理状态机（idle/running/paused × work/rest），通过 NotificationCenter 驱动 QuickPanel 底部计时器栏和 FloatingBall 进度环
-- **FocusByTime 弹窗分级**：编辑弹窗失焦自动关闭（NSApp.didResignActive → abortModal），阶段提示弹窗（工作完成/休息结束）不受失焦影响
+- **FocusByTime 弹窗全失焦关闭**：所有弹窗（编辑/工作完成/休息结束）均失焦自动关闭（NSApp.didResignActive → abortModal）。阶段完成弹窗关闭后，FocusPendingAction 保留待处理动作，计时器栏显示快捷操作按钮供用户回来后一键执行
 
 ### 配置迁移
 

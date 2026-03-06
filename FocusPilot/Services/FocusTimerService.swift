@@ -13,6 +13,13 @@ enum FocusTimerStatus {
     case paused     // 暂停
 }
 
+/// 阶段完成后待执行的动作（弹窗被自动关闭时保留）
+enum FocusPendingAction {
+    case none           // 无待处理动作
+    case startRest      // 工作完成，等待用户确认开始休息
+    case startWork      // 休息完成，等待用户确认继续工作
+}
+
 // MARK: - FocusByTime 计时器服务
 
 final class FocusTimerService: ObservableObject {
@@ -25,6 +32,7 @@ final class FocusTimerService: ObservableObject {
     @Published var remainingSeconds: Int = 0
     @Published var workMinutes: Int = 25
     @Published var restMinutes: Int = 5
+    @Published var pendingAction: FocusPendingAction = .none
 
     /// 当前阶段总秒数（用于计算进度）
     private(set) var totalSeconds: Int = 0
@@ -59,6 +67,7 @@ final class FocusTimerService: ObservableObject {
     // MARK: - 控制
 
     func start() {
+        pendingAction = .none
         totalSeconds = phase == .work ? workMinutes * 60 : restMinutes * 60
         remainingSeconds = totalSeconds
         status = .running
@@ -81,6 +90,7 @@ final class FocusTimerService: ObservableObject {
     }
 
     func reset() {
+        pendingAction = .none
         status = .idle
         phase = .work
         remainingSeconds = 0
@@ -124,19 +134,21 @@ final class FocusTimerService: ObservableObject {
         }
     }
 
-    /// 阶段切换：发送通知让 UI 层弹对话框确认
+    /// 阶段切换：设置 pendingAction 并发送通知让 UI 层弹对话框确认
     private func switchPhase() {
         if phase == .work {
-            // 工作结束 → 暂停，等待 UI 弹对话框后调用 startRestPhase()
+            // 工作结束 → 暂停，等待用户确认开始休息
             status = .paused
+            pendingAction = .startRest
             notifyChanged()
             NotificationCenter.default.post(name: Constants.Notifications.focusWorkCompleted, object: nil)
         } else {
-            // 休息结束 → 回到 idle，等待 UI 弹对话框后调用 start()
+            // 休息结束 → 回到 idle，等待用户确认继续工作
             status = .idle
             phase = .work
             remainingSeconds = 0
             totalSeconds = 0
+            pendingAction = .startWork
             notifyChanged()
             NotificationCenter.default.post(name: Constants.Notifications.focusRestCompleted, object: nil)
         }
@@ -144,6 +156,7 @@ final class FocusTimerService: ObservableObject {
 
     /// 进入休息阶段（由 UI 对话框确认后调用）
     func startRestPhase() {
+        pendingAction = .none
         phase = .rest
         totalSeconds = restMinutes * 60
         remainingSeconds = totalSeconds

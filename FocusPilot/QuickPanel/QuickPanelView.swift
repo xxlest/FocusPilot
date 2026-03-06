@@ -567,6 +567,44 @@ final class QuickPanelView: NSView {
         let timer = FocusTimerService.shared
         let colors = ConfigStore.shared.currentThemeColors
         let isIdle = timer.status == .idle
+        let hasPending = timer.pendingAction != .none
+
+        // pending 状态：idle 但有待处理动作（弹窗被失焦自动关闭）
+        if hasPending {
+            // 隐藏编辑按钮和常规 idle 控件
+            timerIdleLabel.isHidden = true
+            timerEditBtn.isHidden = true
+            timerProgressBg.isHidden = true
+            timerProgressFill.isHidden = true
+            timerTimeLabel.isHidden = true
+            timerResetBtn.isHidden = false
+
+            // 显示 pending 状态文案和快捷操作按钮
+            timerPhaseLabel.isHidden = false
+            timerActionBtn.isHidden = false
+
+            switch timer.pendingAction {
+            case .startRest:
+                timerPhaseLabel.stringValue = "工作完成 · 开始休息"
+                timerPhaseLabel.textColor = NSColor.systemGreen
+                timerActionBtn.image = Self.cachedSymbol(name: "cup.and.saucer.fill", size: 12, weight: .medium)
+                timerActionBtn.contentTintColor = NSColor.systemGreen
+                timerActionBtn.toolTip = "开始休息"
+                timerBar.layer?.backgroundColor = NSColor.systemGreen.withAlphaComponent(0.12).cgColor
+                bottomSeparator.layer?.backgroundColor = NSColor.systemGreen.withAlphaComponent(0.3).cgColor
+            case .startWork:
+                timerPhaseLabel.stringValue = "休息结束 · 继续工作"
+                timerPhaseLabel.textColor = colors.nsAccent
+                timerActionBtn.image = Self.cachedSymbol(name: "play.fill", size: 12, weight: .medium)
+                timerActionBtn.contentTintColor = colors.nsAccent
+                timerActionBtn.toolTip = "继续工作"
+                timerBar.layer?.backgroundColor = colors.nsAccent.withAlphaComponent(0.12).cgColor
+                bottomSeparator.layer?.backgroundColor = colors.nsAccent.withAlphaComponent(0.3).cgColor
+            case .none:
+                break
+            }
+            return
+        }
 
         // idle 模式：显示时长摘要和编辑+开始按钮
         timerIdleLabel.isHidden = !isIdle
@@ -671,11 +709,28 @@ final class QuickPanelView: NSView {
 
             alert.accessoryView = container
 
-            if alert.runModal() == .alertFirstButtonReturn {
+            // 失焦自动关闭（pendingAction 保留，计时器栏提供快捷操作）
+            var resignObserver: NSObjectProtocol?
+            resignObserver = NotificationCenter.default.addObserver(
+                forName: NSApplication.didResignActiveNotification,
+                object: nil, queue: .main
+            ) { _ in
+                NSApp.abortModal()
+                alert.window.close()
+            }
+
+            let result = alert.runModal()
+
+            if let observer = resignObserver {
+                NotificationCenter.default.removeObserver(observer)
+            }
+
+            if result == .alertFirstButtonReturn {
                 timer.startRestPhase()
-            } else {
+            } else if result == .alertSecondButtonReturn {
                 timer.reset()
             }
+            // 其他情况（失焦自动关闭）：pendingAction 保留为 .startRest，计时器栏显示快捷操作
         }
     }
 
@@ -689,9 +744,27 @@ final class QuickPanelView: NSView {
             alert.alertStyle = .informational
             alert.addButton(withTitle: "开始工作")
             alert.addButton(withTitle: "稍后再说")
-            if alert.runModal() == .alertFirstButtonReturn {
+
+            // 失焦自动关闭（pendingAction 保留，计时器栏提供快捷操作）
+            var resignObserver: NSObjectProtocol?
+            resignObserver = NotificationCenter.default.addObserver(
+                forName: NSApplication.didResignActiveNotification,
+                object: nil, queue: .main
+            ) { _ in
+                NSApp.abortModal()
+                alert.window.close()
+            }
+
+            let result = alert.runModal()
+
+            if let observer = resignObserver {
+                NotificationCenter.default.removeObserver(observer)
+            }
+
+            if result == .alertFirstButtonReturn {
                 timer.start()
             }
+            // 其他情况（失焦自动关闭 / 稍后再说）：pendingAction 保留为 .startWork，计时器栏显示快捷操作
         }
     }
 
@@ -699,6 +772,19 @@ final class QuickPanelView: NSView {
 
     @objc private func timerActionTapped() {
         let timer = FocusTimerService.shared
+
+        // 优先处理 pending 动作（弹窗被失焦自动关闭后的快捷操作）
+        switch timer.pendingAction {
+        case .startRest:
+            timer.startRestPhase()
+            return
+        case .startWork:
+            timer.start()
+            return
+        case .none:
+            break
+        }
+
         switch timer.status {
         case .idle:
             break  // idle 时此按钮隐藏，不可达
