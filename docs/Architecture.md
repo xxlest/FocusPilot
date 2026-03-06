@@ -1,8 +1,8 @@
 # Focus Copilot 架构设计文档
 
-> **版本**：V3.7
-> **日期**：2026-03-05
-> **基于**：PRD V3.7
+> **版本**：V3.8
+> **日期**：2026-03-06
+> **基于**：PRD V3.8
 
 ---
 
@@ -22,7 +22,7 @@ FocusPilot/
 │   │   └── FloatingBallView.swift     # 悬浮球视图、拖拽、贴边、hover、品牌 Logo
 │   ├── QuickPanel/
 │   │   ├── QuickPanelWindow.swift     # 快捷面板窗口（NSPanel），钉住模式、resize、drag
-│   │   └── QuickPanelView.swift       # 面板内容视图（活跃/关注 Tab、窗口行高亮+前置+关闭、Tab 记忆）
+│   │   └── QuickPanelView.swift       # 面板内容视图（活跃/关注 Tab、窗口行高亮+前置+关闭、Tab 记忆、FocusByTime 计时器栏）
 │   ├── MainKanban/
 │   │   ├── MainKanbanWindow.swift     # 主看板窗口管理
 │   │   ├── MainKanbanView.swift       # 主看板根视图（SwiftUI），侧边栏+底部双按钮
@@ -32,7 +32,8 @@ FocusPilot/
 │   │   ├── WindowService.swift        # 窗口枚举、AX 操作、层级控制、关闭窗口、诊断日志
 │   │   ├── AppMonitor.swift           # 监听 App 启动/退出，维护运行列表（不依赖 ConfigStore）
 │   │   ├── HotkeyManager.swift        # 全局快捷键注册（Carbon API，支持多快捷键）
-│   │   └── ConfigStore.swift          # 用户配置持久化（UserDefaults）、关注管理、Tab 记忆
+│   │   ├── ConfigStore.swift          # 用户配置持久化（UserDefaults）、关注管理、Tab 记忆
+│   │   └── FocusTimerService.swift   # FocusByTime 番茄钟（状态机、计时、阶段切换通知、时长持久化）
 │   ├── Models/
 │   │   └── Models.swift               # 数据模型定义
 │   ├── Helpers/
@@ -49,6 +50,20 @@ FocusPilot/
 ```
 
 ### 版本变更说明
+
+**V3.8 相比 V3.7 的关键变更**：
+
+- 新增 `FocusTimerService.swift`：番茄钟单例服务，管理 idle/running/paused 状态机 × work/rest 阶段，Timer 计时，通过 NotificationCenter 通知 UI 层
+- Constants：新增 `Keys.focusTimerSettings`、`Notifications.focusTimerChanged`/`focusWorkCompleted`/`focusRestCompleted`
+- FloatingBallView：新增 `CAShapeLayer` 进度环（工作=accent，休息=green），`handleFocusTimerChanged` 通知处理
+- FloatingBallView：品牌 Logo 重设计为十字准星图标（外环+内环+中心点+4 刻度线），accent 光晕阴影，hover 缩放反馈
+- QuickPanelView：底部新增 44px 计时器栏（timerBar），idle 状态显示时长摘要 + play.circle 按钮，运行状态显示阶段/倒计时/进度条 + 暂停/停止按钮
+- QuickPanelView：编辑弹窗含 +/- 按钮、推荐方案 radio 行（深度专注/常规节奏/轻度脑力），手动修改时自动取消 radio 选中
+- QuickPanelView：编辑弹窗失焦自动关闭（`didResignActiveNotification` → `abortModal`），阶段提示弹窗不受影响
+- QuickPanelView：工作完成弹窗含科学休息指南 accessoryView（5 条建议），休息结束弹窗文案"⚡ 充电完毕"
+- Models.swift：默认白主题 accent 从蓝色(#2383E2)改为红色(#E53935)
+- AppDelegate：启动时自动展开快捷面板并钉住
+- 新增 `TimerEditHelper` 辅助类（`NSTextFieldDelegate`，处理 +/- 和推荐方案事件）
 
 **V3.7 相比 V3.6 的关键变更**：
 
@@ -109,13 +124,13 @@ PreferencesView → @Published → AppDelegate.applyPreferences()
 | **FloatingBall/** | 悬浮球 UI、拖拽、贴边、hover 检测、品牌 Logo、钉住状态发光边框 | 悬浮球交互逻辑独立变化频率高 |
 | **QuickPanel/** | 快捷面板 UI、活跃/关注 Tab、Tab 记忆、窗口行高亮+前置+关闭（V3.3：移除面板内钉住按钮） | 面板展示和交互独立于悬浮球 |
 | **MainKanban/** | 主看板 SwiftUI 界面（关注管理 + 偏好设置 + 底部双按钮） | SwiftUI 技术栈独立，页面布局频繁调整 |
-| **Services/** | 底层服务（窗口操作+关闭、App 监控、快捷键、配置存储+Tab 记忆） | 业务逻辑层与 UI 层分离 |
+| **Services/** | 底层服务（窗口操作+关闭、App 监控、快捷键、配置存储+Tab 记忆、FocusByTime 计时） | 业务逻辑层与 UI 层分离 |
 | **Models/** | 数据模型 | 数据结构被多个模块共享 |
 | **Helpers/** | 桥接头、常量、通知名、UserDefaults Keys | 基础设施，极少变化 |
 
 ### 防过度设计自查
 
-- [x] 文件数（~17）<= 功能点数（28）
+- [x] 文件数（~18）<= 功能点数（34）
 - [x] 无多余抽象层：Services 直接暴露方法，无 Protocol 包装
 - [x] 没有为"未来可能"创建接口
 - [x] 没有只有一个实现的抽象层
@@ -419,7 +434,43 @@ class PermissionManager: ObservableObject {
 }
 ```
 
-### 2.7 Constants（集中管理的常量、通知名、Keys）
+### 2.7 FocusTimerService 契约（V3.8）
+
+```swift
+final class FocusTimerService: ObservableObject {
+    static let shared = FocusTimerService()
+
+    // 状态
+    @Published var status: FocusTimerStatus    // .idle / .running / .paused
+    @Published var phase: FocusTimerPhase      // .work / .rest
+    @Published var remainingSeconds: Int
+    @Published var workMinutes: Int             // 默认 25，持久化
+    @Published var restMinutes: Int             // 默认 5，持久化
+
+    // 计算属性
+    var progress: CGFloat                      // 0.0~1.0（剩余/总共）
+    var displayTime: String                    // "MM:SS"
+    var phaseLabel: String                     // "工作中" / "休息中"
+
+    // 控制
+    func start()                               // idle → running(work)
+    func pause()                               // running → paused
+    func resume()                              // paused → running
+    func reset()                               // → idle
+    func startRestPhase()                      // paused(work) → running(rest)（UI 对话框确认后调用）
+    func setWorkMinutes(_ m: Int)              // 仅 idle 时可调，≥1
+    func setRestMinutes(_ m: Int)              // 仅 idle 时可调，≥1
+
+    // 通知
+    // focusTimerChanged：每秒或状态变化时发送
+    // focusWorkCompleted：工作阶段倒计时归零
+    // focusRestCompleted：休息阶段倒计时归零
+
+    // 持久化：workMinutes/restMinutes → UserDefaults(focusTimerSettings)
+}
+```
+
+### 2.8 Constants（集中管理的常量、通知名、Keys）
 
 ```swift
 enum Constants {
@@ -442,6 +493,14 @@ enum Constants {
         // 快捷面板通知
         static let panelPinStateChanged = Notification.Name("QuickPanel.pinStateChanged")
         static let panelDragMoved = Notification.Name("QuickPanel.dragMoved")
+
+        // V3.7：主题变更通知
+        static let themeChanged = Notification.Name("FocusCopilot.themeChanged")
+
+        // V3.8：FocusByTime 计时器通知
+        static let focusTimerChanged = Notification.Name("FocusCopilot.focusTimerChanged")
+        static let focusWorkCompleted = Notification.Name("FocusCopilot.focusWorkCompleted")
+        static let focusRestCompleted = Notification.Name("FocusCopilot.focusRestCompleted")
     }
 
     // V3.2 新增：UserDefaults Keys
@@ -453,6 +512,7 @@ enum Constants {
         static let windowRenames = "FocusCopilot.windowRenames"
         static let panelSize = "FocusCopilot.panelSize"
         static let lastPanelTab = "FocusCopilot.lastPanelTab"   // V3.2 新增
+        static let focusTimerSettings = "FocusCopilot.focusTimerSettings"  // V3.8 新增
     }
 }
 ```
@@ -624,7 +684,32 @@ activateWindow(window)
     → AXUIElementPerformAction(kAXPressAction)
 ```
 
-### 4.5 关闭应用流程
+### 4.5 FocusByTime 状态机（V3.8）
+
+#### 计时器状态
+
+| 当前状态 | 触发条件 | 目标状态 | 副作用 |
+|---|---|---|---|
+| idle | 编辑弹窗"直接开始" | running(work) | 保存时长，启动 Timer |
+| running(work) | 暂停按钮 | paused(work) | 停止 Timer |
+| paused(work) | 继续按钮 | running(work) | 恢复 Timer |
+| running/paused | 停止按钮确认 | idle | 清除 Timer |
+| running(work) | 倒计时归零 | paused(work) | 发送 focusWorkCompleted 通知 |
+| paused(work) | 弹窗"开始休息" | running(rest) | 启动休息 Timer |
+| paused(work) | 弹窗"直接结束" | idle | 清除状态 |
+| running(rest) | 倒计时归零 | idle | 发送 focusRestCompleted 通知 |
+
+#### 编辑弹窗行为
+
+| 事件 | 处理 |
+|---|---|
+| 点击推荐方案 | 自动填充输入框，radio 选中 |
+| 手动输入/点击±按钮 | 取消所有 radio 选中 |
+| 切换到其他应用 | `abortModal` + `close`（等同取消） |
+| 点击"直接开始" | 保存时长 + 启动计时 |
+| 点击"仅保存" | 保存时长，不启动 |
+
+### 4.6 关闭应用流程
 
 ```
 右键 App 行 → createRunningAppContextMenu(bundleID:)
@@ -703,6 +788,27 @@ activateWindow(window)
 - **预期结果**：主看板在显示/隐藏之间切换
 - **覆盖**：正常路径
 
+### TC-10: FocusByTime 编辑+开始
+
+- **前置条件**：快捷面板打开，计时器 idle 状态
+- **操作步骤**：点击 play.circle → 选择"深度专注"推荐方案 → 手动修改工作时长为 30 → 确认 radio 取消选中 → 点击"直接开始"
+- **预期结果**：推荐方案填充 25/5，手动修改后 radio 取消选中，开始后计时器栏显示 30:00 倒计时
+- **覆盖**：正常路径 + 推荐方案交互
+
+### TC-11: FocusByTime 阶段转换
+
+- **前置条件**：计时器工作阶段运行中
+- **操作步骤**：等待倒计时归零 → 弹窗确认"开始休息" → 等待休息结束 → 弹窗确认"开始工作"
+- **预期结果**：工作完成弹窗含科学休息指南，休息结束弹窗提示开始工作，状态正确切换
+- **覆盖**：正常路径
+
+### TC-12: FocusByTime 编辑弹窗失焦
+
+- **前置条件**：编辑弹窗已打开
+- **操作步骤**：切换到其他应用 → 切回 FocusPilot
+- **预期结果**：编辑弹窗自动关闭（等同取消），计时器仍为 idle
+- **覆盖**：边界（失焦处理）
+
 ---
 
 ## 6. 非目标声明
@@ -729,7 +835,7 @@ activateWindow(window)
 | FloatingBallWindow.swift | ~98 | NSPanel 子类，窗口层级、贴边 |
 | FloatingBallView.swift | ~800 | 悬浮球视图、品牌 Logo、hover/click/drag 检测、钉住状态红色发光边框 |
 | QuickPanelWindow.swift | ~483 | NSPanel 子类，面板位置、钉住、resize、drag、联动 |
-| QuickPanelView.swift | ~1069 | 面板内容：活跃/关注 Tab、Tab 记忆、窗口行高亮+前置+关闭、App 行右键菜单（关闭应用） |
+| QuickPanelView.swift | ~1130 | 面板内容：活跃/关注 Tab、Tab 记忆、窗口行高亮+前置+关闭、App 行右键菜单（关闭应用）、FocusByTime 计时器栏+编辑弹窗 |
 | MainKanbanWindow.swift | ~51 | NSWindow 子类，主看板窗口管理 |
 | MainKanbanView.swift | ~90 | SwiftUI 根视图，侧边栏导航（关注管理/偏好设置）+ 底部双按钮 |
 | AppConfigView.swift | ~306 | SwiftUI 关注管理：三 Tab 过滤（全部/活跃/关注）+ 搜索 + 星标关注切换 |
@@ -739,5 +845,6 @@ activateWindow(window)
 | HotkeyManager.swift | ~101 | 全局快捷键（Carbon API），2 个动作（⌘⇧B 悬浮球显隐、⌘Esc 主看板显隐） |
 | ConfigStore.swift | ~221 | UserDefaults 持久化（含迁移逻辑、关注管理、Tab 记忆） |
 | Models.swift | ~118 | 数据模型定义（AppConfig 无 isFavorite、QuickPanelTab 枚举在 QuickPanelView.swift 中） |
-| Constants.swift | ~84 | 全局常量、13 个通知名、7 个 UserDefaults Keys |
-| **合计** | **~4790** | |
+| FocusTimerService.swift | ~186 | FocusByTime 番茄钟服务：状态机（idle/running/paused × work/rest）、Timer 计时、阶段切换通知、时长持久化 |
+| Constants.swift | ~97 | 全局常量、16 个通知名、8 个 UserDefaults Keys |
+| **合计** | **~5040** | |
