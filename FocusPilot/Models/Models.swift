@@ -277,11 +277,11 @@ enum AppTheme: String, Codable, CaseIterable {
             return ThemeColors(
                 background: NSColor(calibratedRed: 1.0, green: 1.0, blue: 1.0, alpha: 1.0),
                 sidebarBackground: NSColor(calibratedRed: 0.965, green: 0.965, blue: 0.965, alpha: 1.0), // #F7F7F7
-                accent: NSColor(calibratedRed: 0.137, green: 0.514, blue: 0.886, alpha: 1.0), // #2383E2
+                accent: NSColor(calibratedRed: 0.898, green: 0.224, blue: 0.208, alpha: 1.0), // #E53935
                 textPrimary: NSColor(calibratedRed: 0.145, green: 0.145, blue: 0.145, alpha: 1.0),
                 textSecondary: NSColor(calibratedRed: 0.455, green: 0.455, blue: 0.455, alpha: 1.0),
                 textTertiary: NSColor(calibratedRed: 0.627, green: 0.627, blue: 0.627, alpha: 1.0),
-                rowHighlight: NSColor(calibratedRed: 0.137, green: 0.514, blue: 0.886, alpha: 0.08),
+                rowHighlight: NSColor(calibratedRed: 0.898, green: 0.224, blue: 0.208, alpha: 0.08),
                 separator: NSColor(calibratedRed: 0.878, green: 0.878, blue: 0.878, alpha: 1.0),
                 favoriteStar: NSColor(calibratedRed: 0.95, green: 0.77, blue: 0.06, alpha: 1.0)
             )
