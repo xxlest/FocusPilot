@@ -1,14 +1,14 @@
 import SwiftUI
 
-/// 收藏管理页面 Tab 枚举
+/// 关注管理页面 Tab 枚举
 private enum AppConfigTab: String, CaseIterable {
     case all = "全部"
     case running = "活跃"
-    case favorites = "收藏"
+    case favorites = "关注"
 }
 
-/// 收藏管理页面
-/// 三 Tab 过滤（全部/活跃/收藏）+ 运行状态标记 + 星标收藏切换
+/// 关注管理页面
+/// 三 Tab 过滤（全部/活跃/关注）+ 运行状态标记 + 星标关注切换
 struct AppConfigView: View {
     @ObservedObject private var configStore = ConfigStore.shared
     @ObservedObject private var appMonitor = AppMonitor.shared
@@ -82,10 +82,10 @@ struct AppConfigView: View {
 
             Spacer(minLength: 0)
 
-            // 底部收藏计数
+            // 底部关注计数
             HStack {
                 Spacer()
-                Text("收藏数量: \(configStore.appConfigs.count)/\(Constants.maxApps)")
+                Text("关注数量: \(configStore.appConfigs.count)/\(Constants.maxApps)")
                     .font(.caption)
                     .foregroundStyle(themeColors.swTextTertiary)
             }
@@ -134,7 +134,7 @@ struct AppConfigView: View {
         switch currentTab {
         case .all:       return "无匹配结果"
         case .running:   return "没有正在运行的应用"
-        case .favorites: return "尚未收藏任何应用"
+        case .favorites: return "尚未关注任何应用"
         }
     }
 
@@ -196,7 +196,7 @@ struct AppConfigView: View {
             }
 
         case .favorites:
-            // 已收藏 App
+            // 已关注 App
             items = configStore.appConfigs.map { config in
                 let installed = installedByID[config.bundleID]
                 let icon: NSImage
@@ -222,7 +222,7 @@ struct AppConfigView: View {
             items = items.filter { $0.name.localizedCaseInsensitiveContains(searchText) }
         }
 
-        // 排序：运行中排前，组内按名称排序（收藏 Tab 保持配置顺序）
+        // 排序：运行中排前，组内按名称排序（关注 Tab 保持配置顺序）
         if currentTab != .favorites {
             items.sort { a, b in
                 if a.isRunning != b.isRunning {
@@ -246,7 +246,7 @@ struct AppConfigView: View {
                 .fill(app.isRunning ? configStore.currentThemeColors.swAccent : configStore.currentThemeColors.swTextTertiary.opacity(0.4))
                 .frame(width: 8, height: 8)
 
-            // 收藏星标按钮
+            // 关注星标按钮
             Button {
                 toggleFavorite(app)
             } label: {
@@ -274,11 +274,11 @@ struct AppConfigView: View {
         .contentShape(Rectangle())
         .contextMenu {
             if app.isFavorite {
-                Button("从收藏中移除") {
+                Button("从关注中移除") {
                     configStore.removeApp(app.bundleID)
                 }
             } else {
-                Button("添加到收藏") {
+                Button("添加到关注") {
                     configStore.addApp(app.bundleID, displayName: app.name)
                 }
                 .disabled(atLimit)
@@ -286,7 +286,7 @@ struct AppConfigView: View {
         }
     }
 
-    // MARK: - 收藏切换
+    // MARK: - 关注切换
 
     private func toggleFavorite(_ app: AppListItem) {
         if app.isFavorite {

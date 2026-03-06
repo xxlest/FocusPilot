@@ -110,7 +110,7 @@ struct PreferencesView: View {
                     Circle()
                         .fill(colors.swAccent)
                         .frame(width: 8, height: 8)
-                    // 收藏星标色
+                    // 关注星标色
                     Image(systemName: "star.fill")
                         .font(.system(size: 8))
                         .foregroundStyle(colors.swFavoriteStar)

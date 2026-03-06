@@ -34,7 +34,7 @@ class ConfigStore: ObservableObject {
         // 从旧 bundle ID (PinTop) 自动迁移配置
         migrateFromPinTop()
 
-        // V3.1 迁移：移除非收藏的 appConfigs，仅保留 isFavorite==true 的
+        // V3.1 迁移：移除非关注的 appConfigs，仅保留 isFavorite==true 的
         migrateToV31()
 
         if let data = defaults.data(forKey: Constants.Keys.appConfigs),
@@ -122,9 +122,9 @@ class ConfigStore: ObservableObject {
         }
     }
 
-    // MARK: - V3.1 数据迁移（移除非收藏 App）
+    // MARK: - V3.1 数据迁移（移除非关注 App）
 
-    /// 将旧数据中仅 isFavorite==true 的 App 保留为收藏，其余移除
+    /// 将旧数据中仅 isFavorite==true 的 App 保留为关注，其余移除
     private func migrateToV31() {
         let migrationKey = "FocusCopilot.v31Migrated"
         guard !defaults.bool(forKey: migrationKey) else { return }
@@ -158,7 +158,7 @@ class ConfigStore: ObservableObject {
             if let newData = try? encoder.encode(newConfigs) {
                 defaults.set(newData, forKey: Constants.Keys.appConfigs)
             }
-            NSLog("[FocusCopilot] V3.1 迁移完成：保留 \(newConfigs.count) 个收藏 App")
+            NSLog("[FocusCopilot] V3.1 迁移完成：保留 \(newConfigs.count) 个关注 App")
         }
 
         defaults.set(true, forKey: migrationKey)
@@ -176,7 +176,7 @@ class ConfigStore: ObservableObject {
         )
         appConfigs.append(config)
         save()
-        // 通知 QuickPanel 刷新（收藏数据变更）
+        // 通知 QuickPanel 刷新（关注数据变更）
         NotificationCenter.default.post(name: Constants.Notifications.appStatusChanged, object: nil)
     }
 
@@ -187,7 +187,7 @@ class ConfigStore: ObservableObject {
             appConfigs[i].order = i
         }
         save()
-        // 通知 QuickPanel 刷新（收藏数据变更）
+        // 通知 QuickPanel 刷新（关注数据变更）
         NotificationCenter.default.post(name: Constants.Notifications.appStatusChanged, object: nil)
     }
 
@@ -203,7 +203,7 @@ class ConfigStore: ObservableObject {
         save()
     }
 
-    /// 检查指定 App 是否已收藏（在 appConfigs 中即为收藏）
+    /// 检查指定 App 是否已关注（在 appConfigs 中即为关注）
     func isFavorite(_ bundleID: String) -> Bool {
         appConfigs.contains { $0.bundleID == bundleID }
     }

@@ -4,11 +4,11 @@ import AppKit
 
 enum QuickPanelTab: String {
     case running    = "running"   // 活跃
-    case favorites  = "favorites" // 收藏
+    case favorites  = "favorites" // 关注
 }
 
 // MARK: - 快捷面板内容视图
-// 活跃/收藏两个 Tab，App 列表 + 内嵌窗口列表
+// 活跃/关注两个 Tab，App 列表 + 内嵌窗口列表
 // 支持实时更新、钉住模式、窗口重命名、窗口行高亮+前置
 
 final class QuickPanelView: NSView {
@@ -86,9 +86,9 @@ final class QuickPanelView: NSView {
         return btn
     }()
 
-    /// 收藏 Tab 按钮
+    /// 关注 Tab 按钮
     private lazy var favoritesTabButton: NSButton = {
-        let btn = NSButton(title: "收藏", target: self, action: #selector(switchToFavoritesTab))
+        let btn = NSButton(title: "关注", target: self, action: #selector(switchToFavoritesTab))
         btn.bezelStyle = .recessed
         btn.isBordered = false
         btn.font = .systemFont(ofSize: 11)
@@ -455,7 +455,7 @@ final class QuickPanelView: NSView {
         }
     }
 
-    /// "活跃"Tab：显示有可见窗口的运行中 App（收藏的排在前面）
+    /// "活跃"Tab：显示有可见窗口的运行中 App（关注的排在前面）
     private func buildRunningTabContent() {
         let activeApps = AppMonitor.shared.runningApps.filter { !$0.windows.isEmpty }
         let sorted = activeApps.sorted { a, b in
@@ -467,7 +467,7 @@ final class QuickPanelView: NSView {
         buildRunningAppList(apps: sorted, emptyText: "没有活跃窗口的应用")
     }
 
-    /// 通用：构建运行中 App 列表（活跃/收藏 Tab 共用）
+    /// 通用：构建运行中 App 列表（活跃/关注 Tab 共用）
     private func buildRunningAppList(apps: [RunningApp], emptyText: String) {
         if apps.isEmpty {
             addEmptyStateLabel(emptyText)
@@ -493,13 +493,13 @@ final class QuickPanelView: NSView {
         }
     }
 
-    /// "收藏"Tab：显示收藏 App 列表（数据源来自 ConfigStore）
+    /// "关注"Tab：显示关注 App 列表（数据源来自 ConfigStore）
     private func buildFavoritesTabContent() {
         let configs = ConfigStore.shared.appConfigs
         let runningApps = AppMonitor.shared.runningApps
 
         if configs.isEmpty {
-            addEmptyStateLabel("尚未收藏任何应用")
+            addEmptyStateLabel("尚未关注任何应用")
             return
         }
 
