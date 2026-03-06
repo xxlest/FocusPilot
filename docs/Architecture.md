@@ -22,17 +22,17 @@ FocusPilot/
 │   │   └── FloatingBallView.swift     # 悬浮球视图、拖拽、贴边、hover、品牌 Logo
 │   ├── QuickPanel/
 │   │   ├── QuickPanelWindow.swift     # 快捷面板窗口（NSPanel），钉住模式、resize、drag
-│   │   └── QuickPanelView.swift       # 面板内容视图（活跃/收藏 Tab、窗口行高亮+前置+关闭、Tab 记忆）
+│   │   └── QuickPanelView.swift       # 面板内容视图（活跃/关注 Tab、窗口行高亮+前置+关闭、Tab 记忆）
 │   ├── MainKanban/
 │   │   ├── MainKanbanWindow.swift     # 主看板窗口管理
 │   │   ├── MainKanbanView.swift       # 主看板根视图（SwiftUI），侧边栏+底部双按钮
-│   │   ├── AppConfigView.swift        # 收藏管理页面（SwiftUI），三 Tab 过滤 + 星标收藏切换
+│   │   ├── AppConfigView.swift        # 关注管理页面（SwiftUI），三 Tab 过滤 + 星标关注切换
 │   │   └── PreferencesView.swift      # 偏好设置页（SwiftUI）
 │   ├── Services/
 │   │   ├── WindowService.swift        # 窗口枚举、AX 操作、层级控制、关闭窗口、诊断日志
 │   │   ├── AppMonitor.swift           # 监听 App 启动/退出，维护运行列表（不依赖 ConfigStore）
 │   │   ├── HotkeyManager.swift        # 全局快捷键注册（Carbon API，支持多快捷键）
-│   │   └── ConfigStore.swift          # 用户配置持久化（UserDefaults）、收藏管理、Tab 记忆
+│   │   └── ConfigStore.swift          # 用户配置持久化（UserDefaults）、关注管理、Tab 记忆
 │   ├── Models/
 │   │   └── Models.swift               # 数据模型定义
 │   ├── Helpers/
@@ -61,7 +61,7 @@ FocusPilot/
 - QuickPanelRowBuilder：`.systemYellow` → `colors.nsFavoriteStar`，运行状态点改为 NSView 圆点（主题色）替代 emoji
 - FloatingBallView：`currentGradientColors()` 改为读取 `appTheme.ballGradientColors`，不再依赖 BallColorStyle
 - PreferencesView：移除"悬浮球颜色"6 色圆点 + 自定义取色器 + "颜色主题" Picker，新增浅色 4 卡片 + 深色 4 卡片的主题选择网格
-- AppConfigView：运行状态点 → `swAccent`，收藏星标 → `swFavoriteStar`
+- AppConfigView：运行状态点 → `swAccent`，关注星标 → `swFavoriteStar`
 - MainKanbanView：侧边栏背景 → `swBackground`
 - AppDelegate.applyPreferences：设置 `NSApp.appearance`（浅色/深色），调用 `quickPanelWindow.applyTheme()`，发送 `themeChanged` 通知
 
@@ -86,13 +86,13 @@ PreferencesView → @Published → AppDelegate.applyPreferences()
 **V3.2 相比 V3.0 的关键变更**：
 
 - QuickPanelTab 枚举：`.selected/.favorites` → `.running/.favorites`（移除 `.all`）
-- AppConfig 移除 `isFavorite` 字段（在 `appConfigs` 中即为收藏）
+- AppConfig 移除 `isFavorite` 字段（在 `appConfigs` 中即为关注）
 - ConfigStore 移除 `toggleFavorite` / `favoriteAppConfigs`，新增 `isFavorite()` / `saveLastPanelTab()` / `lastPanelTab`
 - AppMonitor.refreshRunningApps() 不再依赖 ConfigStore，直接遍历所有 regular App
 - WindowService: `activateWindow` 改用 `NSWorkspace.openApplication`；新增 `raiseAndFocusWindowViaAX`、`closeWindow`
-- QuickPanelView：两个 Tab（活跃/收藏）、Tab 记忆、窗口行关闭按钮、移除底部按钮栏、移除面板内收藏操作
-- AppConfigView 重写为收藏管理页面（三 Tab：全部/活跃/收藏 + 显示数量）
-- MainKanban Tab 标题改为"收藏管理"
+- QuickPanelView：两个 Tab（活跃/关注）、Tab 记忆、窗口行关闭按钮、移除底部按钮栏、移除面板内关注操作
+- AppConfigView 重写为关注管理页面（三 Tab：全部/活跃/关注 + 显示数量）
+- MainKanban Tab 标题改为"关注管理"
 - V3.1 数据迁移：`migrateToV31` 保留旧 `isFavorite==true` 的 App
 - Constants 新增 `Keys.lastPanelTab`
 
@@ -107,8 +107,8 @@ PreferencesView → @Published → AppDelegate.applyPreferences()
 |---|---|---|
 | **App/** | 应用入口、生命周期、权限管理 | 应用级初始化逻辑独立于具体 UI |
 | **FloatingBall/** | 悬浮球 UI、拖拽、贴边、hover 检测、品牌 Logo、钉住状态发光边框 | 悬浮球交互逻辑独立变化频率高 |
-| **QuickPanel/** | 快捷面板 UI、活跃/收藏 Tab、Tab 记忆、窗口行高亮+前置+关闭（V3.3：移除面板内钉住按钮） | 面板展示和交互独立于悬浮球 |
-| **MainKanban/** | 主看板 SwiftUI 界面（收藏管理 + 偏好设置 + 底部双按钮） | SwiftUI 技术栈独立，页面布局频繁调整 |
+| **QuickPanel/** | 快捷面板 UI、活跃/关注 Tab、Tab 记忆、窗口行高亮+前置+关闭（V3.3：移除面板内钉住按钮） | 面板展示和交互独立于悬浮球 |
+| **MainKanban/** | 主看板 SwiftUI 界面（关注管理 + 偏好设置 + 底部双按钮） | SwiftUI 技术栈独立，页面布局频繁调整 |
 | **Services/** | 底层服务（窗口操作+关闭、App 监控、快捷键、配置存储+Tab 记忆） | 业务逻辑层与 UI 层分离 |
 | **Models/** | 数据模型 | 数据结构被多个模块共享 |
 | **Helpers/** | 桥接头、常量、通知名、UserDefaults Keys | 基础设施，极少变化 |
@@ -130,11 +130,11 @@ PreferencesView → @Published → AppDelegate.applyPreferences()
 // 快捷面板 Tab 枚举（V3.2：.running/.favorites）
 enum QuickPanelTab: String {
     case running    = "running"   // 活跃
-    case favorites  = "favorites" // 收藏
+    case favorites  = "favorites" // 关注
 }
 
 // App 配置（持久化）
-// V3.2：移除 isFavorite 字段，在 appConfigs 中即为收藏
+// V3.2：移除 isFavorite 字段，在 appConfigs 中即为关注
 struct AppConfig: Codable, Identifiable, Equatable {
     var id: String { bundleID }
     let bundleID: String          // App 唯一标识
@@ -236,7 +236,7 @@ enum BallColorStyle: String, Codable, CaseIterable { ... }
 class ConfigStore: ObservableObject {
     static let shared = ConfigStore()
 
-    // 收藏 App 列表（有序，在列表中即为收藏）
+    // 关注 App 列表（有序，在列表中即为关注）
     @Published var appConfigs: [AppConfig]
 
     // 偏好设置
@@ -268,8 +268,8 @@ class ConfigStore: ObservableObject {
     func save()    // 持久化到 UserDefaults
     func load()    // 从 UserDefaults 加载
 
-    // V3.2 收藏查询
-    func isFavorite(_ bundleID: String) -> Bool    // 在 appConfigs 中即为收藏
+    // V3.2 关注查询
+    func isFavorite(_ bundleID: String) -> Bool    // 在 appConfigs 中即为关注
 
     // V3.2 面板 Tab 记忆
     func saveLastPanelTab(_ tab: QuickPanelTab)    // 轻量单字段写入，不触发全量 save
@@ -491,7 +491,7 @@ FloatingBallView                   QuickPanelWindow
 ```
 QuickPanelView（V3.2 交互模式）
      │
-     │── Tab 切换（活跃/收藏） ──▶ 切换 currentTab，ConfigStore.saveLastPanelTab()
+     │── Tab 切换（活跃/关注） ──▶ 切换 currentTab，ConfigStore.saveLastPanelTab()
      │── 点击单窗口 App 行 ──▶ WindowService.activateWindow(window)
      │── 点击多窗口 App 行 ──▶ 切换折叠/展开（collapsedApps）
      │── 点击窗口行 ──────────▶ highlightedWindowID = window.id
@@ -500,10 +500,12 @@ QuickPanelView（V3.2 交互模式）
      │── 点击未运行 App ──────▶ NSWorkspace.openApplication(at:configuration:)
      │── 右键窗口行 ──────────▶ 窗口重命名（NSAlert+NSTextField）
      │                         └── ConfigStore.windowRenames["{bundleID}::{CGWindowID}"]
+     │── 右键 App 行 ──────────▶ createRunningAppContextMenu(bundleID:)
+     │                         └── "关闭应用" → handleTerminateApp(_:)
      │── 点击顶部主界面按钮 ──▶ ballOpenMainKanban 通知（切换主看板显示/隐藏）
      │
-     │── 读取数据 ─────────────▶ AppMonitor.runningApps（活跃 Tab：有窗口的 App，收藏优先排序）
-     │                       ▶ ConfigStore.appConfigs（收藏 Tab）
+     │── 读取数据 ─────────────▶ AppMonitor.runningApps（活跃 Tab：有窗口的 App，关注优先排序）
+     │                       ▶ ConfigStore.appConfigs（关注 Tab）
      │                       ▶ ConfigStore.windowRenames
      │                       ▶ ConfigStore.lastPanelTab（Tab 记忆恢复）
 
@@ -519,19 +521,19 @@ QuickPanelWindow
 ```
 MainKanbanView
      │
-     │── 侧边栏 Tab ──────────▶ "收藏管理" / "偏好设置"
+     │── 侧边栏 Tab ──────────▶ "关注管理" / "偏好设置"
      │── 左半按钮（显隐球）──▶ ballToggle 通知
      │── 右半按钮（退出）───▶ 确认对话框 → NSApplication.terminate()
 
-AppConfigView（收藏管理页面）
+AppConfigView（关注管理页面）
      │
-     │── 三 Tab 过滤 ─────────▶ 全部(N) / 活跃(N) / 收藏(N)
+     │── 三 Tab 过滤 ─────────▶ 全部(N) / 活跃(N) / 关注(N)
      │── 搜索框 ──────────────▶ 过滤 App 名称
      │── 点击★按钮 ───────────▶ ConfigStore.addApp() / removeApp()
-     │── 右键菜单 ────────────▶ "添加到收藏" / "从收藏中移除"
+     │── 右键菜单 ────────────▶ "添加到关注" / "从关注中移除"
      │── 读取数据 ────────────▶ AppMonitor.installedApps（全部 Tab）
      │                       ▶ NSWorkspace.runningApplications（活跃 Tab）
-     │                       ▶ ConfigStore.appConfigs（收藏 Tab）
+     │                       ▶ ConfigStore.appConfigs（关注 Tab）
 ```
 
 ---
@@ -559,7 +561,7 @@ AppConfigView（收藏管理页面）
 
 | 当前状态 | 触发条件 | 目标状态 | 副作用 |
 |---|---|---|---|
-| 隐藏 | 悬浮球 hover 150ms | 显示（未钉住） | startWindowRefresh()（已由 mouseEntered 预热），恢复 lastPanelTab，活跃 Tab 收藏优先排序 |
+| 隐藏 | 悬浮球 hover 150ms | 显示（未钉住） | startWindowRefresh()（已由 mouseEntered 预热），恢复 lastPanelTab，活跃 Tab 关注优先排序 |
 | 隐藏 | 悬浮球单击 | 显示（钉住） | startWindowRefresh()，恢复 lastPanelTab |
 | 显示（未钉住） | 鼠标离开 500ms（autoRetractOnHover=true） | 隐藏 | stopWindowRefresh()，highlightedWindowID = nil |
 | 显示（未钉住） | 鼠标离开（autoRetractOnHover=false） | 显示（未钉住） | 面板保持显示，不触发 dismissTimer |
@@ -585,13 +587,13 @@ AppConfigView（收藏管理页面）
 
 | 场景 | 处理 |
 |---|---|
-| 收藏 App 已满 8 个 | 禁用添加按钮，底部显示收藏计数 |
-| 未收藏任何 App | 收藏 Tab 显示空状态引导 |
+| 关注 App 已满 8 个 | 禁用添加按钮，底部显示关注计数 |
+| 未关注任何 App | 关注 Tab 显示空状态引导 |
 | 辅助功能未授权 | 窗口标题获取和前置不可用，App 切换正常，面板底部显示权限引导 |
 | 窗口标题为空 | 四级兜底：AX 标题 → CG 标题 → 缓存 → "(无标题)" |
 | App 图标获取失败 | 使用系统默认图标 |
 | 多显示器 | 悬浮球限制在一个屏幕，拖拽不跨屏 |
-| 未运行 App（收藏 Tab） | 灰度显示，点击调用 NSWorkspace.openApplication 启动 |
+| 未运行 App（关注 Tab） | 灰度显示，点击调用 NSWorkspace.openApplication 启动 |
 | codesign 导致权限失效 | PermissionManager 后台轮询检测，自动恢复 |
 | 面板关闭后重新打开 | 恢复上次 Tab 选择（Tab 记忆） |
 | autoRetractOnHover=false 且未钉住 | hover 离开不收起面板，面板保持显示直到主动关闭 |
@@ -622,15 +624,27 @@ activateWindow(window)
     → AXUIElementPerformAction(kAXPressAction)
 ```
 
+### 4.5 关闭应用流程
+
+```
+右键 App 行 → createRunningAppContextMenu(bundleID:)
+  → 菜单项："关闭应用"
+  → handleTerminateApp(_:) → NSRunningApplication.terminate()
+
+关注 Tab：createFavoriteContextMenu(bundleID:, isRunning:)
+  → isRunning=true 时显示"关闭应用"菜单项
+  → isRunning=false 时不显示
+```
+
 ---
 
 ## 5. 验收用例
 
 ### TC-01: Tab 切换与记忆
 
-- **前置条件**：有运行中的 App，已收藏至少 1 个 App
-- **操作步骤**：打开快捷面板 → 切换到收藏 Tab → 关闭面板 → 重新打开面板
-- **预期结果**：活跃 Tab 显示有可见窗口的运行中 App，收藏 Tab 显示 ConfigStore.appConfigs 中的 App。重新打开面板时恢复到收藏 Tab
+- **前置条件**：有运行中的 App，已关注至少 1 个 App
+- **操作步骤**：打开快捷面板 → 切换到关注 Tab → 关闭面板 → 重新打开面板
+- **预期结果**：活跃 Tab 显示有可见窗口的运行中 App，关注 Tab 显示 ConfigStore.appConfigs 中的 App。重新打开面板时恢复到关注 Tab
 - **覆盖**：正常路径 + Tab 记忆
 
 ### TC-02: 窗口行高亮+前置
@@ -642,8 +656,8 @@ activateWindow(window)
 
 ### TC-03: 启动未运行 App
 
-- **前置条件**：收藏了一个未运行的 App
-- **操作步骤**：切换到收藏 Tab → 点击灰度显示的 App 行
+- **前置条件**：关注了一个未运行的 App
+- **操作步骤**：切换到关注 Tab → 点击灰度显示的 App 行
 - **预期结果**：App 启动，列表更新为运行状态并显示窗口
 - **覆盖**：正常路径
 
@@ -654,11 +668,11 @@ activateWindow(window)
 - **预期结果**：目标窗口被关闭，面板列表刷新
 - **覆盖**：正常路径
 
-### TC-05: 收藏管理
+### TC-05: 关注管理
 
 - **前置条件**：主看板 AppConfigView 打开
-- **操作步骤**：全部 Tab 中点击★添加收藏 → 切换到收藏 Tab → 确认已显示 → 点击★移除收藏 → 重启 App
-- **预期结果**：收藏通过 appConfigs 持久化到 UserDefaults，重启后状态恢复
+- **操作步骤**：全部 Tab 中点击★添加关注 → 切换到关注 Tab → 确认已显示 → 点击★移除关注 → 重启 App
+- **预期结果**：关注通过 appConfigs 持久化到 UserDefaults，重启后状态恢复
 - **覆盖**：正常路径 + 持久化
 
 ### TC-06: 高亮重置
@@ -675,11 +689,11 @@ activateWindow(window)
 - **预期结果**：migrateToV31 将 isFavorite==true 的 App 保留，其余移除。迁移标记 `FocusCopilot.v31Migrated` 写入 UserDefaults
 - **覆盖**：异常恢复（数据兼容）
 
-### TC-08: 收藏管理三 Tab 过滤
+### TC-08: 关注管理三 Tab 过滤
 
-- **前置条件**：主看板 AppConfigView，有已安装/运行中/收藏 App
-- **操作步骤**：在全部/活跃/收藏 Tab 间切换 → 输入搜索关键词
-- **预期结果**：各 Tab 显示对应数量标签（全部(N)/活跃(N)/收藏(N)），搜索即时过滤
+- **前置条件**：主看板 AppConfigView，有已安装/运行中/关注 App
+- **操作步骤**：在全部/活跃/关注 Tab 间切换 → 输入搜索关键词
+- **预期结果**：各 Tab 显示对应数量标签（全部(N)/活跃(N)/关注(N)），搜索即时过滤
 - **覆盖**：正常路径
 
 ### TC-09: "打开主界面"按钮切换
@@ -695,13 +709,13 @@ activateWindow(window)
 
 当前版本**不做**以下功能：
 
-- 收藏 Tab 支持拖拽排序（mouseDown/mouseDragged/mouseUp 手势，通过 HoverableRowView 的 dragEnabled + handler 闭包组实现，持久化到 ConfigStore.reorderApps）
+- 关注 Tab 支持拖拽排序（mouseDown/mouseDragged/mouseUp 手势，通过 HoverableRowView 的 dragEnabled + handler 闭包组实现，持久化到 ConfigStore.reorderApps）
 - 不添加快捷面板搜索框
 - 不添加窗口缩略图预览
 - 不实现窗口分组
 - 不实现插件系统
 - 不实现网络请求（无遥测、无更新检查）
-- 不在快捷面板内提供收藏操作（收藏仅通过主看板 AppConfigView 管理）
+- 不在快捷面板内提供关注操作（关注仅通过主看板 AppConfigView 管理）
 
 ---
 
@@ -715,15 +729,15 @@ activateWindow(window)
 | FloatingBallWindow.swift | ~98 | NSPanel 子类，窗口层级、贴边 |
 | FloatingBallView.swift | ~800 | 悬浮球视图、品牌 Logo、hover/click/drag 检测、钉住状态红色发光边框 |
 | QuickPanelWindow.swift | ~483 | NSPanel 子类，面板位置、钉住、resize、drag、联动 |
-| QuickPanelView.swift | ~1069 | 面板内容：活跃/收藏 Tab、Tab 记忆、窗口行高亮+前置+关闭 |
+| QuickPanelView.swift | ~1069 | 面板内容：活跃/关注 Tab、Tab 记忆、窗口行高亮+前置+关闭、App 行右键菜单（关闭应用） |
 | MainKanbanWindow.swift | ~51 | NSWindow 子类，主看板窗口管理 |
-| MainKanbanView.swift | ~90 | SwiftUI 根视图，侧边栏导航（收藏管理/偏好设置）+ 底部双按钮 |
-| AppConfigView.swift | ~306 | SwiftUI 收藏管理：三 Tab 过滤（全部/活跃/收藏）+ 搜索 + 星标收藏切换 |
+| MainKanbanView.swift | ~90 | SwiftUI 根视图，侧边栏导航（关注管理/偏好设置）+ 底部双按钮 |
+| AppConfigView.swift | ~306 | SwiftUI 关注管理：三 Tab 过滤（全部/活跃/关注）+ 搜索 + 星标关注切换 |
 | PreferencesView.swift | ~140 | SwiftUI 偏好设置页面（外观、颜色主题、hover 回缩开关） |
 | WindowService.swift | ~652 | 窗口枚举、AX 操作、CGS 层级、标题四级兜底、跨 App 激活、窗口关闭 |
 | AppMonitor.swift | ~195 | App 运行状态监控（不依赖 ConfigStore）、窗口刷新定时器 |
 | HotkeyManager.swift | ~101 | 全局快捷键（Carbon API），2 个动作（⌘⇧B 悬浮球显隐、⌘Esc 主看板显隐） |
-| ConfigStore.swift | ~221 | UserDefaults 持久化（含迁移逻辑、收藏管理、Tab 记忆） |
+| ConfigStore.swift | ~221 | UserDefaults 持久化（含迁移逻辑、关注管理、Tab 记忆） |
 | Models.swift | ~118 | 数据模型定义（AppConfig 无 isFavorite、QuickPanelTab 枚举在 QuickPanelView.swift 中） |
 | Constants.swift | ~84 | 全局常量、13 个通知名、7 个 UserDefaults Keys |
 | **合计** | **~4790** | |
