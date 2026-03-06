@@ -26,11 +26,11 @@ FocusPilot/
 │   ├── QuickPanelWindow.swift      # NSPanel, 层级 statusWindow+50, 动画弹出/收起, 钉住, resize
 │   ├── QuickPanelView.swift        # UI 骨架、状态管理、Tab 切换、reloadData 调度、HoverableRowView
 │   ├── QuickPanelRowBuilder.swift  # App 行/窗口行构建、工具方法、SF Symbol 缓存（extension QuickPanelView）
-│   └── QuickPanelMenuHandler.swift # 右键菜单、@objc 事件处理、星号收藏、App 启动（extension QuickPanelView）
+│   └── QuickPanelMenuHandler.swift # 右键菜单、@objc 事件处理、星号关注、App 关闭/启动（extension QuickPanelView）
 ├── MainKanban/
 │   ├── MainKanbanWindow.swift      # NSWindow 包裹 SwiftUI
-│   ├── MainKanbanView.swift        # 侧边栏+内容区（收藏管理 + 偏好设置）
-│   ├── AppConfigView.swift         # 收藏管理（全部/活跃/收藏 三 Tab + 星标切换）
+│   ├── MainKanbanView.swift        # 侧边栏+内容区（关注管理 + 偏好设置）
+│   ├── AppConfigView.swift         # 关注管理（全部/活跃/关注 三 Tab + 星标切换）
 │   └── PreferencesView.swift       # 偏好设置（快捷键、主题选择、悬浮球外观）
 ├── Models/
 │   └── Models.swift                # AppConfig, RunningApp, WindowInfo, Preferences, AppTheme, ThemeColors 等
@@ -51,8 +51,8 @@ FocusPilot/
 - **forceReload() 封装**：统一强制全量刷新入口，封装 lastStructuralKey 清除细节
 - **窗口标题四级解析**：AX 标题 → 缓存 AX → CG 标题 → "(无标题)"
 - **自适应刷新**：面板显示时 1s，无变化时逐步降至 3s；面板隐藏时完全停止
-- **收藏机制**：ConfigStore.appConfigs 中存在即为收藏（V3.1 移除了 isFavorite 字段）
-- **收藏排序**：右键菜单"置顶"操作，通过 ConfigStore.reorderApps 持久化
+- **关注机制**：ConfigStore.appConfigs 中存在即为关注（V3.1 移除了 isFavorite 字段）
+- **关注排序**：右键菜单"置顶"操作，通过 ConfigStore.reorderApps 持久化
 - **窗口前置**：NSWorkspace.openApplication + AXRaise + AXMain + AXFocused 三重设置
 - **QuickPanel 模块化**：extension 拆分（RowBuilder 负责视图构建、MenuHandler 负责菜单和事件），不引入新类型
 - **Notion 风格主题系统**：AppTheme 枚举 8 种预设 → ThemeColors 8 色槽（ns* + sw* 双套），覆盖全 UI
@@ -61,7 +61,7 @@ FocusPilot/
 ### 配置迁移
 
 - V2.0: com.pintop.PinTop → com.focuscopilot.FocusCopilot
-- V3.1: appConfigs 含 isFavorite → 仅保留收藏（migrateToV31）
+- V3.1: appConfigs 含 isFavorite → 仅保留关注（migrateToV31）
 - V3.7: Preferences 移除 colorTheme/ballColorStyle/ballCustomColorHex，新增 appTheme（保留旧 CodingKey 兼容解码）
 - AppConfig decoder 向后兼容（忽略旧字段）
 
