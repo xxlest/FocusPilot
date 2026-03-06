@@ -93,13 +93,13 @@ final class FocusTimerService: ObservableObject {
     /// 切换工作/休息时长（仅 idle 时可调）
     func setWorkMinutes(_ m: Int) {
         guard status == .idle else { return }
-        workMinutes = max(1, min(m, 120))
+        workMinutes = max(1, m)
         saveSettings()
     }
 
     func setRestMinutes(_ m: Int) {
         guard status == .idle else { return }
-        restMinutes = max(1, min(m, 60))
+        restMinutes = max(1, m)
         saveSettings()
     }
 
