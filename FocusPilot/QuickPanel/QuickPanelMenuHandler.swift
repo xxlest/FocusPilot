@@ -209,6 +209,8 @@ extension QuickPanelView {
             return
         }
         let configuration = NSWorkspace.OpenConfiguration()
+        // 面板临时让位，让启动的 App 窗口显示在前面
+        (self.window as? QuickPanelWindow)?.yieldLevel()
         NSWorkspace.shared.openApplication(at: url, configuration: configuration) { app, error in
             if let error = error {
                 WindowService.shared.debugLog("QuickPanel: 启动 App 失败 bundleID=\(bundleID) error=\(error)")

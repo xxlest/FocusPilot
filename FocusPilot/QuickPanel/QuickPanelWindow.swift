@@ -18,6 +18,9 @@ final class QuickPanelWindow: NSPanel {
     /// 面板是否被钉住（钉住时不自动收起）
     var isPanelPinned = false
 
+    /// 面板是否处于让位状态（激活其他窗口后临时降级，避免遮挡目标窗口）
+    private(set) var isYielded = false
+
     // MARK: - Resize 状态
 
     private enum ResizeEdge {
@@ -41,6 +44,12 @@ final class QuickPanelWindow: NSPanel {
 
     /// 防止联动拖动递归
     private var isSyncMoving = false
+
+    /// 记录最近一次弹出时的悬浮球位置（供收起动画使用）
+    private var lastBallFrame: CGRect = .zero
+
+    /// 记录最近一次弹出的最终 frame（供收起动画使用）
+    private var lastShowFrame: CGRect = .zero
 
     // MARK: - 初始化
 
@@ -218,18 +227,25 @@ final class QuickPanelWindow: NSPanel {
         let panelFrame = calculatePosition(relativeTo: ballFrame)
         setFrame(panelFrame, display: false)
 
-        // 设置初始状态：最终位置 + 透明
+        // 记录弹出状态（供收起动画使用）
+        lastBallFrame = ballFrame
+        lastShowFrame = panelFrame
+
+        // 设置初始状态：从悬浮球方向"生长"出来（缩小 frame + 透明）
         alphaValue = 0
-        setFrame(panelFrame, display: false)
+        let scaleFactor: CGFloat = 0.6
+        let startFrame = scaledFrame(panelFrame, towards: ballFrame, scale: scaleFactor)
+        setFrame(startFrame, display: false)
 
         orderFront(nil)
 
-        // 淡入动画，时长由用户偏好设置控制
+        // 生长动画：frame 从小变大 + 淡入
         let targetOpacity = ConfigStore.shared.preferences.panelOpacity
         let duration = Double(ConfigStore.shared.preferences.panelAnimationSpeed)
         NSAnimationContext.runAnimationGroup({ context in
             context.duration = duration
             context.timingFunction = CAMediaTimingFunction(name: .easeOut)
+            self.animator().setFrame(panelFrame, display: true)
             self.animator().alphaValue = targetOpacity
         })
     }
@@ -252,9 +268,13 @@ final class QuickPanelWindow: NSPanel {
         setFrame(panelFrame, display: false)
         panelView.reloadData()
 
+        // 记录弹出状态（供收起动画使用）
+        let effectiveBallFrame = ballFrame ?? NSRect(x: topLeft.x, y: topLeft.y, width: 0, height: 0)
+        lastBallFrame = effectiveBallFrame
+        lastShowFrame = panelFrame
+
         // 设置初始状态：从悬浮球方向"生长"出来（缩小 frame + 透明）
         alphaValue = 0
-        let effectiveBallFrame = ballFrame ?? NSRect(x: topLeft.x, y: topLeft.y, width: 0, height: 0)
         let scaleFactor: CGFloat = 0.6
         let startFrame = scaledFrame(panelFrame, towards: effectiveBallFrame, scale: scaleFactor)
         setFrame(startFrame, display: false)
@@ -272,24 +292,34 @@ final class QuickPanelWindow: NSPanel {
         })
     }
 
-    /// 收起面板
+    /// 收起面板（反向生长动画：缩小到悬浮球方向 + 淡出）
     func hide() {
         dismissTimer?.invalidate()
         dismissTimer = nil
 
-        // 收起动画 ease-in（时长为弹出速度的一半，最少 100ms）
+        // 记录当前 frame（可能被用户 resize 过，与 lastShowFrame 不同）
+        let currentFrame = frame
+
+        // 收起动画：缩小到 60% + 淡出（与弹出动画对称）
+        let scaleFactor: CGFloat = 0.6
+        let shrinkFrame = scaledFrame(currentFrame, towards: lastBallFrame, scale: scaleFactor)
         let hideDuration = max(0.1, Double(ConfigStore.shared.preferences.panelAnimationSpeed) * 0.5)
+
         NSAnimationContext.runAnimationGroup({ context in
             context.duration = hideDuration
             context.timingFunction = CAMediaTimingFunction(name: .easeIn)
+            self.animator().setFrame(shrinkFrame, display: true)
             self.animator().alphaValue = 0
         }, completionHandler: { [weak self] in
             guard let self = self else { return }
             // 防止 show/hide 竞态：如果动画期间又被 show()，不执行收起逻辑（浮点精度安全）
             guard self.alphaValue < 0.01 else { return }
             self.orderOut(nil)
+            // 恢复 frame 和透明度，供下次 show 使用
+            self.setFrame(currentFrame, display: false)
             self.alphaValue = ConfigStore.shared.preferences.panelOpacity
             self.isPanelPinned = false
+            self.isYielded = false
             self.panelView.resetToNormalMode()
             AppMonitor.shared.stopWindowRefresh()
         })
@@ -302,6 +332,9 @@ final class QuickPanelWindow: NSPanel {
         isPanelPinned.toggle()
         if isPanelPinned {
             cancelDismissTimer()
+        } else {
+            // 取消钉住时，恢复让位状态（若有）
+            restoreLevel()
         }
         // 通知 panelView 更新钉住按钮状态
         NotificationCenter.default.post(
@@ -309,6 +342,22 @@ final class QuickPanelWindow: NSPanel {
             object: nil,
             userInfo: ["isPinned": isPanelPinned]
         )
+    }
+
+    // MARK: - 让位机制（激活窗口后临时降级）
+
+    /// 临时降低面板层级，让被激活的窗口显示在面板前面
+    func yieldLevel() {
+        guard isPanelPinned, !isYielded else { return }
+        isYielded = true
+        level = .floating
+    }
+
+    /// 恢复面板到原始置顶层级
+    func restoreLevel() {
+        guard isYielded else { return }
+        isYielded = false
+        level = NSWindow.Level(rawValue: Int(Constants.quickPanelLevel))
     }
 
     // MARK: - 收起计时器
@@ -341,12 +390,17 @@ final class QuickPanelWindow: NSPanel {
                 mouseDown(with: event)
                 return
             }
-            // 检测 topBar 区域拖动（窗口顶部 24px）
+            // 检测 topBar 区域（窗口顶部 24px）
             if location.y > frame.height - 24 {
                 // 检查是否点击在按钮上（按钮点击不应被拖动拦截）
                 if let hitView = contentView?.hitTest(location),
                    hitView is NSButton || hitView.superview is NSButton {
                     break // 让按钮正常处理点击
+                }
+                // 双击标题栏：收起面板
+                if event.clickCount == 2 {
+                    hide()
+                    return
                 }
                 isDraggingPanel = true
                 dragPanelStartMouseLocation = NSEvent.mouseLocation

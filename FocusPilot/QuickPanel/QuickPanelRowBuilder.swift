@@ -240,9 +240,11 @@ extension QuickPanelView {
                    let firstWindow = runApp.windows.first {
                     self.highlightedWindowID = firstWindow.id
                     WindowService.shared.activateWindow(firstWindow)
+                    (self.window as? QuickPanelWindow)?.yieldLevel()
                     self.forceReload()
                 } else {
                     WindowService.shared.activateApp(bundleID)
+                    (self.window as? QuickPanelWindow)?.yieldLevel()
                 }
             }
         }
@@ -355,6 +357,8 @@ extension QuickPanelView {
             WindowService.shared.debugLog("QuickPanel: 点击窗口行 wid=\(windowInfo.id) title=\(windowInfo.title)")
             self.highlightedWindowID = windowInfo.id
             WindowService.shared.activateWindow(windowInfo)
+            // 面板临时让位，让目标窗口显示在前面
+            (self.window as? QuickPanelWindow)?.yieldLevel()
             // 刷新以更新高亮状态
             self.forceReload()
         }
