@@ -506,7 +506,16 @@ final class FloatingBallView: NSView {
         layer?.shadowColor = accentColor.withAlphaComponent(0.4).cgColor
     }
 
+    /// 静态版本：供外部（如 SwiftUI 侧边栏）调用生成品牌 Logo
+    static func brandLogo(size: CGFloat, gradientColors: (light: NSColor, medium: NSColor, dark: NSColor)) -> NSImage {
+        return createBrandLogoImage(size: size, gradientColors: gradientColors)
+    }
+
     private func createBrandLogo(size: CGFloat, gradientColors: (light: NSColor, medium: NSColor, dark: NSColor)) -> NSImage {
+        return Self.createBrandLogoImage(size: size, gradientColors: gradientColors)
+    }
+
+    private static func createBrandLogoImage(size: CGFloat, gradientColors: (light: NSColor, medium: NSColor, dark: NSColor)) -> NSImage {
         let image = NSImage(size: NSSize(width: size, height: size))
         image.lockFocus()
 
@@ -553,51 +562,85 @@ final class FloatingBallView: NSView {
         innerGlow.lineWidth = 0.5
         innerGlow.stroke()
 
-        // 5. 聚焦准星符号（替代 pin.fill + FC）
+        // 5. 禅圆 Ensō（一笔未闭合弧线，起笔墨滴 + 粗→细渐变 + 收笔散点）
         NSGraphicsContext.saveGraphicsState()
         circlePath.addClip()
 
-        let white = NSColor.white
-        let whiteMain = white.withAlphaComponent(0.85)
-        let whiteSub = white.withAlphaComponent(0.85)
+        let ensoRadius = size * 0.30          // 禅圆半径
+        let segments = 28                      // 分段数（越多越平滑）
+        let arcDegrees: CGFloat = 300          // 弧线覆盖角度（留 60° 缺口）
+        let startAngle: CGFloat = 120          // 起笔位置（约 4 点钟方向）
+        let maxWidth = size * 0.09             // 起笔最粗
+        let minWidth = size * 0.02             // 收笔最细
 
-        // 5b. 内环
-        let innerRadius = size * 0.22
-        let innerRing = NSBezierPath(ovalIn: NSRect(
-            x: center.x - innerRadius,
-            y: center.y - innerRadius,
-            width: innerRadius * 2,
-            height: innerRadius * 2
+        let startRad = startAngle * .pi / 180
+        let endRad = (startAngle + arcDegrees) * .pi / 180
+        let arcPerSegment = arcDegrees / CGFloat(segments)
+
+        // 5a. 弧线主体（分段绘制，线宽粗→细）
+        for i in 0..<segments {
+            let t = CGFloat(i) / CGFloat(segments)
+            let angle0 = startAngle + arcPerSegment * CGFloat(i)
+            let angle1 = startAngle + arcPerSegment * CGFloat(i + 1)
+
+            let rad0 = angle0 * .pi / 180
+            let rad1 = angle1 * .pi / 180
+
+            let seg = NSBezierPath()
+            seg.move(to: NSPoint(
+                x: center.x + ensoRadius * cos(rad0),
+                y: center.y + ensoRadius * sin(rad0)
+            ))
+            seg.line(to: NSPoint(
+                x: center.x + ensoRadius * cos(rad1),
+                y: center.y + ensoRadius * sin(rad1)
+            ))
+
+            let easedT = 1.0 - pow(1.0 - t, 2.0)
+            let lineWidth = maxWidth - (maxWidth - minWidth) * easedT
+            let alpha = 0.88 - 0.15 * easedT
+            NSColor.white.withAlphaComponent(alpha).setStroke()
+
+            seg.lineWidth = lineWidth
+            seg.lineCapStyle = .round
+            seg.stroke()
+        }
+
+        // 5b. 起笔墨滴（画在弧线之上，明显大于笔触宽度）
+        let inkDropCenter = NSPoint(
+            x: center.x + ensoRadius * cos(startRad),
+            y: center.y + ensoRadius * sin(startRad)
+        )
+        let inkDropRadius = size * 0.07       // 绝对尺寸，35px 球 → ~1.7px 半径 = 3.4px 直径
+        let inkDropPath = NSBezierPath(ovalIn: NSRect(
+            x: inkDropCenter.x - inkDropRadius,
+            y: inkDropCenter.y - inkDropRadius,
+            width: inkDropRadius * 2,
+            height: inkDropRadius * 2
         ))
-        whiteMain.setStroke()
-        innerRing.lineWidth = size * 0.038
-        innerRing.stroke()
+        NSColor.white.withAlphaComponent(0.92).setFill()
+        inkDropPath.fill()
 
-        // 5c. 中心实心圆点
-        let dotRadius = size * 0.065
-        let dotPath = NSBezierPath(ovalIn: NSRect(
-            x: center.x - dotRadius,
-            y: center.y - dotRadius,
-            width: dotRadius * 2,
-            height: dotRadius * 2
-        ))
-        whiteMain.setFill()
-        dotPath.fill()
+        // 5c. 收笔渐隐散点（沿弧线延伸，用绝对尺寸确保可见）
+        let tailAngles: [CGFloat] = [5.0, 13.0, 22.0]     // 角度偏移（间距拉大）
+        let tailRadii: [CGFloat] = [0.042, 0.030, 0.020]  // 圆点半径（相对 size）
+        let tailAlphas: [CGFloat] = [0.65, 0.42, 0.22]
 
-        // 5d. 四向刻度线（上下左右短线段，准星感）
-        let tickInner = innerRadius + size * 0.04  // 刻度起点（内环外侧）
-        let tickOuter = innerRadius + size * 0.16  // 刻度终点
-        let tickWidth = size * 0.035
-
-        whiteMain.setStroke()
-        let directions: [(CGFloat, CGFloat)] = [(1,0), (-1,0), (0,1), (0,-1)]
-        for (dx, dy) in directions {
-            let tick = NSBezierPath()
-            tick.move(to: NSPoint(x: center.x + dx * tickInner, y: center.y + dy * tickInner))
-            tick.line(to: NSPoint(x: center.x + dx * tickOuter, y: center.y + dy * tickOuter))
-            tick.lineWidth = tickWidth
-            tick.lineCapStyle = .round
-            tick.stroke()
+        for j in 0..<tailAngles.count {
+            let dotAngle = (startAngle + arcDegrees + tailAngles[j]) * .pi / 180
+            let dotCenter = NSPoint(
+                x: center.x + ensoRadius * cos(dotAngle),
+                y: center.y + ensoRadius * sin(dotAngle)
+            )
+            let dotR = size * tailRadii[j]
+            let dotPath = NSBezierPath(ovalIn: NSRect(
+                x: dotCenter.x - dotR,
+                y: dotCenter.y - dotR,
+                width: dotR * 2,
+                height: dotR * 2
+            ))
+            NSColor.white.withAlphaComponent(tailAlphas[j]).setFill()
+            dotPath.fill()
         }
 
         NSGraphicsContext.restoreGraphicsState()

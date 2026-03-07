@@ -17,8 +17,8 @@ enum KanbanTab: String, CaseIterable {
 /// 自定义侧边栏布局（不使用 NavigationSplitView，避免系统生成多余按钮）
 struct MainKanbanView: View {
     @State private var selectedTab: KanbanTab = .appConfig
-    @State private var showQuitConfirmation = false
     @State private var showSidebar = true
+    @State private var ballHover = false
     @ObservedObject private var configStore = ConfigStore.shared
     @ObservedObject private var appMonitor = AppMonitor.shared
 
@@ -49,14 +49,6 @@ struct MainKanbanView: View {
                 }
                 .help("切换侧边栏")
             }
-        }
-        .alert("退出 Focus Copilot", isPresented: $showQuitConfirmation) {
-            Button("取消", role: .cancel) { }
-            Button("退出", role: .destructive) {
-                NSApplication.shared.terminate(nil)
-            }
-        } message: {
-            Text("是否确认退出 Focus Copilot？")
         }
     }
 
@@ -90,43 +82,37 @@ struct MainKanbanView: View {
 
             themeColors.swSeparator.frame(height: 1)
 
-            // 底部双按钮：左=悬浮球显隐，右=退出
-            HStack(spacing: 0) {
-                // 左半：悬浮球显隐切换
-                Button(action: {
-                    NotificationCenter.default.post(
-                        name: Constants.Notifications.ballToggle,
-                        object: nil
-                    )
-                }) {
-                    HStack(spacing: 4) {
-                        Image(systemName: configStore.isBallVisible ? "eye" : "eye.slash")
-                        Text(configStore.isBallVisible ? "悬浮球 隐藏" : "悬浮球 显示")
-                    }
-                    .font(.callout)
-                    .foregroundStyle(themeColors.swTextSecondary)
-                    .frame(maxWidth: .infinity)
+            // 底部：悬浮球显隐切换（样式与导航项统一）
+            Button(action: {
+                NotificationCenter.default.post(
+                    name: Constants.Notifications.ballToggle,
+                    object: nil
+                )
+            }) {
+                HStack(spacing: 6) {
+                    let colors = configStore.preferences.appTheme.ballGradientColors
+                    Image(nsImage: FloatingBallView.brandLogo(size: 16, gradientColors: colors))
+                        .interpolation(.high)
+                        .opacity(configStore.isBallVisible ? 1.0 : 0.4)
+                    Text("悬浮球")
+                        .foregroundStyle(themeColors.swTextPrimary)
+                    Spacer()
+                    Image(systemName: configStore.isBallVisible ? "eye" : "eye.slash")
+                        .font(.system(size: 11))
+                        .foregroundStyle(themeColors.swTextTertiary)
                 }
-                .buttonStyle(.plain)
-                .padding(.vertical, 8)
-
-                themeColors.swSeparator.frame(width: 1, height: 16)
-
-                // 右半：退出
-                Button(action: { showQuitConfirmation = true }) {
-                    HStack(spacing: 4) {
-                        Image(systemName: "power")
-                        Text("退出")
-                    }
-                    .font(.callout)
-                    .foregroundStyle(.red)
-                    .frame(maxWidth: .infinity)
-                }
-                .buttonStyle(.plain)
-                .padding(.vertical, 8)
+                .padding(.vertical, 7)
+                .padding(.horizontal, 10)
+                .background(
+                    RoundedRectangle(cornerRadius: 7)
+                        .fill(themeColors.swTextPrimary.opacity(ballHover ? 0.06 : 0))
+                )
             }
+            .buttonStyle(.plain)
+            .onHover { hovering in ballHover = hovering }
+            .help(configStore.isBallVisible ? "隐藏悬浮球" : "显示悬浮球")
             .padding(.horizontal, 8)
-            .padding(.bottom, 4)
+            .padding(.vertical, 6)
         }
         .background(themeColors.swSidebarBackground)
     }

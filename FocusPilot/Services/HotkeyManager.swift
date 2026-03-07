@@ -7,14 +7,10 @@ class HotkeyManager {
 
     /// 悬浮球快捷键触发时的回调
     var onToggle: (() -> Void)?
-    /// 主看板快捷键触发时的回调
-    var onKanbanToggle: (() -> Void)?
 
     private var hotKeyRef: EventHotKeyRef?
-    private var kanbanHotKeyRef: EventHotKeyRef?
     private var eventHandler: EventHandlerRef?
     private static let hotkeyID: UInt32 = 1
-    private static let kanbanHotkeyID: UInt32 = 2
 
     private init() {}
 
@@ -35,10 +31,6 @@ class HotkeyManager {
                     DispatchQueue.main.async {
                         HotkeyManager.shared.onToggle?()
                     }
-                } else if hotKeyID.id == HotkeyManager.kanbanHotkeyID {
-                    DispatchQueue.main.async {
-                        HotkeyManager.shared.onKanbanToggle?()
-                    }
                 }
                 return noErr
             }
@@ -52,26 +44,10 @@ class HotkeyManager {
         RegisterEventHotKey(hotkey.keyCode, hotkey.carbonModifiers, id, GetApplicationEventTarget(), 0, &hotKeyRef)
     }
 
-    /// 注册主看板快捷键
-    func registerKanban(config: HotkeyConfig? = nil) {
-        // 先注销旧的
-        if let ref = kanbanHotKeyRef {
-            UnregisterEventHotKey(ref)
-            kanbanHotKeyRef = nil
-        }
-        let hotkey = config ?? ConfigStore.shared.preferences.hotkeyKanban
-        let id = EventHotKeyID(signature: OSType(0x50494E54), id: Self.kanbanHotkeyID)
-        RegisterEventHotKey(hotkey.keyCode, hotkey.carbonModifiers, id, GetApplicationEventTarget(), 0, &kanbanHotKeyRef)
-    }
-
     func unregister() {
         if let ref = hotKeyRef {
             UnregisterEventHotKey(ref)
             hotKeyRef = nil
-        }
-        if let ref = kanbanHotKeyRef {
-            UnregisterEventHotKey(ref)
-            kanbanHotKeyRef = nil
         }
         if let handler = eventHandler {
             RemoveEventHandler(handler)
@@ -89,13 +65,4 @@ class HotkeyManager {
         RegisterEventHotKey(config.keyCode, config.carbonModifiers, id, GetApplicationEventTarget(), 0, &hotKeyRef)
     }
 
-    /// 仅重新注册主看板快捷键
-    func reregisterKanban(config: HotkeyConfig) {
-        if let ref = kanbanHotKeyRef {
-            UnregisterEventHotKey(ref)
-            kanbanHotKeyRef = nil
-        }
-        let id = EventHotKeyID(signature: OSType(0x50494E54), id: Self.kanbanHotkeyID)
-        RegisterEventHotKey(config.keyCode, config.carbonModifiers, id, GetApplicationEventTarget(), 0, &kanbanHotKeyRef)
-    }
 }

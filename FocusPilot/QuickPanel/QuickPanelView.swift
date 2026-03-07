@@ -37,11 +37,11 @@ final class QuickPanelView: NSView {
 
     // MARK: - 子视图
 
-    /// 顶部栏（带微妙背景底色，与列表区形成层次）
+    /// 顶部栏（带明显背景底色，与列表区形成层次）
     private let topBar: NSView = {
         let view = NSView()
         view.wantsLayer = true
-        view.layer?.backgroundColor = ConfigStore.shared.currentThemeColors.nsTextPrimary.withAlphaComponent(0.03).cgColor
+        view.layer?.backgroundColor = ConfigStore.shared.currentThemeColors.nsTextPrimary.withAlphaComponent(0.10).cgColor
         return view
     }()
 
@@ -49,7 +49,7 @@ final class QuickPanelView: NSView {
     private let topSeparator: NSView = {
         let view = NSView()
         view.wantsLayer = true
-        view.layer?.backgroundColor = ConfigStore.shared.currentThemeColors.nsSeparator.withAlphaComponent(0.5).cgColor
+        view.layer?.backgroundColor = ConfigStore.shared.currentThemeColors.nsSeparator.withAlphaComponent(0.8).cgColor
         return view
     }()
 
@@ -57,7 +57,7 @@ final class QuickPanelView: NSView {
     private let tabSeparator: NSView = {
         let view = NSView()
         view.wantsLayer = true
-        view.layer?.backgroundColor = ConfigStore.shared.currentThemeColors.nsSeparator.withAlphaComponent(0.5).cgColor
+        view.layer?.backgroundColor = ConfigStore.shared.currentThemeColors.nsSeparator.withAlphaComponent(0.8).cgColor
         return view
     }()
 
@@ -120,7 +120,7 @@ final class QuickPanelView: NSView {
     private let bottomSeparator: NSView = {
         let view = NSView()
         view.wantsLayer = true
-        view.layer?.backgroundColor = ConfigStore.shared.currentThemeColors.nsSeparator.withAlphaComponent(0.6).cgColor
+        view.layer?.backgroundColor = ConfigStore.shared.currentThemeColors.nsSeparator.withAlphaComponent(0.9).cgColor
         return view
     }()
 
@@ -128,7 +128,7 @@ final class QuickPanelView: NSView {
     private let timerBar: NSView = {
         let view = NSView()
         view.wantsLayer = true
-        view.layer?.backgroundColor = ConfigStore.shared.currentThemeColors.nsTextPrimary.withAlphaComponent(0.03).cgColor
+        view.layer?.backgroundColor = ConfigStore.shared.currentThemeColors.nsTextPrimary.withAlphaComponent(0.08).cgColor
         return view
     }()
 
@@ -159,7 +159,7 @@ final class QuickPanelView: NSView {
         let view = NSView()
         view.wantsLayer = true
         view.layer?.cornerRadius = 1.5
-        view.layer?.backgroundColor = ConfigStore.shared.currentThemeColors.nsTextPrimary.withAlphaComponent(0.06).cgColor
+        view.layer?.backgroundColor = ConfigStore.shared.currentThemeColors.nsTextPrimary.withAlphaComponent(0.08).cgColor
         return view
     }()
 
@@ -620,8 +620,8 @@ final class QuickPanelView: NSView {
 
         // 计时器栏大面积颜色变化（工作=accent 底色，休息=绿色底色，idle=透明）
         if isIdle {
-            timerBar.layer?.backgroundColor = colors.nsTextPrimary.withAlphaComponent(0.03).cgColor
-            bottomSeparator.layer?.backgroundColor = colors.nsSeparator.withAlphaComponent(0.6).cgColor
+            timerBar.layer?.backgroundColor = colors.nsTextPrimary.withAlphaComponent(0.08).cgColor
+            bottomSeparator.layer?.backgroundColor = colors.nsSeparator.withAlphaComponent(0.9).cgColor
         } else if timer.phase == .work {
             timerBar.layer?.backgroundColor = colors.nsAccent.withAlphaComponent(0.12).cgColor
             bottomSeparator.layer?.backgroundColor = colors.nsAccent.withAlphaComponent(0.3).cgColor
@@ -1029,13 +1029,13 @@ final class QuickPanelView: NSView {
     /// 应用主题（外部调用）
     func applyTheme() {
         let colors = ConfigStore.shared.currentThemeColors
-        topBar.layer?.backgroundColor = colors.nsTextPrimary.withAlphaComponent(0.03).cgColor
+        topBar.layer?.backgroundColor = colors.nsTextPrimary.withAlphaComponent(0.10).cgColor
         openKanbanButton.contentTintColor = colors.nsTextSecondary
-        topSeparator.layer?.backgroundColor = colors.nsSeparator.withAlphaComponent(0.5).cgColor
-        tabSeparator.layer?.backgroundColor = colors.nsSeparator.withAlphaComponent(0.5).cgColor
-        bottomSeparator.layer?.backgroundColor = colors.nsSeparator.withAlphaComponent(0.6).cgColor
-        timerBar.layer?.backgroundColor = colors.nsTextPrimary.withAlphaComponent(0.03).cgColor
-        timerProgressBg.layer?.backgroundColor = colors.nsTextPrimary.withAlphaComponent(0.06).cgColor
+        topSeparator.layer?.backgroundColor = colors.nsSeparator.withAlphaComponent(0.8).cgColor
+        tabSeparator.layer?.backgroundColor = colors.nsSeparator.withAlphaComponent(0.8).cgColor
+        bottomSeparator.layer?.backgroundColor = colors.nsSeparator.withAlphaComponent(0.9).cgColor
+        timerBar.layer?.backgroundColor = colors.nsTextPrimary.withAlphaComponent(0.08).cgColor
+        timerProgressBg.layer?.backgroundColor = colors.nsTextPrimary.withAlphaComponent(0.08).cgColor
         updateTabButtonStyles()
         updateTimerUI()
         forceReload()
@@ -1356,7 +1356,7 @@ final class HoverableRowView: NSView {
         isHovered = true
         // hover 高亮不覆盖选中高亮（选中高亮由 QuickPanelView 在构建行时设置）
         if !isHighlighted {
-            layer?.backgroundColor = ConfigStore.shared.currentThemeColors.nsTextPrimary.withAlphaComponent(0.06).cgColor
+            layer?.backgroundColor = ConfigStore.shared.currentThemeColors.nsTextPrimary.withAlphaComponent(0.08).cgColor
             layer?.cornerRadius = 6
         }
     }

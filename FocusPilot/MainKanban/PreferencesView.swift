@@ -34,10 +34,7 @@ struct PreferencesView: View {
                 .font(.headline)
                 .foregroundStyle(themeColors.swTextPrimary)
 
-            VStack(spacing: 8) {
-                hotkeyRow(label: "显示/隐藏", config: $configStore.preferences.hotkeyToggle)
-                hotkeyRow(label: "主看板", config: $configStore.preferences.hotkeyKanban)
-            }
+            hotkeyRow(label: "显示/隐藏", config: $configStore.preferences.hotkeyToggle)
         }
     }
 
@@ -123,8 +120,10 @@ struct PreferencesView: View {
             // 主题名称
             Text(theme.displayName)
                 .font(.caption)
-                .foregroundStyle(.primary)
-                .padding(.vertical, 4)
+                .foregroundStyle(themeColors.swTextSecondary)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 5)
+                .background(themeColors.swTextPrimary.opacity(0.05))
         }
         .clipShape(RoundedRectangle(cornerRadius: 8))
         .overlay(
@@ -171,10 +170,10 @@ struct PreferencesView: View {
                 Slider(
                     value: $configStore.preferences.ballOpacity,
                     in: 0.3...1.0,
-                    step: 0.05
+                    step: 0.01
                 )
                 .tint(themeColors.swAccent)
-                Text("\(Int(configStore.preferences.ballOpacity * 100))%")
+                Text("\(Int(round(configStore.preferences.ballOpacity * 100)))%")
                     .frame(width: 50)
                     .foregroundStyle(themeColors.swTextTertiary)
             }
@@ -187,10 +186,10 @@ struct PreferencesView: View {
                 Slider(
                     value: $configStore.preferences.panelOpacity,
                     in: 0.3...1.0,
-                    step: 0.05
+                    step: 0.01
                 )
                 .tint(themeColors.swAccent)
-                Text("\(Int(configStore.preferences.panelOpacity * 100))%")
+                Text("\(Int(round(configStore.preferences.panelOpacity * 100)))%")
                     .frame(width: 50)
                     .foregroundStyle(themeColors.swTextTertiary)
             }

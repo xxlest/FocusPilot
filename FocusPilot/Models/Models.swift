@@ -126,9 +126,6 @@ struct HotkeyConfig: Codable, Equatable {
     // 默认值（⌘⇧B 同时切换悬浮球+面板）
     static let toggleDefault = HotkeyConfig(keyCode: kVK_ANSI_B, carbonModifiers: cmdKeyFlag | shiftKeyFlag)
 
-    // 主看板快捷键默认值（⌘Esc）
-    static let kanbanDefault = HotkeyConfig(keyCode: kVK_Escape, carbonModifiers: cmdKeyFlag)
-
     /// 显示字符串（如 "⌘⇧B"）
     var displayString: String {
         var parts: [String] = []
@@ -208,17 +205,16 @@ struct Preferences: Codable {
     var appTheme: AppTheme = .defaultWhite
     var launchAtLogin: Bool = false
     var hotkeyToggle: HotkeyConfig = .toggleDefault
-    var hotkeyKanban: HotkeyConfig = .kanbanDefault
     var autoRetractOnHover: Bool = true
     var panelAnimationSpeed: CGFloat = 0.25  // 面板弹出动画时长（秒），0.1-0.6
 
     // 自定义解码：兼容旧数据（保留旧字段 CodingKey 以避免解码崩溃）
     private enum CodingKeys: String, CodingKey {
         case ballSize, ballOpacity, panelOpacity, appTheme
-        case launchAtLogin, hotkeyToggle, hotkeyKanban
+        case launchAtLogin, hotkeyToggle
         case autoRetractOnHover, panelAnimationSpeed
         // 旧字段（解码时忽略，兼容升级）
-        case colorTheme, ballColorStyle, ballCustomColorHex
+        case colorTheme, ballColorStyle, ballCustomColorHex, hotkeyKanban
     }
 
     init(from decoder: Decoder) throws {
@@ -229,7 +225,6 @@ struct Preferences: Codable {
         appTheme = try container.decodeIfPresent(AppTheme.self, forKey: .appTheme) ?? .defaultWhite
         launchAtLogin = try container.decodeIfPresent(Bool.self, forKey: .launchAtLogin) ?? false
         hotkeyToggle = (try? container.decode(HotkeyConfig.self, forKey: .hotkeyToggle)) ?? .toggleDefault
-        hotkeyKanban = (try? container.decode(HotkeyConfig.self, forKey: .hotkeyKanban)) ?? .kanbanDefault
         autoRetractOnHover = try container.decodeIfPresent(Bool.self, forKey: .autoRetractOnHover) ?? true
         panelAnimationSpeed = try container.decodeIfPresent(CGFloat.self, forKey: .panelAnimationSpeed) ?? 0.25
     }
@@ -242,7 +237,6 @@ struct Preferences: Codable {
         try container.encode(appTheme, forKey: .appTheme)
         try container.encode(launchAtLogin, forKey: .launchAtLogin)
         try container.encode(hotkeyToggle, forKey: .hotkeyToggle)
-        try container.encode(hotkeyKanban, forKey: .hotkeyKanban)
         try container.encode(autoRetractOnHover, forKey: .autoRetractOnHover)
         try container.encode(panelAnimationSpeed, forKey: .panelAnimationSpeed)
     }
