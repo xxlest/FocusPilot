@@ -22,7 +22,9 @@ FocusPilot/
 │   │   └── FloatingBallView.swift     # 悬浮球视图、拖拽、贴边、hover、品牌 Logo
 │   ├── QuickPanel/
 │   │   ├── QuickPanelWindow.swift     # 快捷面板窗口（NSPanel），钉住模式、resize、drag
-│   │   └── QuickPanelView.swift       # 面板内容视图（活跃/关注 Tab、窗口行高亮+前置+关闭、Tab 记忆、FocusByTime 计时器栏）
+│   │   ├── QuickPanelView.swift       # 面板内容视图（活跃/关注 Tab、窗口行高亮+前置+关闭、Tab 记忆、FocusByTime 计时器栏）
+│   │   ├── QuickPanelRowBuilder.swift # App 行/窗口行构建、工具方法、SF Symbol 缓存（extension QuickPanelView）
+│   │   └── QuickPanelMenuHandler.swift # 右键菜单、@objc 事件处理、星号关注、App 关闭/启动（extension QuickPanelView）
 │   ├── MainKanban/
 │   │   ├── MainKanbanWindow.swift     # 主看板窗口管理
 │   │   ├── MainKanbanView.swift       # 主看板根视图（SwiftUI），侧边栏+底部双按钮
@@ -68,7 +70,7 @@ FocusPilot/
 
 **V3.7 相比 V3.6 的关键变更**：
 
-- Models.swift：新增 `AppTheme`（8 个 Notion 风格主题枚举）和 `ThemeColors`（8 色槽结构体，ns* + sw* 双套属性）
+- Models.swift：新增 `AppTheme`（8 个 Notion 风格主题枚举）和 `ThemeColors`（9 色槽结构体，ns* + sw* 双套属性，含 sidebarBackground）
 - Preferences：新增 `appTheme: AppTheme = .defaultWhite`，移除 `colorTheme`/`ballColorStyle`/`ballCustomColorHex`（保留旧 CodingKey 兼容解码）
 - Constants：新增 `themeChanged` 通知名
 - ConfigStore：新增 `currentThemeColors` 便捷属性
@@ -123,7 +125,7 @@ PreferencesView → @Published → AppDelegate.applyPreferences()
 |---|---|---|
 | **App/** | 应用入口、生命周期、权限管理 | 应用级初始化逻辑独立于具体 UI |
 | **FloatingBall/** | 悬浮球 UI、拖拽、贴边、hover 检测、品牌 Logo、钉住状态发光边框 | 悬浮球交互逻辑独立变化频率高 |
-| **QuickPanel/** | 快捷面板 UI、活跃/关注 Tab、Tab 记忆、窗口行高亮+前置+关闭（V3.3：移除面板内钉住按钮） | 面板展示和交互独立于悬浮球 |
+| **QuickPanel/** | 快捷面板 UI、活跃/关注 Tab、Tab 记忆、窗口行高亮+前置+关闭（V3.3：移除面板内钉住按钮）。extension 拆分为 RowBuilder（视图构建）+ MenuHandler（菜单和事件） | 面板展示和交互独立于悬浮球 |
 | **MainKanban/** | 主看板 SwiftUI 界面（关注管理 + 偏好设置 + 底部双按钮） | SwiftUI 技术栈独立，页面布局频繁调整 |
 | **Services/** | 底层服务（窗口操作+关闭、App 监控、快捷键、配置存储+Tab 记忆、FocusByTime 计时） | 业务逻辑层与 UI 层分离 |
 | **Models/** | 数据模型 | 数据结构被多个模块共享 |
@@ -131,7 +133,7 @@ PreferencesView → @Published → AppDelegate.applyPreferences()
 
 ### 防过度设计自查
 
-- [x] 文件数（~18）<= 功能点数（34）
+- [x] 文件数（~20）<= 功能点数（34）
 - [x] 无多余抽象层：Services 直接暴露方法，无 Protocol 包装
 - [x] 没有为"未来可能"创建接口
 - [x] 没有只有一个实现的抽象层
@@ -219,11 +221,10 @@ struct Preferences: Codable {
     var panelOpacity: CGFloat = 0.9   // 0.3-1.0（快捷面板透明度）
     var appTheme: AppTheme = .defaultWhite  // V3.7：Notion 风格主题
     var launchAtLogin: Bool = false
+    var hotkeyToggle: HotkeyConfig    // 显示/隐藏快捷键（默认 ⌘⇧B）
     var autoRetractOnHover: Bool = true  // V3.3：hover 离开后是否自动收起面板
-    var hotkeyToggle: HotkeyConfig
-    var hotkeyKanban: HotkeyConfig
-    var panelAnimationSpeed: CGFloat = 0.25
-    // 自定义 CodingKeys 保留旧字段（colorTheme/ballColorStyle/ballCustomColorHex）兼容解码
+    var panelAnimationSpeed: CGFloat = 0.25  // 面板弹出动画时长（秒），0.1-0.6
+    // 自定义 CodingKeys 保留旧字段（colorTheme/ballColorStyle/ballCustomColorHex/hotkeyKanban）兼容解码
 }
 
 // V3.7：Notion 风格主题（8 种预设）
@@ -237,8 +238,8 @@ enum AppTheme: String, Codable, CaseIterable {
 }
 
 struct ThemeColors {
-    // NSColor 属性：nsBackground, nsAccent, nsTextPrimary, nsTextSecondary, nsTextTertiary, nsRowHighlight, nsSeparator, nsFavoriteStar
-    // SwiftUI 扩展：swBackground, swAccent, swTextPrimary, ...
+    // NSColor 属性（9 色槽）：nsBackground, nsSidebarBackground, nsAccent, nsTextPrimary, nsTextSecondary, nsTextTertiary, nsRowHighlight, nsSeparator, nsFavoriteStar
+    // SwiftUI 扩展：swBackground, swSidebarBackground, swAccent, swTextPrimary, ...
 }
 
 // 旧枚举保留定义不删（兼容），新代码不再引用
@@ -409,14 +410,15 @@ class WindowService {
 class HotkeyManager {
     static let shared = HotkeyManager()
 
-    func registerAll()       // 注册所有全局快捷键
-    func unregisterAll()     // 注销所有
+    /// 悬浮球快捷键触发时的回调
+    var onToggle: (() -> Void)?
 
-    var onAction: ((HotkeyAction) -> Void)?
-
-    enum HotkeyAction: Int, CaseIterable {
-        case ballToggle = 6  // ⌘⇧B
-    }
+    /// 注册悬浮球快捷键（首次调用时同时安装 Carbon 事件处理器）
+    func register(config: HotkeyConfig? = nil)
+    /// 注销快捷键和事件处理器
+    func unregister()
+    /// 仅重新注册悬浮球快捷键（用于偏好设置中修改快捷键后热更新）
+    func reregister(config: HotkeyConfig)
 }
 ```
 
@@ -835,7 +837,6 @@ activateWindow(window)
 
 当前版本**不做**以下功能：
 
-- 关注 Tab 支持拖拽排序（mouseDown/mouseDragged/mouseUp 手势，通过 HoverableRowView 的 dragEnabled + handler 闭包组实现，持久化到 ConfigStore.reorderApps）
 - 不添加快捷面板搜索框
 - 不添加窗口缩略图预览
 - 不实现窗口分组
@@ -850,21 +851,23 @@ activateWindow(window)
 | 文件 | 行数 | 职责 |
 |---|---|---|
 | FocusPilotApp.swift | ~16 | @main 入口，初始化 AppDelegate |
-| AppDelegate.swift | ~342 | 应用生命周期、窗口管理、菜单栏图标、Dock 图标 |
-| PermissionManager.swift | ~90 | 辅助功能权限检测、引导、后台轮询 |
+| AppDelegate.swift | ~479 | 应用生命周期、窗口管理、菜单栏图标、Dock 图标 |
+| PermissionManager.swift | ~92 | 辅助功能权限检测、引导、后台轮询 |
 | FloatingBallWindow.swift | ~98 | NSPanel 子类，窗口层级、贴边 |
-| FloatingBallView.swift | ~800 | 悬浮球视图、品牌 Logo、hover/click/drag 检测、钉住状态红色发光边框 |
-| QuickPanelWindow.swift | ~483 | NSPanel 子类，面板位置、钉住、resize、drag、联动 |
-| QuickPanelView.swift | ~1130 | 面板内容：活跃/关注 Tab、Tab 记忆、窗口行高亮+前置+关闭、App 行右键菜单（关闭应用）、FocusByTime 计时器栏+编辑弹窗 |
-| MainKanbanWindow.swift | ~51 | NSWindow 子类，主看板窗口管理 |
-| MainKanbanView.swift | ~90 | SwiftUI 根视图，侧边栏导航（关注管理/偏好设置）+ 底部双按钮 |
-| AppConfigView.swift | ~306 | SwiftUI 关注管理：三 Tab 过滤（全部/活跃/关注）+ 搜索 + 星标关注切换 |
-| PreferencesView.swift | ~140 | SwiftUI 偏好设置页面（外观、颜色主题、hover 回缩开关） |
-| WindowService.swift | ~652 | 窗口枚举、AX 操作、CGS 层级、标题四级兜底、跨 App 激活、窗口关闭 |
-| AppMonitor.swift | ~195 | App 运行状态监控（不依赖 ConfigStore）、窗口刷新定时器 |
-| HotkeyManager.swift | ~101 | 全局快捷键（Carbon API），2 个动作（⌘⇧B 悬浮球显隐、⌘Esc 主看板显隐） |
-| ConfigStore.swift | ~221 | UserDefaults 持久化（含迁移逻辑、关注管理、Tab 记忆） |
-| Models.swift | ~118 | 数据模型定义（AppConfig 无 isFavorite、QuickPanelTab 枚举在 QuickPanelView.swift 中） |
-| FocusTimerService.swift | ~195 | FocusByTime 番茄钟服务：状态机（idle/running/paused × work/rest）、Timer 计时、阶段切换通知、FocusPendingAction、时长持久化 |
-| Constants.swift | ~97 | 全局常量、16 个通知名、8 个 UserDefaults Keys |
-| **合计** | **~5040** | |
+| FloatingBallView.swift | ~1051 | 悬浮球视图、品牌 Logo（十字准星）、hover/click/drag 检测、钉住状态红色发光边框、FocusByTime 进度环 |
+| QuickPanelWindow.swift | ~604 | NSPanel 子类，面板位置、钉住、resize、drag、联动 |
+| QuickPanelView.swift | ~1398 | 面板内容：活跃/关注 Tab、Tab 记忆、窗口行高亮+前置+关闭、FocusByTime 计时器栏+编辑弹窗 |
+| QuickPanelRowBuilder.swift | ~416 | App 行/窗口行构建、工具方法、SF Symbol 缓存（extension QuickPanelView） |
+| QuickPanelMenuHandler.swift | ~230 | 右键菜单、@objc 事件处理、星号关注、App 关闭/启动（extension QuickPanelView） |
+| MainKanbanWindow.swift | ~55 | NSWindow 子类，主看板窗口管理 |
+| MainKanbanView.swift | ~152 | SwiftUI 根视图，侧边栏导航（关注管理/偏好设置）+ 底部双按钮 |
+| AppConfigView.swift | ~310 | SwiftUI 关注管理：三 Tab 过滤（全部/活跃/关注）+ 搜索 + 星标关注切换 |
+| PreferencesView.swift | ~297 | SwiftUI 偏好设置页面（快捷键录制、主题选择、外观滑块、hover 回缩开关） |
+| WindowService.swift | ~741 | 窗口枚举、AX 操作、CGS 层级、标题四级兜底、跨 App 激活、窗口关闭 |
+| AppMonitor.swift | ~319 | App 运行状态监控（不依赖 ConfigStore）、窗口刷新定时器 |
+| HotkeyManager.swift | ~68 | 全局快捷键（Carbon API），1 个动作（⌘⇧B 显示/隐藏） |
+| ConfigStore.swift | ~242 | UserDefaults 持久化（含迁移逻辑、关注管理、Tab 记忆） |
+| Models.swift | ~535 | 数据模型定义（AppConfig、Preferences、AppTheme 8 主题、ThemeColors 9 色槽、HotkeyConfig） |
+| FocusTimerService.swift | ~198 | FocusByTime 番茄钟服务：状态机（idle/running/paused × work/rest）、Timer 计时、阶段切换通知、FocusPendingAction、时长持久化 |
+| Constants.swift | ~120 | 全局常量、Design Token、16 个通知名、8 个 UserDefaults Keys |
+| **合计** | **~7421** | |
