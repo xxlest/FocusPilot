@@ -202,7 +202,7 @@ struct Preferences: Codable {
     var ballSize: CGFloat = 35
     var ballOpacity: CGFloat = 0.8
     var panelOpacity: CGFloat = 0.9
-    var appTheme: AppTheme = .defaultWhite
+    var appTheme: AppTheme = .lightBlue
     var launchAtLogin: Bool = false
     var hotkeyToggle: HotkeyConfig = .toggleDefault
     var autoRetractOnHover: Bool = true
@@ -222,7 +222,7 @@ struct Preferences: Codable {
         ballSize = try container.decodeIfPresent(CGFloat.self, forKey: .ballSize) ?? 35
         ballOpacity = try container.decodeIfPresent(CGFloat.self, forKey: .ballOpacity) ?? 0.8
         panelOpacity = try container.decodeIfPresent(CGFloat.self, forKey: .panelOpacity) ?? 0.9
-        appTheme = try container.decodeIfPresent(AppTheme.self, forKey: .appTheme) ?? .defaultWhite
+        appTheme = try container.decodeIfPresent(AppTheme.self, forKey: .appTheme) ?? .lightBlue
         launchAtLogin = try container.decodeIfPresent(Bool.self, forKey: .launchAtLogin) ?? false
         hotkeyToggle = (try? container.decode(HotkeyConfig.self, forKey: .hotkeyToggle)) ?? .toggleDefault
         autoRetractOnHover = try container.decodeIfPresent(Bool.self, forKey: .autoRetractOnHover) ?? true

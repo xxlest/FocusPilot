@@ -28,7 +28,7 @@ VFSOVERLAY   := $(BUILD_DIR)/vfsoverlay.yaml
 all: build
 
 # ── 构建 ──────────────────────────────────────────────
-build: $(APP_BUNDLE)/Contents/MacOS/$(APP_NAME) $(APP_BUNDLE)/Contents/Info.plist $(APP_BUNDLE)/Contents/PkgInfo
+build: $(APP_BUNDLE)/Contents/MacOS/$(APP_NAME) $(APP_BUNDLE)/Contents/Info.plist $(APP_BUNDLE)/Contents/PkgInfo $(APP_BUNDLE)/Contents/Resources/AppIcon.icns
 	@echo "✓ 构建完成: $(APP_BUNDLE)"
 
 $(VFSOVERLAY):
@@ -66,7 +66,18 @@ $(APP_BUNDLE)/Contents/Info.plist: FocusPilot/Resources/Info.plist
 	@# LSUIElement 已移除，App 显示在 Dock 中
 	@/usr/libexec/PlistBuddy -c "Add :NSPrincipalClass string NSApplication" $@ 2>/dev/null || true
 	@/usr/libexec/PlistBuddy -c "Add :NSAccessibilityUsageDescription string Focus Copilot 需要辅助功能权限来管理窗口切换。" $@ 2>/dev/null || true
+	@/usr/libexec/PlistBuddy -c "Add :CFBundleIconFile string AppIcon" $@ 2>/dev/null || true
 	@echo "✓ Info.plist 已生成（变量已解析）"
+
+$(APP_BUNDLE)/Contents/Resources/AppIcon.icns: scripts/gen-icon.swift $(VFSOVERLAY)
+	@mkdir -p $(APP_BUNDLE)/Contents/Resources
+	@echo "  生成应用图标..."
+	@swiftc -swift-version 5 -sdk $(SDK) -target arm64-apple-macosx$(MIN_MACOS) \
+		-Xfrontend -vfsoverlay -Xfrontend $(VFSOVERLAY) \
+		-framework AppKit -O -o $(BUILD_DIR)/gen-icon scripts/gen-icon.swift
+	@$(BUILD_DIR)/gen-icon $(BUILD_DIR)
+	@cp $(BUILD_DIR)/AppIcon.icns $@
+	@echo "✓ AppIcon.icns 已生成"
 
 $(APP_BUNDLE)/Contents/PkgInfo:
 	@mkdir -p $(APP_BUNDLE)/Contents

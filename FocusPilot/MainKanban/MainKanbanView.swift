@@ -3,11 +3,13 @@ import SwiftUI
 /// 主看板导航项
 enum KanbanTab: String, CaseIterable {
     case appConfig = "关注管理"
-    case preferences = "偏好设置"
+    case ballPanel = "悬浮球与面板"
+    case preferences = "个性化"
 
     var icon: String {
         switch self {
         case .appConfig: return "square.grid.2x2"
+        case .ballPanel: return "circle.circle"
         case .preferences: return "gearshape"
         }
     }
@@ -18,7 +20,6 @@ enum KanbanTab: String, CaseIterable {
 struct MainKanbanView: View {
     @State private var selectedTab: KanbanTab = .appConfig
     @State private var showSidebar = true
-    @State private var ballHover = false
     @ObservedObject private var configStore = ConfigStore.shared
     @ObservedObject private var appMonitor = AppMonitor.shared
 
@@ -80,39 +81,6 @@ struct MainKanbanView: View {
 
             Spacer()
 
-            themeColors.swSeparator.frame(height: 1)
-
-            // 底部：悬浮球显隐切换（样式与导航项统一）
-            Button(action: {
-                NotificationCenter.default.post(
-                    name: Constants.Notifications.ballToggle,
-                    object: nil
-                )
-            }) {
-                HStack(spacing: 6) {
-                    let colors = configStore.preferences.appTheme.ballGradientColors
-                    Image(nsImage: FloatingBallView.brandLogo(size: 16, gradientColors: colors))
-                        .interpolation(.high)
-                        .opacity(configStore.isBallVisible ? 1.0 : 0.4)
-                    Text("悬浮球")
-                        .foregroundStyle(themeColors.swTextPrimary)
-                    Spacer()
-                    Image(systemName: configStore.isBallVisible ? "eye" : "eye.slash")
-                        .font(.system(size: 11))
-                        .foregroundStyle(themeColors.swTextTertiary)
-                }
-                .padding(.vertical, 7)
-                .padding(.horizontal, 10)
-                .background(
-                    RoundedRectangle(cornerRadius: 7)
-                        .fill(themeColors.swTextPrimary.opacity(ballHover ? 0.06 : 0))
-                )
-            }
-            .buttonStyle(.plain)
-            .onHover { hovering in ballHover = hovering }
-            .help(configStore.isBallVisible ? "隐藏悬浮球" : "显示悬浮球")
-            .padding(.horizontal, 8)
-            .padding(.vertical, 6)
         }
         .background(themeColors.swSidebarBackground)
     }
@@ -124,6 +92,8 @@ struct MainKanbanView: View {
         switch selectedTab {
         case .appConfig:
             AppConfigView()
+        case .ballPanel:
+            BallPanelConfigView()
         case .preferences:
             PreferencesView()
         }

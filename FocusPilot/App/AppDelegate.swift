@@ -421,56 +421,28 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
     // MARK: - Dock 图标
 
-    /// 程序化绘制 FC+图钉品牌 Dock 图标（蓝色渐变圆角矩形底 + 白色图钉 + 白色 FC）
+    /// Dock 图标：与悬浮球一致的 Enso 品牌 Logo（macOS 标准 padding）
     private func setupDockIcon() {
-        let iconSize: CGFloat = 128
+        let iconSize: CGFloat = 256
+        let padding: CGFloat = iconSize * 0.12  // macOS Dock 图标标准内边距
+        let logoSize: CGFloat = iconSize - padding * 2
+
+        // 使用当前主题 accent 色生成与悬浮球一致的品牌 Logo
+        let gradientColors = ConfigStore.shared.preferences.appTheme.ballGradientColors
+        let logo = FloatingBallView.brandLogo(size: logoSize, gradientColors: gradientColors)
+
         let icon = NSImage(size: NSSize(width: iconSize, height: iconSize))
         icon.lockFocus()
 
-        // 1. 圆角矩形背景（Dock 图标标准形状）
-        let bgRect = NSRect(x: 0, y: 0, width: iconSize, height: iconSize)
-        let bgPath = NSBezierPath(roundedRect: bgRect, xRadius: iconSize * 0.22, yRadius: iconSize * 0.22)
-        let gradient = NSGradient(
-            starting: NSColor(calibratedRed: 0.2, green: 0.5, blue: 0.9, alpha: 1.0),
-            ending: NSColor(calibratedRed: 0.1, green: 0.3, blue: 0.7, alpha: 1.0)
-        )
-        gradient?.draw(in: bgPath, angle: 90)
+        // 底部投影（增强 Dock 质感）
+        let shadowRect = NSRect(x: padding + 1, y: padding - 2, width: logoSize - 2, height: logoSize - 2)
+        let shadowPath = NSBezierPath(ovalIn: shadowRect)
+        NSColor.black.withAlphaComponent(0.25).setFill()
+        shadowPath.fill()
 
-        // 2. 上方白色图钉图标
-        let pinFontSize = iconSize * 0.35
-        let symbolConfig = NSImage.SymbolConfiguration(pointSize: pinFontSize, weight: .semibold)
-        if let pinSymbol = NSImage(systemSymbolName: "pin.fill", accessibilityDescription: nil),
-           let configured = pinSymbol.withSymbolConfiguration(symbolConfig) {
-            let tinted = NSImage(size: configured.size)
-            tinted.lockFocus()
-            NSColor.white.set()
-            let symbolRect = NSRect(origin: .zero, size: configured.size)
-            configured.draw(in: symbolRect)
-            symbolRect.fill(using: .sourceIn)
-            tinted.unlockFocus()
-
-            let pinX = (iconSize - tinted.size.width) / 2
-            let pinY = iconSize * 0.85 - tinted.size.height
-            tinted.draw(
-                in: NSRect(x: pinX, y: pinY, width: tinted.size.width, height: tinted.size.height),
-                from: .zero,
-                operation: .sourceOver,
-                fraction: 1.0
-            )
-        }
-
-        // 3. 下方白色 FC 文字
-        let fcFontSize = iconSize * 0.28
-        let fcFont = NSFont.systemFont(ofSize: fcFontSize, weight: .bold)
-        let fcAttributes: [NSAttributedString.Key: Any] = [
-            .font: fcFont,
-            .foregroundColor: NSColor.white,
-        ]
-        let fcString = NSAttributedString(string: "FC", attributes: fcAttributes)
-        let fcSize = fcString.size()
-        let fcX = (iconSize - fcSize.width) / 2
-        let fcY = iconSize * 0.05
-        fcString.draw(at: NSPoint(x: fcX, y: fcY))
+        // 居中绘制圆形 Logo
+        let logoRect = NSRect(x: padding, y: padding, width: logoSize, height: logoSize)
+        logo.draw(in: logoRect, from: .zero, operation: .sourceOver, fraction: 1.0)
 
         icon.unlockFocus()
 

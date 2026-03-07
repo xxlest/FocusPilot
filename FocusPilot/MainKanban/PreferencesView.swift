@@ -1,8 +1,8 @@
 import SwiftUI
 import ServiceManagement
 
-/// 偏好设置页面
-/// 快捷键配置、主题选择、外观设置、通用设置
+/// 个性化页面
+/// 快捷键配置、主题选择、通用设置
 struct PreferencesView: View {
     @ObservedObject private var configStore = ConfigStore.shared
 
@@ -14,7 +14,6 @@ struct PreferencesView: View {
             VStack(alignment: .leading, spacing: 28) {
                 hotkeySection
                 themeSection
-                ballAppearanceSection
                 generalSection
             }
             .padding()
@@ -138,80 +137,6 @@ struct PreferencesView: View {
         }
     }
 
-    // MARK: - 外观
-
-    private var ballAppearanceSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("外观")
-                .font(.headline)
-                .foregroundStyle(themeColors.swTextPrimary)
-
-            // 悬浮球大小滑块
-            HStack {
-                Text("悬浮球大小")
-                    .foregroundStyle(themeColors.swTextSecondary)
-                    .frame(width: 110, alignment: .leading)
-                Slider(
-                    value: $configStore.preferences.ballSize,
-                    in: Constants.Ball.minSize...Constants.Ball.maxSize,
-                    step: 1
-                )
-                .tint(themeColors.swAccent)
-                Text("\(Int(configStore.preferences.ballSize))px")
-                    .frame(width: 50)
-                    .foregroundStyle(themeColors.swTextTertiary)
-            }
-
-            // 悬浮球透明度滑块
-            HStack {
-                Text("悬浮球透明度")
-                    .foregroundStyle(themeColors.swTextSecondary)
-                    .frame(width: 110, alignment: .leading)
-                Slider(
-                    value: $configStore.preferences.ballOpacity,
-                    in: 0.3...1.0,
-                    step: 0.01
-                )
-                .tint(themeColors.swAccent)
-                Text("\(Int(round(configStore.preferences.ballOpacity * 100)))%")
-                    .frame(width: 50)
-                    .foregroundStyle(themeColors.swTextTertiary)
-            }
-
-            // 面板透明度滑块
-            HStack {
-                Text("面板透明度")
-                    .foregroundStyle(themeColors.swTextSecondary)
-                    .frame(width: 110, alignment: .leading)
-                Slider(
-                    value: $configStore.preferences.panelOpacity,
-                    in: 0.3...1.0,
-                    step: 0.01
-                )
-                .tint(themeColors.swAccent)
-                Text("\(Int(round(configStore.preferences.panelOpacity * 100)))%")
-                    .frame(width: 50)
-                    .foregroundStyle(themeColors.swTextTertiary)
-            }
-
-            // 面板弹出动画速度滑块
-            HStack {
-                Text("弹出动画")
-                    .foregroundStyle(themeColors.swTextSecondary)
-                    .frame(width: 110, alignment: .leading)
-                Slider(
-                    value: $configStore.preferences.panelAnimationSpeed,
-                    in: 0.1...0.6,
-                    step: 0.05
-                )
-                .tint(themeColors.swAccent)
-                Text("\(Int(configStore.preferences.panelAnimationSpeed * 1000))ms")
-                    .frame(width: 50)
-                    .foregroundStyle(themeColors.swTextTertiary)
-            }
-        }
-    }
-
     // MARK: - 通用设置
 
     private var generalSection: some View {
@@ -219,9 +144,6 @@ struct PreferencesView: View {
             Text("通用")
                 .font(.headline)
                 .foregroundStyle(themeColors.swTextPrimary)
-
-            Toggle("hover 离开后自动收起面板", isOn: $configStore.preferences.autoRetractOnHover)
-                .tint(themeColors.swAccent)
 
             // 开机自启动
             Toggle("开机自启动", isOn: $configStore.preferences.launchAtLogin)
