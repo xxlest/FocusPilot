@@ -60,7 +60,7 @@ FocusPilot/
 │   └── FloatingBallView.swift      # 毛玻璃圆球、拖拽吸附、hover 弹出、贴边半隐藏、呼吸动画
 ├── QuickPanel/
 │   ├── QuickPanelWindow.swift      # NSPanel, 层级 statusWindow+50, 动画弹出/收起, 钉住, resize
-│   ├── QuickPanelView.swift        # UI 骨架、状态管理、Tab 切换、reloadData 调度、HoverableRowView、FocusByTime 计时器栏
+│   ├── QuickPanelView.swift        # UI 骨架、状态管理、Tab 切换、reloadData 调度、HoverableRowView、FocusByTime 计时器栏（整栏可点击，栏内零按钮）
 │   ├── QuickPanelRowBuilder.swift  # App 行/窗口行构建、工具方法、SF Symbol 缓存（extension QuickPanelView）
 │   └── QuickPanelMenuHandler.swift # 右键菜单、@objc 事件处理、星号关注、App 关闭/启动（extension QuickPanelView）
 ├── MainKanban/
@@ -95,7 +95,8 @@ FocusPilot/
 - **Notion 风格主题系统**：AppTheme 枚举 8 种预设 → ThemeColors 9 色槽（ns* + sw* 双套，含 sidebarBackground），覆盖全 UI
 - **主题刷新链路**：PreferencesView → @Published → AppDelegate.applyPreferences → NSApp.appearance + quickPanelWindow.applyTheme + themeChanged 通知
 - **FocusByTime 番茄钟**：FocusTimerService 单例管理状态机（idle/running/paused × work/rest），通过 NotificationCenter 驱动 QuickPanel 底部计时器栏和 FloatingBall 进度环
-- **FocusByTime 弹窗全失焦关闭**：所有弹窗（编辑/工作完成/休息结束）均失焦自动关闭（NSApp.didResignActive → abortModal）。阶段完成弹窗关闭后，FocusPendingAction 保留待处理动作，计时器栏显示快捷操作按钮供用户回来后一键执行
+- **计时器栏整栏可点击**：栏内零按钮，NSClickGestureRecognizer 整栏点击，根据状态分发到编辑弹窗/操作面板/阶段转换弹窗；hover 时底色加深 + 手形光标；`buildRestGuideView()` 复用科学休息指南
+- **FocusByTime 弹窗全失焦关闭**：所有弹窗均失焦自动关闭（NSApp.didResignActive → abortModal）。阶段完成弹窗关闭后，FocusPendingAction 保留待处理动作，计时器栏显示 pending pill 徽章供用户点击重新弹出
 
 ### 配置迁移
 

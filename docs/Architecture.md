@@ -59,11 +59,11 @@ FocusPilot/
 - Constants：新增 `Keys.focusTimerSettings`、`Notifications.focusTimerChanged`/`focusWorkCompleted`/`focusRestCompleted`
 - FloatingBallView：新增 `CAShapeLayer` 进度环（工作=accent，休息=green），`handleFocusTimerChanged` 通知处理
 - FloatingBallView：品牌 Logo 重设计为十字准星图标（外环+内环+中心点+4 刻度线），accent 光晕阴影，hover 缩放反馈
-- QuickPanelView：底部新增 44px 计时器栏（timerBar），idle 状态显示时长摘要 + play.circle 按钮，运行状态显示阶段/倒计时/进度条 + 暂停/停止按钮
-- QuickPanelView：编辑弹窗含 +/- 按钮、推荐方案 radio 行（深度专注/常规节奏/轻度脑力），手动修改时自动取消 radio 选中
-- QuickPanelView：所有弹窗（编辑/工作完成/休息结束）失焦自动关闭（`didResignActiveNotification` → `abortModal`）
-- QuickPanelView：工作完成弹窗含科学休息指南 accessoryView（5 条建议），休息结束弹窗文案"⚡ 充电完毕"
-- QuickPanelView：阶段完成弹窗失焦关闭后，计时器栏显示 pending 状态（"工作完成 · 开始休息" / "休息结束 · 继续工作"）+ 快捷操作按钮
+- QuickPanelView：底部 48px 计时器栏（timerBar），整栏可点击（NSClickGestureRecognizer），栏内零按钮，hover 时底色加深 + 手形光标
+- QuickPanelView：计时器栏状态——idle 居中"▶  开始专注"，running 居中阶段+时间+进度条，paused 灰色调"已暂停"，pending pill 徽章
+- QuickPanelView：点击计时器栏根据状态分发：idle→编辑弹窗，running/paused→操作面板（暂停/继续+停止，休息中附加休息指南），pending→阶段转换弹窗
+- QuickPanelView：`buildRestGuideView()` 提取科学休息指南视图，复用于工作完成弹窗和休息中操作面板
+- QuickPanelView：所有弹窗失焦自动关闭（`didResignActiveNotification` → `abortModal`），阶段完成弹窗关闭后 pending 状态保留
 - Models.swift：默认白主题 accent 从蓝色(#2383E2)改为红色(#E53935)
 - AppDelegate：启动时自动展开快捷面板并钉住
 - 新增 `TimerEditHelper` 辅助类（`NSTextFieldDelegate`，处理 +/- 和推荐方案事件）

@@ -186,56 +186,10 @@ final class QuickPanelView: NSView {
     private var timerPhaseLabelTop: NSLayoutConstraint?
     private var timerPhaseLabelCenterY: NSLayoutConstraint?
 
-    /// idle 模式时长摘要标签（"工作 25min / 休息 5min"）
-    private let timerIdleLabel: NSTextField = {
-        let label = NSTextField(labelWithString: "")
-        label.font = .systemFont(ofSize: 11, weight: .medium)
-        label.textColor = ConfigStore.shared.currentThemeColors.nsTextSecondary
-        label.isEditable = false
-        label.isBezeled = false
-        label.drawsBackground = false
-        return label
-    }()
-
-    /// 编辑+开始按钮（弹出编辑对话框，可直接开始）
-    private lazy var timerEditBtn: NSButton = {
-        let btn = NSButton()
-        btn.bezelStyle = .recessed
-        btn.isBordered = false
-        btn.image = Self.cachedSymbol(name: "play.circle", size: 14, weight: .medium)
-        btn.contentTintColor = ConfigStore.shared.currentThemeColors.nsAccent
-        btn.target = self
-        btn.action = #selector(timerEditTapped)
-        btn.toolTip = "设置并开始"
-        return btn
-    }()
-
-    /// 开始/暂停按钮
-    private lazy var timerActionBtn: NSButton = {
-        let btn = NSButton()
-        btn.bezelStyle = .recessed
-        btn.isBordered = false
-        btn.image = Self.cachedSymbol(name: "play.fill", size: 14, weight: .medium)
-        btn.contentTintColor = ConfigStore.shared.currentThemeColors.nsAccent
-        btn.target = self
-        btn.action = #selector(timerActionTapped)
-        btn.toolTip = "开始"
-        return btn
-    }()
-
-    /// 重置按钮
-    private lazy var timerResetBtn: NSButton = {
-        let btn = NSButton()
-        btn.bezelStyle = .recessed
-        btn.isBordered = false
-        btn.image = Self.cachedSymbol(name: "stop.fill", size: 12, weight: .medium)
-        btn.contentTintColor = ConfigStore.shared.currentThemeColors.nsTextTertiary
-        btn.target = self
-        btn.action = #selector(timerResetTapped)
-        btn.toolTip = "重置"
-        btn.isHidden = true
-        return btn
-    }()
+    /// 计时器栏鼠标追踪区域（hover 效果）
+    private var timerBarTrackingArea: NSTrackingArea?
+    /// 计时器栏 hover 状态
+    private var isTimerBarHovered = false
 
     /// 滚动视图（包含内容区域）
     private let scrollView: NSScrollView = {
@@ -278,6 +232,9 @@ final class QuickPanelView: NSView {
         if let area = trackingArea {
             removeTrackingArea(area)
         }
+        if let area = timerBarTrackingArea {
+            timerBar.removeTrackingArea(area)
+        }
         NotificationCenter.default.removeObserver(self)
     }
 
@@ -313,10 +270,6 @@ final class QuickPanelView: NSView {
         timerBar.addSubview(timerTimeLabel)
         timerBar.addSubview(timerProgressBg)
         timerProgressBg.addSubview(timerProgressFill)
-        timerBar.addSubview(timerIdleLabel)
-        timerBar.addSubview(timerEditBtn)
-        timerBar.addSubview(timerActionBtn)
-        timerBar.addSubview(timerResetBtn)
 
         // Auto Layout
         topBar.translatesAutoresizingMaskIntoConstraints = false
@@ -336,10 +289,6 @@ final class QuickPanelView: NSView {
         timerTimeLabel.translatesAutoresizingMaskIntoConstraints = false
         timerProgressBg.translatesAutoresizingMaskIntoConstraints = false
         timerProgressFill.translatesAutoresizingMaskIntoConstraints = false
-        timerIdleLabel.translatesAutoresizingMaskIntoConstraints = false
-        timerEditBtn.translatesAutoresizingMaskIntoConstraints = false
-        timerActionBtn.translatesAutoresizingMaskIntoConstraints = false
-        timerResetBtn.translatesAutoresizingMaskIntoConstraints = false
 
         let topBarHeight: CGFloat = 32
 
@@ -407,51 +356,29 @@ final class QuickPanelView: NSView {
             timerBar.bottomAnchor.constraint(equalTo: bottomAnchor),
             timerBar.heightAnchor.constraint(equalToConstant: 48),
 
-            // 开始/暂停按钮（右侧）
-            timerActionBtn.trailingAnchor.constraint(equalTo: timerBar.trailingAnchor, constant: -8),
-            timerActionBtn.centerYAnchor.constraint(equalTo: timerBar.centerYAnchor),
-            timerActionBtn.widthAnchor.constraint(equalToConstant: 28),
-            timerActionBtn.heightAnchor.constraint(equalToConstant: 28),
-
-            // 重置按钮（开始按钮左侧）
-            timerResetBtn.trailingAnchor.constraint(equalTo: timerActionBtn.leadingAnchor, constant: -2),
-            timerResetBtn.centerYAnchor.constraint(equalTo: timerBar.centerYAnchor),
-            timerResetBtn.widthAnchor.constraint(equalToConstant: 24),
-            timerResetBtn.heightAnchor.constraint(equalToConstant: 24),
-
             // 阶段标签徽章背景（pending 时显示，包裹 phaseLabel）
             timerPhaseBadge.leadingAnchor.constraint(equalTo: timerPhaseLabel.leadingAnchor, constant: -8),
             timerPhaseBadge.trailingAnchor.constraint(equalTo: timerPhaseLabel.trailingAnchor, constant: 8),
             timerPhaseBadge.topAnchor.constraint(equalTo: timerPhaseLabel.topAnchor, constant: -3),
             timerPhaseBadge.bottomAnchor.constraint(equalTo: timerPhaseLabel.bottomAnchor, constant: 3),
 
-            // 阶段标签（左侧，垂直约束在外部管理）
-            timerPhaseLabel.leadingAnchor.constraint(equalTo: timerBar.leadingAnchor, constant: 12),
+            // 阶段标签（水平居中，垂直约束在外部管理）
+            timerPhaseLabel.centerXAnchor.constraint(equalTo: timerBar.centerXAnchor),
 
-            // 时间显示（阶段标签右侧）
-            timerTimeLabel.leadingAnchor.constraint(equalTo: timerPhaseLabel.trailingAnchor, constant: 6),
-            timerTimeLabel.centerYAnchor.constraint(equalTo: timerPhaseLabel.centerYAnchor),
+            // 时间显示（水平居中，阶段标签下方）
+            timerTimeLabel.centerXAnchor.constraint(equalTo: timerBar.centerXAnchor),
+            timerTimeLabel.topAnchor.constraint(equalTo: timerPhaseLabel.bottomAnchor, constant: 1),
 
-            // 进度条（第二行）
-            timerProgressBg.leadingAnchor.constraint(equalTo: timerBar.leadingAnchor, constant: 12),
-            timerProgressBg.trailingAnchor.constraint(equalTo: timerResetBtn.leadingAnchor, constant: -8),
-            timerProgressBg.bottomAnchor.constraint(equalTo: timerBar.bottomAnchor, constant: -8),
+            // 进度条（底部，左右留边距居中）
+            timerProgressBg.leadingAnchor.constraint(equalTo: timerBar.leadingAnchor, constant: 16),
+            timerProgressBg.trailingAnchor.constraint(equalTo: timerBar.trailingAnchor, constant: -16),
+            timerProgressBg.bottomAnchor.constraint(equalTo: timerBar.bottomAnchor, constant: -4),
             timerProgressBg.heightAnchor.constraint(equalToConstant: 3),
 
             // 进度条填充
             timerProgressFill.leadingAnchor.constraint(equalTo: timerProgressBg.leadingAnchor),
             timerProgressFill.topAnchor.constraint(equalTo: timerProgressBg.topAnchor),
             timerProgressFill.bottomAnchor.constraint(equalTo: timerProgressBg.bottomAnchor),
-
-            // idle 模式时长摘要标签（居中）
-            timerIdleLabel.leadingAnchor.constraint(equalTo: timerBar.leadingAnchor, constant: 12),
-            timerIdleLabel.centerYAnchor.constraint(equalTo: timerBar.centerYAnchor),
-
-            // 编辑+开始按钮（右侧，idle 时替代 timerActionBtn 位置）
-            timerEditBtn.trailingAnchor.constraint(equalTo: timerBar.trailingAnchor, constant: -8),
-            timerEditBtn.centerYAnchor.constraint(equalTo: timerBar.centerYAnchor),
-            timerEditBtn.widthAnchor.constraint(equalToConstant: 28),
-            timerEditBtn.heightAnchor.constraint(equalToConstant: 28),
         ])
 
         // 进度条填充宽度约束（初始为 0）
@@ -459,13 +386,27 @@ final class QuickPanelView: NSView {
         fillWidth.isActive = true
         timerProgressFillWidth = fillWidth
 
-        // 阶段标签垂直约束（running 用 top, pending 用 centerY）
-        let topC = timerPhaseLabel.topAnchor.constraint(equalTo: timerBar.topAnchor, constant: 6)
-        topC.isActive = true
+        // 阶段标签垂直约束（running/paused 用 top, idle/pending 用 centerY）
+        let topC = timerPhaseLabel.topAnchor.constraint(equalTo: timerBar.topAnchor, constant: 5)
+        topC.isActive = false
         timerPhaseLabelTop = topC
         let centerC = timerPhaseLabel.centerYAnchor.constraint(equalTo: timerBar.centerYAnchor)
-        centerC.isActive = false
+        centerC.isActive = true
         timerPhaseLabelCenterY = centerC
+
+        // 计时器栏点击手势（整栏可点击）
+        let timerBarClick = NSClickGestureRecognizer(target: self, action: #selector(handleTimerBarTapped))
+        timerBar.addGestureRecognizer(timerBarClick)
+
+        // 计时器栏 hover 追踪
+        let timerTracking = NSTrackingArea(
+            rect: .zero,
+            options: [.mouseEnteredAndExited, .activeAlways, .inVisibleRect],
+            owner: self,
+            userInfo: nil
+        )
+        timerBar.addTrackingArea(timerTracking)
+        timerBarTrackingArea = timerTracking
 
         // 鼠标追踪
         updateTrackingArea()
@@ -500,6 +441,12 @@ final class QuickPanelView: NSView {
     }
 
     override func mouseEntered(with event: NSEvent) {
+        // 计时器栏 hover
+        if event.trackingArea === timerBarTrackingArea {
+            isTimerBarHovered = true
+            updateTimerBarHover()
+            return
+        }
         if let panelWindow = window as? QuickPanelWindow {
             // 鼠标进入面板：取消收起计时器
             panelWindow.cancelDismissTimer()
@@ -509,6 +456,12 @@ final class QuickPanelView: NSView {
     }
 
     override func mouseExited(with event: NSEvent) {
+        // 计时器栏 hover 结束
+        if event.trackingArea === timerBarTrackingArea {
+            isTimerBarHovered = false
+            updateTimerBarHover()
+            return
+        }
         // 钉住模式下不触发收起
         if let panelWindow = window as? QuickPanelWindow, panelWindow.isPanelPinned {
             return
@@ -598,22 +551,15 @@ final class QuickPanelView: NSView {
         let isIdle = timer.status == .idle
         let hasPending = timer.pendingAction != .none
 
-        // pending 状态：idle 但有待处理动作（弹窗被失焦自动关闭）
+        // pending 状态：弹窗被失焦自动关闭，等待用户点击栏确认
         if hasPending {
-            // 隐藏编辑按钮和常规 idle 控件
-            timerIdleLabel.isHidden = true
-            timerEditBtn.isHidden = true
             timerProgressBg.isHidden = true
             timerProgressFill.isHidden = true
             timerTimeLabel.isHidden = true
-            timerResetBtn.isHidden = false
-
-            // 显示 pending 状态文案和快捷操作按钮（pill 徽章，垂直居中）
             timerPhaseLabel.isHidden = false
             timerPhaseLabel.font = .systemFont(ofSize: 11, weight: .semibold)
             timerPhaseLabelTop?.isActive = false
             timerPhaseLabelCenterY?.isActive = true
-            timerActionBtn.isHidden = false
             timerPhaseBadge.isHidden = false
 
             switch timer.pendingAction {
@@ -622,9 +568,6 @@ final class QuickPanelView: NSView {
                 timerPhaseLabel.stringValue = "工作完成 · 开始休息"
                 timerPhaseLabel.textColor = badgeColor
                 timerPhaseBadge.layer?.backgroundColor = badgeColor.withAlphaComponent(0.15).cgColor
-                timerActionBtn.image = Self.cachedSymbol(name: "cup.and.saucer.fill", size: 14, weight: .medium)
-                timerActionBtn.contentTintColor = badgeColor
-                timerActionBtn.toolTip = "开始休息"
                 timerBar.layer?.backgroundColor = colors.nsTextPrimary.withAlphaComponent(0.08).cgColor
                 bottomSeparator.layer?.backgroundColor = badgeColor.withAlphaComponent(0.3).cgColor
             case .startWork:
@@ -632,9 +575,6 @@ final class QuickPanelView: NSView {
                 timerPhaseLabel.stringValue = "休息结束 · 继续工作"
                 timerPhaseLabel.textColor = badgeColor
                 timerPhaseBadge.layer?.backgroundColor = badgeColor.withAlphaComponent(0.15).cgColor
-                timerActionBtn.image = Self.cachedSymbol(name: "play.fill", size: 14, weight: .medium)
-                timerActionBtn.contentTintColor = badgeColor
-                timerActionBtn.toolTip = "继续工作"
                 timerBar.layer?.backgroundColor = colors.nsTextPrimary.withAlphaComponent(0.08).cgColor
                 bottomSeparator.layer?.backgroundColor = badgeColor.withAlphaComponent(0.3).cgColor
             case .none:
@@ -643,88 +583,102 @@ final class QuickPanelView: NSView {
             return
         }
 
-        // 非 pending 状态：隐藏徽章，恢复标签字重和垂直位置
         timerPhaseBadge.isHidden = true
-        timerPhaseLabel.font = .systemFont(ofSize: 11, weight: .medium)
-        timerPhaseLabelCenterY?.isActive = false
-        timerPhaseLabelTop?.isActive = true
+        timerPhaseLabel.isHidden = false
 
-        // idle 模式：显示时长摘要和编辑+开始按钮
-        timerIdleLabel.isHidden = !isIdle
-        timerEditBtn.isHidden = !isIdle
-
-        // 运行模式：显示阶段、时间、进度条、暂停/继续按钮
-        timerPhaseLabel.isHidden = isIdle
-        timerTimeLabel.isHidden = isIdle
-        timerProgressBg.isHidden = isIdle
-        timerProgressFill.isHidden = isIdle
-        timerResetBtn.isHidden = isIdle
-        timerActionBtn.isHidden = isIdle
-
-        // 计时器栏大面积颜色变化（工作=accent 底色，休息=绿色底色，idle=透明）
         if isIdle {
+            // idle：居中显示 "▶  开始专注"
+            timerPhaseLabel.stringValue = "▶  开始专注"
+            timerPhaseLabel.font = .systemFont(ofSize: 12, weight: .medium)
+            timerPhaseLabel.textColor = colors.nsAccent
+            timerPhaseLabelTop?.isActive = false
+            timerPhaseLabelCenterY?.isActive = true
+            timerTimeLabel.isHidden = true
+            timerProgressBg.isHidden = true
+            timerProgressFill.isHidden = true
             timerBar.layer?.backgroundColor = colors.nsTextPrimary.withAlphaComponent(0.08).cgColor
             bottomSeparator.layer?.backgroundColor = colors.nsSeparator.withAlphaComponent(0.9).cgColor
-        } else if timer.phase == .work {
-            timerBar.layer?.backgroundColor = colors.nsAccent.withAlphaComponent(0.12).cgColor
-            bottomSeparator.layer?.backgroundColor = colors.nsAccent.withAlphaComponent(0.3).cgColor
         } else {
-            timerBar.layer?.backgroundColor = NSColor.systemGreen.withAlphaComponent(0.12).cgColor
-            bottomSeparator.layer?.backgroundColor = NSColor.systemGreen.withAlphaComponent(0.3).cgColor
-        }
+            // running / paused：阶段标签 + 居中时间 + 进度条
+            let isPaused = timer.status == .paused
+            timerPhaseLabel.font = .systemFont(ofSize: 11, weight: .medium)
+            timerPhaseLabelCenterY?.isActive = false
+            timerPhaseLabelTop?.isActive = true
+            timerTimeLabel.isHidden = false
+            timerProgressBg.isHidden = false
+            timerProgressFill.isHidden = false
 
-        if isIdle {
-            // 更新时长摘要
-            timerIdleLabel.stringValue = "工作 \(timer.workMinutes)min / 休息 \(timer.restMinutes)min"
-        } else {
-            // 阶段标签
-            timerPhaseLabel.stringValue = timer.phaseLabel
-            let phaseColor = timer.phase == .work ? colors.nsAccent : NSColor.systemGreen
-            timerPhaseLabel.textColor = phaseColor
+            if isPaused {
+                timerPhaseLabel.stringValue = "已暂停"
+                timerPhaseLabel.textColor = colors.nsTextTertiary
+                timerTimeLabel.textColor = colors.nsTextTertiary
+                timerProgressFill.layer?.backgroundColor = colors.nsTextTertiary.cgColor
+                timerBar.layer?.backgroundColor = colors.nsTextPrimary.withAlphaComponent(0.08).cgColor
+                bottomSeparator.layer?.backgroundColor = colors.nsSeparator.withAlphaComponent(0.9).cgColor
+            } else {
+                let phaseColor = timer.phase == .work ? colors.nsAccent : NSColor.systemGreen
+                timerPhaseLabel.stringValue = timer.phaseLabel
+                timerPhaseLabel.textColor = phaseColor
+                timerTimeLabel.textColor = colors.nsTextPrimary
+                timerProgressFill.layer?.backgroundColor = phaseColor.cgColor
+                if timer.phase == .work {
+                    timerBar.layer?.backgroundColor = colors.nsAccent.withAlphaComponent(0.12).cgColor
+                    bottomSeparator.layer?.backgroundColor = colors.nsAccent.withAlphaComponent(0.3).cgColor
+                } else {
+                    timerBar.layer?.backgroundColor = NSColor.systemGreen.withAlphaComponent(0.12).cgColor
+                    bottomSeparator.layer?.backgroundColor = NSColor.systemGreen.withAlphaComponent(0.3).cgColor
+                }
+            }
 
-            // 时间（大号醒目）
             timerTimeLabel.stringValue = timer.displayTime
-            timerTimeLabel.textColor = colors.nsTextPrimary
-
-            // 进度条
-            timerProgressFill.layer?.backgroundColor = phaseColor.cgColor
             let progressWidth = timerProgressBg.bounds.width * timer.progress
             timerProgressFillWidth?.constant = max(0, progressWidth)
             timerProgressBg.layoutSubtreeIfNeeded()
+        }
+    }
 
-            // 暂停/继续按钮
-            if timer.status == .running {
-                timerActionBtn.image = Self.cachedSymbol(name: "pause.fill", size: 14, weight: .medium)
-                timerActionBtn.contentTintColor = colors.nsTextSecondary
-                timerActionBtn.toolTip = "暂停"
-            } else {
-                timerActionBtn.image = Self.cachedSymbol(name: "play.fill", size: 14, weight: .medium)
-                timerActionBtn.contentTintColor = colors.nsAccent
-                timerActionBtn.toolTip = "继续"
+    // MARK: - 计时器栏 hover 效果
+
+    private func updateTimerBarHover() {
+        let colors = ConfigStore.shared.currentThemeColors
+        let timer = FocusTimerService.shared
+
+        if isTimerBarHovered {
+            NSAnimationContext.runAnimationGroup { ctx in
+                ctx.duration = Constants.Design.Anim.micro
+                let isNeutral = timer.status == .idle || timer.pendingAction != .none || timer.status == .paused
+                if isNeutral {
+                    timerBar.animator().layer?.backgroundColor = colors.nsTextPrimary.withAlphaComponent(0.14).cgColor
+                } else if timer.phase == .work {
+                    timerBar.animator().layer?.backgroundColor = colors.nsAccent.withAlphaComponent(0.18).cgColor
+                } else {
+                    timerBar.animator().layer?.backgroundColor = NSColor.systemGreen.withAlphaComponent(0.18).cgColor
+                }
             }
+            NSCursor.pointingHand.push()
+        } else {
+            NSCursor.pop()
+            updateTimerUI()
         }
     }
 
     // MARK: - FocusByTime 对话框
 
-    /// 移除 NSAlert 内置图标视图，消除顶部空白区域
-    private func removeAlertIcon(_ alert: NSAlert) {
-        alert.layout()
-        func hideImageView(in view: NSView) {
-            for subview in view.subviews {
-                if let iv = subview as? NSImageView {
-                    iv.isHidden = true
-                    iv.removeFromSuperview()
-                    return
-                }
-                hideImageView(in: subview)
-            }
+    /// 弹窗预处理：层级置顶 + 压缩图标空白
+    /// 所有从面板弹出的 NSAlert 必须调用此方法，确保不被面板遮挡
+    /// 弹窗前：临时降低面板层级，让弹窗自然显示在面板前面
+    /// 所有从面板弹出的 NSAlert 必须调用此方法，runModal 结束后调用 restoreAfterAlert
+    private func prepareAlert(_ alert: NSAlert) {
+        if let panelWindow = self.window as? QuickPanelWindow {
+            panelWindow.level = .normal
         }
-        if let contentView = alert.window.contentView {
-            hideImageView(in: contentView)
+    }
+
+    /// 弹窗后：恢复面板层级
+    private func restoreAfterAlert() {
+        if let panelWindow = self.window as? QuickPanelWindow {
+            panelWindow.level = NSWindow.Level(rawValue: Int(Constants.quickPanelLevel))
         }
-        // 重新布局以回收图标占用的空间
-        alert.layout()
     }
 
     @objc private func handleWorkCompleted() {
@@ -732,68 +686,19 @@ final class QuickPanelView: NSView {
             NSApp.activate(ignoringOtherApps: true)
             let timer = FocusTimerService.shared
             let alert = NSAlert()
-            alert.icon = NSImage(size: NSSize(width: 1, height: 1))
+
             alert.messageText = "工作完成！"
             alert.informativeText = "已专注 \(timer.workMinutes) 分钟，休息 \(timer.restMinutes) 分钟吧\n休息是为了更高效地专注"
             alert.alertStyle = .informational
             alert.addButton(withTitle: "开始休息")
             alert.addButton(withTitle: "直接结束")
 
-            // 主按钮着色（绿色 = 休息色）
             if let primaryBtn = alert.buttons.first {
                 primaryBtn.bezelColor = NSColor.systemGreen
             }
 
-            // 科学休息指南 accessoryView（前两条重点恢复 semibold + labelColor，后三条建议 regular + secondaryLabelColor）
-            let mustDoItems: [(String, String)] = [
-                ("👀", "闭眼 1 分钟，看远处 20 秒"),
-                ("🧘", "深呼吸 5 次（吸 4s → 屏 2s → 呼 6s）"),
-            ]
-            let optionalItems: [(String, String)] = [
-                ("🚶", "站起来走动，转头耸肩拉伸"),
-                ("💧", "喝杯水，离开屏幕看看窗外"),
-                ("⛔", "别刷短视频、别看社交消息"),
-            ]
-            let lineHeight: CGFloat = 20
-            let padding: CGFloat = 10
-            let titleH: CGFloat = 18
-            let groupGap: CGFloat = 8
-            let totalItems = mustDoItems.count + optionalItems.count
-            let containerH = titleH + CGFloat(totalItems) * lineHeight + groupGap + padding * 2 + 4
-            let container = NSView(frame: NSRect(x: 0, y: 0, width: 280, height: containerH))
-            container.wantsLayer = true
-            container.layer?.backgroundColor = NSColor.textColor.withAlphaComponent(0.04).cgColor
-            container.layer?.cornerRadius = 8
-
-            let title = NSTextField(labelWithString: "科学休息指南")
-            title.font = .systemFont(ofSize: 11, weight: .semibold)
-            title.textColor = .secondaryLabelColor
-            title.frame = NSRect(x: padding, y: containerH - padding - titleH, width: 260, height: titleH)
-            container.addSubview(title)
-
-            // 重点恢复项（semibold + labelColor）
-            for (i, item) in mustDoItems.enumerated() {
-                let y = containerH - padding - titleH - 4 - CGFloat(i + 1) * lineHeight
-                let label = NSTextField(labelWithString: "\(item.0)  \(item.1)")
-                label.font = .systemFont(ofSize: 12, weight: .semibold)
-                label.textColor = .labelColor
-                label.frame = NSRect(x: padding + 2, y: y, width: 260, height: lineHeight)
-                container.addSubview(label)
-            }
-
-            // 建议项（regular + secondaryLabelColor，上方留 8px 间距分组）
-            let optionalBaseY = containerH - padding - titleH - 4 - CGFloat(mustDoItems.count) * lineHeight - groupGap
-            for (i, item) in optionalItems.enumerated() {
-                let y = optionalBaseY - CGFloat(i + 1) * lineHeight
-                let label = NSTextField(labelWithString: "\(item.0)  \(item.1)")
-                label.font = .systemFont(ofSize: 12)
-                label.textColor = .secondaryLabelColor
-                label.frame = NSRect(x: padding + 2, y: y, width: 260, height: lineHeight)
-                container.addSubview(label)
-            }
-
-            alert.accessoryView = container
-            self.removeAlertIcon(alert)
+            alert.accessoryView = self.buildRestGuideView()
+            self.prepareAlert(alert)
 
             // 失焦自动关闭（pendingAction 保留，计时器栏提供快捷操作）
             var resignObserver: NSObjectProtocol?
@@ -810,6 +715,7 @@ final class QuickPanelView: NSView {
             if let observer = resignObserver {
                 NotificationCenter.default.removeObserver(observer)
             }
+            self.restoreAfterAlert()
 
             if result == .alertFirstButtonReturn {
                 timer.startRestPhase()
@@ -828,7 +734,7 @@ final class QuickPanelView: NSView {
             NSApp.activate(ignoringOtherApps: true)
             let timer = FocusTimerService.shared
             let alert = NSAlert()
-            alert.icon = NSImage(size: NSSize(width: 1, height: 1))
+
             alert.messageText = "充电完毕"
             alert.informativeText = "准备好下一轮 \(timer.workMinutes) 分钟专注了吗？"
             alert.alertStyle = .informational
@@ -841,7 +747,7 @@ final class QuickPanelView: NSView {
                 primaryBtn.bezelColor = accentColor
             }
 
-            self.removeAlertIcon(alert)
+            self.prepareAlert(alert)
 
             // 失焦自动关闭（pendingAction 保留，计时器栏提供快捷操作）
             var resignObserver: NSObjectProtocol?
@@ -858,6 +764,7 @@ final class QuickPanelView: NSView {
             if let observer = resignObserver {
                 NotificationCenter.default.removeObserver(observer)
             }
+            self.restoreAfterAlert()
 
             if result == .alertFirstButtonReturn {
                 timer.start()
@@ -869,12 +776,12 @@ final class QuickPanelView: NSView {
         }
     }
 
-    // MARK: - FocusByTime 按钮事件
+    // MARK: - FocusByTime 计时器栏点击
 
-    @objc private func timerActionTapped() {
+    @objc private func handleTimerBarTapped() {
         let timer = FocusTimerService.shared
 
-        // 优先处理 pending 动作：保持当前 pending UI 状态，重新弹出完整对话框
+        // 优先处理 pending 动作
         switch timer.pendingAction {
         case .startRest:
             handleWorkCompleted()
@@ -888,53 +795,129 @@ final class QuickPanelView: NSView {
 
         switch timer.status {
         case .idle:
-            break  // idle 时此按钮隐藏，不可达
-        case .running:
-            timer.pause()
-        case .paused:
-            timer.resume()
+            timerEditTapped()
+        case .running, .paused:
+            showRunningActionSheet()
         }
     }
 
-    @objc private func timerResetTapped() {
+    /// 运行/暂停中点击栏 → 弹出操作面板（暂停/继续 + 停止，休息时附加休息指南）
+    private func showRunningActionSheet() {
         let timer = FocusTimerService.shared
+        let isPaused = timer.status == .paused
+        let isRest = timer.phase == .rest
 
-        NSApp.activate(ignoringOtherApps: true)
+        DispatchQueue.main.async {
+            NSApp.activate(ignoringOtherApps: true)
 
-        let alert = NSAlert()
-        alert.icon = NSImage(size: NSSize(width: 1, height: 1))
-        alert.messageText = "停止计时"
-        alert.informativeText = "确定要停止当前计时吗？进度将被重置。"
-        alert.alertStyle = .warning
-        alert.addButton(withTitle: "停止")
-        alert.addButton(withTitle: "取消")
+            let alert = NSAlert()
+            let totalDisplay = String(format: "%02d:%02d", timer.totalSeconds / 60, timer.totalSeconds % 60)
 
-        // 停止按钮着色（红色警示）
-        if let stopBtn = alert.buttons.first {
-            stopBtn.bezelColor = NSColor.systemRed
+            if isPaused {
+                alert.messageText = "已暂停 · \(timer.displayTime) / \(totalDisplay)"
+                alert.informativeText = "准备好了就继续"
+            } else if isRest {
+                alert.messageText = "休息中 · \(timer.displayTime) / \(totalDisplay)"
+                alert.informativeText = "让身体和大脑充分恢复"
+            } else {
+                alert.messageText = "工作中 · \(timer.displayTime) / \(totalDisplay)"
+                alert.informativeText = "保持专注，你做得很好"
+            }
+            alert.alertStyle = .informational
+
+            if isPaused {
+                alert.addButton(withTitle: "继续")
+                if let primaryBtn = alert.buttons.first {
+                    primaryBtn.bezelColor = ConfigStore.shared.currentThemeColors.nsAccent
+                }
+            } else {
+                alert.addButton(withTitle: "暂停")
+            }
+            alert.addButton(withTitle: "停止")
+
+            // 休息中附加休息指南
+            if isRest {
+                alert.accessoryView = self.buildRestGuideView()
+            }
+
+            self.prepareAlert(alert)
+
+            var resignObserver: NSObjectProtocol?
+            resignObserver = NotificationCenter.default.addObserver(
+                forName: NSApplication.didResignActiveNotification,
+                object: nil, queue: .main
+            ) { _ in
+                NSApp.abortModal()
+                alert.window.close()
+            }
+
+            let result = alert.runModal()
+
+            if let observer = resignObserver {
+                NotificationCenter.default.removeObserver(observer)
+            }
+            self.restoreAfterAlert()
+
+            if result == .alertFirstButtonReturn {
+                if isPaused {
+                    timer.resume()
+                } else {
+                    timer.pause()
+                }
+            } else if result == .alertSecondButtonReturn {
+                timer.reset()
+            }
+        }
+    }
+
+    /// 构建科学休息指南视图（复用于工作完成弹窗和休息中查看弹窗）
+    private func buildRestGuideView() -> NSView {
+        let mustDoItems: [(String, String)] = [
+            ("\u{1f440}", "闭眼 1 分钟，看远处 20 秒"),
+            ("\u{1f9d8}", "深呼吸 5 次（吸 4s \u{2192} 屏 2s \u{2192} 呼 6s）"),
+        ]
+        let optionalItems: [(String, String)] = [
+            ("\u{1f6b6}", "站起来走动，转头耸肩拉伸"),
+            ("\u{1f4a7}", "喝杯水，离开屏幕看看窗外"),
+            ("\u{26d4}", "别刷短视频、别看社交消息"),
+        ]
+        let lineHeight: CGFloat = 20
+        let padding: CGFloat = 10
+        let titleH: CGFloat = 18
+        let groupGap: CGFloat = 8
+        let totalItems = mustDoItems.count + optionalItems.count
+        let containerH = titleH + CGFloat(totalItems) * lineHeight + groupGap + padding * 2 + 4
+        let container = NSView(frame: NSRect(x: 0, y: 0, width: 280, height: containerH))
+        container.wantsLayer = true
+        container.layer?.backgroundColor = NSColor.textColor.withAlphaComponent(0.04).cgColor
+        container.layer?.cornerRadius = 8
+
+        let title = NSTextField(labelWithString: "科学休息指南")
+        title.font = .systemFont(ofSize: 11, weight: .semibold)
+        title.textColor = .secondaryLabelColor
+        title.frame = NSRect(x: padding, y: containerH - padding - titleH, width: 260, height: titleH)
+        container.addSubview(title)
+
+        for (i, item) in mustDoItems.enumerated() {
+            let y = containerH - padding - titleH - 4 - CGFloat(i + 1) * lineHeight
+            let label = NSTextField(labelWithString: "\(item.0)  \(item.1)")
+            label.font = .systemFont(ofSize: 12, weight: .semibold)
+            label.textColor = .labelColor
+            label.frame = NSRect(x: padding + 2, y: y, width: 260, height: lineHeight)
+            container.addSubview(label)
         }
 
-        removeAlertIcon(alert)
-
-        // 失焦自动关闭（等同取消，不执行停止操作）
-        var resignObserver: NSObjectProtocol?
-        resignObserver = NotificationCenter.default.addObserver(
-            forName: NSApplication.didResignActiveNotification,
-            object: nil, queue: .main
-        ) { _ in
-            NSApp.abortModal()
-            alert.window.close()
+        let optionalBaseY = containerH - padding - titleH - 4 - CGFloat(mustDoItems.count) * lineHeight - groupGap
+        for (i, item) in optionalItems.enumerated() {
+            let y = optionalBaseY - CGFloat(i + 1) * lineHeight
+            let label = NSTextField(labelWithString: "\(item.0)  \(item.1)")
+            label.font = .systemFont(ofSize: 12)
+            label.textColor = .secondaryLabelColor
+            label.frame = NSRect(x: padding + 2, y: y, width: 260, height: lineHeight)
+            container.addSubview(label)
         }
 
-        let result = alert.runModal()
-
-        if let observer = resignObserver {
-            NotificationCenter.default.removeObserver(observer)
-        }
-
-        if result == .alertFirstButtonReturn {
-            timer.reset()
-        }
+        return container
     }
 
     @objc private func timerEditTapped() {
@@ -947,109 +930,134 @@ final class QuickPanelView: NSView {
             NSApp.activate(ignoringOtherApps: true)
     
             let alert = NSAlert()
-            alert.icon = NSImage(size: NSSize(width: 1, height: 1))
-            alert.messageText = "选择专注方案"
-            alert.informativeText = "选择适合当前任务的节奏"
+
+            alert.messageText = "开始专注"
+            alert.informativeText = "选择匹配当前任务的节奏，让每段时间都有效"
             alert.alertStyle = .informational
             alert.addButton(withTitle: "开始")
             let cancelBtn = alert.addButton(withTitle: "取消")
             cancelBtn.keyEquivalent = "\u{1b}"
-    
+
             // 主按钮着色（accent 蓝）
             let colors = ConfigStore.shared.currentThemeColors
             if let primaryBtn = alert.buttons.first {
                 primaryBtn.bezelColor = colors.nsAccent
             }
-    
-            // 构建 accessory view（推荐方案 + 自定义输入）
+
+            // 构建 accessory view（推荐方案 + 自定义输入 + ⓘ 提示）
             let presets: [(String, Int, Int)] = [
                 ("深度专注", 25, 5),
                 ("常规节奏", 35, 7),
                 ("轻度脑力", 50, 10),
             ]
-            let presetRowH: CGFloat = 26
+            let containerWidth: CGFloat = 300
+            let presetRowH: CGFloat = 24
             let presetsH = CGFloat(presets.count) * presetRowH
-            let separatorH: CGFloat = 20
-            let customRowH: CGFloat = 28
-            let totalH = presetsH + separatorH + customRowH + 8
-            let container = NSView(frame: NSRect(x: 0, y: 0, width: 280, height: totalH))
-    
-            // --- 自定义输入区域（底部，紧凑单行：工作 [−] 25 [+]   休息 [−] 5 [+]）---
-            let customY: CGFloat = 0
-            let stepperSize: CGFloat = 24
-            let stepperFont = NSFont.systemFont(ofSize: 14, weight: .medium)
-    
+            let sepH: CGFloat = 16
+            let customRowH: CGFloat = 26
+            let infoRowH: CGFloat = 18
+            let totalH = presetsH + sepH + customRowH + 6 + infoRowH
+            let container = NSView(frame: NSRect(x: 0, y: 0, width: containerWidth, height: totalH))
+
+            // --- 底部 ⓘ 了解更多（hover 弹出 Popover）---
+            let accentColor = colors.nsAccent
+            let tipTitleColor = accentColor.blended(withFraction: 0.35, of: .secondaryLabelColor) ?? accentColor
+            let tipTitleFont = NSFont.systemFont(ofSize: 11, weight: .semibold)
+            let tipBodyFont = NSFont.systemFont(ofSize: 11)
+            let tipBodyColor = NSColor.secondaryLabelColor
+            let tA: [NSAttributedString.Key: Any] = [.font: tipTitleFont, .foregroundColor: tipTitleColor]
+            let bA: [NSAttributedString.Key: Any] = [.font: tipBodyFont, .foregroundColor: tipBodyColor]
+
+            let popContent = NSMutableAttributedString()
+            popContent.append(NSAttributedString(string: "📋 方案说明\n\n", attributes: tA))
+            popContent.append(NSAttributedString(string: "深度专注（25+5）\n", attributes: tA))
+            popContent.append(NSAttributedString(string: "经典番茄钟节奏。适合需要高度集中的任务，如编码调试、论文写作、方案设计、深度阅读。\n\n", attributes: bA))
+            popContent.append(NSAttributedString(string: "常规节奏（35+7）\n", attributes: tA))
+            popContent.append(NSAttributedString(string: "平衡专注与疲劳恢复。适合日常工作节奏，如邮件处理、文档整理、会议纪要、代码审查。\n\n", attributes: bA))
+            popContent.append(NSAttributedString(string: "轻度脑力（50+10）\n", attributes: tA))
+            popContent.append(NSAttributedString(string: "适合低认知负荷的长周期任务，如资料浏览、数据录入、素材收集、笔记归档。\n\n", attributes: bA))
+            popContent.append(NSAttributedString(string: "🧠 为什么要定时休息？\n", attributes: tA))
+            popContent.append(NSAttributedString(string: "前额叶皮层主导专注与决策，持续 20-50 分钟后活力自然衰退。定时休息让它恢复，硬撑只会陷入「伪工作」。\n\n", attributes: bA))
+            popContent.append(NSAttributedString(string: "⚡ 为什么不能过度消耗？\n", attributes: tA))
+            popContent.append(NSAttributedString(string: "透支会拖慢前额叶的恢复节奏，一次硬撑的代价往往是半天的低效。", attributes: bA))
+
+            let hoverInfo = HoverInfoView(
+                frame: NSRect(x: 0, y: 0, width: containerWidth, height: infoRowH),
+                text: "ⓘ 了解各方案的适用场景与科学依据",
+                popoverAttributedContent: popContent
+            )
+            container.addSubview(hoverInfo)
+
+            // --- 自定义输入区域（紧凑单行）---
+            let customY: CGFloat = infoRowH + 6
+            let stepperSize: CGFloat = 22
+            let stepperFont = NSFont.systemFont(ofSize: 12, weight: .medium)
+
             let workLabel = NSTextField(labelWithString: "工作")
-            workLabel.font = .systemFont(ofSize: 12)
-            workLabel.frame = NSRect(x: 2, y: customY, width: 30, height: customRowH)
+            workLabel.font = .systemFont(ofSize: 11)
+            workLabel.frame = NSRect(x: 2, y: customY, width: 28, height: customRowH)
             container.addSubview(workLabel)
-    
-            let workMinusBtn = NSButton(frame: NSRect(x: 34, y: customY + 2, width: stepperSize, height: stepperSize))
+
+            let workMinusBtn = NSButton(frame: NSRect(x: 32, y: customY + 2, width: stepperSize, height: stepperSize))
             workMinusBtn.title = "−"
             workMinusBtn.bezelStyle = .circular
             workMinusBtn.font = stepperFont
             container.addSubview(workMinusBtn)
-    
+
             let workVisibleField = NSTextField(string: "\(timer.workMinutes)")
-            workVisibleField.font = .monospacedDigitSystemFont(ofSize: 14, weight: .semibold)
+            workVisibleField.font = .monospacedDigitSystemFont(ofSize: 13, weight: .medium)
             workVisibleField.alignment = .center
-            workVisibleField.frame = NSRect(x: 60, y: customY + 3, width: 36, height: 22)
+            workVisibleField.frame = NSRect(x: 56, y: customY + 2, width: 34, height: 20)
             container.addSubview(workVisibleField)
-    
-            let workPlusBtn = NSButton(frame: NSRect(x: 98, y: customY + 2, width: stepperSize, height: stepperSize))
+
+            let workPlusBtn = NSButton(frame: NSRect(x: 92, y: customY + 2, width: stepperSize, height: stepperSize))
             workPlusBtn.title = "+"
             workPlusBtn.bezelStyle = .circular
             workPlusBtn.font = stepperFont
             container.addSubview(workPlusBtn)
-    
+
             let restLabel = NSTextField(labelWithString: "休息")
-            restLabel.font = .systemFont(ofSize: 12)
-            restLabel.frame = NSRect(x: 140, y: customY, width: 30, height: customRowH)
+            restLabel.font = .systemFont(ofSize: 11)
+            restLabel.frame = NSRect(x: 130, y: customY, width: 28, height: customRowH)
             container.addSubview(restLabel)
-    
-            let restMinusBtn = NSButton(frame: NSRect(x: 172, y: customY + 2, width: stepperSize, height: stepperSize))
+
+            let restMinusBtn = NSButton(frame: NSRect(x: 160, y: customY + 2, width: stepperSize, height: stepperSize))
             restMinusBtn.title = "−"
             restMinusBtn.bezelStyle = .circular
             restMinusBtn.font = stepperFont
             container.addSubview(restMinusBtn)
-    
+
             let restVisibleField = NSTextField(string: "\(timer.restMinutes)")
-            restVisibleField.font = .monospacedDigitSystemFont(ofSize: 14, weight: .semibold)
+            restVisibleField.font = .monospacedDigitSystemFont(ofSize: 13, weight: .medium)
             restVisibleField.alignment = .center
-            restVisibleField.frame = NSRect(x: 198, y: customY + 3, width: 36, height: 22)
+            restVisibleField.frame = NSRect(x: 184, y: customY + 2, width: 34, height: 20)
             container.addSubview(restVisibleField)
-    
-            let restPlusBtn = NSButton(frame: NSRect(x: 236, y: customY + 2, width: stepperSize, height: stepperSize))
+
+            let restPlusBtn = NSButton(frame: NSRect(x: 220, y: customY + 2, width: stepperSize, height: stepperSize))
             restPlusBtn.title = "+"
             restPlusBtn.bezelStyle = .circular
             restPlusBtn.font = stepperFont
             container.addSubview(restPlusBtn)
-    
+
             // --- helper 初始化（绑定可见输入框）---
             let helper = TimerEditHelper(workField: workVisibleField, restField: restVisibleField, workStep: 1, restStep: 1)
-    
-            // --- 分隔线 + "自定义" 标题（位于推荐方案和自定义输入之间）---
-            let separatorY = customRowH + 4
-            let customTitleLabel = NSTextField(labelWithString: "自定义")
-            customTitleLabel.font = .systemFont(ofSize: 10, weight: .medium)
-            customTitleLabel.textColor = .secondaryLabelColor
-            customTitleLabel.frame = NSRect(x: 0, y: separatorY, width: 50, height: 16)
-            container.addSubview(customTitleLabel)
-    
-            let sepLine = NSView(frame: NSRect(x: 0, y: separatorY + separatorH - 2, width: 280, height: 1))
+
+            // --- 分隔线（自定义区 ↔ 方案区）---
+            let sepY = customY + customRowH + sepH / 2 - 0.5
+            let sepLine = NSView(frame: NSRect(x: 0, y: sepY, width: containerWidth, height: 1))
             sepLine.wantsLayer = true
             sepLine.layer?.backgroundColor = NSColor.separatorColor.cgColor
             container.addSubview(sepLine)
-    
-            // --- 推荐方案区域（顶部）---
+
+            // --- 推荐方案区域（顶部，单行 radio）---
             var radioButtons: [NSButton] = []
             let presetBaseY = totalH
             for (i, preset) in presets.enumerated() {
                 let y = presetBaseY - CGFloat(i + 1) * presetRowH
-                let btn = NSButton(radioButtonWithTitle: "\(preset.0)      \(preset.1) min 工作 · \(preset.2) min 休息",
+                let btn = NSButton(radioButtonWithTitle: "\(preset.0)    \(preset.1) min 工作 · \(preset.2) min 休息",
                                    target: helper, action: #selector(TimerEditHelper.presetSelected(_:)))
-                btn.font = NSFont.systemFont(ofSize: 13)
-                btn.frame = NSRect(x: 2, y: y, width: 270, height: presetRowH)
+                btn.font = NSFont.systemFont(ofSize: 12)
+                btn.frame = NSRect(x: 2, y: y + 2, width: containerWidth - 4, height: 20)
                 btn.tag = i
                 container.addSubview(btn)
                 radioButtons.append(btn)
@@ -1078,7 +1086,7 @@ final class QuickPanelView: NSView {
     
             alert.accessoryView = container
             alert.window.initialFirstResponder = nil
-            self.removeAlertIcon(alert)
+            self.prepareAlert(alert)
     
             // 失焦自动取消编辑弹窗（仅编辑弹窗，阶段提示弹窗不受影响）
             var resignObserver: NSObjectProtocol?
@@ -1091,12 +1099,14 @@ final class QuickPanelView: NSView {
             }
     
             let result = alert.runModal()
-    
-            // 移除失焦观察者
+
+            // 清理
+            hoverInfo.cleanup()
             if let observer = resignObserver {
                 NotificationCenter.default.removeObserver(observer)
             }
-    
+            self.restoreAfterAlert()
+
             if result == .alertFirstButtonReturn {
                 // 保存时长并启动计时
                 let workVal = Int(workVisibleField.stringValue) ?? timer.workMinutes
@@ -1418,6 +1428,85 @@ private class TimerEditHelper: NSObject, NSTextFieldDelegate {
 
     func controlTextDidChange(_ obj: Notification) {
         deselectRadios()
+    }
+}
+
+// MARK: - 悬停弹出信息提示视图
+
+private final class HoverInfoView: NSView {
+    private let label: NSTextField
+    private var popover: NSPopover?
+    private var hoverTimer: Timer?
+    private let popoverContent: NSAttributedString
+
+    init(frame: NSRect, text: String, popoverAttributedContent: NSAttributedString) {
+        self.label = NSTextField(labelWithString: text)
+        self.popoverContent = popoverAttributedContent
+        super.init(frame: frame)
+
+        label.font = .systemFont(ofSize: 11)
+        label.textColor = .secondaryLabelColor
+        label.frame = bounds
+        addSubview(label)
+    }
+
+    required init?(coder: NSCoder) { fatalError() }
+
+    // 在视图进入窗口后动态管理 tracking area
+    override func updateTrackingAreas() {
+        super.updateTrackingAreas()
+        for area in trackingAreas { removeTrackingArea(area) }
+        let trackingArea = NSTrackingArea(
+            rect: bounds,
+            options: [.mouseEnteredAndExited, .activeAlways, .inVisibleRect],
+            owner: self, userInfo: nil
+        )
+        addTrackingArea(trackingArea)
+    }
+
+    override func mouseEntered(with event: NSEvent) {
+        label.textColor = .labelColor
+        hoverTimer?.invalidate()
+        // Timer 必须加入 .common mode 才能在 NSAlert modal 中触发
+        let timer = Timer(timeInterval: 0.15, repeats: false) { [weak self] _ in
+            self?.showPopover()
+        }
+        RunLoop.current.add(timer, forMode: .common)
+        hoverTimer = timer
+    }
+
+    override func mouseExited(with event: NSEvent) {
+        label.textColor = .secondaryLabelColor
+        hoverTimer?.invalidate()
+        hoverTimer = nil
+        popover?.close()
+        popover = nil
+    }
+
+    private func showPopover() {
+        guard popover == nil, window != nil else { return }
+
+        let textField = NSTextField(wrappingLabelWithString: "")
+        textField.attributedStringValue = popoverContent
+        textField.isSelectable = false
+        textField.preferredMaxLayoutWidth = 300
+        let size = textField.intrinsicContentSize
+        textField.frame = NSRect(x: 12, y: 12, width: size.width, height: size.height)
+
+        let vc = NSViewController()
+        vc.view = NSView(frame: NSRect(x: 0, y: 0, width: size.width + 24, height: size.height + 24))
+        vc.view.addSubview(textField)
+
+        let pop = NSPopover()
+        pop.contentViewController = vc
+        pop.behavior = .semitransient
+        pop.show(relativeTo: bounds, of: self, preferredEdge: .maxY)
+        popover = pop
+    }
+
+    func cleanup() {
+        hoverTimer?.invalidate()
+        popover?.close()
     }
 }
 
