@@ -297,6 +297,16 @@ final class QuickPanelWindow: NSPanel {
         dismissTimer?.invalidate()
         dismissTimer = nil
 
+        // 立即取消钉住状态并通知 UI 更新（不等动画完成）
+        if isPanelPinned {
+            isPanelPinned = false
+            NotificationCenter.default.post(
+                name: Constants.Notifications.panelPinStateChanged,
+                object: nil,
+                userInfo: ["isPinned": false]
+            )
+        }
+
         // 记录当前 frame（可能被用户 resize 过，与 lastShowFrame 不同）
         let currentFrame = frame
 

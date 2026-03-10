@@ -421,27 +421,52 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
     // MARK: - Dock 图标
 
-    /// Dock 图标：与悬浮球一致的 Enso 品牌 Logo（macOS 标准 padding）
+    /// Dock 图标：白色圆角正方形背景 + Enso 品牌 Logo
     private func setupDockIcon() {
-        let iconSize: CGFloat = 256
-        let padding: CGFloat = iconSize * 0.12  // macOS Dock 图标标准内边距
-        let logoSize: CGFloat = iconSize - padding * 2
+        let canvasSize: CGFloat = 256
 
-        // 使用当前主题 accent 色生成与悬浮球一致的品牌 Logo
+        let squirclePadding = canvasSize * 0.08
+        let squircleSize = canvasSize - squirclePadding * 2
+        let cornerRadius = squircleSize * 0.2237
+        let logoPadding = squircleSize * 0.18
+        let logoSize = squircleSize - logoPadding * 2
+
+        let squircleRect = NSRect(
+            x: squirclePadding, y: squirclePadding,
+            width: squircleSize, height: squircleSize
+        )
+        let squirclePath = NSBezierPath(roundedRect: squircleRect, xRadius: cornerRadius, yRadius: cornerRadius)
+
         let gradientColors = ConfigStore.shared.preferences.appTheme.ballGradientColors
         let logo = FloatingBallView.brandLogo(size: logoSize, gradientColors: gradientColors)
 
-        let icon = NSImage(size: NSSize(width: iconSize, height: iconSize))
+        let icon = NSImage(size: NSSize(width: canvasSize, height: canvasSize))
         icon.lockFocus()
 
-        // 底部投影（增强 Dock 质感）
-        let shadowRect = NSRect(x: padding + 1, y: padding - 2, width: logoSize - 2, height: logoSize - 2)
-        let shadowPath = NSBezierPath(ovalIn: shadowRect)
-        NSColor.black.withAlphaComponent(0.25).setFill()
-        shadowPath.fill()
+        // 1. Squircle 外部微阴影
+        NSGraphicsContext.saveGraphicsState()
+        let shadow = NSShadow()
+        shadow.shadowOffset = NSSize(width: 0, height: -1)
+        shadow.shadowBlurRadius = max(canvasSize * 0.01, 1.5)
+        shadow.shadowColor = NSColor.black.withAlphaComponent(0.18)
+        shadow.set()
+        NSColor.white.setFill()
+        squirclePath.fill()
+        NSGraphicsContext.restoreGraphicsState()
 
-        // 居中绘制圆形 Logo
-        let logoRect = NSRect(x: padding, y: padding, width: logoSize, height: logoSize)
+        // 2. 白色 Squircle 背景
+        NSColor.white.setFill()
+        squirclePath.fill()
+
+        // 3. 极细描边
+        NSColor.black.withAlphaComponent(0.06).setStroke()
+        squirclePath.lineWidth = max(canvasSize * 0.002, 0.5)
+        squirclePath.stroke()
+
+        // 4. 球体 Logo 居中
+        let logoX = squirclePadding + logoPadding
+        let logoY = squirclePadding + logoPadding
+        let logoRect = NSRect(x: logoX, y: logoY, width: logoSize, height: logoSize)
         logo.draw(in: logoRect, from: .zero, operation: .sourceOver, fraction: 1.0)
 
         icon.unlockFocus()

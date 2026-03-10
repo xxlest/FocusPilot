@@ -142,24 +142,49 @@ func createBrandLogo(size: CGFloat, gradientColors: (light: NSColor, medium: NSC
     return image
 }
 
-/// 生成带 padding 的完整 app icon（圆形 logo + 底部投影）
+/// 生成带白色圆角正方形背景的完整 app icon
 func createAppIcon(canvasSize: CGFloat, gradientColors: (light: NSColor, medium: NSColor, dark: NSColor)) -> NSImage {
-    let padding = canvasSize * 0.12
-    let logoSize = canvasSize - padding * 2
-
-    let logo = createBrandLogo(size: logoSize, gradientColors: gradientColors)
-
     let icon = NSImage(size: NSSize(width: canvasSize, height: canvasSize))
     icon.lockFocus()
 
-    // 底部投影
-    let shadowRect = NSRect(x: padding + 1, y: padding - 2, width: logoSize - 2, height: logoSize - 2)
-    let shadowPath = NSBezierPath(ovalIn: shadowRect)
-    NSColor.black.withAlphaComponent(0.25).setFill()
-    shadowPath.fill()
+    // -- 参数 --
+    let squirclePadding = canvasSize * 0.08          // squircle 距画布边缘
+    let squircleSize = canvasSize - squirclePadding * 2
+    let cornerRadius = squircleSize * 0.2237         // Apple 标准连续圆角比例
+    let logoPadding = squircleSize * 0.18            // 球体距 squircle 内边距
+    let logoSize = squircleSize - logoPadding * 2
 
-    // Logo
-    let logoRect = NSRect(x: padding, y: padding, width: logoSize, height: logoSize)
+    let squircleRect = NSRect(
+        x: squirclePadding, y: squirclePadding,
+        width: squircleSize, height: squircleSize
+    )
+    let squirclePath = NSBezierPath(roundedRect: squircleRect, xRadius: cornerRadius, yRadius: cornerRadius)
+
+    // 1. Squircle 外部微阴影
+    NSGraphicsContext.saveGraphicsState()
+    let shadow = NSShadow()
+    shadow.shadowOffset = NSSize(width: 0, height: -1)
+    shadow.shadowBlurRadius = max(canvasSize * 0.01, 1.5)
+    shadow.shadowColor = NSColor.black.withAlphaComponent(0.18)
+    shadow.set()
+    NSColor.white.setFill()
+    squirclePath.fill()
+    NSGraphicsContext.restoreGraphicsState()
+
+    // 2. 白色 Squircle 背景（无阴影再绘一次确保干净）
+    NSColor.white.setFill()
+    squirclePath.fill()
+
+    // 3. Squircle 极细描边（防止亮色壁纸上边界模糊）
+    NSColor.black.withAlphaComponent(0.06).setStroke()
+    squirclePath.lineWidth = max(canvasSize * 0.002, 0.5)
+    squirclePath.stroke()
+
+    // 4. 球体 Logo 居中绘制
+    let logo = createBrandLogo(size: logoSize, gradientColors: gradientColors)
+    let logoX = squirclePadding + logoPadding
+    let logoY = squirclePadding + logoPadding
+    let logoRect = NSRect(x: logoX, y: logoY, width: logoSize, height: logoSize)
     logo.draw(in: logoRect, from: .zero, operation: .sourceOver, fraction: 1.0)
 
     icon.unlockFocus()
