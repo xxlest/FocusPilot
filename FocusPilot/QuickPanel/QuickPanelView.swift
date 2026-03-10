@@ -132,35 +132,44 @@ final class QuickPanelView: NSView {
         return view
     }()
 
-    /// 阶段标签背景（pending 状态时显示为 pill 徽章）
-    private let timerPhaseBadge: NSView = {
-        let view = NSView()
-        view.wantsLayer = true
-        view.layer?.cornerRadius = 4
-        view.isHidden = true
-        return view
+    /// 阶段图标（laptopcomputer / cup.and.saucer.fill / pause.circle）
+    private let timerPhaseIcon: NSImageView = {
+        let iv = NSImageView()
+        iv.imageScaling = .scaleProportionallyUpOrDown
+        iv.setContentHuggingPriority(.required, for: .horizontal)
+        iv.setContentHuggingPriority(.required, for: .vertical)
+        iv.isHidden = true
+        return iv
     }()
 
-    /// 阶段标签（"工作中" / "休息中" / 时钟图标）
-    private let timerPhaseLabel: NSTextField = {
+    /// 行动提示标签（idle / pending 共用，14pt medium 居中）
+    private let timerActionLabel: NSTextField = {
         let label = NSTextField(labelWithString: "")
-        label.font = .systemFont(ofSize: 11, weight: .medium)
-        label.textColor = ConfigStore.shared.currentThemeColors.nsTextSecondary
+        label.font = .systemFont(ofSize: 14, weight: .medium)
         label.isEditable = false
         label.isBezeled = false
         label.drawsBackground = false
         return label
     }()
 
-    /// 时间显示 "MM:SS"
+    /// 时间显示 "MM:SS"（22pt 大号等宽，视觉重心）
     private let timerTimeLabel: NSTextField = {
         let label = NSTextField(labelWithString: "")
-        label.font = .monospacedDigitSystemFont(ofSize: 16, weight: .semibold)
+        label.font = .monospacedDigitSystemFont(ofSize: 22, weight: .semibold)
         label.textColor = ConfigStore.shared.currentThemeColors.nsTextPrimary
         label.isEditable = false
         label.isBezeled = false
         label.drawsBackground = false
         return label
+    }()
+
+    /// 计时器内容组（icon + time 水平排列，垂直居中对齐）
+    private let timerContentStack: NSStackView = {
+        let stack = NSStackView()
+        stack.orientation = .horizontal
+        stack.alignment = .centerY
+        stack.spacing = 6
+        return stack
     }()
 
     /// 进度条背景
@@ -182,9 +191,8 @@ final class QuickPanelView: NSView {
 
     /// 进度条填充宽度约束
     private var timerProgressFillWidth: NSLayoutConstraint?
-    /// 阶段标签垂直约束（running: top, pending: centerY）
-    private var timerPhaseLabelTop: NSLayoutConstraint?
-    private var timerPhaseLabelCenterY: NSLayoutConstraint?
+    /// 进度条可见时内容组微上移约束
+    private var timerContentStackCenterY: NSLayoutConstraint?
 
     /// 计时器栏鼠标追踪区域（hover 效果）
     private var timerBarTrackingArea: NSTrackingArea?
@@ -265,9 +273,10 @@ final class QuickPanelView: NSView {
         // 底部计时器栏
         addSubview(bottomSeparator)
         addSubview(timerBar)
-        timerBar.addSubview(timerPhaseBadge)
-        timerBar.addSubview(timerPhaseLabel)
-        timerBar.addSubview(timerTimeLabel)
+        timerContentStack.addArrangedSubview(timerPhaseIcon)
+        timerContentStack.addArrangedSubview(timerTimeLabel)
+        timerBar.addSubview(timerContentStack)
+        timerBar.addSubview(timerActionLabel)
         timerBar.addSubview(timerProgressBg)
         timerProgressBg.addSubview(timerProgressFill)
 
@@ -284,9 +293,9 @@ final class QuickPanelView: NSView {
         favoritesTabIndicator.translatesAutoresizingMaskIntoConstraints = false
         bottomSeparator.translatesAutoresizingMaskIntoConstraints = false
         timerBar.translatesAutoresizingMaskIntoConstraints = false
-        timerPhaseBadge.translatesAutoresizingMaskIntoConstraints = false
-        timerPhaseLabel.translatesAutoresizingMaskIntoConstraints = false
-        timerTimeLabel.translatesAutoresizingMaskIntoConstraints = false
+        timerContentStack.translatesAutoresizingMaskIntoConstraints = false
+        timerPhaseIcon.translatesAutoresizingMaskIntoConstraints = false
+        timerActionLabel.translatesAutoresizingMaskIntoConstraints = false
         timerProgressBg.translatesAutoresizingMaskIntoConstraints = false
         timerProgressFill.translatesAutoresizingMaskIntoConstraints = false
 
@@ -356,18 +365,16 @@ final class QuickPanelView: NSView {
             timerBar.bottomAnchor.constraint(equalTo: bottomAnchor),
             timerBar.heightAnchor.constraint(equalToConstant: 48),
 
-            // 阶段标签徽章背景（pending 时显示，包裹 phaseLabel）
-            timerPhaseBadge.leadingAnchor.constraint(equalTo: timerPhaseLabel.leadingAnchor, constant: -8),
-            timerPhaseBadge.trailingAnchor.constraint(equalTo: timerPhaseLabel.trailingAnchor, constant: 8),
-            timerPhaseBadge.topAnchor.constraint(equalTo: timerPhaseLabel.topAnchor, constant: -3),
-            timerPhaseBadge.bottomAnchor.constraint(equalTo: timerPhaseLabel.bottomAnchor, constant: 3),
+            // 内容组（icon + time 水平排列，整组居中）
+            timerContentStack.centerXAnchor.constraint(equalTo: timerBar.centerXAnchor),
 
-            // 阶段标签（水平居中，垂直约束在外部管理）
-            timerPhaseLabel.centerXAnchor.constraint(equalTo: timerBar.centerXAnchor),
+            // 图标尺寸（比时间字体稍大，更醒目）
+            timerPhaseIcon.widthAnchor.constraint(equalToConstant: 28),
+            timerPhaseIcon.heightAnchor.constraint(equalToConstant: 28),
 
-            // 时间显示（水平居中，阶段标签下方）
-            timerTimeLabel.centerXAnchor.constraint(equalTo: timerBar.centerXAnchor),
-            timerTimeLabel.topAnchor.constraint(equalTo: timerPhaseLabel.bottomAnchor, constant: 1),
+            // 行动提示标签居中（idle / pending 共用）
+            timerActionLabel.centerXAnchor.constraint(equalTo: timerBar.centerXAnchor),
+            timerActionLabel.centerYAnchor.constraint(equalTo: timerBar.centerYAnchor),
 
             // 进度条（底部，左右留边距居中）
             timerProgressBg.leadingAnchor.constraint(equalTo: timerBar.leadingAnchor, constant: 16),
@@ -386,13 +393,10 @@ final class QuickPanelView: NSView {
         fillWidth.isActive = true
         timerProgressFillWidth = fillWidth
 
-        // 阶段标签垂直约束（running/paused 用 top, idle/pending 用 centerY）
-        let topC = timerPhaseLabel.topAnchor.constraint(equalTo: timerBar.topAnchor, constant: 5)
-        topC.isActive = false
-        timerPhaseLabelTop = topC
-        let centerC = timerPhaseLabel.centerYAnchor.constraint(equalTo: timerBar.centerYAnchor)
-        centerC.isActive = true
-        timerPhaseLabelCenterY = centerC
+        // 内容组垂直居中（微上移 2px 给进度条留视觉空间）
+        let centerY = timerContentStack.centerYAnchor.constraint(equalTo: timerBar.centerYAnchor, constant: -2)
+        centerY.isActive = true
+        timerContentStackCenterY = centerY
 
         // 计时器栏点击手势（整栏可点击）
         let timerBarClick = NSClickGestureRecognizer(target: self, action: #selector(handleTimerBarTapped))
@@ -551,74 +555,69 @@ final class QuickPanelView: NSView {
         let isIdle = timer.status == .idle
         let hasPending = timer.pendingAction != .none
 
+        // 先隐藏所有元素，按状态按需显示
+        timerPhaseIcon.isHidden = true
+        timerActionLabel.isHidden = true
+        timerTimeLabel.isHidden = true
+        timerContentStack.isHidden = true
+        timerProgressBg.isHidden = true
+        timerProgressFill.isHidden = true
+
         // pending 状态：弹窗被失焦自动关闭，等待用户点击栏确认
         if hasPending {
-            timerProgressBg.isHidden = true
-            timerProgressFill.isHidden = true
-            timerTimeLabel.isHidden = true
-            timerPhaseLabel.isHidden = false
-            timerPhaseLabel.font = .systemFont(ofSize: 11, weight: .semibold)
-            timerPhaseLabelTop?.isActive = false
-            timerPhaseLabelCenterY?.isActive = true
-            timerPhaseBadge.isHidden = false
+            timerActionLabel.isHidden = false
 
             switch timer.pendingAction {
             case .startRest:
-                let badgeColor = NSColor.systemGreen
-                timerPhaseLabel.stringValue = "工作完成 · 开始休息"
-                timerPhaseLabel.textColor = badgeColor
-                timerPhaseBadge.layer?.backgroundColor = badgeColor.withAlphaComponent(0.15).cgColor
+                timerActionLabel.stringValue = "工作完成 · 开始休息"
+                timerActionLabel.textColor = NSColor.systemGreen
                 timerBar.layer?.backgroundColor = colors.nsTextPrimary.withAlphaComponent(0.08).cgColor
-                bottomSeparator.layer?.backgroundColor = badgeColor.withAlphaComponent(0.3).cgColor
+                bottomSeparator.layer?.backgroundColor = NSColor.systemGreen.withAlphaComponent(0.3).cgColor
             case .startWork:
-                let badgeColor = colors.nsAccent
-                timerPhaseLabel.stringValue = "休息结束 · 继续工作"
-                timerPhaseLabel.textColor = badgeColor
-                timerPhaseBadge.layer?.backgroundColor = badgeColor.withAlphaComponent(0.15).cgColor
+                timerActionLabel.stringValue = "休息结束 · 继续工作"
+                timerActionLabel.textColor = colors.nsAccent
                 timerBar.layer?.backgroundColor = colors.nsTextPrimary.withAlphaComponent(0.08).cgColor
-                bottomSeparator.layer?.backgroundColor = badgeColor.withAlphaComponent(0.3).cgColor
+                bottomSeparator.layer?.backgroundColor = colors.nsAccent.withAlphaComponent(0.3).cgColor
             case .none:
                 break
             }
             return
         }
 
-        timerPhaseBadge.isHidden = true
-        timerPhaseLabel.isHidden = false
-
         if isIdle {
             // idle：居中显示 "▶  开始专注"
-            timerPhaseLabel.stringValue = "▶  开始专注"
-            timerPhaseLabel.font = .systemFont(ofSize: 12, weight: .medium)
-            timerPhaseLabel.textColor = colors.nsAccent
-            timerPhaseLabelTop?.isActive = false
-            timerPhaseLabelCenterY?.isActive = true
-            timerTimeLabel.isHidden = true
-            timerProgressBg.isHidden = true
-            timerProgressFill.isHidden = true
+            timerActionLabel.isHidden = false
+            timerActionLabel.stringValue = "▶  开始专注"
+            timerActionLabel.textColor = colors.nsAccent
             timerBar.layer?.backgroundColor = colors.nsTextPrimary.withAlphaComponent(0.08).cgColor
             bottomSeparator.layer?.backgroundColor = colors.nsSeparator.withAlphaComponent(0.9).cgColor
         } else {
-            // running / paused：阶段标签 + 居中时间 + 进度条
+            // running / paused：SF Symbol 图标 + 大号时间 + 进度条
             let isPaused = timer.status == .paused
-            timerPhaseLabel.font = .systemFont(ofSize: 11, weight: .medium)
-            timerPhaseLabelCenterY?.isActive = false
-            timerPhaseLabelTop?.isActive = true
+            timerContentStack.isHidden = false
+            timerPhaseIcon.isHidden = false
             timerTimeLabel.isHidden = false
             timerProgressBg.isHidden = false
             timerProgressFill.isHidden = false
+            timerContentStackCenterY?.constant = -2
 
             if isPaused {
-                timerPhaseLabel.stringValue = "已暂停"
-                timerPhaseLabel.textColor = colors.nsTextTertiary
+                let iconConfig = NSImage.SymbolConfiguration(pointSize: 22, weight: .medium)
+                let icon = NSImage(systemSymbolName: "pause.circle", accessibilityDescription: "已暂停")
+                timerPhaseIcon.image = icon?.withSymbolConfiguration(iconConfig)
+                timerPhaseIcon.contentTintColor = colors.nsTextTertiary
                 timerTimeLabel.textColor = colors.nsTextTertiary
                 timerProgressFill.layer?.backgroundColor = colors.nsTextTertiary.cgColor
                 timerBar.layer?.backgroundColor = colors.nsTextPrimary.withAlphaComponent(0.08).cgColor
                 bottomSeparator.layer?.backgroundColor = colors.nsSeparator.withAlphaComponent(0.9).cgColor
             } else {
                 let phaseColor = timer.phase == .work ? colors.nsAccent : NSColor.systemGreen
-                timerPhaseLabel.stringValue = timer.phaseLabel
-                timerPhaseLabel.textColor = phaseColor
+                let iconName = timer.phase == .work ? "laptopcomputer" : "cup.and.saucer.fill"
+                let iconDesc = timer.phase == .work ? "工作中" : "休息中"
+                let iconConfig = NSImage.SymbolConfiguration(pointSize: 22, weight: .medium)
+                let icon = NSImage(systemSymbolName: iconName, accessibilityDescription: iconDesc)
+                timerPhaseIcon.image = icon?.withSymbolConfiguration(iconConfig)
+                timerPhaseIcon.contentTintColor = phaseColor
                 timerTimeLabel.textColor = colors.nsTextPrimary
                 timerProgressFill.layer?.backgroundColor = phaseColor.cgColor
                 if timer.phase == .work {
