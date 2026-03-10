@@ -766,7 +766,10 @@ final class QuickPanelView: NSView {
             self.restoreAfterAlert()
 
             if result == .alertFirstButtonReturn {
-                timer.start()
+                // 回到 idle 状态，弹出时长选择弹窗（与初始"开始专注"一致）
+                timer.reset()
+                self.updateTimerUI()
+                self.timerEditTapped()
             } else {
                 // 失焦自动关闭 / 稍后再说：重新设置 pendingAction，计时器栏显示快捷操作
                 timer.pendingAction = .startWork
