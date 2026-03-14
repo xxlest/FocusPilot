@@ -84,6 +84,7 @@ enum Constants {
         static let panelSize = "FocusCopilot.panelSize"
         static let lastPanelTab = "FocusCopilot.lastPanelTab"
         static let focusTimerSettings = "FocusCopilot.focusTimerSettings"
+        static let focusRestIntensity = "FocusCopilot.focusRestIntensity"
     }
 
     // MARK: - 通知名称
@@ -116,5 +117,7 @@ enum Constants {
         static let focusWorkCompleted = Notification.Name("FocusCopilot.focusWorkCompleted")
         /// 休息阶段结束 → 需要弹对话框提示开始工作
         static let focusRestCompleted = Notification.Name("FocusCopilot.focusRestCompleted")
+        /// 引导休息步骤切换
+        static let focusGuidedStepChanged = Notification.Name("FocusCopilot.focusGuidedStepChanged")
     }
 }

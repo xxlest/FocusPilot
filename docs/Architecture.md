@@ -53,6 +53,17 @@ FocusPilot/
 
 ### 版本变更说明
 
+**V3.9 相比 V3.8 的关键变更**：
+
+- FocusTimerService：新增引导休息类型（`RestCategory`/`RestStep`/`RestMode`/`RestIntensity`），三级强度预设步骤模板（轻度~3min/中度~5min/深度~8min），覆盖脑/眼/肌肉三维恢复
+- FocusTimerService：新增 `startGuidedRest(intensity:)` 方法，分步倒计时自动推进，`currentStep`/`guidedProgress`/`stepDisplayTime` 计算属性
+- FocusTimerService：`progress`/`displayTime`/`phaseLabel` 适配引导模式，强度偏好持久化（`focusRestIntensity`）
+- Constants：新增 `Notifications.focusGuidedStepChanged`、`Keys.focusRestIntensity`
+- QuickPanelView：工作完成弹窗改为三按钮（引导休息/自由休息/直接结束），新增强度选择弹窗（`showIntensityPicker`）+ `IntensityPickerHelper`
+- QuickPanelView：新增 `timerStepLabel`（步骤名·n/N），引导模式计时器栏显示步骤图标+步骤剩余时间+步骤标签
+- QuickPanelView：`buildRestGuideView()` 重构为三维分组（脑/眼/肌肉），新增 `buildGuidedStepListView()` 步骤进度列表
+- QuickPanelView：`showRunningActionSheet()` 引导模式下显示步骤信息+步骤进度列表
+
 **V3.8 相比 V3.7 的关键变更**：
 
 - 新增 `FocusTimerService.swift`：番茄钟单例服务，管理 idle/running/paused 状态机 × work/rest 阶段，Timer 计时，FocusPendingAction 保留弹窗失焦后的待处理动作，通过 NotificationCenter 通知 UI 层
@@ -437,7 +448,7 @@ class PermissionManager: ObservableObject {
 }
 ```
 
-### 2.7 FocusTimerService 契约（V3.8）
+### 2.7 FocusTimerService 契约（V3.9）
 
 ```swift
 final class FocusTimerService: ObservableObject {
@@ -451,30 +462,44 @@ final class FocusTimerService: ObservableObject {
     @Published var restMinutes: Int             // 默认 5，持久化
     @Published var pendingAction: FocusPendingAction  // .none / .startRest / .startWork
 
+    // 引导休息状态（V3.9）
+    @Published var restMode: RestMode          // .free / .guided
+    @Published var currentStepIndex: Int       // 当前步骤索引
+    var guidedSteps: [RestStep]                // 当前引导步骤列表
+    var restIntensity: RestIntensity           // 上次选择的强度（持久化）
+
     // 计算属性
-    var progress: CGFloat                      // 0.0~1.0（剩余/总共）
-    var displayTime: String                    // "MM:SS"
-    var phaseLabel: String                     // "工作中" / "休息中"
+    var progress: CGFloat                      // 0.0~1.0（引导模式=整体进度，自由模式=剩余/总共）
+    var displayTime: String                    // "MM:SS"（引导模式=整体剩余，自由模式=当前阶段剩余）
+    var stepDisplayTime: String                // "MM:SS"（当前步骤剩余，仅引导模式有意义）
+    var phaseLabel: String                     // "工作中" / 步骤名 / "休息中"
+    var currentStep: RestStep?                 // 当前引导步骤
+    var guidedTotalSeconds: Int                // 引导休息总秒数
+    var guidedElapsedSeconds: Int              // 引导休息已过秒数
 
     // 控制
-    func start()                               // idle → running(work)，清除 pendingAction
+    func start()                               // idle → running(work)，restMode=.free
     func pause()                               // running → paused
     func resume()                              // paused → running
-    func reset()                               // → idle，清除 pendingAction
-    func startRestPhase()                      // paused(work) → running(rest)，清除 pendingAction
+    func reset()                               // → idle，清除引导状态
+    func startRestPhase()                      // → running(rest)，自由模式
+    func startGuidedRest(intensity:)           // → running(rest)，引导模式，分步倒计时
     func setWorkMinutes(_ m: Int)              // 仅 idle 时可调，≥1
     func setRestMinutes(_ m: Int)              // 仅 idle 时可调，≥1
 
     // 阶段切换（内部）
+    // tick()：引导模式步骤结束 → 自动前进到下一步骤 + 发 focusGuidedStepChanged
     // switchPhase()：工作完成 → pendingAction=.startRest + 发 focusWorkCompleted
     //               休息完成 → pendingAction=.startWork + 发 focusRestCompleted
 
     // 通知
     // focusTimerChanged：每秒或状态变化时发送
     // focusWorkCompleted：工作阶段倒计时归零
-    // focusRestCompleted：休息阶段倒计时归零
+    // focusRestCompleted：休息阶段倒计时归零（含引导模式最后一步）
+    // focusGuidedStepChanged：引导模式步骤切换
 
-    // 持久化：workMinutes/restMinutes → UserDefaults(focusTimerSettings)
+    // 持久化：workMinutes/restMinutes → focusTimerSettings
+    //         restIntensity → focusRestIntensity
 }
 ```
 
@@ -509,6 +534,9 @@ enum Constants {
         static let focusTimerChanged = Notification.Name("FocusCopilot.focusTimerChanged")
         static let focusWorkCompleted = Notification.Name("FocusCopilot.focusWorkCompleted")
         static let focusRestCompleted = Notification.Name("FocusCopilot.focusRestCompleted")
+
+        // V3.9：引导休息步骤切换通知
+        static let focusGuidedStepChanged = Notification.Name("FocusCopilot.focusGuidedStepChanged")
     }
 
     // V3.2 新增：UserDefaults Keys
@@ -521,6 +549,7 @@ enum Constants {
         static let panelSize = "FocusCopilot.panelSize"
         static let lastPanelTab = "FocusCopilot.lastPanelTab"   // V3.2 新增
         static let focusTimerSettings = "FocusCopilot.focusTimerSettings"  // V3.8 新增
+        static let focusRestIntensity = "FocusCopilot.focusRestIntensity"  // V3.9 新增
     }
 }
 ```
