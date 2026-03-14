@@ -55,14 +55,15 @@ FocusPilot/
 
 **V3.9 相比 V3.8 的关键变更**：
 
-- FocusTimerService：新增引导休息类型（`RestCategory`/`RestStep`/`RestMode`/`RestIntensity`），三级强度预设步骤模板（轻度~3min/中度~5min/深度~8min），覆盖脑/眼/肌肉三维恢复
+- FocusTimerService：新增引导休息类型（`RestCategory`/`RestStep`/`RestMode`/`RestIntensity`），三级强度预设步骤模板（轻度~3min/标准~5min/深度~8min），覆盖脑/眼/肌肉三维恢复，肌肉环节按强度分级（坐姿/站立/全链路核心激活）
 - FocusTimerService：新增 `startGuidedRest(intensity:)` 方法，分步倒计时自动推进，`currentStep`/`guidedProgress`/`stepDisplayTime` 计算属性
-- FocusTimerService：`progress`/`displayTime`/`phaseLabel` 适配引导模式，强度偏好持久化（`focusRestIntensity`）
+- FocusTimerService：`progress`/`displayTime`/`phaseLabel` 适配引导模式，强度偏好持久化（`focusRestIntensity`），兼容旧值 `medium` → `standard`
 - Constants：新增 `Notifications.focusGuidedStepChanged`、`Keys.focusRestIntensity`
-- QuickPanelView：工作完成弹窗改为三按钮（引导休息/自由休息/直接结束），新增强度选择弹窗（`showIntensityPicker`）+ `IntensityPickerHelper`
+- QuickPanelView：工作完成弹窗统一为 radio 模式（轻度/标准/深度引导 + 分隔线 + 自由休息 + ⓘ 科学依据），与「开始专注」弹窗对称布局，合并原 `showIntensityPicker` 为一步决策，`WorkCompleteHelper` 替换 `IntensityPickerHelper`
 - QuickPanelView：新增 `timerStepLabel`（步骤名·n/N），引导模式计时器栏显示步骤图标+步骤剩余时间+步骤标签
-- QuickPanelView：`buildRestGuideView()` 重构为三维分组（脑/眼/肌肉），新增 `buildGuidedStepListView()` 步骤进度列表
+- QuickPanelView：`buildRestGuideView()` 改为三维单行摘要（眼/脑/肌肉/禁忌），新增 `buildGuidedStepListView()` 步骤进度列表
 - QuickPanelView：`showRunningActionSheet()` 引导模式下显示步骤信息+步骤进度列表
+- QuickPanelView：ⓘ HoverInfoView popover 提供三维恢复科学依据（眼睛/大脑/肌肉/禁忌）
 
 **V3.8 相比 V3.7 的关键变更**：
 

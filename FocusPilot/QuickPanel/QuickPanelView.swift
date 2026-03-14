@@ -739,143 +739,88 @@ final class QuickPanelView: NSView {
             let alert = NSAlert()
 
             alert.messageText = "工作完成！"
-            alert.informativeText = "已专注 \(timer.workMinutes) 分钟，选择休息方式恢复状态"
+            alert.informativeText = "已专注 \(timer.workMinutes) 分钟，选择恢复方式"
             alert.alertStyle = .informational
-            alert.addButton(withTitle: "引导休息")
-            alert.addButton(withTitle: "自由休息 \(timer.restMinutes)min")
             alert.addButton(withTitle: "直接结束")
+            alert.addButton(withTitle: "开始休息")
 
-            if let primaryBtn = alert.buttons.first {
-                primaryBtn.bezelColor = NSColor.systemGreen
+            // 主操作按钮（开始休息）靠右 → 第二个按钮着绿色
+            if alert.buttons.count > 1 {
+                alert.buttons[1].bezelColor = NSColor.systemGreen
+                alert.buttons[1].keyEquivalent = "\r"  // 回车键绑定到"开始休息"
+                alert.buttons[0].keyEquivalent = ""     // 取消"直接结束"的默认回车
             }
 
-            alert.accessoryView = self.buildRestGuideView()
-            self.prepareAlert(alert)
-
-            // 失焦自动关闭（pendingAction 保留，计时器栏提供快捷操作）
-            var resignObserver: NSObjectProtocol?
-            resignObserver = NotificationCenter.default.addObserver(
-                forName: NSApplication.didResignActiveNotification,
-                object: nil, queue: .main
-            ) { _ in
-                NSApp.abortModal()
-                alert.window.close()
-            }
-
-            let result = alert.runModal()
-
-            if let observer = resignObserver {
-                NotificationCenter.default.removeObserver(observer)
-            }
-            self.restoreAfterAlert()
-
-            if result == .alertFirstButtonReturn {
-                // 引导休息 → 弹出强度选择
-                self.showIntensityPicker()
-            } else if result == .alertSecondButtonReturn {
-                // 自由休息
-                timer.startRestPhase()
-            } else if result == NSApplication.ModalResponse(rawValue: 1002) {
-                // 直接结束
-                timer.reset()
-            } else {
-                // 失焦自动关闭：重新设置 pendingAction，计时器栏显示快捷操作
-                timer.pendingAction = .startRest
-                self.updateTimerUI()
-            }
-        }
-    }
-
-    /// 引导休息强度选择弹窗
-    private func showIntensityPicker() {
-        let timer = FocusTimerService.shared
-
-        DispatchQueue.main.async {
-            NSApp.activate(ignoringOtherApps: true)
-
-            let alert = NSAlert()
-            alert.messageText = "选择恢复强度"
-            alert.informativeText = "根据疲劳程度选择合适的恢复方案"
-            alert.alertStyle = .informational
-            alert.addButton(withTitle: "开始")
-            let cancelBtn = alert.addButton(withTitle: "取消")
-            cancelBtn.keyEquivalent = "\u{1b}"
-
-            if let primaryBtn = alert.buttons.first {
-                primaryBtn.bezelColor = NSColor.systemGreen
-            }
-
-            // 构建强度选择 accessory view
+            // 构建统一的 radio 选择 accessory view
             let containerWidth: CGFloat = 320
             let intensities = RestIntensity.allCases
             let radioRowH: CGFloat = 22
             let descRowH: CGFloat = 16
             let groupH = radioRowH + descRowH
-            let groupGap: CGFloat = 6
-            let previewTitleH: CGFloat = 20
-            let stepRowH: CGFloat = 18
-            // 预估最多 6 步（deep）
-            let maxSteps = intensities.map { $0.steps.count }.max() ?? 6
-            let previewH = previewTitleH + CGFloat(maxSteps) * stepRowH + 8
+            let groupGap: CGFloat = 4
             let sepH: CGFloat = 12
-            let totalH = CGFloat(intensities.count) * groupH + CGFloat(intensities.count - 1) * groupGap + sepH + previewH
+            let freeRowH: CGFloat = 22
+            let freeDescH: CGFloat = 16
+            let infoRowH: CGFloat = 20
+            let totalH = CGFloat(intensities.count) * groupH + CGFloat(intensities.count - 1) * groupGap + sepH + freeRowH + freeDescH + 4 + infoRowH
             let container = NSView(frame: NSRect(x: 0, y: 0, width: containerWidth, height: totalH))
 
-            // 步骤预览区域
-            let previewContainer = NSView(frame: NSRect(x: 0, y: 0, width: containerWidth, height: previewH))
-            previewContainer.wantsLayer = true
-            previewContainer.layer?.backgroundColor = NSColor.textColor.withAlphaComponent(0.04).cgColor
-            previewContainer.layer?.cornerRadius = 8
-            container.addSubview(previewContainer)
+            // --- 底部 ⓘ 了解更多 ---
+            let colors = ConfigStore.shared.currentThemeColors
+            let accentColor = colors.nsAccent
+            let tipTitleColor = accentColor.blended(withFraction: 0.35, of: .secondaryLabelColor) ?? accentColor
+            let tipTitleFont = NSFont.systemFont(ofSize: 11, weight: .semibold)
+            let tipBodyFont = NSFont.systemFont(ofSize: 11)
+            let tipBodyColor = NSColor.secondaryLabelColor
+            let tA: [NSAttributedString.Key: Any] = [.font: tipTitleFont, .foregroundColor: tipTitleColor]
+            let bA: [NSAttributedString.Key: Any] = [.font: tipBodyFont, .foregroundColor: tipBodyColor]
 
-            let previewTitle = NSTextField(labelWithString: "步骤预览")
-            previewTitle.font = .systemFont(ofSize: 11, weight: .semibold)
-            previewTitle.textColor = .secondaryLabelColor
-            previewTitle.frame = NSRect(x: 10, y: previewH - previewTitleH - 2, width: containerWidth - 20, height: previewTitleH)
-            previewContainer.addSubview(previewTitle)
+            let popContent = NSMutableAttributedString()
+            popContent.append(NSAttributedString(string: "三维恢复的科学依据\n\n", attributes: tA))
+            popContent.append(NSAttributedString(string: "\u{1f441} 眼睛恢复\n", attributes: tA))
+            popContent.append(NSAttributedString(string: "持续近距离用眼使睫状肌紧张痉挛，闭眼休息 + 远眺（6 米以上）能快速放松睫状肌、缓解干眼和视觉疲劳。每 20-30 分钟远眺 20 秒是眼科推荐的 20-20-20 法则。\n\n", attributes: bA))
+            popContent.append(NSAttributedString(string: "\u{1f9e0} 大脑恢复\n", attributes: tA))
+            popContent.append(NSAttributedString(string: "前额叶皮层主导专注与决策，持续 20-50 分钟后活力自然衰退。深呼吸能激活副交感神经，降低皮质醇水平，让前额叶「重启」。硬撑只会陷入伪工作状态。\n\n", attributes: bA))
+            popContent.append(NSAttributedString(string: "\u{1f4aa} 肌肉恢复\n", attributes: tA))
+            popContent.append(NSAttributedString(string: "久坐导致髋屈肌缩短、核心失活、腰椎压力增大。骨盆后倾激活深层核心，猫牛拉伸脊柱，夹臀锁定骨盆中立位。三级强度对应不同姿态需求：坐着 → 站立 → 全链路。\n\n", attributes: bA))
+            popContent.append(NSAttributedString(string: "\u{26d4} 禁忌\n", attributes: tA))
+            popContent.append(NSAttributedString(string: "别刷短视频、别看社交消息。它们会消耗注意力残留，让大脑无法真正恢复，反而加重疲劳感。", attributes: bA))
 
-            // 步骤标签引用（用于更新预览）
-            var stepLabels: [NSTextField] = []
-            for i in 0..<maxSteps {
-                let y = previewH - previewTitleH - 6 - CGFloat(i + 1) * stepRowH
-                let label = NSTextField(labelWithString: "")
-                label.font = .systemFont(ofSize: 11)
-                label.textColor = .labelColor
-                label.frame = NSRect(x: 12, y: y, width: containerWidth - 24, height: stepRowH)
-                previewContainer.addSubview(label)
-                stepLabels.append(label)
-            }
+            let hoverInfo = HoverInfoView(
+                frame: NSRect(x: 0, y: 0, width: containerWidth, height: infoRowH),
+                text: "\u{24d8} 了解三维恢复（眼睛 · 大脑 · 肌肉）的科学依据",
+                popoverAttributedContent: popContent
+            )
+            container.addSubview(hoverInfo)
 
-            // 分隔线
-            let sepY = previewH + sepH / 2 - 0.5
+            // --- 分隔线下方：自由休息 radio ---
+            let freeY = infoRowH + 4
+            let freeRadio = NSButton(radioButtonWithTitle: "自由休息    \(timer.restMinutes) 分钟",
+                                     target: nil, action: nil)
+            freeRadio.font = .systemFont(ofSize: 12)
+            freeRadio.frame = NSRect(x: 2, y: freeY + freeDescH, width: containerWidth - 4, height: freeRowH)
+            freeRadio.tag = intensities.count  // tag = 3（区别于引导 0/1/2）
+            container.addSubview(freeRadio)
+
+            let freeDesc = NSTextField(labelWithString: "不跟步骤，按自己节奏恢复")
+            freeDesc.font = .systemFont(ofSize: 11)
+            freeDesc.textColor = .secondaryLabelColor
+            freeDesc.frame = NSRect(x: 22, y: freeY, width: containerWidth - 24, height: freeDescH)
+            container.addSubview(freeDesc)
+
+            // --- 分隔线 ---
+            let sepY = freeY + freeRowH + freeDescH + sepH / 2 - 0.5
             let sepLine = NSView(frame: NSRect(x: 0, y: sepY, width: containerWidth, height: 1))
             sepLine.wantsLayer = true
             sepLine.layer?.backgroundColor = NSColor.separatorColor.cgColor
             container.addSubview(sepLine)
 
-            // 更新预览的闭包
-            let updatePreview: (RestIntensity) -> Void = { intensity in
-                let steps = intensity.steps
-                for (i, label) in stepLabels.enumerated() {
-                    if i < steps.count {
-                        let step = steps[i]
-                        let mins = step.durationSeconds / 60
-                        let secs = step.durationSeconds % 60
-                        let timeStr = mins > 0 ? "\(mins)m\(secs > 0 ? String(format: "%02ds", secs) : "")" : "\(secs)s"
-                        label.stringValue = "\(step.category.displayName)  \(step.label) · \(timeStr)"
-                        label.isHidden = false
-                    } else {
-                        label.stringValue = ""
-                        label.isHidden = true
-                    }
-                }
-            }
-
-            // Radio 按钮
+            // --- 引导休息 radio（轻度/标准/深度）---
             var radioButtons: [NSButton] = []
+            let guidedBaseY = sepY + sepH / 2
             for (i, intensity) in intensities.enumerated() {
-                let y = totalH - CGFloat(i + 1) * groupH - CGFloat(i) * groupGap
-                let btn = NSButton(radioButtonWithTitle: "\(intensity.displayName)  ~\(intensity.totalMinutes) 分钟",
+                let y = guidedBaseY + CGFloat(intensities.count - 1 - i) * (groupH + groupGap)
+                let btn = NSButton(radioButtonWithTitle: "\(intensity.displayName)    ~\(intensity.totalMinutes) 分钟",
                                    target: nil, action: nil)
                 btn.font = .systemFont(ofSize: 12, weight: .medium)
                 btn.frame = NSRect(x: 2, y: y + descRowH, width: containerWidth - 4, height: radioRowH)
@@ -889,28 +834,34 @@ final class QuickPanelView: NSView {
                 desc.frame = NSRect(x: 22, y: y, width: containerWidth - 24, height: descRowH)
                 container.addSubview(desc)
             }
+            radioButtons.append(freeRadio)
 
-            // Helper 处理 radio 选中
-            let helper = IntensityPickerHelper(
-                intensities: intensities,
-                radioButtons: radioButtons,
-                updatePreview: updatePreview
+            // Helper 处理 radio 互斥
+            let helper = WorkCompleteHelper(
+                guidedCount: intensities.count,
+                radioButtons: radioButtons
             )
             for btn in radioButtons {
                 btn.target = helper
-                btn.action = #selector(IntensityPickerHelper.intensitySelected(_:))
+                btn.action = #selector(WorkCompleteHelper.radioSelected(_:))
             }
 
-            // 默认选中上次使用的强度
-            let defaultIndex = intensities.firstIndex(of: timer.restIntensity) ?? 1
+            // 根据休息时长自动匹配引导强度（1:1 对应：5min→轻度，7min→标准，10min→深度）
+            let matchedIntensity: RestIntensity
+            switch timer.restMinutes {
+            case ...5:  matchedIntensity = .light
+            case 6...8: matchedIntensity = .standard
+            default:    matchedIntensity = .deep
+            }
+            let defaultIndex = intensities.firstIndex(of: matchedIntensity) ?? 1
             radioButtons[defaultIndex].state = .on
-            helper.selectedIndex = defaultIndex
-            updatePreview(intensities[defaultIndex])
+            helper.selectedTag = defaultIndex
 
             alert.accessoryView = container
             alert.window.initialFirstResponder = nil
             self.prepareAlert(alert)
 
+            // 失焦自动关闭
             var resignObserver: NSObjectProtocol?
             resignObserver = NotificationCenter.default.addObserver(
                 forName: NSApplication.didResignActiveNotification,
@@ -922,16 +873,25 @@ final class QuickPanelView: NSView {
 
             let result = alert.runModal()
 
+            hoverInfo.cleanup()
             if let observer = resignObserver {
                 NotificationCenter.default.removeObserver(observer)
             }
             self.restoreAfterAlert()
 
-            if result == .alertFirstButtonReturn {
-                let selected = intensities[helper.selectedIndex]
-                timer.startGuidedRest(intensity: selected)
+            if result == .alertSecondButtonReturn {
+                // "开始休息"按钮
+                let tag = helper.selectedTag
+                if tag < intensities.count {
+                    timer.startGuidedRest(intensity: intensities[tag])
+                } else {
+                    timer.startRestPhase()
+                }
+            } else if result == .alertFirstButtonReturn {
+                // "直接结束"
+                timer.reset()
             } else {
-                // 取消或失焦：回到 pending 状态
+                // 失焦自动关闭：保留 pending
                 timer.pendingAction = .startRest
                 self.updateTimerUI()
             }
@@ -1097,53 +1057,29 @@ final class QuickPanelView: NSView {
         }
     }
 
-    /// 构建科学休息指南视图（三维分组：脑/眼/肌肉）
+    /// 构建科学休息指南视图（三维单行摘要，用于自由休息操作面板）
     private func buildRestGuideView() -> NSView {
-        let groups: [(String, String, [(String, String)])] = [
-            ("eye", "眼", [
-                ("\u{1f440}", "闭眼 1 分钟，远眺 20 秒"),
-                ("\u{1f333}", "看窗外远处绿色植物"),
-            ]),
-            ("brain.head.profile", "脑", [
-                ("\u{1f9d8}", "深呼吸 5 次（吸 4s \u{2192} 屏 2s \u{2192} 呼 6s）"),
-                ("\u{26d4}", "别刷短视频、别看社交消息"),
-            ]),
-            ("figure.cooldown", "肌肉", [
-                ("\u{1f6b6}", "站起来走动，转头耸肩拉伸"),
-                ("\u{1f4a7}", "喝杯水，活动手腕和肩膀"),
-            ]),
+        let items: [(String, String, String)] = [
+            ("\u{1f441}", "眼睛恢复", "闭眼休息 + 远眺，放松睫状肌"),
+            ("\u{1f9e0}", "大脑恢复", "深呼吸放空，让前额叶皮层恢复活力"),
+            ("\u{1f4aa}", "肌肉恢复", "拉伸激活核心肌群，缓解久坐损伤"),
+            ("\u{26d4}",  "禁忌",     "别刷短视频、别看社交消息"),
         ]
-        let lineHeight: CGFloat = 18
+        let lineHeight: CGFloat = 20
         let padding: CGFloat = 10
-        let groupTitleH: CGFloat = 18
-        let groupGap: CGFloat = 4
-        let totalLines = groups.reduce(0) { $0 + $1.2.count }
-        let containerH = CGFloat(groups.count) * groupTitleH + CGFloat(totalLines) * lineHeight + CGFloat(groups.count - 1) * groupGap + padding * 2
+        let containerH = CGFloat(items.count) * lineHeight + padding * 2
         let container = NSView(frame: NSRect(x: 0, y: 0, width: 300, height: containerH))
         container.wantsLayer = true
         container.layer?.backgroundColor = NSColor.textColor.withAlphaComponent(0.04).cgColor
         container.layer?.cornerRadius = 8
 
-        var currentY = containerH - padding
-        for (_, group) in groups.enumerated() {
-            // 分组标题
-            currentY -= groupTitleH
-            let titleLabel = NSTextField(labelWithString: "\(group.1)")
-            titleLabel.font = .systemFont(ofSize: 11, weight: .semibold)
-            titleLabel.textColor = .secondaryLabelColor
-            titleLabel.frame = NSRect(x: padding, y: currentY, width: 280, height: groupTitleH)
-            container.addSubview(titleLabel)
-
-            // 分组条目
-            for item in group.2 {
-                currentY -= lineHeight
-                let label = NSTextField(labelWithString: "\(item.0)  \(item.1)")
-                label.font = .systemFont(ofSize: 11)
-                label.textColor = .labelColor
-                label.frame = NSRect(x: padding + 8, y: currentY, width: 272, height: lineHeight)
-                container.addSubview(label)
-            }
-            currentY -= groupGap
+        for (i, item) in items.enumerated() {
+            let y = containerH - padding - CGFloat(i + 1) * lineHeight
+            let label = NSTextField(labelWithString: "\(item.0)  \(item.1)  \(item.2)")
+            label.font = .systemFont(ofSize: 11)
+            label.textColor = .labelColor
+            label.frame = NSRect(x: padding, y: y, width: 280, height: lineHeight)
+            container.addSubview(label)
         }
 
         return container
@@ -1154,41 +1090,63 @@ final class QuickPanelView: NSView {
         let timer = FocusTimerService.shared
         let steps = timer.guidedSteps
         let currentIndex = timer.currentStepIndex
+        let isPaused = timer.status == .paused
 
         let lineHeight: CGFloat = 22
+        let detailHeight: CGFloat = 16
         let padding: CGFloat = 10
         let titleH: CGFloat = 20
-        let containerH = titleH + CGFloat(steps.count) * lineHeight + padding * 2
+        // 当前步骤多一行 detail
+        let contentH = CGFloat(steps.count) * lineHeight + detailHeight
+        let containerH = titleH + contentH + padding * 2 + 4
         let container = NSView(frame: NSRect(x: 0, y: 0, width: 300, height: containerH))
         container.wantsLayer = true
         container.layer?.backgroundColor = NSColor.textColor.withAlphaComponent(0.04).cgColor
         container.layer?.cornerRadius = 8
 
-        let totalMins = timer.guidedTotalSeconds / 60
-        let totalSecs = timer.guidedTotalSeconds % 60
-        let totalStr = totalSecs > 0 ? "\(totalMins)m\(String(format: "%02d", totalSecs))s" : "\(totalMins) 分钟"
-        let title = NSTextField(labelWithString: "\(timer.restIntensity.displayName) · \(totalStr)")
+        // 标题：强度 + 动态剩余总时间
+        let remaining = max(0, timer.guidedTotalSeconds - timer.guidedElapsedSeconds)
+        let titleStr: String
+        if isPaused {
+            titleStr = "\(timer.restIntensity.displayName) · 已暂停"
+        } else {
+            let rm = remaining / 60
+            let rs = remaining % 60
+            let remainStr = rs > 0 ? "\(rm)m\(String(format: "%02d", rs))s" : "\(rm)m"
+            titleStr = "\(timer.restIntensity.displayName) · \(remainStr)"
+        }
+        let title = NSTextField(labelWithString: titleStr)
         title.font = .systemFont(ofSize: 11, weight: .semibold)
         title.textColor = .secondaryLabelColor
         title.frame = NSRect(x: padding, y: containerH - padding - titleH, width: 280, height: titleH)
         container.addSubview(title)
 
+        var currentY = containerH - padding - titleH - 4
         for (i, step) in steps.enumerated() {
-            let y = containerH - padding - titleH - 4 - CGFloat(i + 1) * lineHeight
+            currentY -= lineHeight
             let mins = step.durationSeconds / 60
             let secs = step.durationSeconds % 60
-            let timeStr = mins > 0 ? "\(mins)m\(secs > 0 ? String(format: "%02d", secs) + "s" : "")" : "\(secs)s"
+            let timeStr: String
+            if i == currentIndex {
+                // 当前步骤显示剩余时间
+                let sr = timer.remainingSeconds
+                let srm = sr / 60
+                let srs = sr % 60
+                timeStr = srm > 0 ? "\(srm)m\(srs > 0 ? String(format: "%02d", srs) + "s" : "")" : "\(srs)s"
+            } else {
+                timeStr = mins > 0 ? "\(mins)m\(secs > 0 ? String(format: "%02d", secs) + "s" : "")" : "\(secs)s"
+            }
             let prefix: String
             let font: NSFont
             let color: NSColor
             if i < currentIndex {
-                prefix = "\u{2705}"  // ✅
+                prefix = "\u{2713}"  // ✓
                 font = .systemFont(ofSize: 11)
                 color = .tertiaryLabelColor
             } else if i == currentIndex {
-                prefix = "\u{25b6}\u{fe0f}"  // ▶️
+                prefix = isPaused ? "\u{23f8}" : "\u{25b6}\u{fe0f}"  // ⏸ or ▶️
                 font = .systemFont(ofSize: 11, weight: .semibold)
-                color = NSColor.systemGreen
+                color = isPaused ? .secondaryLabelColor : NSColor.systemGreen
             } else {
                 prefix = "\u{25cb}"  // ○
                 font = .systemFont(ofSize: 11)
@@ -1197,8 +1155,18 @@ final class QuickPanelView: NSView {
             let label = NSTextField(labelWithString: "\(prefix)  \(step.label) · \(timeStr)")
             label.font = font
             label.textColor = color
-            label.frame = NSRect(x: padding + 2, y: y, width: 278, height: lineHeight)
+            label.frame = NSRect(x: padding + 2, y: currentY, width: 278, height: lineHeight)
             container.addSubview(label)
+
+            // 当前步骤下方显示 detail 副文案
+            if i == currentIndex {
+                currentY -= detailHeight
+                let detail = NSTextField(labelWithString: step.detail)
+                detail.font = .systemFont(ofSize: 10.5)
+                detail.textColor = .secondaryLabelColor
+                detail.frame = NSRect(x: padding + 20, y: currentY, width: 260, height: detailHeight)
+                container.addSubview(detail)
+            }
         }
 
         return container
@@ -1228,7 +1196,7 @@ final class QuickPanelView: NSView {
                 primaryBtn.bezelColor = colors.nsAccent
             }
 
-            // 构建 accessory view（推荐方案 + 自定义输入 + ⓘ 提示）
+            // 构建 accessory view（预设方案 radio → 分隔线 → 自定义 radio + 输入 → ⓘ 提示）
             let presets: [(String, Int, Int)] = [
                 ("深度专注", 25, 5),
                 ("常规节奏", 35, 7),
@@ -1237,10 +1205,11 @@ final class QuickPanelView: NSView {
             let containerWidth: CGFloat = 300
             let presetRowH: CGFloat = 24
             let presetsH = CGFloat(presets.count) * presetRowH
-            let sepH: CGFloat = 16
-            let customRowH: CGFloat = 26
+            let sepH: CGFloat = 12
+            let customRadioH: CGFloat = 22
+            let customInputH: CGFloat = 26
             let infoRowH: CGFloat = 18
-            let totalH = presetsH + sepH + customRowH + 6 + infoRowH
+            let totalH = presetsH + sepH + customRadioH + customInputH + 6 + infoRowH
             let container = NSView(frame: NSRect(x: 0, y: 0, width: containerWidth, height: totalH))
 
             // --- 底部 ⓘ 了解更多（hover 弹出 Popover）---
@@ -1253,37 +1222,49 @@ final class QuickPanelView: NSView {
             let bA: [NSAttributedString.Key: Any] = [.font: tipBodyFont, .foregroundColor: tipBodyColor]
 
             let popContent = NSMutableAttributedString()
-            popContent.append(NSAttributedString(string: "📋 方案说明\n\n", attributes: tA))
+            popContent.append(NSAttributedString(string: "\u{1f4cb} 方案说明\n\n", attributes: tA))
             popContent.append(NSAttributedString(string: "深度专注（25+5）\n", attributes: tA))
             popContent.append(NSAttributedString(string: "经典番茄钟节奏。适合需要高度集中的任务，如编码调试、论文写作、方案设计、深度阅读。\n\n", attributes: bA))
             popContent.append(NSAttributedString(string: "常规节奏（35+7）\n", attributes: tA))
             popContent.append(NSAttributedString(string: "平衡专注与疲劳恢复。适合日常工作节奏，如邮件处理、文档整理、会议纪要、代码审查。\n\n", attributes: bA))
             popContent.append(NSAttributedString(string: "轻度脑力（50+10）\n", attributes: tA))
             popContent.append(NSAttributedString(string: "适合低认知负荷的长周期任务，如资料浏览、数据录入、素材收集、笔记归档。\n\n", attributes: bA))
-            popContent.append(NSAttributedString(string: "🧠 为什么要定时休息？\n", attributes: tA))
+            popContent.append(NSAttributedString(string: "\u{1f9e0} 为什么要定时休息？\n", attributes: tA))
             popContent.append(NSAttributedString(string: "前额叶皮层主导专注与决策，持续 20-50 分钟后活力自然衰退。定时休息让它恢复，硬撑只会陷入「伪工作」。\n\n", attributes: bA))
-            popContent.append(NSAttributedString(string: "⚡ 为什么不能过度消耗？\n", attributes: tA))
+            popContent.append(NSAttributedString(string: "\u{26a1} 为什么不能过度消耗？\n", attributes: tA))
             popContent.append(NSAttributedString(string: "透支会拖慢前额叶的恢复节奏，一次硬撑的代价往往是半天的低效。", attributes: bA))
 
             let hoverInfo = HoverInfoView(
                 frame: NSRect(x: 0, y: 0, width: containerWidth, height: infoRowH),
-                text: "ⓘ 了解各方案的适用场景与科学依据",
+                text: "\u{24d8} 了解各方案的适用场景与科学依据",
                 popoverAttributedContent: popContent
             )
             container.addSubview(hoverInfo)
 
-            // --- 自定义输入区域（紧凑单行）---
-            let customY: CGFloat = infoRowH + 6
+            // --- 自定义 radio + 输入区域 ---
+            let customInputY: CGFloat = infoRowH + 4
+            let customRadioY = customInputY + customInputH + 2
             let stepperSize: CGFloat = 22
             let stepperFont = NSFont.systemFont(ofSize: 12, weight: .medium)
 
+            // 自定义 radio 按钮
+            let customRadio = NSButton(radioButtonWithTitle: "自定义",
+                                       target: nil, action: nil)
+            customRadio.font = .systemFont(ofSize: 12)
+            customRadio.frame = NSRect(x: 2, y: customRadioY, width: containerWidth - 4, height: customRadioH)
+            customRadio.tag = presets.count  // tag = 3
+            container.addSubview(customRadio)
+
+            // 自定义输入（缩进 22px，与 radio 文字对齐）
+            let inputIndent: CGFloat = 22
+
             let workLabel = NSTextField(labelWithString: "工作")
             workLabel.font = .systemFont(ofSize: 11)
-            workLabel.frame = NSRect(x: 2, y: customY, width: 28, height: customRowH)
+            workLabel.frame = NSRect(x: inputIndent, y: customInputY, width: 28, height: customInputH)
             container.addSubview(workLabel)
 
-            let workMinusBtn = NSButton(frame: NSRect(x: 32, y: customY + 2, width: stepperSize, height: stepperSize))
-            workMinusBtn.title = "−"
+            let workMinusBtn = NSButton(frame: NSRect(x: inputIndent + 30, y: customInputY + 2, width: stepperSize, height: stepperSize))
+            workMinusBtn.title = "\u{2212}"
             workMinusBtn.bezelStyle = .circular
             workMinusBtn.font = stepperFont
             container.addSubview(workMinusBtn)
@@ -1291,10 +1272,10 @@ final class QuickPanelView: NSView {
             let workVisibleField = NSTextField(string: "\(timer.workMinutes)")
             workVisibleField.font = .monospacedDigitSystemFont(ofSize: 13, weight: .medium)
             workVisibleField.alignment = .center
-            workVisibleField.frame = NSRect(x: 56, y: customY + 2, width: 34, height: 20)
+            workVisibleField.frame = NSRect(x: inputIndent + 54, y: customInputY + 2, width: 34, height: 20)
             container.addSubview(workVisibleField)
 
-            let workPlusBtn = NSButton(frame: NSRect(x: 92, y: customY + 2, width: stepperSize, height: stepperSize))
+            let workPlusBtn = NSButton(frame: NSRect(x: inputIndent + 90, y: customInputY + 2, width: stepperSize, height: stepperSize))
             workPlusBtn.title = "+"
             workPlusBtn.bezelStyle = .circular
             workPlusBtn.font = stepperFont
@@ -1302,11 +1283,11 @@ final class QuickPanelView: NSView {
 
             let restLabel = NSTextField(labelWithString: "休息")
             restLabel.font = .systemFont(ofSize: 11)
-            restLabel.frame = NSRect(x: 130, y: customY, width: 28, height: customRowH)
+            restLabel.frame = NSRect(x: inputIndent + 124, y: customInputY, width: 28, height: customInputH)
             container.addSubview(restLabel)
 
-            let restMinusBtn = NSButton(frame: NSRect(x: 160, y: customY + 2, width: stepperSize, height: stepperSize))
-            restMinusBtn.title = "−"
+            let restMinusBtn = NSButton(frame: NSRect(x: inputIndent + 154, y: customInputY + 2, width: stepperSize, height: stepperSize))
+            restMinusBtn.title = "\u{2212}"
             restMinusBtn.bezelStyle = .circular
             restMinusBtn.font = stepperFont
             container.addSubview(restMinusBtn)
@@ -1314,20 +1295,20 @@ final class QuickPanelView: NSView {
             let restVisibleField = NSTextField(string: "\(timer.restMinutes)")
             restVisibleField.font = .monospacedDigitSystemFont(ofSize: 13, weight: .medium)
             restVisibleField.alignment = .center
-            restVisibleField.frame = NSRect(x: 184, y: customY + 2, width: 34, height: 20)
+            restVisibleField.frame = NSRect(x: inputIndent + 178, y: customInputY + 2, width: 34, height: 20)
             container.addSubview(restVisibleField)
 
-            let restPlusBtn = NSButton(frame: NSRect(x: 220, y: customY + 2, width: stepperSize, height: stepperSize))
+            let restPlusBtn = NSButton(frame: NSRect(x: inputIndent + 214, y: customInputY + 2, width: stepperSize, height: stepperSize))
             restPlusBtn.title = "+"
             restPlusBtn.bezelStyle = .circular
             restPlusBtn.font = stepperFont
             container.addSubview(restPlusBtn)
 
-            // --- helper 初始化（绑定可见输入框）---
+            // --- helper 初始化（绑定可见输入框 + 自定义 radio）---
             let helper = TimerEditHelper(workField: workVisibleField, restField: restVisibleField, workStep: 1, restStep: 1)
 
-            // --- 分隔线（自定义区 ↔ 方案区）---
-            let sepY = customY + customRowH + sepH / 2 - 0.5
+            // --- 分隔线（预设 ↔ 自定义）---
+            let sepY = customRadioY + customRadioH + sepH / 2 - 0.5
             let sepLine = NSView(frame: NSRect(x: 0, y: sepY, width: containerWidth, height: 1))
             sepLine.wantsLayer = true
             sepLine.layer?.backgroundColor = NSColor.separatorColor.cgColor
@@ -1338,7 +1319,7 @@ final class QuickPanelView: NSView {
             let presetBaseY = totalH
             for (i, preset) in presets.enumerated() {
                 let y = presetBaseY - CGFloat(i + 1) * presetRowH
-                let btn = NSButton(radioButtonWithTitle: "\(preset.0)    \(preset.1) min 工作 · \(preset.2) min 休息",
+                let btn = NSButton(radioButtonWithTitle: "\(preset.0)    \(preset.1) min 工作 \u{00b7} \(preset.2) min 休息",
                                    target: helper, action: #selector(TimerEditHelper.presetSelected(_:)))
                 btn.font = NSFont.systemFont(ofSize: 12)
                 btn.frame = NSRect(x: 2, y: y + 2, width: containerWidth - 4, height: 20)
@@ -1346,15 +1327,22 @@ final class QuickPanelView: NSView {
                 container.addSubview(btn)
                 radioButtons.append(btn)
             }
+            // 自定义 radio 加入 radioButtons 数组（互斥管理）
+            radioButtons.append(customRadio)
+            customRadio.target = helper
+            customRadio.action = #selector(TimerEditHelper.customSelected(_:))
+
             helper.presets = presets
             helper.radioButtons = radioButtons
-    
-            // 默认选中匹配当前时长的方案
+
+            // 默认选中匹配当前时长的方案，无匹配则选中自定义
             if let matchIndex = presets.firstIndex(where: { $0.1 == timer.workMinutes && $0.2 == timer.restMinutes }) {
                 radioButtons[matchIndex].state = .on
+            } else {
+                customRadio.state = .on
             }
-    
-            // +/- 按钮事件（同时取消 radio 选中）
+
+            // +/- 按钮事件（切换到自定义 radio）
             workMinusBtn.target = helper
             workMinusBtn.action = #selector(TimerEditHelper.decreaseWork)
             workPlusBtn.target = helper
@@ -1363,8 +1351,8 @@ final class QuickPanelView: NSView {
             restMinusBtn.action = #selector(TimerEditHelper.decreaseRest)
             restPlusBtn.target = helper
             restPlusBtn.action = #selector(TimerEditHelper.increaseRest)
-    
-            // 输入框编辑时取消 radio 选中
+
+            // 输入框编辑时切换到自定义 radio
             workVisibleField.delegate = helper
             restVisibleField.delegate = helper
     
@@ -1653,23 +1641,25 @@ final class QuickPanelView: NSView {
     }
 }
 
-// MARK: - 引导休息强度选择辅助
+// MARK: - 工作完成弹窗 radio 辅助
 
-private class IntensityPickerHelper: NSObject {
-    let intensities: [RestIntensity]
+private class WorkCompleteHelper: NSObject {
+    let guidedCount: Int
     let radioButtons: [NSButton]
-    let updatePreview: (RestIntensity) -> Void
-    var selectedIndex: Int = 1
+    var selectedTag: Int = 0
 
-    init(intensities: [RestIntensity], radioButtons: [NSButton], updatePreview: @escaping (RestIntensity) -> Void) {
-        self.intensities = intensities
+    init(guidedCount: Int, radioButtons: [NSButton]) {
+        self.guidedCount = guidedCount
         self.radioButtons = radioButtons
-        self.updatePreview = updatePreview
     }
 
-    @objc func intensitySelected(_ sender: NSButton) {
-        selectedIndex = sender.tag
-        updatePreview(intensities[selectedIndex])
+    @objc func radioSelected(_ sender: NSButton) {
+        selectedTag = sender.tag
+        // 互斥：关闭其他 radio
+        for btn in radioButtons where btn !== sender {
+            btn.state = .off
+        }
+        sender.state = .on
     }
 }
 
@@ -1690,34 +1680,34 @@ private class TimerEditHelper: NSObject, NSTextFieldDelegate {
         self.restStep = restStep
     }
 
-    private func deselectRadios() {
-        for btn in radioButtons {
-            btn.state = .off
-        }
+    /// 取消所有预设 radio，选中"自定义"（数组最后一个）
+    private func selectCustomRadio() {
+        for btn in radioButtons { btn.state = .off }
+        radioButtons.last?.state = .on
     }
 
     @objc func decreaseWork() {
         let cur = Int(workField.stringValue) ?? 0
         workField.stringValue = "\(max(1, cur - workStep))"
-        deselectRadios()
+        selectCustomRadio()
     }
 
     @objc func increaseWork() {
         let cur = Int(workField.stringValue) ?? 0
         workField.stringValue = "\(cur + workStep)"
-        deselectRadios()
+        selectCustomRadio()
     }
 
     @objc func decreaseRest() {
         let cur = Int(restField.stringValue) ?? 0
         restField.stringValue = "\(max(1, cur - restStep))"
-        deselectRadios()
+        selectCustomRadio()
     }
 
     @objc func increaseRest() {
         let cur = Int(restField.stringValue) ?? 0
         restField.stringValue = "\(cur + restStep)"
-        deselectRadios()
+        selectCustomRadio()
     }
 
     @objc func presetSelected(_ sender: NSButton) {
@@ -1726,12 +1716,21 @@ private class TimerEditHelper: NSObject, NSTextFieldDelegate {
         let preset = presets[idx]
         workField.stringValue = "\(preset.1)"
         restField.stringValue = "\(preset.2)"
+        // 手动互斥：取消其他 radio
+        for btn in radioButtons where btn !== sender { btn.state = .off }
+        sender.state = .on
     }
 
-    // MARK: - NSTextFieldDelegate（手动输入时取消 radio 选中）
+    @objc func customSelected(_ sender: NSButton) {
+        // 手动互斥：取消预设 radio
+        for btn in radioButtons where btn !== sender { btn.state = .off }
+        sender.state = .on
+    }
+
+    // MARK: - NSTextFieldDelegate（手动输入时切换到自定义 radio）
 
     func controlTextDidChange(_ obj: Notification) {
-        deselectRadios()
+        selectCustomRadio()
     }
 }
 
