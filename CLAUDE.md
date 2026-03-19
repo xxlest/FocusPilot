@@ -97,6 +97,9 @@ FocusPilot/
 - **FocusByTime 番茄钟**：FocusTimerService 单例管理状态机（idle/running/paused × work/rest），通过 NotificationCenter 驱动 QuickPanel 底部计时器栏和 FloatingBall 进度环
 - **引导休息模式**：RestIntensity 三级强度（轻度~3min/中度~5min/深度~8min），RestStep 分步定义覆盖脑/眼/肌肉三维恢复；tick() 自动推进步骤，计时器栏显示步骤名+步骤图标+步骤倒计时
 - **计时器栏整栏可点击**：栏内零按钮，NSClickGestureRecognizer 整栏点击，根据状态分发到编辑弹窗/操作面板/阶段转换弹窗；hover 时底色加深 + 手形光标；`buildRestGuideView()` 三维分组休息指南
+- **idle 双入口**：计时器栏 idle 状态显示「▶ 开始专注 | ☕ 休息」左右并排，点击位置检测分发到 `timerEditTapped()` 或 `restDirectTapped()`
+- **独立休息模式**：`isStandaloneRest` 标记直接休息（非工作→休息流程），休息结束后直接 reset 回 idle，不弹"充电完毕"对话框
+- **休息选择 UI 共享**：`buildRestSelectionAccessoryView()` 提取引导/自由休息 radio 选择 UI，`handleWorkCompleted()` 和 `restDirectTapped()` 共用
 - **FocusByTime 弹窗全失焦关闭**：所有弹窗均失焦自动关闭（NSApp.didResignActive → abortModal）。阶段完成弹窗关闭后，FocusPendingAction 保留待处理动作，计时器栏显示 pending pill 徽章供用户点击重新弹出
 
 ### 配置迁移
@@ -105,7 +108,7 @@ FocusPilot/
 - V3.1: appConfigs 含 isFavorite → 仅保留关注（migrateToV31）
 - V3.7: Preferences 移除 colorTheme/ballColorStyle/ballCustomColorHex，新增 appTheme（保留旧 CodingKey 兼容解码）
 - V3.8: 新增 FocusTimerService + QuickPanel 计时器栏 + FloatingBall 进度环
-- V3.9: FocusTimerService 新增引导休息（RestStep/RestMode/RestIntensity）+ QuickPanel 强度选择弹窗 + 步骤进度列表
+- V3.9: FocusTimerService 新增引导休息（RestStep/RestMode/RestIntensity）+ QuickPanel 强度选择弹窗 + 步骤进度列表 + idle 双入口（专注/休息）+ 独立休息模式
 - AppConfig decoder 向后兼容（忽略旧字段）
 
 ## 构建

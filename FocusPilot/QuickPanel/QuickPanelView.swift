@@ -202,6 +202,38 @@ final class QuickPanelView: NSView {
         return label
     }()
 
+    /// idle 状态：开始专注标签（左半边）
+    private let timerIdleFocusLabel: NSTextField = {
+        let label = NSTextField(labelWithString: "")
+        label.font = .systemFont(ofSize: 14, weight: .medium)
+        label.alignment = .center
+        label.isEditable = false
+        label.isBezeled = false
+        label.drawsBackground = false
+        label.isHidden = true
+        return label
+    }()
+
+    /// idle 状态：休息标签（右半边）
+    private let timerIdleRestLabel: NSTextField = {
+        let label = NSTextField(labelWithString: "")
+        label.font = .systemFont(ofSize: 14, weight: .medium)
+        label.alignment = .center
+        label.isEditable = false
+        label.isBezeled = false
+        label.drawsBackground = false
+        label.isHidden = true
+        return label
+    }()
+
+    /// idle 状态：专注与休息之间的竖线分隔符
+    private let timerIdleSeparator: NSView = {
+        let view = NSView()
+        view.wantsLayer = true
+        view.isHidden = true
+        return view
+    }()
+
     /// 进度条填充宽度约束
     private var timerProgressFillWidth: NSLayoutConstraint?
     /// 进度条可见时内容组微上移约束
@@ -293,6 +325,9 @@ final class QuickPanelView: NSView {
         timerBar.addSubview(timerStepLabel)
         timerBar.addSubview(timerProgressBg)
         timerProgressBg.addSubview(timerProgressFill)
+        timerBar.addSubview(timerIdleFocusLabel)
+        timerBar.addSubview(timerIdleSeparator)
+        timerBar.addSubview(timerIdleRestLabel)
 
         // Auto Layout
         topBar.translatesAutoresizingMaskIntoConstraints = false
@@ -313,6 +348,9 @@ final class QuickPanelView: NSView {
         timerStepLabel.translatesAutoresizingMaskIntoConstraints = false
         timerProgressBg.translatesAutoresizingMaskIntoConstraints = false
         timerProgressFill.translatesAutoresizingMaskIntoConstraints = false
+        timerIdleFocusLabel.translatesAutoresizingMaskIntoConstraints = false
+        timerIdleSeparator.translatesAutoresizingMaskIntoConstraints = false
+        timerIdleRestLabel.translatesAutoresizingMaskIntoConstraints = false
 
         let topBarHeight: CGFloat = 32
 
@@ -405,6 +443,22 @@ final class QuickPanelView: NSView {
             timerProgressFill.leadingAnchor.constraint(equalTo: timerProgressBg.leadingAnchor),
             timerProgressFill.topAnchor.constraint(equalTo: timerProgressBg.topAnchor),
             timerProgressFill.bottomAnchor.constraint(equalTo: timerProgressBg.bottomAnchor),
+
+            // idle 双入口：竖线分隔符居中
+            timerIdleSeparator.centerXAnchor.constraint(equalTo: timerBar.centerXAnchor),
+            timerIdleSeparator.centerYAnchor.constraint(equalTo: timerBar.centerYAnchor),
+            timerIdleSeparator.widthAnchor.constraint(equalToConstant: 1),
+            timerIdleSeparator.heightAnchor.constraint(equalToConstant: 18),
+
+            // idle 双入口：开始专注（左半边居中）
+            timerIdleFocusLabel.leadingAnchor.constraint(equalTo: timerBar.leadingAnchor),
+            timerIdleFocusLabel.trailingAnchor.constraint(equalTo: timerIdleSeparator.leadingAnchor),
+            timerIdleFocusLabel.centerYAnchor.constraint(equalTo: timerBar.centerYAnchor),
+
+            // idle 双入口：休息（右半边居中）
+            timerIdleRestLabel.leadingAnchor.constraint(equalTo: timerIdleSeparator.trailingAnchor),
+            timerIdleRestLabel.trailingAnchor.constraint(equalTo: timerBar.trailingAnchor),
+            timerIdleRestLabel.centerYAnchor.constraint(equalTo: timerBar.centerYAnchor),
         ])
 
         // 进度条填充宽度约束（初始为 0）
@@ -418,7 +472,7 @@ final class QuickPanelView: NSView {
         timerContentStackCenterY = centerY
 
         // 计时器栏点击手势（整栏可点击）
-        let timerBarClick = NSClickGestureRecognizer(target: self, action: #selector(handleTimerBarTapped))
+        let timerBarClick = NSClickGestureRecognizer(target: self, action: #selector(handleTimerBarTapped(_:)))
         timerBar.addGestureRecognizer(timerBarClick)
 
         // 计时器栏 hover 追踪
@@ -596,6 +650,9 @@ final class QuickPanelView: NSView {
         timerProgressBg.isHidden = true
         timerProgressFill.isHidden = true
         timerStepLabel.isHidden = true
+        timerIdleFocusLabel.isHidden = true
+        timerIdleRestLabel.isHidden = true
+        timerIdleSeparator.isHidden = true
 
         // pending 状态：弹窗被失焦自动关闭，等待用户点击栏确认
         if hasPending {
@@ -619,10 +676,15 @@ final class QuickPanelView: NSView {
         }
 
         if isIdle {
-            // idle：居中显示 "▶  开始专注"
-            timerActionLabel.isHidden = false
-            timerActionLabel.stringValue = "▶  开始专注"
-            timerActionLabel.textColor = colors.nsAccent
+            // idle：左右双入口（开始专注 | 休息）
+            timerIdleFocusLabel.isHidden = false
+            timerIdleRestLabel.isHidden = false
+            timerIdleSeparator.isHidden = false
+            timerIdleFocusLabel.stringValue = "▶  开始专注"
+            timerIdleFocusLabel.textColor = colors.nsAccent
+            timerIdleRestLabel.stringValue = "☕  休息"
+            timerIdleRestLabel.textColor = NSColor.systemGreen
+            timerIdleSeparator.layer?.backgroundColor = colors.nsSeparator.withAlphaComponent(0.6).cgColor
             timerBar.layer?.backgroundColor = colors.nsTextPrimary.withAlphaComponent(0.08).cgColor
             bottomSeparator.layer?.backgroundColor = colors.nsSeparator.withAlphaComponent(0.9).cgColor
         } else {
@@ -732,6 +794,117 @@ final class QuickPanelView: NSView {
         }
     }
 
+    /// 构建休息选择 accessory view（引导休息 radio + 自由休息 radio）
+    private func buildRestSelectionAccessoryView() -> (container: NSView, helper: WorkCompleteHelper, hoverInfo: HoverInfoView) {
+        let timer = FocusTimerService.shared
+        let containerWidth: CGFloat = 320
+        let intensities = RestIntensity.allCases
+        let radioRowH: CGFloat = 22
+        let descRowH: CGFloat = 16
+        let groupH = radioRowH + descRowH
+        let groupGap: CGFloat = 4
+        let sepH: CGFloat = 12
+        let freeRowH: CGFloat = 22
+        let freeDescH: CGFloat = 16
+        let infoRowH: CGFloat = 20
+        let totalH = CGFloat(intensities.count) * groupH + CGFloat(intensities.count - 1) * groupGap + sepH + freeRowH + freeDescH + 4 + infoRowH
+        let container = NSView(frame: NSRect(x: 0, y: 0, width: containerWidth, height: totalH))
+
+        // --- 底部 ⓘ 了解更多 ---
+        let colors = ConfigStore.shared.currentThemeColors
+        let accentColor = colors.nsAccent
+        let tipTitleColor = accentColor.blended(withFraction: 0.35, of: .secondaryLabelColor) ?? accentColor
+        let tipTitleFont = NSFont.systemFont(ofSize: 11, weight: .semibold)
+        let tipBodyFont = NSFont.systemFont(ofSize: 11)
+        let tipBodyColor = NSColor.secondaryLabelColor
+        let tA: [NSAttributedString.Key: Any] = [.font: tipTitleFont, .foregroundColor: tipTitleColor]
+        let bA: [NSAttributedString.Key: Any] = [.font: tipBodyFont, .foregroundColor: tipBodyColor]
+
+        let popContent = NSMutableAttributedString()
+        popContent.append(NSAttributedString(string: "三维恢复的科学依据\n\n", attributes: tA))
+        popContent.append(NSAttributedString(string: "\u{1f441} 眼睛恢复\n", attributes: tA))
+        popContent.append(NSAttributedString(string: "持续近距离用眼使睫状肌紧张痉挛，闭眼休息 + 远眺（6 米以上）能快速放松睫状肌、缓解干眼和视觉疲劳。每 20-30 分钟远眺 20 秒是眼科推荐的 20-20-20 法则。\n\n", attributes: bA))
+        popContent.append(NSAttributedString(string: "\u{1f9e0} 大脑恢复\n", attributes: tA))
+        popContent.append(NSAttributedString(string: "前额叶皮层主导专注与决策，持续 20-50 分钟后活力自然衰退。深呼吸能激活副交感神经，降低皮质醇水平，让前额叶「重启」。硬撑只会陷入伪工作状态。\n\n", attributes: bA))
+        popContent.append(NSAttributedString(string: "\u{1f4aa} 肌肉恢复\n", attributes: tA))
+        popContent.append(NSAttributedString(string: "久坐导致髋屈肌缩短、核心失活、腰椎压力增大。骨盆后倾激活深层核心，猫牛拉伸脊柱，夹臀锁定骨盆中立位。三级强度对应不同姿态需求：坐着 → 站立 → 全链路。\n\n", attributes: bA))
+        popContent.append(NSAttributedString(string: "\u{26d4} 禁忌\n", attributes: tA))
+        popContent.append(NSAttributedString(string: "别刷短视频、别看社交消息。它们会消耗注意力残留，让大脑无法真正恢复，反而加重疲劳感。", attributes: bA))
+
+        let hoverInfo = HoverInfoView(
+            frame: NSRect(x: 0, y: 0, width: containerWidth, height: infoRowH),
+            text: "\u{24d8} 了解三维恢复（眼睛 · 大脑 · 肌肉）的科学依据",
+            popoverAttributedContent: popContent
+        )
+        container.addSubview(hoverInfo)
+
+        // --- 分隔线下方：自由休息 radio ---
+        let freeY = infoRowH + 4
+        let freeRadio = NSButton(radioButtonWithTitle: "自由休息    \(timer.restMinutes) 分钟",
+                                 target: nil, action: nil)
+        freeRadio.font = .systemFont(ofSize: 12)
+        freeRadio.frame = NSRect(x: 2, y: freeY + freeDescH, width: containerWidth - 4, height: freeRowH)
+        freeRadio.tag = intensities.count  // tag = 3（区别于引导 0/1/2）
+        container.addSubview(freeRadio)
+
+        let freeDesc = NSTextField(labelWithString: "不跟步骤，按自己节奏恢复")
+        freeDesc.font = .systemFont(ofSize: 11)
+        freeDesc.textColor = .secondaryLabelColor
+        freeDesc.frame = NSRect(x: 22, y: freeY, width: containerWidth - 24, height: freeDescH)
+        container.addSubview(freeDesc)
+
+        // --- 分隔线 ---
+        let sepY = freeY + freeRowH + freeDescH + sepH / 2 - 0.5
+        let sepLine = NSView(frame: NSRect(x: 0, y: sepY, width: containerWidth, height: 1))
+        sepLine.wantsLayer = true
+        sepLine.layer?.backgroundColor = NSColor.separatorColor.cgColor
+        container.addSubview(sepLine)
+
+        // --- 引导休息 radio（轻度/标准/深度）---
+        var radioButtons: [NSButton] = []
+        let guidedBaseY = sepY + sepH / 2
+        for (i, intensity) in intensities.enumerated() {
+            let y = guidedBaseY + CGFloat(intensities.count - 1 - i) * (groupH + groupGap)
+            let btn = NSButton(radioButtonWithTitle: "\(intensity.displayName)    ~\(intensity.totalMinutes) 分钟",
+                               target: nil, action: nil)
+            btn.font = .systemFont(ofSize: 12, weight: .medium)
+            btn.frame = NSRect(x: 2, y: y + descRowH, width: containerWidth - 4, height: radioRowH)
+            btn.tag = i
+            container.addSubview(btn)
+            radioButtons.append(btn)
+
+            let desc = NSTextField(labelWithString: intensity.description)
+            desc.font = .systemFont(ofSize: 11)
+            desc.textColor = .secondaryLabelColor
+            desc.frame = NSRect(x: 22, y: y, width: containerWidth - 24, height: descRowH)
+            container.addSubview(desc)
+        }
+        radioButtons.append(freeRadio)
+
+        // Helper 处理 radio 互斥
+        let helper = WorkCompleteHelper(
+            guidedCount: intensities.count,
+            radioButtons: radioButtons
+        )
+        for btn in radioButtons {
+            btn.target = helper
+            btn.action = #selector(WorkCompleteHelper.radioSelected(_:))
+        }
+
+        // 根据休息时长自动匹配引导强度（1:1 对应：5min→轻度，7min→标准，10min→深度）
+        let matchedIntensity: RestIntensity
+        switch timer.restMinutes {
+        case ...5:  matchedIntensity = .light
+        case 6...8: matchedIntensity = .standard
+        default:    matchedIntensity = .deep
+        }
+        let defaultIndex = intensities.firstIndex(of: matchedIntensity) ?? 1
+        radioButtons[defaultIndex].state = .on
+        helper.selectedTag = defaultIndex
+
+        return (container, helper, hoverInfo)
+    }
+
     @objc private func handleWorkCompleted() {
         DispatchQueue.main.async {
             NSApp.activate(ignoringOtherApps: true)
@@ -751,112 +924,7 @@ final class QuickPanelView: NSView {
                 alert.buttons[0].keyEquivalent = ""     // 取消"直接结束"的默认回车
             }
 
-            // 构建统一的 radio 选择 accessory view
-            let containerWidth: CGFloat = 320
-            let intensities = RestIntensity.allCases
-            let radioRowH: CGFloat = 22
-            let descRowH: CGFloat = 16
-            let groupH = radioRowH + descRowH
-            let groupGap: CGFloat = 4
-            let sepH: CGFloat = 12
-            let freeRowH: CGFloat = 22
-            let freeDescH: CGFloat = 16
-            let infoRowH: CGFloat = 20
-            let totalH = CGFloat(intensities.count) * groupH + CGFloat(intensities.count - 1) * groupGap + sepH + freeRowH + freeDescH + 4 + infoRowH
-            let container = NSView(frame: NSRect(x: 0, y: 0, width: containerWidth, height: totalH))
-
-            // --- 底部 ⓘ 了解更多 ---
-            let colors = ConfigStore.shared.currentThemeColors
-            let accentColor = colors.nsAccent
-            let tipTitleColor = accentColor.blended(withFraction: 0.35, of: .secondaryLabelColor) ?? accentColor
-            let tipTitleFont = NSFont.systemFont(ofSize: 11, weight: .semibold)
-            let tipBodyFont = NSFont.systemFont(ofSize: 11)
-            let tipBodyColor = NSColor.secondaryLabelColor
-            let tA: [NSAttributedString.Key: Any] = [.font: tipTitleFont, .foregroundColor: tipTitleColor]
-            let bA: [NSAttributedString.Key: Any] = [.font: tipBodyFont, .foregroundColor: tipBodyColor]
-
-            let popContent = NSMutableAttributedString()
-            popContent.append(NSAttributedString(string: "三维恢复的科学依据\n\n", attributes: tA))
-            popContent.append(NSAttributedString(string: "\u{1f441} 眼睛恢复\n", attributes: tA))
-            popContent.append(NSAttributedString(string: "持续近距离用眼使睫状肌紧张痉挛，闭眼休息 + 远眺（6 米以上）能快速放松睫状肌、缓解干眼和视觉疲劳。每 20-30 分钟远眺 20 秒是眼科推荐的 20-20-20 法则。\n\n", attributes: bA))
-            popContent.append(NSAttributedString(string: "\u{1f9e0} 大脑恢复\n", attributes: tA))
-            popContent.append(NSAttributedString(string: "前额叶皮层主导专注与决策，持续 20-50 分钟后活力自然衰退。深呼吸能激活副交感神经，降低皮质醇水平，让前额叶「重启」。硬撑只会陷入伪工作状态。\n\n", attributes: bA))
-            popContent.append(NSAttributedString(string: "\u{1f4aa} 肌肉恢复\n", attributes: tA))
-            popContent.append(NSAttributedString(string: "久坐导致髋屈肌缩短、核心失活、腰椎压力增大。骨盆后倾激活深层核心，猫牛拉伸脊柱，夹臀锁定骨盆中立位。三级强度对应不同姿态需求：坐着 → 站立 → 全链路。\n\n", attributes: bA))
-            popContent.append(NSAttributedString(string: "\u{26d4} 禁忌\n", attributes: tA))
-            popContent.append(NSAttributedString(string: "别刷短视频、别看社交消息。它们会消耗注意力残留，让大脑无法真正恢复，反而加重疲劳感。", attributes: bA))
-
-            let hoverInfo = HoverInfoView(
-                frame: NSRect(x: 0, y: 0, width: containerWidth, height: infoRowH),
-                text: "\u{24d8} 了解三维恢复（眼睛 · 大脑 · 肌肉）的科学依据",
-                popoverAttributedContent: popContent
-            )
-            container.addSubview(hoverInfo)
-
-            // --- 分隔线下方：自由休息 radio ---
-            let freeY = infoRowH + 4
-            let freeRadio = NSButton(radioButtonWithTitle: "自由休息    \(timer.restMinutes) 分钟",
-                                     target: nil, action: nil)
-            freeRadio.font = .systemFont(ofSize: 12)
-            freeRadio.frame = NSRect(x: 2, y: freeY + freeDescH, width: containerWidth - 4, height: freeRowH)
-            freeRadio.tag = intensities.count  // tag = 3（区别于引导 0/1/2）
-            container.addSubview(freeRadio)
-
-            let freeDesc = NSTextField(labelWithString: "不跟步骤，按自己节奏恢复")
-            freeDesc.font = .systemFont(ofSize: 11)
-            freeDesc.textColor = .secondaryLabelColor
-            freeDesc.frame = NSRect(x: 22, y: freeY, width: containerWidth - 24, height: freeDescH)
-            container.addSubview(freeDesc)
-
-            // --- 分隔线 ---
-            let sepY = freeY + freeRowH + freeDescH + sepH / 2 - 0.5
-            let sepLine = NSView(frame: NSRect(x: 0, y: sepY, width: containerWidth, height: 1))
-            sepLine.wantsLayer = true
-            sepLine.layer?.backgroundColor = NSColor.separatorColor.cgColor
-            container.addSubview(sepLine)
-
-            // --- 引导休息 radio（轻度/标准/深度）---
-            var radioButtons: [NSButton] = []
-            let guidedBaseY = sepY + sepH / 2
-            for (i, intensity) in intensities.enumerated() {
-                let y = guidedBaseY + CGFloat(intensities.count - 1 - i) * (groupH + groupGap)
-                let btn = NSButton(radioButtonWithTitle: "\(intensity.displayName)    ~\(intensity.totalMinutes) 分钟",
-                                   target: nil, action: nil)
-                btn.font = .systemFont(ofSize: 12, weight: .medium)
-                btn.frame = NSRect(x: 2, y: y + descRowH, width: containerWidth - 4, height: radioRowH)
-                btn.tag = i
-                container.addSubview(btn)
-                radioButtons.append(btn)
-
-                let desc = NSTextField(labelWithString: intensity.description)
-                desc.font = .systemFont(ofSize: 11)
-                desc.textColor = .secondaryLabelColor
-                desc.frame = NSRect(x: 22, y: y, width: containerWidth - 24, height: descRowH)
-                container.addSubview(desc)
-            }
-            radioButtons.append(freeRadio)
-
-            // Helper 处理 radio 互斥
-            let helper = WorkCompleteHelper(
-                guidedCount: intensities.count,
-                radioButtons: radioButtons
-            )
-            for btn in radioButtons {
-                btn.target = helper
-                btn.action = #selector(WorkCompleteHelper.radioSelected(_:))
-            }
-
-            // 根据休息时长自动匹配引导强度（1:1 对应：5min→轻度，7min→标准，10min→深度）
-            let matchedIntensity: RestIntensity
-            switch timer.restMinutes {
-            case ...5:  matchedIntensity = .light
-            case 6...8: matchedIntensity = .standard
-            default:    matchedIntensity = .deep
-            }
-            let defaultIndex = intensities.firstIndex(of: matchedIntensity) ?? 1
-            radioButtons[defaultIndex].state = .on
-            helper.selectedTag = defaultIndex
-
+            let (container, helper, hoverInfo) = self.buildRestSelectionAccessoryView()
             alert.accessoryView = container
             alert.window.initialFirstResponder = nil
             self.prepareAlert(alert)
@@ -879,6 +947,7 @@ final class QuickPanelView: NSView {
             }
             self.restoreAfterAlert()
 
+            let intensities = RestIntensity.allCases
             if result == .alertSecondButtonReturn {
                 // "开始休息"按钮
                 let tag = helper.selectedTag
@@ -951,7 +1020,7 @@ final class QuickPanelView: NSView {
 
     // MARK: - FocusByTime 计时器栏点击
 
-    @objc private func handleTimerBarTapped() {
+    @objc private func handleTimerBarTapped(_ gesture: NSClickGestureRecognizer) {
         let timer = FocusTimerService.shared
 
         // 优先处理 pending 动作
@@ -968,7 +1037,13 @@ final class QuickPanelView: NSView {
 
         switch timer.status {
         case .idle:
-            timerEditTapped()
+            // 左半边 = 开始专注，右半边 = 休息
+            let location = gesture.location(in: timerBar)
+            if location.x > timerBar.bounds.midX {
+                restDirectTapped()
+            } else {
+                timerEditTapped()
+            }
         case .running, .paused:
             showRunningActionSheet()
         }
@@ -1170,6 +1245,66 @@ final class QuickPanelView: NSView {
         }
 
         return container
+    }
+
+    /// idle 状态点击"休息" → 直接选择休息方式并开始
+    private func restDirectTapped() {
+        let timer = FocusTimerService.shared
+        guard timer.status == .idle else { return }
+
+        DispatchQueue.main.async {
+            NSApp.activate(ignoringOtherApps: true)
+
+            let alert = NSAlert()
+            alert.messageText = "选择休息方式"
+            alert.informativeText = "放下工作，让身体和大脑充分恢复"
+            alert.alertStyle = .informational
+            alert.addButton(withTitle: "取消")
+            alert.addButton(withTitle: "开始休息")
+
+            // 主操作按钮（开始休息）着绿色
+            if alert.buttons.count > 1 {
+                alert.buttons[1].bezelColor = NSColor.systemGreen
+                alert.buttons[1].keyEquivalent = "\r"
+                alert.buttons[0].keyEquivalent = "\u{1b}"
+            }
+
+            let (container, helper, hoverInfo) = self.buildRestSelectionAccessoryView()
+            alert.accessoryView = container
+            alert.window.initialFirstResponder = nil
+            self.prepareAlert(alert)
+
+            // 失焦自动关闭
+            var resignObserver: NSObjectProtocol?
+            resignObserver = NotificationCenter.default.addObserver(
+                forName: NSApplication.didResignActiveNotification,
+                object: nil, queue: .main
+            ) { _ in
+                NSApp.abortModal()
+                alert.window.close()
+            }
+
+            let result = alert.runModal()
+
+            hoverInfo.cleanup()
+            if let observer = resignObserver {
+                NotificationCenter.default.removeObserver(observer)
+            }
+            self.restoreAfterAlert()
+
+            let intensities = RestIntensity.allCases
+            if result == .alertSecondButtonReturn {
+                // "开始休息"按钮 → 独立休息模式
+                let tag = helper.selectedTag
+                if tag < intensities.count {
+                    timer.startStandaloneGuidedRest(intensity: intensities[tag])
+                } else {
+                    timer.startStandaloneRestFree()
+                }
+            }
+            // 取消或失焦关闭：回到 idle，无需处理
+            _ = helper
+        }
     }
 
     @objc private func timerEditTapped() {

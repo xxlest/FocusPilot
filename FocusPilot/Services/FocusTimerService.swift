@@ -138,6 +138,9 @@ final class FocusTimerService: ObservableObject {
     var guidedSteps: [RestStep] = []
     var restIntensity: RestIntensity = .standard
 
+    /// 是否为独立休息（非工作→休息流程，结束后直接回 idle）
+    private(set) var isStandaloneRest = false
+
     /// 当前阶段总秒数（用于计算进度）
     private(set) var totalSeconds: Int = 0
 
@@ -244,6 +247,7 @@ final class FocusTimerService: ObservableObject {
         restMode = .free
         guidedSteps = []
         currentStepIndex = 0
+        isStandaloneRest = false
         timer?.invalidate()
         timer = nil
         notifyChanged()
@@ -302,6 +306,11 @@ final class FocusTimerService: ObservableObject {
             notifyChanged()
             NotificationCenter.default.post(name: Constants.Notifications.focusWorkCompleted, object: nil)
         } else {
+            if isStandaloneRest {
+                // 独立休息结束 → 直接回 idle，不弹对话框
+                reset()
+                return
+            }
             // 休息结束 → 回到 idle，等待用户确认继续工作
             status = .idle
             phase = .work
@@ -344,6 +353,18 @@ final class FocusTimerService: ObservableObject {
         saveIntensity()
         startTimer()
         notifyChanged()
+    }
+
+    /// 直接开始自由休息（无前置工作阶段，结束后直接回 idle）
+    func startStandaloneRestFree() {
+        isStandaloneRest = true
+        startRestPhase()
+    }
+
+    /// 直接开始引导休息（无前置工作阶段，结束后直接回 idle）
+    func startStandaloneGuidedRest(intensity: RestIntensity) {
+        isStandaloneRest = true
+        startGuidedRest(intensity: intensity)
     }
 
     // MARK: - 通知
