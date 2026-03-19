@@ -68,9 +68,9 @@ enum RestIntensity: String, Codable, CaseIterable {
 
     var description: String {
         switch self {
-        case .light:    return "远眺 · 深呼吸 · 坐姿核心激活"
-        case .standard: return "闭眼远眺 · 深呼吸 · 站立核心激活 · 走动补水"
-        case .deep:     return "冥想 · 腹式呼吸 · 全链路核心激活 · 走动远眺"
+        case .light:    return "远眺 · 深呼吸 · 坐姿核心激活 · 补水"
+        case .standard: return "闭眼远眺 · 深呼吸 · 走动 · 站立核心激活 · 补水"
+        case .deep:     return "冥想 · 腹式呼吸 · 走动 · 全链路核心激活 · 补水"
         }
     }
 
@@ -88,30 +88,32 @@ enum RestIntensity: String, Codable, CaseIterable {
     }
 
     // 5 min = 300s（4 步，全程坐着）— 对应深度专注 25+5
+    // 流程：👁 → 🧠 → 💪 → 💧（坐姿夹臀收尾 → 直接喝水复工）
     private static let lightSteps: [RestStep] = [
-        RestStep(sfSymbol: "eye",              label: "远眺放松",     detail: "目视 6m 外远处，缓慢眨眼 10 次，再注视 20s",                              durationSeconds: 45,  category: .eye),
-        RestStep(sfSymbol: "wind",             label: "深呼吸",       detail: "吸 4s \u{2192} 屏 2s \u{2192} 呼 6s，重复 7 次",                        durationSeconds: 85,  category: .brain),
-        RestStep(sfSymbol: "figure.cooldown",  label: "坐姿核心激活", detail: "骨盆后倾 x8 \u{2192} 坐姿扭转各 20s \u{2192} 夹臀 30s",                  durationSeconds: 110, category: .muscle),
-        RestStep(sfSymbol: "drop.fill",        label: "补水远眺",     detail: "喝口水，看远处放松，回顾下一步要做什么",                                    durationSeconds: 60,  category: .eye),
+        RestStep(sfSymbol: "eye",              label: "远眺放松",     detail: "目视 6m 外远处，缓慢眨眼 10 次，再注视 20s",       durationSeconds: 50,  category: .eye),
+        RestStep(sfSymbol: "wind",             label: "深呼吸",       detail: "吸 4s \u{2192} 屏 2s \u{2192} 呼 6s，重复 7 次", durationSeconds: 85,  category: .brain),
+        RestStep(sfSymbol: "figure.cooldown",  label: "坐姿核心激活", detail: "骨盆后倾 x5 \u{2192} 坐姿扭转各 15s \u{2192} 夹臀 20s", durationSeconds: 80, category: .muscle),
+        RestStep(sfSymbol: "drop.fill",        label: "补水远眺",     detail: "喝口水，看远处放松，回顾下一步要做什么",             durationSeconds: 85,  category: .eye),
     ]
 
     // 7 min = 420s（5 步，站起来活动）— 对应常规节奏 35+7
+    // 流程：👁 → 🧠 → 🚶 → 💪 → 💧（走热身体 → 核心激活 → 坐姿夹臀收尾 → 直接喝水复工）
     private static let standardSteps: [RestStep] = [
-        RestStep(sfSymbol: "eye.slash",        label: "闭眼远眺",     detail: "闭眼 60 秒，然后远眺 20 秒",                                                                    durationSeconds: 80,  category: .eye),
-        RestStep(sfSymbol: "wind",             label: "深呼吸",       detail: "吸 4s \u{2192} 屏 2s \u{2192} 呼 6s，重复 8 次",                                                  durationSeconds: 100, category: .brain),
-        RestStep(sfSymbol: "figure.cooldown",  label: "站立核心激活", detail: "骨盆后倾 x3 \u{2192} 站立猫牛 x5 \u{2192} 椅子扭转各 15s \u{2192} 坐姿夹臀 25s",                    durationSeconds: 120, category: .muscle),
-        RestStep(sfSymbol: "figure.walk",      label: "起身走动",     detail: "离开座位走 30 步，转头左右各 5 次，耸肩 8 次",                                                      durationSeconds: 70,  category: .muscle),
-        RestStep(sfSymbol: "drop.fill",        label: "补水远眺",     detail: "喝水，看窗外远处",                                                                                durationSeconds: 50,  category: .eye),
+        RestStep(sfSymbol: "eye.slash",        label: "闭眼远眺",     detail: "闭眼 60 秒，然后远眺 20 秒",                     durationSeconds: 80,  category: .eye),
+        RestStep(sfSymbol: "wind",             label: "深呼吸",       detail: "吸 4s \u{2192} 屏 2s \u{2192} 呼 6s，重复 8 次", durationSeconds: 100, category: .brain),
+        RestStep(sfSymbol: "figure.walk",      label: "起身走动",     detail: "离开座位走 30 步，转头左右各 5 次，耸肩 8 次",       durationSeconds: 80,  category: .muscle),
+        RestStep(sfSymbol: "figure.cooldown",  label: "站立核心激活", detail: "骨盆后倾 x3 \u{2192} 站立猫牛 x5 \u{2192} 椅子扭转各 10s \u{2192} 坐姿夹臀 20s", durationSeconds: 90, category: .muscle),
+        RestStep(sfSymbol: "drop.fill",        label: "补水远眺",     detail: "喝水，看窗外远处",                                durationSeconds: 70,  category: .eye),
     ]
 
-    // 10 min = 600s（6 步，站→墙→走→坐全链路）— 对应轻度脑力 50+10
+    // 10 min = 600s（5 步，站→墙→走→坐全链路）— 对应轻度脑力 50+10
+    // 流程：👁 → 🧠 → 🚶 → 💪 → 💧（走热身体 → 全链路核心激活 → 坐姿夹臀收尾 → 直接喝水复工）
     private static let deepSteps: [RestStep] = [
-        RestStep(sfSymbol: "eye.slash",        label: "闭眼冥想",       detail: "闭眼放空，吸气数 1、呼气数 2，数到 10 后重来",                                                      durationSeconds: 100, category: .eye),
-        RestStep(sfSymbol: "wind",             label: "腹式深呼吸",     detail: "吸 4s \u{2192} 屏 4s \u{2192} 呼 8s，重复 9 次",                                                   durationSeconds: 145, category: .brain),
-        RestStep(sfSymbol: "figure.cooldown",  label: "全链路核心激活", detail: "浅扎马步 50s \u{2192} 靠墙微蹲 40s \u{2192} 原地慢走稳胯 30s \u{2192} 坐姿夹臀 30s",                  durationSeconds: 150, category: .muscle),
-        RestStep(sfSymbol: "figure.walk",      label: "走动放松",       detail: "离开工位走 50 步，甩臂前后各 10 次，转头左右各 5 次",                                                   durationSeconds: 75,  category: .muscle),
-        RestStep(sfSymbol: "eye",              label: "远眺绿植",       detail: "目视 6m 外绿植或窗外，20s 后闭眼 10s，重复 3 轮",                                                   durationSeconds: 80,  category: .eye),
-        RestStep(sfSymbol: "drop.fill",        label: "补水收尾",       detail: "喝水，调整坐姿准备复工",                                                                            durationSeconds: 50,  category: .muscle),
+        RestStep(sfSymbol: "eye.slash",        label: "闭眼冥想",       detail: "闭眼放空，吸气数 1、呼气数 2，数到 10 后重来",    durationSeconds: 120, category: .eye),
+        RestStep(sfSymbol: "wind",             label: "腹式深呼吸",     detail: "吸 4s \u{2192} 屏 4s \u{2192} 呼 8s，重复 9 次", durationSeconds: 150, category: .brain),
+        RestStep(sfSymbol: "figure.walk",      label: "走动放松",       detail: "离开工位走 50 步，甩臂前后各 10 次，看看远处绿植",  durationSeconds: 120, category: .muscle),
+        RestStep(sfSymbol: "figure.cooldown",  label: "全链路核心激活", detail: "浅扎马步 40s \u{2192} 靠墙微蹲 30s \u{2192} 原地慢走稳胯 20s \u{2192} 坐姿夹臀 30s", durationSeconds: 120, category: .muscle),
+        RestStep(sfSymbol: "drop.fill",        label: "补水收尾",       detail: "喝水，调整坐姿准备复工",                          durationSeconds: 90,  category: .muscle),
     ]
 }
 
