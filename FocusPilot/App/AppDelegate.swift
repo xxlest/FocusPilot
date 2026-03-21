@@ -78,15 +78,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             // 没有可见窗口：打开主看板
             showMainKanban()
         }
-        // 无论哪种情况，都确保快捷面板弹出并钉住
-        if let ball = floatingBallWindow {
-            if quickPanelWindow == nil || !quickPanelWindow!.isVisible {
-                showPanelFromBallCenter(ballFrame: ball.frame)
-                AppMonitor.shared.startWindowRefresh()
-                if let panel = quickPanelWindow, !panel.isPanelPinned {
-                    panel.togglePanelPin()
-                }
-            }
+        // 悬浮球+面板未显示时，恢复到上次保存位置并弹出
+        if !(quickPanelWindow?.isVisible ?? false) {
+            showAll(atMousePosition: false)
         }
         return false
     }
@@ -208,31 +202,40 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             floatingBallWindow?.orderOut(nil)
             ConfigStore.shared.isBallVisible = false
         } else {
-            // 获取鼠标位置（面板左上角将出现在此处）
-            let mouseLocation = NSEvent.mouseLocation
+            showAll(atMousePosition: true)
+        }
+    }
 
-            // 确保面板已创建
-            if quickPanelWindow == nil {
-                quickPanelWindow = QuickPanelWindow()
-            }
+    /// 显示悬浮球+面板+钉住
+    /// - Parameter atMousePosition: true=悬浮球定位到鼠标位置（快捷键），false=恢复上次保存位置（Dock）
+    private func showAll(atMousePosition: Bool) {
+        // 确保面板已创建
+        if quickPanelWindow == nil {
+            quickPanelWindow = QuickPanelWindow()
+        }
 
-            // 显示悬浮球（中心在鼠标位置）
-            if let ball = floatingBallWindow {
+        if let ball = floatingBallWindow {
+            if atMousePosition {
+                // 悬浮球中心 = 鼠标位置
+                let mouseLocation = NSEvent.mouseLocation
                 let ballSize = ball.frame.size
                 let ballOrigin = CGPoint(
                     x: mouseLocation.x - ballSize.width / 2,
                     y: mouseLocation.y - ballSize.height / 2
                 )
                 ball.setFrameOrigin(ballOrigin)
-                ball.show()
-                ConfigStore.shared.isBallVisible = true
+            } else {
+                // 恢复上次保存的位置
+                ball.restorePosition()
+            }
+            ball.show()
+            ConfigStore.shared.isBallVisible = true
 
-                // 面板从悬浮球中心展开 + 自动钉住
-                showPanelFromBallCenter(ballFrame: ball.frame)
-                AppMonitor.shared.startWindowRefresh()
-                if let panel = quickPanelWindow, !panel.isPanelPinned {
-                    panel.togglePanelPin()
-                }
+            // 面板从悬浮球中心展开 + 自动钉住
+            showPanelFromBallCenter(ballFrame: ball.frame)
+            AppMonitor.shared.startWindowRefresh()
+            if let panel = quickPanelWindow, !panel.isPanelPinned {
+                panel.togglePanelPin()
             }
         }
     }
