@@ -78,6 +78,16 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             // 没有可见窗口：打开主看板
             showMainKanban()
         }
+        // 无论哪种情况，都确保快捷面板弹出并钉住
+        if let ball = floatingBallWindow {
+            if quickPanelWindow == nil || !quickPanelWindow!.isVisible {
+                showPanelFromBallCenter(ballFrame: ball.frame)
+                AppMonitor.shared.startWindowRefresh()
+                if let panel = quickPanelWindow, !panel.isPanelPinned {
+                    panel.togglePanelPin()
+                }
+            }
+        }
         return false
     }
 
