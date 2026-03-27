@@ -9,6 +9,7 @@
 - **会话身份和窗口定位解耦**：hook 只注册会话元数据，点击时再实时匹配窗口
 - **能自动就自动，不能自动就靠用户改名区分**：不做复杂的窗口指纹推断
 - **持久化用户意图，不持久化运行时标识**：CGWindowID 等瞬时 ID 不落盘
+- **不持久化 session 列表**：FocusPilot 重启后清空所有 session，等 coder-bridge 重新注册（因为 AI 工具中断后必须重新启动）
 
 ---
 
@@ -45,7 +46,7 @@ struct CoderSession: Identifiable {
 
 enum CoderTool: String, Codable { case claude, codex, gemini }
 enum SessionStatus: String, Codable { case registered, working, idle, done, error }
-enum SessionLifecycle: String, Codable { case active, ended, stale }
+enum SessionLifecycle: String, Codable { case active, ended }
 enum MatchConfidence: String, Codable { case high, low, none }
 ```
 
@@ -96,7 +97,6 @@ struct WindowHint: Codable {
 |------|------|
 | `active` | 正常运行中 |
 | `ended` | 收到 session.end，保留显示等用户确认或超时 |
-| `stale` | App 重启后恢复，等待重连验证 |
 
 ### 2.2 事件与状态迁移
 
@@ -107,7 +107,7 @@ struct WindowHint: Codable {
 | `session.start` | SessionStart hook | → status=registered, lifecycle=active |
 | `session.update` | Stop / Notification hook | → status 由字段指定（working/idle/done/error），lifecycle 不变 |
 | `session.end` | SessionEnd hook | → lifecycle=ended，status 保持不变 |
-| `session.heartbeat` | 可选，周期上报 | 刷新 lastUpdate，不变 status/lifecycle |
+| `session.heartbeat` | 可选（P2），周期上报 | 刷新 lastUpdate，不变 status/lifecycle |
 
 **乱序防护**：每个事件携带 `seq`（session 内单调递增）。`if seq <= lastSeq then drop`。
 
@@ -118,17 +118,8 @@ struct WindowHint: Codable {
 | done/error + ended → 用户点击确认 | 移除 |
 | done/error + ended → 30 分钟超时 | 移除 |
 | working/idle/registered + ended → 5 分钟超时 | 移除 |
-| * + stale → 5 分钟无事件 | 移除 |
-| * + stale → 收到该 sid 的事件 | → lifecycle=active |
-
-### 2.4 stale 恢复规则
-
-| 当前 lifecycle | 收到事件 | 结果 |
-|---|---|---|
-| stale | session.start（新 sid） | 新建 session，旧 stale 不受影响 |
-| stale | session.update（同 sid） | → lifecycle=active，更新 status，更新 lastSeq |
-| stale | session.end（同 sid） | → lifecycle=ended，走正常保留策略 |
-| ended | session.start（同 sid） | 拒绝，sid 不复用 |
+| ended + session.start（同 sid） | 拒绝，sid 不复用 |
+| FocusPilot 重启 | 清空所有 session（等重新注册） |
 
 ---
 
@@ -271,8 +262,8 @@ let actionable: [(SessionStatus, SessionLifecycle)] = [
   working+active, registered+active
   → 内部按 lastUpdate 倒排
 
-第三档：faded（可能失效）
-  *+stale, idle+ended, registered+ended
+第三档：faded（已结束但不紧急）
+  idle+ended, registered+ended
   → 内部按 lastUpdate 倒排
 ```
 
@@ -300,7 +291,6 @@ let actionable: [(SessionStatus, SessionLifecycle)] = [
 | registered | active | "已连接" | 灰 | 1.0 | 2 | ❌ |
 | idle | ended | "等待输入 · 已结束" | 蓝 | 0.5 | 3 | ❌ |
 | registered | ended | "已连接 · 已结束" | 灰 | 0.5 | 3 | ❌ |
-| * | stale | "{业务态} · 等待重连" | 原色 | 0.4 | 3 | ❌ |
 
 #### 工具图标（14px）
 
@@ -428,7 +418,7 @@ FocusPilot/coder-bridge/
 
 | 文件 | 职责 |
 |------|------|
-| `Services/CoderBridgeService.swift` | DistributedNotification 监听、CoderSession 列表管理、清理定时器、偏好持久化 |
+| `Services/CoderBridgeService.swift` | DistributedNotification 监听、CoderSession 列表管理（纯运行时）、清理定时器、偏好持久化 |
 | `Models/CoderSession.swift` | CoderSession + CoderSessionPreference + WindowHint 数据结构 |
 
 ### 7.2 集成点
@@ -472,12 +462,11 @@ coder-bridge hook 脚本
 - 右键改名 + WindowHint 绑定
 - displayName 持久化偏好
 - 角标 + actionable 排序
-- ended/stale 清理策略
+- ended 清理策略
 - 隐藏会话入口
 
 ### P2：扩展
 
 - Codex / Gemini CLI adapter 实现
-- hostHint 实验性弱信号验证
-- heartbeat + 超时降级
+- heartbeat 心跳机制
 - Token stopwords 优化
