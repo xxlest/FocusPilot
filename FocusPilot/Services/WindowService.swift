@@ -249,22 +249,78 @@ class WindowService {
 
     // MARK: - AX 后台批量查询
 
-    /// 后台线程批量构建 AX 标题映射（不阻塞主线程）
-    /// 回调在主线程执行，返回 [PID: [CGWindowID: String]] 映射
+    /// 后台线程批量构建 AX 标题映射 + 发现非屏幕窗口（不阻塞主线程）
+    /// 回调在主线程执行，返回标题映射和其他 Space 上的窗口
     func buildAXTitleMapAsync(
         for pidWindowMap: [pid_t: [[String: Any]]],
-        completion: @escaping ([pid_t: [CGWindowID: String]]) -> Void
+        completion: @escaping (_ titleMaps: [pid_t: [CGWindowID: String]], _ offScreenWindows: [pid_t: [WindowInfo]]) -> Void
     ) {
         axWorkQueue.async { [weak self] in
             guard let self = self else { return }
-            var result: [pid_t: [CGWindowID: String]] = [:]
+            var titleResult: [pid_t: [CGWindowID: String]] = [:]
+            var offScreenResult: [pid_t: [WindowInfo]] = [:]
             for (pid, cgWindows) in pidWindowMap {
-                result[pid] = self.buildAXTitleMap(for: pid, cgWindows: cgWindows)
+                titleResult[pid] = self.buildAXTitleMap(for: pid, cgWindows: cgWindows)
+                // 发现 CG OnScreen 未包含的 AX 窗口（其他 Space/Desktop）
+                let cgIDs = Set(cgWindows.compactMap { info -> CGWindowID? in
+                    guard let wid = info[kCGWindowNumber as String] as? CGWindowID,
+                          let layer = info[kCGWindowLayer as String] as? Int,
+                          layer == 0
+                    else { return nil }
+                    return wid
+                })
+                let extra = self.findOffScreenWindows(for: pid, knownCGIDs: cgIDs)
+                if !extra.isEmpty {
+                    offScreenResult[pid] = extra
+                }
             }
             DispatchQueue.main.async {
-                completion(result)
+                completion(titleResult, offScreenResult)
             }
         }
+    }
+
+    /// 发现 CG OnScreen 未报告但 AX 可见的窗口（其他桌面/Space 上的窗口）
+    /// 在后台队列调用
+    private func findOffScreenWindows(for pid: pid_t, knownCGIDs: Set<CGWindowID>) -> [WindowInfo] {
+        guard AXIsProcessTrusted(), let axGetWindow = axGetWindow else { return [] }
+
+        let bundleID = NSRunningApplication(processIdentifier: pid)?.bundleIdentifier ?? ""
+        let axApp = AXUIElementCreateApplication(pid)
+        var windowsRef: CFTypeRef?
+        AXUIElementCopyAttributeValue(axApp, kAXWindowsAttribute as CFString, &windowsRef)
+        guard let axWindows = windowsRef as? [AXUIElement] else { return [] }
+
+        var extra: [WindowInfo] = []
+        for axWindow in axWindows {
+            var wid: CGWindowID = 0
+            guard axGetWindow(axWindow, &wid) == .success, wid != 0, !knownCGIDs.contains(wid) else { continue }
+
+            var titleRef: CFTypeRef?
+            AXUIElementCopyAttributeValue(axWindow, kAXTitleAttribute as CFString, &titleRef)
+            let title = (titleRef as? String).flatMap { $0.isEmpty ? nil : $0 } ?? "(无标题)"
+
+            var posRef: CFTypeRef?
+            AXUIElementCopyAttributeValue(axWindow, kAXPositionAttribute as CFString, &posRef)
+            var origin = CGPoint.zero
+            if let posVal = posRef { AXValueGetValue(posVal as! AXValue, .cgPoint, &origin) }
+
+            var sizeRef: CFTypeRef?
+            AXUIElementCopyAttributeValue(axWindow, kAXSizeAttribute as CFString, &sizeRef)
+            var size = CGSize.zero
+            if let sizeVal = sizeRef { AXValueGetValue(sizeVal as! AXValue, .cgSize, &size) }
+
+            extra.append(WindowInfo(
+                id: wid,
+                ownerBundleID: bundleID,
+                ownerPID: pid,
+                title: title,
+                bounds: CGRect(origin: origin, size: size),
+                isMinimized: false,
+                isFullScreen: false
+            ))
+        }
+        return extra
     }
 
     /// 将 AX 标题应用到 titleCache 并返回是否有变化

@@ -32,6 +32,9 @@ class AppMonitor: ObservableObject {
     // P1: AX 后台化 — 刷新代数，防止过期回调覆盖新数据
     private var refreshGeneration: UInt64 = 0
 
+    /// 上轮 AX 发现的非屏幕窗口缓存（避免 Phase 1→2 间闪烁）
+    private var offScreenWindowCache: [pid_t: [WindowInfo]] = [:]
+
     private init() {}
 
     // MARK: - 监听控制
@@ -190,6 +193,7 @@ class AppMonitor: ObservableObject {
         }
 
         // Phase 1: 用 CG 标题快速构建 WindowInfo → 发通知 → UI 先渲染
+        // 合并上轮 AX 发现的非屏幕窗口（避免 Phase 1→2 间闪烁）
         var currentSnapshot: [String: [CGWindowID]] = [:]
         for app in runningApps {
             let pid = app.nsApp?.processIdentifier ?? -1
@@ -198,7 +202,14 @@ class AppMonitor: ObservableObject {
 
             app.isRunning = running
             if running, let cgWindows = windowsByPID[pid] {
-                app.windows = WindowService.shared.buildWindowInfo(for: pid, from: cgWindows)
+                var windows = WindowService.shared.buildWindowInfo(for: pid, from: cgWindows)
+                // 保留上轮 AX 发现的非屏幕窗口（其他 Space/Desktop）
+                if let cached = offScreenWindowCache[pid] {
+                    let cgIDs = Set(windows.map { $0.id })
+                    let stillOffScreen = cached.filter { !cgIDs.contains($0.id) }
+                    windows.append(contentsOf: stillOffScreen)
+                }
+                app.windows = windows
             } else {
                 app.windows = []
             }
@@ -236,18 +247,25 @@ class AppMonitor: ObservableObject {
 
         guard !pidWindowMap.isEmpty else { return }
 
-        WindowService.shared.buildAXTitleMapAsync(for: pidWindowMap) { [weak self] axMap in
+        WindowService.shared.buildAXTitleMapAsync(for: pidWindowMap) { [weak self] axMap, offScreenWindows in
             guard let self = self else { return }
             // 检查代数，过期则丢弃
             guard gen == self.refreshGeneration else { return }
             // 应用 AX 标题到缓存
-            let changed = WindowService.shared.applyAXTitles(axMap)
-            guard changed else { return }
-            // 标题有变化，用缓存后的标题重建 WindowInfo
-            for app in self.runningApps where app.isRunning && !app.windows.isEmpty {
+            let titleChanged = WindowService.shared.applyAXTitles(axMap)
+            // 更新非屏幕窗口缓存
+            self.offScreenWindowCache = offScreenWindows
+            let hasOffScreen = !offScreenWindows.isEmpty
+            guard titleChanged || hasOffScreen else { return }
+            // 重建 WindowInfo（CG 窗口 + 非屏幕窗口）
+            for app in self.runningApps where app.isRunning {
                 let pid = app.nsApp?.processIdentifier ?? -1
                 if let cgWindows = windowsByPID[pid] {
-                    app.windows = WindowService.shared.buildWindowInfo(for: pid, from: cgWindows)
+                    var windows = WindowService.shared.buildWindowInfo(for: pid, from: cgWindows)
+                    if let extra = offScreenWindows[pid] {
+                        windows.append(contentsOf: extra)
+                    }
+                    app.windows = windows
                 }
             }
             NotificationCenter.default.post(name: Constants.Notifications.windowsChanged, object: nil)
