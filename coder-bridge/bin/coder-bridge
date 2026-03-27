@@ -1,0 +1,94 @@
+#!/bin/bash
+
+# Code-Notify - Desktop notifications for AI coding tools
+# https://github.com/mylee04/coder-bridge
+
+set -e
+
+# Version
+VERSION="1.6.0"
+
+# Determine the directory where the script is located (resolve symlinks)
+SCRIPT_PATH="${BASH_SOURCE[0]}"
+while [[ -L "$SCRIPT_PATH" ]]; do
+    SCRIPT_DIR="$(cd "$(dirname "$SCRIPT_PATH")" && pwd)"
+    SCRIPT_PATH="$(readlink "$SCRIPT_PATH")"
+    [[ "$SCRIPT_PATH" != /* ]] && SCRIPT_PATH="$SCRIPT_DIR/$SCRIPT_PATH"
+done
+SCRIPT_DIR="$(cd "$(dirname "$SCRIPT_PATH")" && pwd)"
+LIB_DIR="$(dirname "$SCRIPT_DIR")/lib/coder-bridge"
+
+# Load utility functions
+source "$LIB_DIR/utils/colors.sh"
+source "$LIB_DIR/utils/detect.sh"
+source "$LIB_DIR/utils/help.sh"
+source "$LIB_DIR/core/config.sh"
+
+# Detect how the script was called
+COMMAND_NAME=$(basename "$0")
+
+# Show version
+show_version() {
+    echo "coder-bridge version $VERSION"
+}
+
+# Show help (wrapper to pass command name)
+show_main_help() {
+    show_help "$COMMAND_NAME"
+}
+
+# Route commands based on how script was called
+case "$COMMAND_NAME" in
+    "cn")
+        # Called as 'cn' - handle global commands directly
+        case "${1:-status}" in
+            "help"|"-h"|"--help")
+                show_main_help
+                ;;
+            "version"|"-v"|"--version")
+                show_version
+                ;;
+            "on"|"off"|"status"|"test"|"setup"|"voice"|"sound"|"alerts")
+                source "$LIB_DIR/commands/global.sh"
+                handle_global_command "$@"
+                ;;
+            *)
+                error "Unknown command: $1"
+                echo "Try 'cn help' for usage"
+                exit 1
+                ;;
+        esac
+        ;;
+    
+    "cnp")
+        # Called as 'cnp' - handle project commands directly
+        source "$LIB_DIR/commands/project.sh"
+        handle_project_command "$@"
+        ;;
+    
+    "coder-bridge"|*)
+        # Called as 'coder-bridge' - full command parsing
+        case "${1:-help}" in
+            "on"|"off"|"status"|"test"|"setup"|"voice"|"sound"|"alerts")
+                source "$LIB_DIR/commands/global.sh"
+                handle_global_command "$@"
+                ;;
+            "project")
+                shift
+                source "$LIB_DIR/commands/project.sh"
+                handle_project_command "$@"
+                ;;
+            "help"|"-h"|"--help")
+                show_main_help
+                ;;
+            "version"|"-v"|"--version")
+                show_version
+                ;;
+            *)
+                error "Unknown command: $1"
+                echo "Try 'coder-bridge help' for usage"
+                exit 1
+                ;;
+        esac
+        ;;
+esac
