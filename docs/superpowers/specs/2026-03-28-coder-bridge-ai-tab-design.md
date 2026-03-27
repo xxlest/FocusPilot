@@ -125,7 +125,7 @@ struct WindowHint: Codable {
 
 | 条件 | 动作 |
 |------|------|
-| done/error + ended → 用户点击确认 | 移除 |
+| done/error + ended → 用户右键菜单"移除已结束的会话" | 移除 |
 | done/error + ended → 30 分钟超时 | 移除 |
 | working/idle/registered + ended → 5 分钟超时 | 移除 |
 | ended + session.start（同 sid） | 拒绝，sid 不复用 |
@@ -162,7 +162,7 @@ coder-bridge（shell 脚本）→ macOS DistributedNotificationCenter → FocusP
 - `seq`：session 内单调递增，防乱序覆盖
 - `cwd`：原始工作目录
 - `cwdNormalized`：规范化路径（git repo root 优先，realpath 兜底），用于偏好索引
-- `hostApp`：从 `$TERM_PROGRAM` 推断，辅助字段
+- `hostApp`：从 `$TERM_PROGRAM` 推断并归一化，辅助字段（见 3.4 归一化规则）
 - `sid`：必须 UUID，禁止复用
 
 ### 3.3 FocusPilot 接收端
@@ -176,6 +176,37 @@ DistributedNotificationCenter.default().addObserver(
     object: nil
 )
 ```
+
+### 3.4 hostApp 归一化规则
+
+coder-bridge 侧根据 `$TERM_PROGRAM` 环境变量归一化为标准值：
+
+| `$TERM_PROGRAM` 原始值 | 归一化 hostApp | 对应 bundleID |
+|------------------------|---------------|---------------|
+| `Apple_Terminal` | `terminal` | `com.apple.Terminal` |
+| `iTerm.app` / `iTerm2` | `iterm2` | `com.googlecode.iterm2` |
+| `WezTerm` | `wezterm` | `com.github.wez.wezterm` |
+| `WarpTerminal` | `warp` | `dev.warp.Warp-Stable` |
+| `vscode` | `vscode` | `com.microsoft.VSCode` |
+| `cursor` | `cursor` | `com.todesktop.230313mzl4w4u92` |
+| 其他 / 未设置 | `""` (空) | — |
+
+```bash
+# coder-bridge 侧归一化逻辑
+normalize_host_app() {
+    case "${TERM_PROGRAM:-}" in
+        Apple_Terminal)     echo "terminal" ;;
+        iTerm.app|iTerm2)   echo "iterm2" ;;
+        WezTerm)            echo "wezterm" ;;
+        WarpTerminal)       echo "warp" ;;
+        vscode)             echo "vscode" ;;
+        cursor)             echo "cursor" ;;
+        *)                  echo "" ;;
+    esac
+}
+```
+
+FocusPilot 侧维护一张 `hostApp → bundleID` 映射表，用于 `session.start` 时判断"前台窗口所属 app 与 hostApp 是否一致"。
 
 ---
 
@@ -204,20 +235,25 @@ DistributedNotificationCenter.default().addObserver(
 
 **第二层：回退匹配**
 
-当 `initialCandidateWindowID` 失效（窗口已关闭/重建）或不存在时，使用简单匹配规则：
+当 `initialCandidateWindowID` 失效（窗口已关闭/重建）或不存在时，按以下优先级匹配：
 
 ```
 resolveWindow(session) -> (CGWindowID?, MatchConfidence)
 
+P0 规则（按优先级）：
 1. 同宿主 app 的窗口中，cwd basename 命中窗口标题 → .high
-2. 同宿主 app 的窗口中，cwd 高信息 token 命中窗口标题 → .low
-3. 同宿主 app 只有一个窗口 且 cwd 也有弱命中 → .high
-4. 同宿主 app 有多个窗口，无法区分 → 取最近活跃的 → .low
-5. WindowHint 匹配（P1 启用后）→ .high
-6. 全部未命中 → .none
+2. 同宿主 app 只有一个窗口 → .low
+3. 同宿主 app 有多个窗口，无法区分 → 取最近活跃的 → .low
+4. 全部未命中 → .none
+
+P1 新增规则（插入到 P0 规则之前）：
+0. WindowHint 匹配 → .high（用户手动绑定过，最高优先级）
+
+P1 增强规则（插入到规则 1 和 2 之间）：
+1.5. 同宿主 app 的窗口中，cwd 高信息 token 命中窗口标题 → .low
 ```
 
-**Token stopwords 过滤**（不参与匹配的低信息词）：
+**Token stopwords 过滤**（P1 启用，不参与匹配的低信息词）：
 ```
 users, home, workspace, documents, desktop, code, projects,
 src, app, web, server, client, lib, packages, repos, dev,
@@ -248,10 +284,12 @@ var, tmp, opt, usr, volumes + 当前用户名
 右键 → "绑定到窗口..." → 子菜单列出同宿主 App 的窗口
 → 用户选择
 → 存 WindowHint { hostBundleID, matchTokens(从标题提取), cwdFingerprint }
-→ 后续匹配时 WindowHint 优先于回退规则
+→ 后续匹配时 WindowHint 作为最高优先级（回退规则第 0 步）
 ```
 
 WindowHint 是用户可选增强，不承担"解决所有同标题窗口"的核心责任。
+
+**限制说明**：如果窗口标题仍是低信息标题（如 `Default`、`Claude`），手动绑定后 matchTokens 区分度不足，提升有限。建议用户先改窗口名再绑定，改名后标题自然不同，匹配自然准确。
 
 ---
 
