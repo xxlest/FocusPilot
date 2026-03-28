@@ -235,21 +235,17 @@ extension QuickPanelView {
     func createSessionContextMenu(session: CoderSession) -> NSMenu? {
         let menu = NSMenu()
 
-        // 编辑主题
-        let editItem = NSMenuItem(title: "编辑主题...", action: #selector(handleEditTopic(_:)), keyEquivalent: "")
-        editItem.target = self
-        editItem.representedObject = [
-            "sessionID": session.sessionID,
-            "cwdBasename": session.cwdBasename,
-            "currentTopic": session.topic ?? ""
-        ] as [String: String]
-        menu.addItem(editItem)
-
         // 绑定到当前窗口
         let bindItem = NSMenuItem(title: "绑定到当前窗口", action: #selector(handleBindToCurrentWindow(_:)), keyEquivalent: "")
         bindItem.target = self
         bindItem.representedObject = session.sessionID
         menu.addItem(bindItem)
+
+        // 复制 Session ID
+        let copyItem = NSMenuItem(title: "复制 Session ID", action: #selector(handleCopySessionID(_:)), keyEquivalent: "")
+        copyItem.target = self
+        copyItem.representedObject = session.sessionID
+        menu.addItem(copyItem)
 
         if session.lifecycle == .ended {
             menu.addItem(NSMenuItem.separator())
@@ -267,37 +263,9 @@ extension QuickPanelView {
         return menu
     }
 
-    @objc func handleEditTopic(_ sender: NSMenuItem) {
-        guard let info = sender.representedObject as? [String: String],
-              let sessionID = info["sessionID"],
-              let cwdBasename = info["cwdBasename"],
-              let currentTopic = info["currentTopic"] else { return }
-
-        let alert = NSAlert()
-        alert.messageText = "编辑主题"
-        alert.informativeText = "项目：\(cwdBasename)"
-        alert.addButton(withTitle: "确定")
-        alert.addButton(withTitle: "取消")
-
-        let input = NSTextField(frame: NSRect(x: 0, y: 0, width: 300, height: 24))
-        input.stringValue = currentTopic
-        input.placeholderString = "输入主题..."
-        alert.accessoryView = input
-        alert.window.initialFirstResponder = input
-
-        if alert.runModal() == .alertFirstButtonReturn {
-            let newTopic = input.stringValue.trimmingCharacters(in: .whitespaces)
-            if !newTopic.isEmpty {
-                CoderBridgeService.shared.updateTopic(sid: sessionID, topic: newTopic)
-            }
-            forceReload()
-        }
-    }
-
     @objc func handleBindToCurrentWindow(_ sender: NSMenuItem) {
         guard let sid = sender.representedObject as? String else { return }
 
-        // 获取当前前台窗口
         guard let frontApp = NSWorkspace.shared.frontmostApplication,
               let frontBundleID = frontApp.bundleIdentifier else { return }
 
@@ -325,11 +293,10 @@ extension QuickPanelView {
         let alert = NSAlert()
         alert.messageText = "绑定到当前窗口"
 
-        // 检查冲突：是否已被其他 session 占用
         if let occupierSid = CoderBridgeService.shared.sessionOccupyingWindow(wid, excludingSid: sid) {
             let occupierSession = CoderBridgeService.shared.sessions.first(where: { $0.sessionID == occupierSid })
-            let occupierName = occupierSession?.cwdBasename ?? "其他会话"
-            alert.informativeText = "「\(displayTitle)」当前已被「\(occupierName)」会话绑定。\n确定替换绑定到此会话？（旧绑定将被清除）"
+            let occupierName = occupierSession?.shortID ?? "其他会话"
+            alert.informativeText = "「\(displayTitle)」当前已被会话 \(occupierName) 绑定。\n确定替换绑定？（旧绑定将被清除）"
         } else {
             alert.informativeText = "确定将此会话绑定到「\(displayTitle)」？"
         }
@@ -341,6 +308,12 @@ extension QuickPanelView {
             CoderBridgeService.shared.bindSessionToWindow(sid: sid, windowID: wid)
             forceReload()
         }
+    }
+
+    @objc func handleCopySessionID(_ sender: NSMenuItem) {
+        guard let sid = sender.representedObject as? String else { return }
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString(sid, forType: .string)
     }
 
     @objc func handleRemoveSession(_ sender: NSMenuItem) {
