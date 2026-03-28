@@ -93,10 +93,13 @@ class CoderBridgeService: NSObject {
             manualWindowID: nil
         )
 
+        // 初始窗口关联：取当前前台宿主窗口
+        // 同宿主 App 有多个窗口时降为 .low（无法确定是哪个窗口启动的）
         session.initialCandidateWindowID = resolveFrontmostWindow(hostApp: hostApp)
         if session.initialCandidateWindowID != nil {
             session.candidateWindowID = session.initialCandidateWindowID
-            session.matchConfidence = .high
+            let hostWindowCount = findWindowsForHostApp(hostApp).count
+            session.matchConfidence = hostWindowCount <= 1 ? .high : .low
         }
 
         sessions.append(session)
