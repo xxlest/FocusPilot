@@ -86,7 +86,10 @@ class CoderBridgeService: NSObject {
             isHidden: false,
             initialCandidateWindowID: nil,
             candidateWindowID: nil,
-            matchConfidence: .none
+            matchConfidence: .none,
+            lastInteraction: nil,
+            taskName: nil,
+            manualWindowID: nil
         )
 
         session.initialCandidateWindowID = resolveFrontmostWindow(hostApp: hostApp)
@@ -153,6 +156,19 @@ class CoderBridgeService: NSObject {
     }
 
     func resolveWindowForSession(_ session: CoderSession) -> (CGWindowID?, MatchConfidence) {
+        // 第零层：用户手动绑定（优先级最高）
+        if let manual = session.manualWindowID {
+            if windowExists(manual) {
+                return (manual, .high)
+            } else {
+                // 失效，自动清空
+                if let index = sessions.firstIndex(where: { $0.sessionID == session.sessionID }) {
+                    sessions[index].manualWindowID = nil
+                }
+            }
+        }
+
+        // 第一层：初始关联仍有效？
         if let initial = session.initialCandidateWindowID, windowExists(initial) {
             return (initial, .high)
         }
@@ -279,7 +295,7 @@ class CoderBridgeService: NSObject {
                 if a.sortTier != b.sortTier {
                     return a.sortTier < b.sortTier
                 }
-                return a.lastUpdate > b.lastUpdate
+                return a.sortDate > b.sortDate
             }
     }
 
@@ -288,6 +304,12 @@ class CoderBridgeService: NSObject {
     }
 
     // MARK: - Session Actions
+
+    func updateLastInteraction(sid: String) {
+        guard let index = sessions.firstIndex(where: { $0.sessionID == sid }) else { return }
+        sessions[index].lastInteraction = Date()
+        postSessionChanged()
+    }
 
     func hideSession(_ sid: String) {
         guard let index = sessions.firstIndex(where: { $0.sessionID == sid }) else { return }
