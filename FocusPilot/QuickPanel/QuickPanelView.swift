@@ -5,6 +5,7 @@ import AppKit
 enum QuickPanelTab: String {
     case running    = "running"   // 活跃
     case favorites  = "favorites" // 关注
+    case ai         = "ai"        // AI
 }
 
 // MARK: - 快捷面板内容视图
@@ -112,6 +113,47 @@ final class QuickPanelView: NSView {
         view.wantsLayer = true
         view.layer?.cornerRadius = 1
         return view
+    }()
+
+    /// Tab 按钮之间的竖线分隔符（关注 | AI）
+    private let tabSeparator2: NSView = {
+        let view = NSView()
+        view.wantsLayer = true
+        view.layer?.backgroundColor = ConfigStore.shared.currentThemeColors.nsSeparator.withAlphaComponent(0.8).cgColor
+        return view
+    }()
+
+    /// AI Tab 按钮
+    private lazy var aiTabButton: NSButton = {
+        let btn = NSButton(title: "AI", target: self, action: #selector(switchToAITab))
+        btn.bezelStyle = .recessed
+        btn.isBordered = false
+        btn.font = .systemFont(ofSize: 11)
+        btn.wantsLayer = true
+        btn.layer?.cornerRadius = 4
+        btn.contentTintColor = ConfigStore.shared.currentThemeColors.nsTextSecondary
+        return btn
+    }()
+
+    /// Tab 选中下划线指示条（AI）
+    private let aiTabIndicator: NSView = {
+        let view = NSView()
+        view.wantsLayer = true
+        view.layer?.cornerRadius = 1
+        return view
+    }()
+
+    /// AI Tab 角标（actionable 计数）
+    private let aiBadgeLabel: NSTextField = {
+        let label = NSTextField(labelWithString: "")
+        label.font = .systemFont(ofSize: 9, weight: .medium)
+        label.textColor = .white
+        label.alignment = .center
+        label.wantsLayer = true
+        label.layer?.cornerRadius = 6
+        label.layer?.backgroundColor = ConfigStore.shared.currentThemeColors.nsAccent.cgColor
+        label.isHidden = true
+        return label
     }()
 
     // MARK: - FocusByTime 底部计时器栏
@@ -311,6 +353,10 @@ final class QuickPanelView: NSView {
         topBar.addSubview(favoritesTabButton)
         topBar.addSubview(runningTabIndicator)
         topBar.addSubview(favoritesTabIndicator)
+        topBar.addSubview(tabSeparator2)
+        topBar.addSubview(aiTabButton)
+        topBar.addSubview(aiTabIndicator)
+        topBar.addSubview(aiBadgeLabel)
 
         // 滚动区域
         addSubview(scrollView)
@@ -340,6 +386,10 @@ final class QuickPanelView: NSView {
         contentStack.translatesAutoresizingMaskIntoConstraints = false
         runningTabIndicator.translatesAutoresizingMaskIntoConstraints = false
         favoritesTabIndicator.translatesAutoresizingMaskIntoConstraints = false
+        tabSeparator2.translatesAutoresizingMaskIntoConstraints = false
+        aiTabButton.translatesAutoresizingMaskIntoConstraints = false
+        aiTabIndicator.translatesAutoresizingMaskIntoConstraints = false
+        aiBadgeLabel.translatesAutoresizingMaskIntoConstraints = false
         bottomSeparator.translatesAutoresizingMaskIntoConstraints = false
         timerBar.translatesAutoresizingMaskIntoConstraints = false
         timerContentStack.translatesAutoresizingMaskIntoConstraints = false
@@ -394,6 +444,27 @@ final class QuickPanelView: NSView {
             favoritesTabIndicator.trailingAnchor.constraint(equalTo: favoritesTabButton.trailingAnchor, constant: -2),
             favoritesTabIndicator.bottomAnchor.constraint(equalTo: topBar.bottomAnchor, constant: -1),
             favoritesTabIndicator.heightAnchor.constraint(equalToConstant: 2),
+
+            // Tab 竖线分隔符 2（关注 | AI）
+            tabSeparator2.leadingAnchor.constraint(equalTo: favoritesTabButton.trailingAnchor, constant: 5),
+            tabSeparator2.centerYAnchor.constraint(equalTo: topBar.centerYAnchor),
+            tabSeparator2.widthAnchor.constraint(equalToConstant: 1),
+            tabSeparator2.heightAnchor.constraint(equalToConstant: 12),
+
+            aiTabButton.leadingAnchor.constraint(equalTo: tabSeparator2.trailingAnchor, constant: 5),
+            aiTabButton.centerYAnchor.constraint(equalTo: topBar.centerYAnchor),
+
+            // AI Tab 下划线指示条
+            aiTabIndicator.leadingAnchor.constraint(equalTo: aiTabButton.leadingAnchor, constant: 2),
+            aiTabIndicator.trailingAnchor.constraint(equalTo: aiTabButton.trailingAnchor, constant: -2),
+            aiTabIndicator.bottomAnchor.constraint(equalTo: topBar.bottomAnchor, constant: -1),
+            aiTabIndicator.heightAnchor.constraint(equalToConstant: 2),
+
+            // AI Tab 角标（按钮右上角偏移）
+            aiBadgeLabel.leadingAnchor.constraint(equalTo: aiTabButton.trailingAnchor, constant: -4),
+            aiBadgeLabel.bottomAnchor.constraint(equalTo: aiTabButton.topAnchor, constant: 6),
+            aiBadgeLabel.widthAnchor.constraint(greaterThanOrEqualToConstant: 14),
+            aiBadgeLabel.heightAnchor.constraint(equalToConstant: 14),
 
             // 滚动区域（顶部栏到底部计时器栏之上）
             scrollView.topAnchor.constraint(equalTo: topSeparator.bottomAnchor),
@@ -603,6 +674,13 @@ final class QuickPanelView: NSView {
             self,
             selector: #selector(focusGuidedStepDidChange),
             name: Constants.Notifications.focusGuidedStepChanged,
+            object: nil
+        )
+        // CoderBridge session 变化
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(coderBridgeSessionsDidChange),
+            name: Constants.Notifications.coderBridgeSessionChanged,
             object: nil
         )
     }
@@ -1540,11 +1618,12 @@ final class QuickPanelView: NSView {
 
     @objc private func switchToRunningTab() { switchTab(.running) }
     @objc private func switchToFavoritesTab() { switchTab(.favorites) }
+    @objc private func switchToAITab() { switchTab(.ai) }
 
     private func updateTabButtonStyles() {
         let colors = ConfigStore.shared.currentThemeColors
         // 先全部重置为未选中样式
-        for btn in [runningTabButton, favoritesTabButton] {
+        for btn in [runningTabButton, favoritesTabButton, aiTabButton] {
             btn.font = .systemFont(ofSize: 11)
             btn.contentTintColor = colors.nsTextTertiary
             btn.layer?.backgroundColor = NSColor.clear.cgColor
@@ -1552,6 +1631,7 @@ final class QuickPanelView: NSView {
         // 隐藏所有指示条
         runningTabIndicator.layer?.backgroundColor = NSColor.clear.cgColor
         favoritesTabIndicator.layer?.backgroundColor = NSColor.clear.cgColor
+        aiTabIndicator.layer?.backgroundColor = NSColor.clear.cgColor
 
         // 设置选中 Tab 样式（加粗 + 强调色 + 底部指示条）
         let selectedButton: NSButton
@@ -1563,6 +1643,9 @@ final class QuickPanelView: NSView {
         case .favorites:
             selectedButton = favoritesTabButton
             selectedIndicator = favoritesTabIndicator
+        case .ai:
+            selectedButton = aiTabButton
+            selectedIndicator = aiTabIndicator
         }
         selectedButton.font = .systemFont(ofSize: 11, weight: .semibold)
         selectedButton.contentTintColor = colors.nsAccent
@@ -1576,6 +1659,8 @@ final class QuickPanelView: NSView {
         openKanbanButton.contentTintColor = colors.nsTextSecondary
         topSeparator.layer?.backgroundColor = colors.nsSeparator.withAlphaComponent(0.8).cgColor
         tabSeparator.layer?.backgroundColor = colors.nsSeparator.withAlphaComponent(0.8).cgColor
+        tabSeparator2.layer?.backgroundColor = colors.nsSeparator.withAlphaComponent(0.8).cgColor
+        aiBadgeLabel.layer?.backgroundColor = colors.nsAccent.cgColor
         bottomSeparator.layer?.backgroundColor = colors.nsSeparator.withAlphaComponent(0.9).cgColor
         timerBar.layer?.backgroundColor = colors.nsTextPrimary.withAlphaComponent(0.08).cgColor
         timerProgressBg.layer?.backgroundColor = colors.nsTextPrimary.withAlphaComponent(0.08).cgColor
@@ -1635,6 +1720,11 @@ final class QuickPanelView: NSView {
                 let collapsed = collapsedApps.contains(config.bundleID) ? "C" : "E"
                 parts.append("\(config.bundleID):\(isRunning):\(windowIDs):\(collapsed)")
             }
+        case .ai:
+            let sessions = CoderBridgeService.shared.sortedVisibleSessions
+            for s in sessions {
+                parts.append("\(s.sessionID):\(s.status.rawValue):\(s.lifecycle.rawValue)")
+            }
         }
 
         parts.append("H:\(highlightedWindowID ?? 0)")
@@ -1683,6 +1773,8 @@ final class QuickPanelView: NSView {
             buildRunningTabContent()
         case .favorites:
             buildFavoritesTabContent()
+        case .ai:
+            buildAITabContent()
         }
     }
 
@@ -1754,6 +1846,52 @@ final class QuickPanelView: NSView {
         if !hasAccessibility {
             let permissionHint = createPermissionHintView()
             contentStack.addArrangedSubview(permissionHint)
+        }
+    }
+
+    /// "AI"Tab：显示 CoderBridge session 列表或空状态
+    private func buildAITabContent() {
+        let sessions = CoderBridgeService.shared.sortedVisibleSessions
+
+        if sessions.isEmpty {
+            let label = createLabel(
+                "还没有 AI 编码会话\n启动一个 AI 编码工具后\n会自动显示在这里",
+                size: 11,
+                color: ConfigStore.shared.currentThemeColors.nsTextTertiary
+            )
+            label.alignment = .center
+            label.maximumNumberOfLines = 0
+            label.lineBreakMode = .byWordWrapping
+            label.translatesAutoresizingMaskIntoConstraints = false
+            contentStack.addArrangedSubview(label)
+            label.widthAnchor.constraint(equalTo: contentStack.widthAnchor).isActive = true
+            return
+        }
+
+        for session in sessions {
+            let row = createSessionRow(session: session)
+            contentStack.addArrangedSubview(row)
+        }
+    }
+
+    /// 更新 AI Tab 角标（actionable 计数）
+    private func updateAIBadge() {
+        let count = CoderBridgeService.shared.actionableCount
+        if count > 0 {
+            aiBadgeLabel.stringValue = "\(count)"
+            aiBadgeLabel.isHidden = false
+        } else {
+            aiBadgeLabel.isHidden = true
+        }
+    }
+
+    @objc private func coderBridgeSessionsDidChange() {
+        DispatchQueue.main.async { [weak self] in
+            guard let self = self else { return }
+            self.updateAIBadge()
+            if self.currentTab == .ai {
+                self.forceReload()
+            }
         }
     }
 

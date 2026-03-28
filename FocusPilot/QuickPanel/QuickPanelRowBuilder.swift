@@ -417,4 +417,29 @@ extension QuickPanelView {
 
         return container
     }
+
+    // MARK: - AI Session 行（占位，Task 6 实现）
+
+    /// 创建 session 行视图（占位实现）
+    func createSessionRow(session: CoderSession) -> NSView {
+        let colors = ConfigStore.shared.currentThemeColors
+        let row = NSView()
+        row.wantsLayer = true
+        row.translatesAutoresizingMaskIntoConstraints = false
+        row.heightAnchor.constraint(equalToConstant: 36).isActive = true
+
+        let label = createLabel(
+            "\(session.tool.rawValue)  \(session.cwdBasename)  ·  \(session.statusText)",
+            size: 11,
+            color: colors.nsTextSecondary
+        )
+        label.translatesAutoresizingMaskIntoConstraints = false
+        row.addSubview(label)
+        NSLayoutConstraint.activate([
+            label.leadingAnchor.constraint(equalTo: row.leadingAnchor, constant: 12),
+            label.centerYAnchor.constraint(equalTo: row.centerYAnchor),
+            label.trailingAnchor.constraint(lessThanOrEqualTo: row.trailingAnchor, constant: -12),
+        ])
+        return row
+    }
 }
