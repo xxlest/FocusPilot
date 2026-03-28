@@ -1872,6 +1872,38 @@ final class QuickPanelView: NSView {
             let row = createSessionRow(session: session)
             contentStack.addArrangedSubview(row)
         }
+
+        // 隐藏的会话折叠入口
+        let hiddenSessions = CoderBridgeService.shared.hiddenSessions
+        if !hiddenSessions.isEmpty {
+            let separator = NSView()
+            separator.wantsLayer = true
+            separator.layer?.backgroundColor = ConfigStore.shared.currentThemeColors.nsTextTertiary.withAlphaComponent(0.15).cgColor
+            separator.translatesAutoresizingMaskIntoConstraints = false
+            separator.heightAnchor.constraint(equalToConstant: 1).isActive = true
+            contentStack.addArrangedSubview(separator)
+
+            let hiddenRow = HoverableRowView()
+            hiddenRow.translatesAutoresizingMaskIntoConstraints = false
+            hiddenRow.heightAnchor.constraint(equalToConstant: 28).isActive = true
+
+            let hiddenLabel = createLabel("隐藏的会话 (\(hiddenSessions.count))", size: 11, color: ConfigStore.shared.currentThemeColors.nsTextTertiary)
+            hiddenLabel.translatesAutoresizingMaskIntoConstraints = false
+            hiddenRow.addSubview(hiddenLabel)
+            NSLayoutConstraint.activate([
+                hiddenLabel.leadingAnchor.constraint(equalTo: hiddenRow.leadingAnchor, constant: Constants.Design.Spacing.sm),
+                hiddenLabel.centerYAnchor.constraint(equalTo: hiddenRow.centerYAnchor),
+            ])
+
+            hiddenRow.clickHandler = { [weak self] in
+                for s in hiddenSessions {
+                    CoderBridgeService.shared.unhideSession(s.sessionID)
+                }
+                self?.forceReload()
+            }
+
+            contentStack.addArrangedSubview(hiddenRow)
+        }
     }
 
     /// 更新 AI Tab 角标（actionable 计数）
