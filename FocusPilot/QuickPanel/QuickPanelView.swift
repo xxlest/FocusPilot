@@ -1910,6 +1910,18 @@ final class QuickPanelView: NSView {
                 groupStack.addArrangedSubview(chevron)
             }
 
+            // 文件夹图标（folder.fill，accent 色）
+            if let folderImage = Self.cachedSymbol(name: "folder.fill", size: 13, weight: .regular) {
+                let folderIcon = NSImageView(image: folderImage)
+                folderIcon.contentTintColor = theme.nsAccent
+                folderIcon.translatesAutoresizingMaskIntoConstraints = false
+                NSLayoutConstraint.activate([
+                    folderIcon.widthAnchor.constraint(equalToConstant: 16),
+                    folderIcon.heightAnchor.constraint(equalToConstant: 14),
+                ])
+                groupStack.addArrangedSubview(folderIcon)
+            }
+
             // 目录名（可截断）
             let dirLabel = createLabel(group.displayName, size: 12, color: theme.nsTextPrimary)
             dirLabel.font = .systemFont(ofSize: 12, weight: .medium)
