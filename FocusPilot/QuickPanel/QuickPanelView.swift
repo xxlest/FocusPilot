@@ -2312,7 +2312,7 @@ final class HoverableRowView: NSView {
 
     override func mouseEntered(with event: NSEvent) {
         isHovered = true
-        // 暂时隐藏同级其他行的 selected 高亮（同一时间只亮一个）
+        // 隐藏同级其他行的 selected 高亮（直接操作 layer，不触发 updateAppearance 避免闪烁）
         if let parent = superview as? NSStackView {
             for view in parent.arrangedSubviews {
                 if let sibling = view as? HoverableRowView, sibling !== self, sibling.isSelected {
@@ -2327,11 +2327,15 @@ final class HoverableRowView: NSView {
     override func mouseExited(with event: NSEvent) {
         isHovered = false
         updateAppearance()
-        // 恢复同级 selected 行的高亮
-        if let parent = superview as? NSStackView {
-            for view in parent.arrangedSubviews {
-                if let sibling = view as? HoverableRowView, sibling !== self, sibling.isSelected {
-                    sibling.updateAppearance()
+        // 延迟一帧后检查：如果没有任何兄弟行处于 hover，恢复 selected 行
+        DispatchQueue.main.async { [weak self] in
+            guard let parent = self?.superview as? NSStackView else { return }
+            let anyHovered = parent.arrangedSubviews.contains { ($0 as? HoverableRowView)?.isHovered == true }
+            if !anyHovered {
+                for view in parent.arrangedSubviews {
+                    if let sibling = view as? HoverableRowView, sibling.isSelected {
+                        sibling.updateAppearance()
+                    }
                 }
             }
         }
