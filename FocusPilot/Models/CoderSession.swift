@@ -52,6 +52,10 @@ struct CoderSession: Identifiable {
     var candidateWindowID: CGWindowID?
     var matchConfidence: MatchConfidence
 
+    var lastInteraction: Date?           // 用户点击此 session 的时间，nil 表示未操作过
+    var taskName: String?                // 用户手动编辑的任务名，nil 时显示 query 摘要
+    var manualWindowID: CGWindowID?      // 用户手动绑定的窗口，优先级最高，失效时自动清空
+
     var id: String { sessionID }
 
     var preferenceKey: String {
@@ -81,16 +85,13 @@ struct CoderSession: Identifiable {
     }
 
     var sortTier: Int {
-        switch (status, lifecycle) {
-        case (.idle, .active),
-             (.done, .active), (.done, .ended),
-             (.error, .active), (.error, .ended):
-            return 1
-        case (.working, .active), (.registered, .active), (.working, .ended):
-            return 2
-        default:
-            return 3
-        }
+        if lifecycle == .ended { return 2 }
+        return 1
+    }
+
+    /// 排序用的时间：lastInteraction 优先，无则退回 lastUpdate
+    var sortDate: Date {
+        lastInteraction ?? lastUpdate
     }
 
     var statusText: String {
@@ -114,7 +115,7 @@ struct CoderSession: Identifiable {
         case .done:       return .systemGreen
         case .error:      return .systemRed
         case .working:    return theme.nsAccent
-        case .registered: return theme.nsTextTertiary
+        case .registered: return theme.nsAccent
         }
     }
 
