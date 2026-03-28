@@ -76,25 +76,25 @@ send_to_focuspilot() {
     local ts
     ts=$(date +%s)
 
-    swift -e '
-import Foundation
-DistributedNotificationCenter.default().post(
-    name: .init("'"$NOTIFICATION_NAME"'"),
-    object: nil,
-    userInfo: [
-        "event": "'"$event"'",
-        "sid": "'"$sid"'",
-        "seq": "'"$seq"'",
-        "tool": "'"$tool"'",
-        "cwd": "'"$cwd"'",
-        "cwdNormalized": "'"$cwd_normalized"'",
-        "status": "'"$status"'",
-        "hostApp": "'"$host_app"'",
-        "ts": "'"$ts"'"
-    ],
-    deliverImmediately: true
-)
-' 2>/dev/null
+    # 使用 osascript 调用 ObjC bridge 发送 DistributedNotification
+    # 比 swift -e 更通用，不受 SwiftBridging 模块冲突影响
+    osascript -l JavaScript -e '
+        ObjC.import("Foundation");
+        var nc = $.NSDistributedNotificationCenter.defaultCenter;
+        var info = $.NSMutableDictionary.alloc.init;
+        info.setObjectForKey("'"$event"'", "event");
+        info.setObjectForKey("'"$sid"'", "sid");
+        info.setObjectForKey("'"$seq"'", "seq");
+        info.setObjectForKey("'"$tool"'", "tool");
+        info.setObjectForKey("'"$cwd"'", "cwd");
+        info.setObjectForKey("'"$cwd_normalized"'", "cwdNormalized");
+        info.setObjectForKey("'"$status"'", "status");
+        info.setObjectForKey("'"$host_app"'", "hostApp");
+        info.setObjectForKey("'"$ts"'", "ts");
+        nc.postNotificationNameObjectUserInfoDeliverImmediately(
+            "'"$NOTIFICATION_NAME"'", $(), info, true
+        );
+    ' 2>/dev/null
 }
 
 # --- High-level session operations ---
