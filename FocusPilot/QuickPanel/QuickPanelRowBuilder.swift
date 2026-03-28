@@ -531,13 +531,13 @@ extension QuickPanelView {
         statusLabel.setContentCompressionResistancePriority(.required, for: .horizontal)
         firstLine.addArrangedSubview(statusLabel)
 
-        // done 未读标签
-        if session.status == .done && !session.isRead && session.lifecycle == .active {
+        // actionable 未读标签（统一红底白字，与 Tab 角标/悬浮球角标风格一致）
+        if session.isActionable {
             let badge = NSTextField(labelWithString: " 未读 ")
             badge.font = .systemFont(ofSize: 9, weight: .semibold)
             badge.textColor = .white
             badge.wantsLayer = true
-            badge.layer?.backgroundColor = NSColor.systemGreen.cgColor
+            badge.layer?.backgroundColor = NSColor.systemRed.cgColor
             badge.layer?.cornerRadius = 3
             badge.alignment = .center
             badge.translatesAutoresizingMaskIntoConstraints = false
@@ -598,7 +598,17 @@ extension QuickPanelView {
     }
 
     private func handleSessionClick(_ session: CoderSession, row: HoverableRowView) {
-        // 1. 即时选中高亮（毫秒级，无延迟）
+        // 1. 清除所有兄弟行的 selected 状态（确保同一时间只有一个）
+        if let parent = row.superview as? NSStackView {
+            for view in parent.arrangedSubviews {
+                if let sibling = view as? HoverableRowView, sibling !== row, sibling.isSelected {
+                    sibling.isSelected = false
+                    sibling.updateAppearance()
+                }
+            }
+        }
+
+        // 2. 即时选中高亮（毫秒级，无延迟）
         row.isSelected = true
         CoderBridgeService.shared.activeSessionID = session.sessionID
         CoderBridgeService.shared.updateLastInteraction(sid: session.sessionID)
