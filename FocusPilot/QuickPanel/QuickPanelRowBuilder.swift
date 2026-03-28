@@ -498,14 +498,13 @@ extension QuickPanelView {
         let statusLabel = createLabel(session.statusText, size: 11, color: theme.nsTextSecondary)
         stack.addArrangedSubview(statusLabel)
 
-        // 副标题：taskName 优先，nil 时取 query 摘要
-        let subtitle = session.taskName ?? CoderBridgeService.shared.latestQuerySummary(for: session)
-        if let subtitle = subtitle, !subtitle.isEmpty {
-            let summaryLabel = createLabel(subtitle, size: 10, color: theme.nsTextTertiary)
-            summaryLabel.lineBreakMode = .byTruncatingTail
-            summaryLabel.translatesAutoresizingMaskIntoConstraints = false
+        // 第二行：任务名（仅在用户编辑过时显示）
+        // 第三行：最近 query 摘要（始终尝试显示）
+        let hasTaskName = session.taskName != nil && !session.taskName!.isEmpty
+        let querySummary = CoderBridgeService.shared.latestQuerySummary(for: session, maxLength: 50)
 
-            // 移除 stack 的现有约束，包裹进垂直容器
+        if hasTaskName || querySummary != nil {
+            // 需要多行，包裹进垂直容器
             stack.removeFromSuperview()
 
             let verticalStack = NSStackView()
@@ -514,19 +513,39 @@ extension QuickPanelView {
             verticalStack.spacing = 2
             verticalStack.translatesAutoresizingMaskIntoConstraints = false
             verticalStack.addArrangedSubview(stack)
-            verticalStack.addArrangedSubview(summaryLabel)
+
+            if hasTaskName {
+                let taskLabel = createLabel("任务：\(session.taskName!)", size: 10, color: theme.nsTextSecondary)
+                taskLabel.lineBreakMode = .byTruncatingTail
+                taskLabel.translatesAutoresizingMaskIntoConstraints = false
+                verticalStack.addArrangedSubview(taskLabel)
+                NSLayoutConstraint.activate([
+                    taskLabel.leadingAnchor.constraint(equalTo: verticalStack.leadingAnchor, constant: 20),
+                    taskLabel.trailingAnchor.constraint(lessThanOrEqualTo: verticalStack.trailingAnchor),
+                ])
+            }
+
+            if let query = querySummary {
+                let queryLabel = createLabel("\"\(query)\"", size: 10, color: theme.nsTextTertiary)
+                queryLabel.lineBreakMode = .byTruncatingTail
+                queryLabel.translatesAutoresizingMaskIntoConstraints = false
+                verticalStack.addArrangedSubview(queryLabel)
+                NSLayoutConstraint.activate([
+                    queryLabel.leadingAnchor.constraint(equalTo: verticalStack.leadingAnchor, constant: 20),
+                    queryLabel.trailingAnchor.constraint(lessThanOrEqualTo: verticalStack.trailingAnchor),
+                ])
+            }
 
             row.addSubview(verticalStack)
             NSLayoutConstraint.activate([
                 verticalStack.leadingAnchor.constraint(equalTo: row.leadingAnchor, constant: Constants.Design.Spacing.sm),
                 verticalStack.trailingAnchor.constraint(equalTo: row.trailingAnchor, constant: -Constants.Design.Spacing.sm),
                 verticalStack.centerYAnchor.constraint(equalTo: row.centerYAnchor),
-                summaryLabel.leadingAnchor.constraint(equalTo: verticalStack.leadingAnchor, constant: 20),
-                summaryLabel.trailingAnchor.constraint(lessThanOrEqualTo: verticalStack.trailingAnchor),
             ])
 
-            // 有摘要时行高增加
-            row.heightAnchor.constraint(greaterThanOrEqualToConstant: 44).isActive = true
+            // 行高：有任务名+query 时 52，只有一个时 44
+            let extraHeight: CGFloat = (hasTaskName && querySummary != nil) ? 52 : 44
+            row.heightAnchor.constraint(greaterThanOrEqualToConstant: extraHeight).isActive = true
         }
 
         // 行透明度

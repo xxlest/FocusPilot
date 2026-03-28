@@ -280,23 +280,48 @@ extension QuickPanelView {
         alert.informativeText = "项目：\(cwdBasename)"
         alert.addButton(withTitle: "确定")
         alert.addButton(withTitle: "取消")
-        alert.addButton(withTitle: "重置为默认")
 
-        let input = NSTextField(frame: NSRect(x: 0, y: 0, width: 300, height: 24))
-        input.stringValue = currentTaskName.isEmpty ? defaultSummary : currentTaskName
+        // 输入框 + "用默认值"按钮 水平排列
+        let container = NSView(frame: NSRect(x: 0, y: 0, width: 340, height: 28))
+
+        let input = NSTextField(frame: NSRect(x: 0, y: 2, width: 240, height: 24))
+        input.stringValue = currentTaskName.isEmpty ? "" : currentTaskName
         input.placeholderString = defaultSummary.isEmpty ? "输入任务名..." : defaultSummary
-        alert.accessoryView = input
+        container.addSubview(input)
+
+        let resetBtn = NSButton(title: "用默认值", target: nil, action: nil)
+        resetBtn.bezelStyle = .rounded
+        resetBtn.frame = NSRect(x: 248, y: 0, width: 88, height: 28)
+        resetBtn.target = nil
+        resetBtn.action = nil
+        container.addSubview(resetBtn)
+
+        // 点击"用默认值"时填入默认摘要
+        class ResetHandler: NSObject {
+            let input: NSTextField
+            let defaultValue: String
+            init(input: NSTextField, defaultValue: String) {
+                self.input = input
+                self.defaultValue = defaultValue
+            }
+            @objc func reset(_ sender: Any?) {
+                input.stringValue = defaultValue
+                input.selectText(nil)
+            }
+        }
+        let handler = ResetHandler(input: input, defaultValue: defaultSummary)
+        resetBtn.target = handler
+        resetBtn.action = #selector(ResetHandler.reset(_:))
+        // 防止 handler 被释放
+        objc_setAssociatedObject(alert, "resetHandler", handler, .OBJC_ASSOCIATION_RETAIN)
+
+        alert.accessoryView = container
         alert.window.initialFirstResponder = input
 
         let response = alert.runModal()
         if response == .alertFirstButtonReturn {
-            // 确定
             let newName = input.stringValue.trimmingCharacters(in: .whitespaces)
             CoderBridgeService.shared.updateTaskName(sid: sessionID, taskName: newName.isEmpty ? nil : newName)
-            forceReload()
-        } else if response == .alertThirdButtonReturn {
-            // 重置为默认（清空 taskName，恢复为 query 摘要）
-            CoderBridgeService.shared.updateTaskName(sid: sessionID, taskName: nil)
             forceReload()
         }
     }
