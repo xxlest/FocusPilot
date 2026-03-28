@@ -1721,10 +1721,12 @@ final class QuickPanelView: NSView {
                 parts.append("\(config.bundleID):\(isRunning):\(windowIDs):\(collapsed)")
             }
         case .ai:
-            let sessions = CoderBridgeService.shared.sortedVisibleSessions
-            for s in sessions {
-                parts.append("\(s.sessionID):\(s.status.rawValue):\(s.lifecycle.rawValue)")
-            }
+            let groups = CoderBridgeService.shared.groupedSessions
+            let sessionKeys = groups.flatMap { g in
+                g.sessions.map { "\(g.cwdNormalized):\($0.sessionID):\($0.status.rawValue):\($0.lifecycle.rawValue)" }
+            }.joined(separator: "|")
+            let collapsed = CoderBridgeService.shared.collapsedGroups.sorted().joined(separator: ",")
+            parts.append("AI:\(sessionKeys):C:\(collapsed)")
         }
 
         parts.append("H:\(highlightedWindowID ?? 0)")
@@ -1851,9 +1853,9 @@ final class QuickPanelView: NSView {
 
     /// "AI"Tab：显示 CoderBridge session 列表或空状态
     private func buildAITabContent() {
-        let sessions = CoderBridgeService.shared.sortedVisibleSessions
+        let groups = CoderBridgeService.shared.groupedSessions
 
-        if sessions.isEmpty {
+        if groups.isEmpty {
             let label = createLabel(
                 "还没有 AI 编码会话\n启动一个 AI 编码工具后\n会自动显示在这里",
                 size: 11,
@@ -1868,11 +1870,71 @@ final class QuickPanelView: NSView {
             return
         }
 
-        for session in sessions {
-            let row = createSessionRow(session: session)
-            contentStack.addArrangedSubview(row)
-        }
+        let theme = ConfigStore.shared.currentThemeColors
 
+        for group in groups {
+            let isCollapsed = CoderBridgeService.shared.collapsedGroups.contains(group.cwdNormalized)
+
+            // 目录组行
+            let groupRow = HoverableRowView()
+            groupRow.translatesAutoresizingMaskIntoConstraints = false
+            groupRow.heightAnchor.constraint(equalToConstant: Constants.Panel.appRowHeight).isActive = true
+
+            let groupStack = NSStackView()
+            groupStack.orientation = .horizontal
+            groupStack.alignment = .centerY
+            groupStack.spacing = Constants.Design.Spacing.sm
+            groupStack.translatesAutoresizingMaskIntoConstraints = false
+            groupRow.addSubview(groupStack)
+            NSLayoutConstraint.activate([
+                groupStack.leadingAnchor.constraint(equalTo: groupRow.leadingAnchor, constant: Constants.Design.Spacing.sm),
+                groupStack.trailingAnchor.constraint(equalTo: groupRow.trailingAnchor, constant: -Constants.Design.Spacing.sm),
+                groupStack.centerYAnchor.constraint(equalTo: groupRow.centerYAnchor),
+            ])
+
+            // 折叠箭头
+            let chevronName = isCollapsed ? "chevron.right" : "chevron.down"
+            if let chevronImage = Self.cachedSymbol(name: chevronName, size: 10, weight: .medium) {
+                let chevron = NSImageView(image: chevronImage)
+                chevron.contentTintColor = theme.nsTextSecondary
+                chevron.translatesAutoresizingMaskIntoConstraints = false
+                NSLayoutConstraint.activate([
+                    chevron.widthAnchor.constraint(equalToConstant: 14),
+                    chevron.heightAnchor.constraint(equalToConstant: 14),
+                ])
+                groupStack.addArrangedSubview(chevron)
+            }
+
+            // 目录名
+            let dirLabel = createLabel(group.displayName, size: 12, color: theme.nsTextPrimary)
+            dirLabel.font = .systemFont(ofSize: 12, weight: .medium)
+            groupStack.addArrangedSubview(dirLabel)
+
+            groupStack.addArrangedSubview(createSpacer())
+
+            // session 数量
+            let countLabel = createLabel("(\(group.sessions.count))", size: 11, color: theme.nsTextTertiary)
+            groupStack.addArrangedSubview(countLabel)
+
+            let cwdKey = group.cwdNormalized
+            groupRow.clickHandler = { [weak self] in
+                if CoderBridgeService.shared.collapsedGroups.contains(cwdKey) {
+                    CoderBridgeService.shared.collapsedGroups.remove(cwdKey)
+                } else {
+                    CoderBridgeService.shared.collapsedGroups.insert(cwdKey)
+                }
+                self?.forceReload()
+            }
+
+            contentStack.addArrangedSubview(groupRow)
+
+            if !isCollapsed {
+                for session in group.sessions {
+                    let row = createSessionRow(session: session)
+                    contentStack.addArrangedSubview(row)
+                }
+            }
+        }
     }
 
     /// 更新 AI Tab 角标（actionable 计数）
