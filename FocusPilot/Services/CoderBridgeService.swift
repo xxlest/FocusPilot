@@ -144,6 +144,15 @@ class CoderBridgeService: NSObject {
         })
     }
 
+    /// 检查某个 autoWindowID 是否与其他 active session 冲突（多个 session 指向同一窗口）
+    func isAutoWindowConflicted(for session: CoderSession) -> Bool {
+        guard let auto = session.autoWindowID else { return false }
+        let count = sessions.filter {
+            $0.sessionID != session.sessionID && $0.lifecycle == .active && $0.autoWindowID == auto
+        }.count
+        return count > 0
+    }
+
     func resolveWindowForSession(_ session: CoderSession) -> (CGWindowID?, MatchConfidence) {
         // 第一优先：用户手动绑定
         if let manual = session.manualWindowID {
@@ -156,16 +165,18 @@ class CoderBridgeService: NSObject {
             }
         }
 
-        // 第二优先：自动采样弱绑定
+        // 第二优先：自动采样弱绑定（冲突时跳过）
         if let auto = session.autoWindowID {
-            if windowExists(auto) {
-                return (auto, .high)
-            } else {
+            if !windowExists(auto) {
                 // 失效，清空
                 if let index = sessions.firstIndex(where: { $0.sessionID == session.sessionID }) {
                     sessions[index].autoWindowID = nil
                 }
+            } else if !isAutoWindowConflicted(for: session) {
+                // 有效且无冲突
+                return (auto, .high)
             }
+            // 有效但冲突 → 跳过，不使用
         }
 
         // fallback：排除已被手动绑定占用的窗口

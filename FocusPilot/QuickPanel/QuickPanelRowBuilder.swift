@@ -473,10 +473,11 @@ extension QuickPanelView {
         }
 
         // 绑定状态标记（紧跟图标后面）
+        let autoConflicted = CoderBridgeService.shared.isAutoWindowConflicted(for: session)
         if session.manualWindowID != nil {
             // 已手动绑定：不加标记（正常状态）
-        } else if session.autoWindowID != nil {
-            // 自动关联（弱绑定）：加 ? 标记
+        } else if session.autoWindowID != nil && !autoConflicted {
+            // 自动关联（弱绑定，无冲突）：加 ? 标记
             if let qImage = Self.cachedSymbol(name: "questionmark.circle", size: 10, weight: .regular) {
                 let qView = NSImageView(image: qImage)
                 qView.contentTintColor = theme.nsTextTertiary
@@ -488,6 +489,7 @@ extension QuickPanelView {
                 firstLine.addArrangedSubview(qView)
             }
         } else {
+            // 未绑定 或 autoWindowID 冲突：红色 ✕
             // 未绑定：红色 ✕
             if let xImage = Self.cachedSymbol(name: "xmark.square", size: 12, weight: .medium) {
                 let xView = NSImageView(image: xImage)
