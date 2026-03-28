@@ -346,11 +346,8 @@ class CoderBridgeService: NSObject {
 
             let elapsed = now.timeIntervalSince(session.lastUpdate)
 
-            if (session.status == .done || session.status == .error) && elapsed > 1800 {
-                changed = true
-                return true
-            }
-            if elapsed > 300 {
+            // 所有 ended 会话统一 2 分钟后自动移除
+            if elapsed > 120 {
                 changed = true
                 return true
             }
