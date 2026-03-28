@@ -436,6 +436,7 @@ extension QuickPanelView {
         firstLine.orientation = .horizontal
         firstLine.alignment = .centerY
         firstLine.spacing = 4
+        firstLine.distribution = .fill
         firstLine.translatesAutoresizingMaskIntoConstraints = false
 
         // 状态圆点（10px，支持闪烁）
@@ -557,9 +558,10 @@ extension QuickPanelView {
         }
         let queryLabel = createLabel(queryText, size: 10, color: theme.nsTextTertiary)
         queryLabel.lineBreakMode = .byTruncatingTail
+        queryLabel.setContentCompressionResistancePriority(.defaultLow - 1, for: .horizontal)
+        queryLabel.setContentHuggingPriority(.defaultLow, for: .horizontal)
         queryLabel.translatesAutoresizingMaskIntoConstraints = false
         verticalStack.addArrangedSubview(queryLabel)
-        // query 行宽度跟随 verticalStack
         queryLabel.widthAnchor.constraint(lessThanOrEqualTo: verticalStack.widthAnchor).isActive = true
 
         // 布局（缩进 windowIndent）
