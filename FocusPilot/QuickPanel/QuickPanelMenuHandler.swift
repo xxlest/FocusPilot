@@ -241,6 +241,16 @@ extension QuickPanelView {
         bindItem.representedObject = session.sessionID
         menu.addItem(bindItem)
 
+        // 解除绑定（仅在有绑定时显示）
+        if session.manualWindowID != nil || session.autoWindowID != nil {
+            let unbindItem = NSMenuItem(title: "解除绑定", action: #selector(handleUnbindSession(_:)), keyEquivalent: "")
+            unbindItem.target = self
+            unbindItem.representedObject = session.sessionID
+            menu.addItem(unbindItem)
+        }
+
+        menu.addItem(NSMenuItem.separator())
+
         // 复制 Session ID
         let copyItem = NSMenuItem(title: "复制 Session ID", action: #selector(handleCopySessionID(_:)), keyEquivalent: "")
         copyItem.target = self
@@ -308,6 +318,13 @@ extension QuickPanelView {
             CoderBridgeService.shared.bindSessionToWindow(sid: sid, windowID: wid)
             forceReload()
         }
+    }
+
+    @objc func handleUnbindSession(_ sender: NSMenuItem) {
+        guard let sid = sender.representedObject as? String else { return }
+        CoderBridgeService.shared.clearManualWindowID(sid: sid)
+        CoderBridgeService.shared.clearAutoWindowID(sid: sid)
+        forceReload()
     }
 
     @objc func handleCopySessionID(_ sender: NSMenuItem) {

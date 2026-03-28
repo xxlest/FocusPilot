@@ -567,15 +567,10 @@ extension QuickPanelView {
             CoderBridgeService.shared.clearManualWindowID(sid: session.sessionID)
         }
 
-        // 2. autoWindowID（弱绑定）— 冲突时跳过
+        // 2. autoWindowID（弱绑定）— 冲突或失效时跳过，不清空
         if let auto = session.autoWindowID {
-            if !CoderBridgeService.shared.windowExists(auto) {
-                // 窗口已失效，清空
-                CoderBridgeService.shared.clearAutoWindowID(sid: session.sessionID)
-            } else if CoderBridgeService.shared.isAutoWindowConflicted(for: session) {
-                // 冲突：多个 session 指向同一窗口，清空并跳过
-                CoderBridgeService.shared.clearAutoWindowID(sid: session.sessionID)
-            } else {
+            if CoderBridgeService.shared.windowExists(auto)
+                && !CoderBridgeService.shared.isAutoWindowConflicted(for: session) {
                 // 有效且无冲突，切换
                 let allWindows = AppMonitor.shared.runningApps.flatMap { $0.windows }
                 if let windowInfo = allWindows.first(where: { $0.id == auto }) {
@@ -584,9 +579,10 @@ extension QuickPanelView {
                     return
                 }
             }
+            // 失效或冲突 → 不清空 autoWindowID，继续到引导绑定
         }
 
-        // 3. 都无 → 引导手动绑定
+        // 3. 未绑定/冲突/失效 → 引导手动绑定
         promptBindToCurrentWindow(sid: session.sessionID)
     }
 
