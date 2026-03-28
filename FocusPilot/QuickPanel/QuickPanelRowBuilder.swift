@@ -466,7 +466,7 @@ extension QuickPanelView {
 
         // hostApp 显示名
         if !session.hostApp.isEmpty {
-            let hostLabel = createLabel(session.hostAppDisplayName, size: 10, color: theme.nsTextTertiary)
+            let hostLabel = createLabel(HostAppMapping.displayName(for: session.hostApp), size: 10, color: theme.nsTextTertiary)
             firstLine.addArrangedSubview(hostLabel)
         }
 

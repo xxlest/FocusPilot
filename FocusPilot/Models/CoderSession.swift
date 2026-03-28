@@ -49,7 +49,6 @@ struct CoderSession: Identifiable {
     var lastInteraction: Date?
 
     var manualWindowID: CGWindowID?
-    var resolvedWindowID: CGWindowID?
 
     var id: String { sessionID }
 
@@ -120,17 +119,6 @@ struct CoderSession: Identifiable {
         }
     }
 
-    var hostAppDisplayName: String {
-        switch hostApp {
-        case "cursor":   return "Cursor"
-        case "vscode":   return "VSCode"
-        case "terminal": return "Terminal"
-        case "iterm2":   return "iTerm2"
-        case "wezterm":  return "WezTerm"
-        case "warp":     return "Warp"
-        default:         return hostApp
-        }
-    }
 }
 
 // MARK: - SessionGroup
@@ -173,5 +161,17 @@ enum HostAppMapping {
 
     static func hostApp(for bundleID: String) -> String? {
         hostToBundleID.first(where: { $0.value == bundleID })?.key
+    }
+
+    static func displayName(for hostApp: String) -> String {
+        switch hostApp {
+        case "cursor":   return "Cursor"
+        case "vscode":   return "VSCode"
+        case "terminal": return "Terminal"
+        case "iterm2":   return "iTerm2"
+        case "wezterm":  return "WezTerm"
+        case "warp":     return "Warp"
+        default:         return hostApp
+        }
     }
 }

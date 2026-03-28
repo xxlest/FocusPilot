@@ -5,9 +5,7 @@ class CoderBridgeService: NSObject {
 
     private(set) var sessions: [CoderSession] = []
     private var cleanupTimer: Timer?
-
-    /// 折叠的目录组（UI 状态）
-    var collapsedGroups: Set<String> = []
+    private var queryCache: [String: (summary: String, timestamp: Date)] = [:]
 
     private override init() {
         super.init()
@@ -75,8 +73,7 @@ class CoderBridgeService: NSObject {
             lastSeq: seq,
             lastUpdate: Date(),
             lastInteraction: nil,
-            manualWindowID: nil,
-            resolvedWindowID: nil
+            manualWindowID: nil
         )
 
         sessions.append(session)
@@ -140,11 +137,7 @@ class CoderBridgeService: NSObject {
         let basename = session.cwdBasename
         let matches = candidateWindows.filter { $0.1.contains(basename) }
         if matches.count == 1 {
-            let wid = matches[0].0
-            if let index = sessions.firstIndex(where: { $0.sessionID == session.sessionID }) {
-                sessions[index].resolvedWindowID = wid
-            }
-            return (wid, .high)
+            return (matches[0].0, .high)
         }
 
         // 其他情况一律 .none
@@ -230,6 +223,12 @@ class CoderBridgeService: NSObject {
     }
 
     func latestQuerySummary(for session: CoderSession, maxLength: Int = 50) -> String? {
+        // 缓存 5 秒内有效
+        if let cached = queryCache[session.sessionID],
+           Date().timeIntervalSince(cached.timestamp) < 5 {
+            return cached.summary
+        }
+
         guard let path = transcriptPath(for: session),
               let data = FileManager.default.contents(atPath: path),
               let content = String(data: data, encoding: .utf8) else {
@@ -259,6 +258,7 @@ class CoderBridgeService: NSObject {
 
             text = text.replacingOccurrences(of: "\n", with: " ").trimmingCharacters(in: .whitespaces)
             if text.count > maxLength { text = String(text.prefix(maxLength)) + "..." }
+            queryCache[session.sessionID] = (summary: text, timestamp: Date())
             return text
         }
         return nil

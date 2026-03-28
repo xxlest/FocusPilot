@@ -25,6 +25,9 @@ final class QuickPanelView: NSView {
     /// 多窗口 App 折叠状态（按 bundleID 跟踪）
     var collapsedApps: Set<String> = []
 
+    /// AI Tab 目录组折叠状态（按 cwdNormalized 跟踪）
+    var collapsedGroups: Set<String> = []
+
     /// 上次渲染时的结构快照（用于判断是否需要全量重建）
     private var lastStructuralKey: String = ""
 
@@ -1721,11 +1724,12 @@ final class QuickPanelView: NSView {
                 parts.append("\(config.bundleID):\(isRunning):\(windowIDs):\(collapsed)")
             }
         case .ai:
-            let groups = CoderBridgeService.shared.groupedSessions
-            let sessionKeys = groups.flatMap { g in
-                g.sessions.map { "\(g.cwdNormalized):\($0.sessionID):\($0.status.rawValue):\($0.lifecycle.rawValue)" }
-            }.joined(separator: "|")
-            let collapsed = CoderBridgeService.shared.collapsedGroups.sorted().joined(separator: ",")
+            // 直接用 sessions 构建 key，不调用 groupedSessions 避免重复计算
+            let sessionKeys = CoderBridgeService.shared.sessions
+                .map { "\($0.cwdNormalized):\($0.sessionID):\($0.status.rawValue):\($0.lifecycle.rawValue)" }
+                .sorted()
+                .joined(separator: "|")
+            let collapsed = collapsedGroups.sorted().joined(separator: ",")
             parts.append("AI:\(sessionKeys):C:\(collapsed)")
         }
 
@@ -1873,7 +1877,7 @@ final class QuickPanelView: NSView {
         let theme = ConfigStore.shared.currentThemeColors
 
         for group in groups {
-            let isCollapsed = CoderBridgeService.shared.collapsedGroups.contains(group.cwdNormalized)
+            let isCollapsed = collapsedGroups.contains(group.cwdNormalized)
 
             // 目录组行
             let groupRow = HoverableRowView()
@@ -1918,10 +1922,10 @@ final class QuickPanelView: NSView {
 
             let cwdKey = group.cwdNormalized
             groupRow.clickHandler = { [weak self] in
-                if CoderBridgeService.shared.collapsedGroups.contains(cwdKey) {
-                    CoderBridgeService.shared.collapsedGroups.remove(cwdKey)
+                if self?.collapsedGroups.contains(cwdKey) == true {
+                    self?.collapsedGroups.remove(cwdKey)
                 } else {
-                    CoderBridgeService.shared.collapsedGroups.insert(cwdKey)
+                    self?.collapsedGroups.insert(cwdKey)
                 }
                 self?.forceReload()
             }
