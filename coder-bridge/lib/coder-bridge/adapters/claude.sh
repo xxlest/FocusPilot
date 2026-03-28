@@ -45,6 +45,13 @@ handle_notification() {
     [[ -n "$SESSION_ID" ]] && session_update "claude" "$SESSION_ID" "$CWD" "idle"
 }
 
+handle_user_prompt_submit() {
+    local hook_data="$1"
+    parse_claude_hook "$hook_data"
+    # UserPromptSubmit = 用户提交了 prompt → working
+    [[ -n "$SESSION_ID" ]] && session_update "claude" "$SESSION_ID" "$CWD" "working"
+}
+
 handle_session_end() {
     local hook_data="$1"
     parse_claude_hook "$hook_data"
@@ -58,10 +65,11 @@ if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
     [[ ! -t 0 ]] && HOOK_INPUT=$(cat 2>/dev/null || true)
 
     case "$EVENT_TYPE" in
-        SessionStart)   handle_session_start "$HOOK_INPUT" ;;
-        Stop)           handle_stop "$HOOK_INPUT" ;;
-        Notification)   handle_notification "$HOOK_INPUT" ;;
-        SessionEnd)     handle_session_end "$HOOK_INPUT" ;;
-        *)              echo "Unknown event: $EVENT_TYPE" >&2; exit 1 ;;
+        SessionStart)       handle_session_start "$HOOK_INPUT" ;;
+        Stop)               handle_stop "$HOOK_INPUT" ;;
+        Notification)       handle_notification "$HOOK_INPUT" ;;
+        UserPromptSubmit)   handle_user_prompt_submit "$HOOK_INPUT" ;;
+        SessionEnd)         handle_session_end "$HOOK_INPUT" ;;
+        *)                  echo "Unknown event: $EVENT_TYPE" >&2; exit 1 ;;
     esac
 fi
