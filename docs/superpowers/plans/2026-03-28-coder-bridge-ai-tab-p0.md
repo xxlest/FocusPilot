@@ -683,10 +683,9 @@ class CoderBridgeService {
             }
         }
 
-        // P0 规则 2/3: 只有一个窗口或取最近活跃的
+        // P0 规则 2/3: 取窗口列表第一个可见候选（CGWindowList 按 z-order 排列，第一个即最前窗口）
         if let first = candidateWindows.first {
-            let confidence: MatchConfidence = candidateWindows.count == 1 ? .low : .low
-            return (first.0, confidence)
+            return (first.0, .low)
         }
 
         return (nil, .none)
@@ -1157,15 +1156,28 @@ git commit -m "feat(QuickPanel): 新增 AI Tab 基础 UI
     }
 
     private func handleSessionClick(_ session: CoderSession) {
-        // 更新窗口匹配
         let (windowID, confidence) = CoderBridgeService.shared.resolveWindowForSession(session)
 
         if let wid = windowID {
-            // 找到对应的 WindowInfo
             let allWindows = AppMonitor.shared.runningApps.flatMap { $0.windows }
             if let windowInfo = allWindows.first(where: { $0.id == wid }) {
                 WindowService.shared.activateWindow(windowInfo)
                 (self.window as? QuickPanelWindow)?.yieldLevel()
+
+                // .low 时短暂闪烁行背景提示"已切换到最近窗口"
+                if confidence == .low, let row = self.contentStack.arrangedSubviews.first(where: {
+                    ($0 as? HoverableRowView)?.windowInfo == nil  // session row 没有 windowInfo
+                }) as? HoverableRowView {
+                    row.wantsLayer = true
+                    let flashColor = ConfigStore.shared.currentThemeColors.nsAccent.withAlphaComponent(0.15).cgColor
+                    row.layer?.backgroundColor = flashColor
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
+                        NSAnimationContext.runAnimationGroup({ ctx in
+                            ctx.duration = Constants.Design.Anim.normal
+                            row.layer?.backgroundColor = NSColor.clear.cgColor
+                        })
+                    }
+                }
                 return
             }
         }
@@ -1212,18 +1224,30 @@ git commit -m "feat(QuickPanel): 新增 createSessionRow() 构建 AI 会话行
     // MARK: - AI Session Context Menu
 
     func createSessionContextMenu(session: CoderSession) -> NSMenu? {
-        guard session.lifecycle == .ended else { return nil }
-
         let menu = NSMenu()
 
-        let removeItem = NSMenuItem(title: "移除已结束的会话", action: #selector(handleRemoveEndedSessions), keyEquivalent: "")
-        removeItem.target = self
-        menu.addItem(removeItem)
+        if session.lifecycle == .ended {
+            let removeItem = NSMenuItem(title: "移除此会话", action: #selector(handleRemoveSession(_:)), keyEquivalent: "")
+            removeItem.target = self
+            removeItem.representedObject = session.sessionID
+            menu.addItem(removeItem)
 
-        return menu
+            menu.addItem(NSMenuItem.separator())
+
+            let removeAllItem = NSMenuItem(title: "移除所有已结束会话", action: #selector(handleRemoveAllEndedSessions), keyEquivalent: "")
+            removeAllItem.target = self
+            menu.addItem(removeAllItem)
+        }
+
+        return menu.items.isEmpty ? nil : menu
     }
 
-    @objc func handleRemoveEndedSessions() {
+    @objc func handleRemoveSession(_ sender: NSMenuItem) {
+        guard let sid = sender.representedObject as? String else { return }
+        CoderBridgeService.shared.removeSession(sid)
+    }
+
+    @objc func handleRemoveAllEndedSessions() {
         CoderBridgeService.shared.removeEndedSessions()
     }
 ```

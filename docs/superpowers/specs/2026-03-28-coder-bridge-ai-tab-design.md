@@ -243,7 +243,7 @@ resolveWindow(session) -> (CGWindowID?, MatchConfidence)
 P0 规则（按优先级）：
 1. 同宿主 app 的窗口中，cwd basename 命中窗口标题 → .high
 2. 同宿主 app 只有一个窗口 → .low
-3. 同宿主 app 有多个窗口，无法区分 → 取最近活跃的 → .low
+3. 同宿主 app 有多个窗口，无法区分 → 取窗口列表第一个可见候选（CGWindowList z-order 最前）→ .low
 4. 全部未命中 → .none
 
 P1 新增规则（插入到 P0 规则之前）：
@@ -270,7 +270,7 @@ var, tmp, opt, usr, volumes + 当前用户名
 
 2. 退回回退匹配，得到候选窗口：
    - .high → 直接 activateWindow + yieldLevel
-   - .low  → 也直接切到该候选窗口 + 轻提示"已切换到最近窗口"
+   - .low  → 也直接切到该候选窗口 + 行背景短暂闪烁提示（0.6s accent 色 flash）
    - .none → 只激活宿主 App
 
 3. 多个候选同分 → 取最近活跃的，直接切（不弹选择器）
@@ -385,7 +385,9 @@ let actionable: [(SessionStatus, SessionLifecycle)] = [
 
 P0：
 ```
-移除已结束的会话
+移除此会话           ← 仅删当前这条 ended session
+────
+移除所有已结束会话    ← 批量删除所有 ended session
 ```
 
 P1：
