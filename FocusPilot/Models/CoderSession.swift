@@ -48,10 +48,6 @@ struct CoderSession: Identifiable {
     var lastUpdate: Date
     var isHidden: Bool
 
-    var initialCandidateWindowID: CGWindowID?
-    var candidateWindowID: CGWindowID?
-    var matchConfidence: MatchConfidence
-
     var lastInteraction: Date?           // 用户点击此 session 的时间，nil 表示未操作过
     var topic: String?                   // 主题：仅用户手动编辑后才有值，nil 时显示"未命名主题"
     var manualWindowID: CGWindowID?      // 用户手动绑定的窗口，优先级最高，失效时自动清空

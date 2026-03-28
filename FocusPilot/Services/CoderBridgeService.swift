@@ -73,7 +73,7 @@ class CoderBridgeService: NSObject {
 
         let tool = CoderTool(rawValue: toolStr) ?? .claude
 
-        var session = CoderSession(
+        let session = CoderSession(
             sessionID: sid,
             tool: tool,
             cwd: cwd,
@@ -84,9 +84,6 @@ class CoderBridgeService: NSObject {
             lastSeq: seq,
             lastUpdate: Date(),
             isHidden: false,
-            initialCandidateWindowID: nil,
-            candidateWindowID: nil,
-            matchConfidence: .none,
             lastInteraction: nil,
             topic: nil,
             manualWindowID: nil
@@ -127,35 +124,15 @@ class CoderBridgeService: NSObject {
 
     // MARK: - Window Resolution
 
-    private func resolveFrontmostWindow(hostApp: String) -> CGWindowID? {
-        guard !hostApp.isEmpty,
-              let expectedBundleID = HostAppMapping.bundleID(for: hostApp),
-              let frontApp = NSWorkspace.shared.frontmostApplication,
-              frontApp.bundleIdentifier == expectedBundleID else {
-            return nil
-        }
-
-        let pid = frontApp.processIdentifier
-        guard let windowList = CGWindowListCopyWindowInfo([.optionOnScreenOnly, .excludeDesktopElements], kCGNullWindowID) as? [[String: Any]] else {
-            return nil
-        }
-
-        for windowInfo in windowList {
-            guard let ownerPID = windowInfo[kCGWindowOwnerPID as String] as? pid_t,
-                  ownerPID == pid,
-                  let layer = windowInfo[kCGWindowLayer as String] as? Int,
-                  layer == 0,
-                  let windowID = windowInfo[kCGWindowNumber as String] as? CGWindowID else {
-                continue
-            }
-            return windowID
-        }
-
-        return nil
+    /// 已被其他 active session 的 manualWindowID 占用的窗口 ID 集合
+    private var occupiedWindowIDs: Set<CGWindowID> {
+        Set(sessions.compactMap { s in
+            s.lifecycle == .active ? s.manualWindowID : nil
+        })
     }
 
     func resolveWindowForSession(_ session: CoderSession) -> (CGWindowID?, MatchConfidence) {
-        // 第零层：用户手动绑定（优先级最高）
+        // 第一优先：用户手动绑定（manualWindowID）
         if let manual = session.manualWindowID {
             if windowExists(manual) {
                 return (manual, .high)
@@ -167,13 +144,16 @@ class CoderBridgeService: NSObject {
             }
         }
 
-        // 回退匹配：按 hostApp 找候选窗口
+        // 回退匹配：按 hostApp 找候选窗口，排除已被其他 session 占用的窗口
+        let occupied = occupiedWindowIDs
         let candidateWindows = findWindowsForHostApp(session.hostApp)
+            .filter { !occupied.contains($0.0) }
 
         if candidateWindows.isEmpty {
             return (nil, .none)
         }
 
+        // 按 cwd basename 匹配窗口标题
         let basename = session.cwdBasename
         for (wid, title) in candidateWindows {
             if title.contains(basename) {
@@ -181,8 +161,9 @@ class CoderBridgeService: NSObject {
             }
         }
 
-        if let first = candidateWindows.first {
-            return (first.0, .low)
+        // 只有一个未占用候选窗口时才返回 .low，多个时返回 .none（无法区分）
+        if candidateWindows.count == 1 {
+            return (candidateWindows[0].0, .low)
         }
 
         return (nil, .none)
@@ -314,8 +295,22 @@ class CoderBridgeService: NSObject {
         postSessionChanged()
     }
 
+    /// 检查窗口是否已被其他 active session 占用，返回占用者的 sessionID
+    func sessionOccupyingWindow(_ windowID: CGWindowID, excludingSid: String) -> String? {
+        sessions.first(where: {
+            $0.sessionID != excludingSid && $0.lifecycle == .active && $0.manualWindowID == windowID
+        })?.sessionID
+    }
+
     func bindSessionToWindow(sid: String, windowID: CGWindowID) {
         guard let index = sessions.firstIndex(where: { $0.sessionID == sid }) else { return }
+
+        // 冲突检测：如果已被其他 session 占用，清除旧绑定
+        if let occupierSid = sessionOccupyingWindow(windowID, excludingSid: sid),
+           let occupierIndex = sessions.firstIndex(where: { $0.sessionID == occupierSid }) {
+            sessions[occupierIndex].manualWindowID = nil
+        }
+
         sessions[index].manualWindowID = windowID
         postSessionChanged()
     }

@@ -324,7 +324,16 @@ extension QuickPanelView {
 
         let alert = NSAlert()
         alert.messageText = "绑定到当前窗口"
-        alert.informativeText = "确定将此会话绑定到「\(displayTitle)」？"
+
+        // 检查冲突：是否已被其他 session 占用
+        if let occupierSid = CoderBridgeService.shared.sessionOccupyingWindow(wid, excludingSid: sid) {
+            let occupierSession = CoderBridgeService.shared.sessions.first(where: { $0.sessionID == occupierSid })
+            let occupierName = occupierSession?.cwdBasename ?? "其他会话"
+            alert.informativeText = "「\(displayTitle)」当前已被「\(occupierName)」会话绑定。\n确定替换绑定到此会话？（旧绑定将被清除）"
+        } else {
+            alert.informativeText = "确定将此会话绑定到「\(displayTitle)」？"
+        }
+
         alert.addButton(withTitle: "确定")
         alert.addButton(withTitle: "取消")
 
