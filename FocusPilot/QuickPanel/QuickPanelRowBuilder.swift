@@ -418,28 +418,139 @@ extension QuickPanelView {
         return container
     }
 
-    // MARK: - AI Session 行（占位，Task 6 实现）
+    // MARK: - AI Session Row
 
-    /// 创建 session 行视图（占位实现）
     func createSessionRow(session: CoderSession) -> NSView {
-        let colors = ConfigStore.shared.currentThemeColors
-        let row = NSView()
-        row.wantsLayer = true
+        let theme = ConfigStore.shared.currentThemeColors
+        let row = HoverableRowView()
         row.translatesAutoresizingMaskIntoConstraints = false
-        row.heightAnchor.constraint(equalToConstant: 36).isActive = true
+        row.heightAnchor.constraint(greaterThanOrEqualToConstant: 32).isActive = true
 
-        let label = createLabel(
-            "\(session.tool.rawValue)  \(session.cwdBasename)  ·  \(session.statusText)",
-            size: 11,
-            color: colors.nsTextSecondary
-        )
-        label.translatesAutoresizingMaskIntoConstraints = false
-        row.addSubview(label)
+        let stack = NSStackView()
+        stack.orientation = .horizontal
+        stack.alignment = .centerY
+        stack.spacing = Constants.Design.Spacing.sm
+        stack.translatesAutoresizingMaskIntoConstraints = false
+        row.addSubview(stack)
         NSLayoutConstraint.activate([
-            label.leadingAnchor.constraint(equalTo: row.leadingAnchor, constant: 12),
-            label.centerYAnchor.constraint(equalTo: row.centerYAnchor),
-            label.trailingAnchor.constraint(lessThanOrEqualTo: row.trailingAnchor, constant: -12),
+            stack.leadingAnchor.constraint(equalTo: row.leadingAnchor, constant: Constants.Design.Spacing.sm),
+            stack.trailingAnchor.constraint(equalTo: row.trailingAnchor, constant: -Constants.Design.Spacing.sm),
+            stack.centerYAnchor.constraint(equalTo: row.centerYAnchor),
         ])
+
+        // 1. 状态圆点（6px）
+        let dot = NSView()
+        dot.wantsLayer = true
+        dot.translatesAutoresizingMaskIntoConstraints = false
+        let dotColor = session.statusDotColor(theme: theme)
+        dot.layer?.backgroundColor = dotColor.cgColor
+        dot.layer?.cornerRadius = 3
+        if session.statusDotHasGlow {
+            dot.layer?.shadowColor = dotColor.cgColor
+            dot.layer?.shadowRadius = 3
+            dot.layer?.shadowOpacity = 0.5
+            dot.layer?.shadowOffset = .zero
+        }
+        NSLayoutConstraint.activate([
+            dot.widthAnchor.constraint(equalToConstant: 6),
+            dot.heightAnchor.constraint(equalToConstant: 6),
+        ])
+        stack.addArrangedSubview(dot)
+
+        // 2. 工具图标（14px）
+        if let toolImage = Self.cachedSymbol(name: session.tool.symbolName, size: 14, weight: .regular) {
+            let toolIcon = NSImageView(image: toolImage)
+            toolIcon.contentTintColor = theme.nsTextSecondary
+            toolIcon.translatesAutoresizingMaskIntoConstraints = false
+            NSLayoutConstraint.activate([
+                toolIcon.widthAnchor.constraint(equalToConstant: 14),
+                toolIcon.heightAnchor.constraint(equalToConstant: 14),
+            ])
+            stack.addArrangedSubview(toolIcon)
+        }
+
+        // 3. displayName（cwd basename）
+        let nameLabel = createLabel(session.cwdBasename, size: 12, color: theme.nsTextPrimary)
+        nameLabel.lineBreakMode = .byTruncatingTail
+        nameLabel.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+        stack.addArrangedSubview(nameLabel)
+
+        // spacer
+        stack.addArrangedSubview(createSpacer())
+
+        // 4. 宿主 App 图标（16px）
+        if !session.hostApp.isEmpty,
+           let bundleID = HostAppMapping.bundleID(for: session.hostApp),
+           let appURL = NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleID) {
+            let appIcon = NSWorkspace.shared.icon(forFile: appURL.path)
+            appIcon.size = NSSize(width: 16, height: 16)
+            let hostIconView = NSImageView(image: appIcon)
+            hostIconView.translatesAutoresizingMaskIntoConstraints = false
+            NSLayoutConstraint.activate([
+                hostIconView.widthAnchor.constraint(equalToConstant: 16),
+                hostIconView.heightAnchor.constraint(equalToConstant: 16),
+            ])
+            stack.addArrangedSubview(hostIconView)
+        }
+
+        // 5. 状态文字
+        let statusLabel = createLabel(session.statusText, size: 11, color: theme.nsTextSecondary)
+        stack.addArrangedSubview(statusLabel)
+
+        // 行透明度
+        row.alphaValue = session.rowAlpha
+
+        // 点击处理：切换到对应窗口
+        row.clickHandler = { [weak self] in
+            self?.handleSessionClick(session)
+        }
+
+        // 右键菜单
+        row.contextMenuProvider = { [weak self] in
+            self?.createSessionContextMenu(session: session)
+        }
+
         return row
+    }
+
+    private func handleSessionClick(_ session: CoderSession) {
+        let (windowID, confidence) = CoderBridgeService.shared.resolveWindowForSession(session)
+
+        if let wid = windowID {
+            let allWindows = AppMonitor.shared.runningApps.flatMap { $0.windows }
+            if let windowInfo = allWindows.first(where: { $0.id == wid }) {
+                WindowService.shared.activateWindow(windowInfo)
+                (self.window as? QuickPanelWindow)?.yieldLevel()
+
+                // .low 时短暂闪烁行背景
+                if confidence == .low {
+                    let flashColor = ConfigStore.shared.currentThemeColors.nsAccent.withAlphaComponent(0.15)
+                    // 找到刚点击的 session 行并闪烁
+                    for view in contentStack.arrangedSubviews {
+                        if let hoverRow = view as? HoverableRowView, hoverRow.clickHandler != nil {
+                            hoverRow.wantsLayer = true
+                            hoverRow.layer?.backgroundColor = flashColor.cgColor
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
+                                NSAnimationContext.runAnimationGroup { ctx in
+                                    ctx.duration = Constants.Design.Anim.normal
+                                    hoverRow.layer?.backgroundColor = NSColor.clear.cgColor
+                                }
+                            }
+                            break
+                        }
+                    }
+                }
+                return
+            }
+        }
+
+        // .none: 只激活宿主 App
+        if !session.hostApp.isEmpty,
+           let bundleID = HostAppMapping.bundleID(for: session.hostApp),
+           let appURL = NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleID) {
+            let config = NSWorkspace.OpenConfiguration()
+            NSWorkspace.shared.openApplication(at: appURL, configuration: config)
+            (self.window as? QuickPanelWindow)?.yieldLevel()
+        }
     }
 }

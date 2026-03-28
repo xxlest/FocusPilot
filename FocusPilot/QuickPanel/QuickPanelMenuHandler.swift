@@ -229,4 +229,10 @@ extension QuickPanelView {
     @objc func openAccessibilitySettings() {
         NSWorkspace.shared.open(URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility")!)
     }
+
+    // MARK: - AI Session 右键菜单（占位，Task 7 实现）
+
+    func createSessionContextMenu(session: CoderSession) -> NSMenu? {
+        return nil
+    }
 }
