@@ -580,8 +580,8 @@ extension QuickPanelView {
         // 活跃窗口高亮
         if session.sessionID == CoderBridgeService.shared.activeSessionID {
             row.wantsLayer = true
-            row.layer?.backgroundColor = NSColor(calibratedRed: 0.36, green: 0.50, blue: 1.0, alpha: 0.06).cgColor
-            // 左侧蓝色竖线（用一个子 view）
+            row.layer?.backgroundColor = NSColor(calibratedRed: 0.36, green: 0.50, blue: 1.0, alpha: 0.3).cgColor
+            // 左侧蓝色竖线
             let activeLine = NSView()
             activeLine.wantsLayer = true
             activeLine.layer?.backgroundColor = NSColor(calibratedRed: 0.36, green: 0.50, blue: 1.0, alpha: 1.0).cgColor
@@ -591,7 +591,7 @@ extension QuickPanelView {
                 activeLine.leadingAnchor.constraint(equalTo: row.leadingAnchor),
                 activeLine.topAnchor.constraint(equalTo: row.topAnchor),
                 activeLine.bottomAnchor.constraint(equalTo: row.bottomAnchor),
-                activeLine.widthAnchor.constraint(equalToConstant: 2),
+                activeLine.widthAnchor.constraint(equalToConstant: 5),
             ])
         }
 
