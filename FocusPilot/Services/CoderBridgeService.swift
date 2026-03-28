@@ -1,16 +1,13 @@
 import AppKit
 
-/// 管理 AI 编码工具会话的服务
-/// 通过 DistributedNotificationCenter 接收 coder-bridge 事件
-/// 维护纯运行时的 CoderSession 列表
 class CoderBridgeService: NSObject {
     static let shared = CoderBridgeService()
 
-    /// 当前活跃的 AI 会话列表（运行时，不持久化）
     private(set) var sessions: [CoderSession] = []
-
-    /// 清理定时器
     private var cleanupTimer: Timer?
+
+    /// 折叠的目录组（UI 状态）
+    var collapsedGroups: Set<String> = []
 
     private override init() {
         super.init()
@@ -25,7 +22,6 @@ class CoderBridgeService: NSObject {
             name: NSNotification.Name("com.focuscopilot.coder-bridge"),
             object: nil
         )
-
         cleanupTimer = Timer.scheduledTimer(withTimeInterval: 60, repeats: true) { [weak self] _ in
             self?.cleanupEndedSessions()
         }
@@ -53,7 +49,6 @@ class CoderBridgeService: NSObject {
             case "session.start":
                 self?.handleSessionStart(sid: sid, seq: seq, toolStr: toolStr, cwd: cwd, cwdNormalized: cwdNormalized, hostApp: hostApp)
             case "session.update":
-                // 如果 session 不存在（已打开的会话），自动创建后再更新
                 if self?.sessions.contains(where: { $0.sessionID == sid }) != true {
                     self?.handleSessionStart(sid: sid, seq: 0, toolStr: toolStr, cwd: cwd, cwdNormalized: cwdNormalized, hostApp: hostApp)
                 }
@@ -67,15 +62,11 @@ class CoderBridgeService: NSObject {
     }
 
     private func handleSessionStart(sid: String, seq: Int, toolStr: String, cwd: String, cwdNormalized: String, hostApp: String) {
-        if sessions.contains(where: { $0.sessionID == sid }) {
-            return
-        }
-
-        let tool = CoderTool(rawValue: toolStr) ?? .claude
+        if sessions.contains(where: { $0.sessionID == sid }) { return }
 
         let session = CoderSession(
             sessionID: sid,
-            tool: tool,
+            tool: CoderTool(rawValue: toolStr) ?? .claude,
             cwd: cwd,
             cwdNormalized: cwdNormalized,
             hostApp: hostApp,
@@ -83,16 +74,10 @@ class CoderBridgeService: NSObject {
             lifecycle: .active,
             lastSeq: seq,
             lastUpdate: Date(),
-            isHidden: false,
             lastInteraction: nil,
-            topic: nil,
-            manualWindowID: nil
+            manualWindowID: nil,
+            resolvedWindowID: nil
         )
-
-        // 不做自动初始绑定（存在 race condition：用户可能已切走窗口）
-        // 窗口绑定仅通过：
-        //   1. 用户手动"绑定到当前窗口"（写入 manualWindowID）
-        //   2. 点击时回退匹配（cwd basename 匹配窗口标题）
 
         sessions.append(session)
         postSessionChanged()
@@ -107,7 +92,6 @@ class CoderBridgeService: NSObject {
         }
         sessions[index].lastSeq = seq
         sessions[index].lastUpdate = Date()
-
         postSessionChanged()
     }
 
@@ -118,33 +102,32 @@ class CoderBridgeService: NSObject {
         sessions[index].lifecycle = .ended
         sessions[index].lastSeq = seq
         sessions[index].lastUpdate = Date()
-
         postSessionChanged()
     }
 
     // MARK: - Window Resolution
 
-    /// 已被其他 active session 的 manualWindowID 占用的窗口 ID 集合
+    /// 只统计 active session 的 manualWindowID（手动绑定 = 强占用）
     private var occupiedWindowIDs: Set<CGWindowID> {
         Set(sessions.compactMap { s in
-            s.lifecycle == .active ? s.manualWindowID : nil
+            guard s.lifecycle == .active else { return nil }
+            return s.manualWindowID
         })
     }
 
     func resolveWindowForSession(_ session: CoderSession) -> (CGWindowID?, MatchConfidence) {
-        // 第一优先：用户手动绑定（manualWindowID）
+        // 第一优先：用户手动绑定
         if let manual = session.manualWindowID {
             if windowExists(manual) {
                 return (manual, .high)
             } else {
-                // 失效，自动清空
                 if let index = sessions.firstIndex(where: { $0.sessionID == session.sessionID }) {
                     sessions[index].manualWindowID = nil
                 }
             }
         }
 
-        // 回退匹配：按 hostApp 找候选窗口，排除已被其他 session 占用的窗口
+        // fallback：排除已被手动绑定占用的窗口
         let occupied = occupiedWindowIDs
         let candidateWindows = findWindowsForHostApp(session.hostApp)
             .filter { !occupied.contains($0.0) }
@@ -153,19 +136,18 @@ class CoderBridgeService: NSObject {
             return (nil, .none)
         }
 
-        // 按 cwd basename 匹配窗口标题
+        // basename 匹配：仅当唯一命中且未占用时才 .high
         let basename = session.cwdBasename
-        for (wid, title) in candidateWindows {
-            if title.contains(basename) {
-                return (wid, .high)
+        let matches = candidateWindows.filter { $0.1.contains(basename) }
+        if matches.count == 1 {
+            let wid = matches[0].0
+            if let index = sessions.firstIndex(where: { $0.sessionID == session.sessionID }) {
+                sessions[index].resolvedWindowID = wid
             }
+            return (wid, .high)
         }
 
-        // 只有一个未占用候选窗口时才返回 .low，多个时返回 .none（无法区分）
-        if candidateWindows.count == 1 {
-            return (candidateWindows[0].0, .low)
-        }
-
+        // 其他情况一律 .none
         return (nil, .none)
     }
 
@@ -177,41 +159,67 @@ class CoderBridgeService: NSObject {
     }
 
     private func findWindowsForHostApp(_ hostApp: String) -> [(CGWindowID, String)] {
-        guard let bundleID = HostAppMapping.bundleID(for: hostApp) else {
-            return []
-        }
-
-        guard let runningApp = AppMonitor.shared.runningApps.first(where: { $0.bundleID == bundleID }) else {
-            return []
-        }
-
+        guard let bundleID = HostAppMapping.bundleID(for: hostApp) else { return [] }
+        guard let runningApp = AppMonitor.shared.runningApps.first(where: { $0.bundleID == bundleID }) else { return [] }
         return runningApp.windows.map { ($0.id, $0.title) }
     }
 
     // MARK: - Session Queries
 
-    /// 获取 session 的显示名（preference 优先，否则 cwdBasename）
-    func displayName(for session: CoderSession) -> String {
-        if let pref = ConfigStore.shared.sessionPreferences[session.preferenceKey],
-           !pref.displayName.isEmpty {
-            return pref.displayName
+    /// 按目录分组，组内排序，组间按最新 sortDate 排序
+    var groupedSessions: [SessionGroup] {
+        var groupMap: [String: [CoderSession]] = [:]
+        for session in sessions {
+            groupMap[session.cwdNormalized, default: []].append(session)
         }
-        return session.cwdBasename
+
+        var basenameCount: [String: Int] = [:]
+        for key in groupMap.keys {
+            let basename = (key as NSString).lastPathComponent
+            basenameCount[basename, default: 0] += 1
+        }
+
+        var groups: [SessionGroup] = []
+        for (cwdNormalized, sessions) in groupMap {
+            let basename = (cwdNormalized as NSString).lastPathComponent
+            let displayName: String
+            if basenameCount[basename, default: 1] > 1 {
+                let parent = ((cwdNormalized as NSString).deletingLastPathComponent as NSString).lastPathComponent
+                displayName = "\(basename) (\(parent))"
+            } else {
+                displayName = basename.isEmpty ? "~" : basename
+            }
+
+            let sorted = sessions.sorted { a, b in
+                if a.sortTier != b.sortTier { return a.sortTier < b.sortTier }
+                return a.sortDate > b.sortDate
+            }
+
+            groups.append(SessionGroup(cwdNormalized: cwdNormalized, displayName: displayName, sessions: sorted))
+        }
+
+        groups.sort { a, b in
+            let aDate = a.sessions.first?.sortDate ?? .distantPast
+            let bDate = b.sessions.first?.sortDate ?? .distantPast
+            return aDate > bDate
+        }
+
+        return groups
     }
 
-    /// 定位 session 对应的 transcript 文件路径
+    var actionableCount: Int {
+        sessions.filter { $0.isActionable }.count
+    }
+
     func transcriptPath(for session: CoderSession) -> String? {
         let claudeProjectsDir = NSHomeDirectory() + "/.claude/projects"
         let fm = FileManager.default
         guard fm.fileExists(atPath: claudeProjectsDir) else { return nil }
 
-        // sanitized-cwd：把 / 替换为 -，去掉开头的 -
-        let sanitized = session.cwdNormalized
-            .replacingOccurrences(of: "/", with: "-")
+        let sanitized = session.cwdNormalized.replacingOccurrences(of: "/", with: "-")
         let jsonlPath = claudeProjectsDir + "/" + sanitized + "/" + session.sessionID + ".jsonl"
         if fm.fileExists(atPath: jsonlPath) { return jsonlPath }
 
-        // 兜底：遍历 projects 目录找匹配的 sessionID
         if let dirs = try? fm.contentsOfDirectory(atPath: claudeProjectsDir) {
             for dir in dirs {
                 let candidate = claudeProjectsDir + "/" + dir + "/" + session.sessionID + ".jsonl"
@@ -221,8 +229,7 @@ class CoderBridgeService: NSObject {
         return nil
     }
 
-    /// 从 transcript 文件中提取最近一条用户 query 的摘要
-    func latestQuerySummary(for session: CoderSession, maxLength: Int = 40) -> String? {
+    func latestQuerySummary(for session: CoderSession, maxLength: Int = 50) -> String? {
         guard let path = transcriptPath(for: session),
               let data = FileManager.default.contents(atPath: path),
               let content = String(data: data, encoding: .utf8) else {
@@ -234,23 +241,17 @@ class CoderBridgeService: NSObject {
             guard !line.isEmpty,
                   let lineData = line.data(using: .utf8),
                   let json = try? JSONSerialization.jsonObject(with: lineData) as? [String: Any],
-                  let type = json["type"] as? String,
-                  type == "user",
+                  let type = json["type"] as? String, type == "user",
                   let message = json["message"] as? [String: Any],
-                  let role = message["role"] as? String,
-                  role == "user" else {
-                continue
-            }
+                  let role = message["role"] as? String, role == "user" else { continue }
 
             var text = ""
             if let contentStr = message["content"] as? String {
                 text = contentStr
             } else if let contentArr = message["content"] as? [[String: Any]] {
                 for block in contentArr {
-                    if let blockType = block["type"] as? String, blockType == "text",
-                       let blockText = block["text"] as? String {
-                        text = blockText
-                        break
+                    if let bt = block["type"] as? String, bt == "text", let t = block["text"] as? String {
+                        text = t; break
                     }
                 }
             }
@@ -263,39 +264,16 @@ class CoderBridgeService: NSObject {
         return nil
     }
 
-    var sortedVisibleSessions: [CoderSession] {
-        sessions
-            .filter { !$0.isHidden }
-            .sorted { a, b in
-                if a.sortTier != b.sortTier {
-                    return a.sortTier < b.sortTier
-                }
-                return a.sortDate > b.sortDate
-            }
-    }
-
-    var actionableCount: Int {
-        sessions.filter { !$0.isHidden && $0.isActionable }.count
-    }
-
     // MARK: - Session Actions
 
     func updateLastInteraction(sid: String) {
         guard let index = sessions.firstIndex(where: { $0.sessionID == sid }) else { return }
         sessions[index].lastInteraction = Date()
-        // 延迟 0.5 秒再刷新排序，让窗口切换先完成
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
             self?.postSessionChanged()
         }
     }
 
-    func updateTopic(sid: String, topic: String?) {
-        guard let index = sessions.firstIndex(where: { $0.sessionID == sid }) else { return }
-        sessions[index].topic = topic
-        postSessionChanged()
-    }
-
-    /// 检查窗口是否已被其他 active session 占用，返回占用者的 sessionID
     func sessionOccupyingWindow(_ windowID: CGWindowID, excludingSid: String) -> String? {
         sessions.first(where: {
             $0.sessionID != excludingSid && $0.lifecycle == .active && $0.manualWindowID == windowID
@@ -305,7 +283,6 @@ class CoderBridgeService: NSObject {
     func bindSessionToWindow(sid: String, windowID: CGWindowID) {
         guard let index = sessions.firstIndex(where: { $0.sessionID == sid }) else { return }
 
-        // 冲突检测：如果已被其他 session 占用，清除旧绑定
         if let occupierSid = sessionOccupyingWindow(windowID, excludingSid: sid),
            let occupierIndex = sessions.firstIndex(where: { $0.sessionID == occupierSid }) {
             sessions[occupierIndex].manualWindowID = nil
@@ -330,31 +307,19 @@ class CoderBridgeService: NSObject {
     private func cleanupEndedSessions() {
         let now = Date()
         var changed = false
-
         sessions.removeAll { session in
             guard session.lifecycle == .ended else { return false }
-
-            let elapsed = now.timeIntervalSince(session.lastUpdate)
-
-            // 所有 ended 会话统一 2 分钟后自动移除
-            if elapsed > 120 {
-                changed = true
-                return true
+            if now.timeIntervalSince(session.lastUpdate) > 120 {
+                changed = true; return true
             }
             return false
         }
-
-        if changed {
-            postSessionChanged()
-        }
+        if changed { postSessionChanged() }
     }
 
     // MARK: - Notification
 
     private func postSessionChanged() {
-        NotificationCenter.default.post(
-            name: Constants.Notifications.coderBridgeSessionChanged,
-            object: nil
-        )
+        NotificationCenter.default.post(name: Constants.Notifications.coderBridgeSessionChanged, object: nil)
     }
 }
