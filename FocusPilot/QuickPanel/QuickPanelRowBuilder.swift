@@ -577,14 +577,14 @@ extension QuickPanelView {
         row.setContentHuggingPriority(.defaultLow, for: .horizontal)
         row.alphaValue = session.rowAlpha
 
-        // 活跃窗口高亮
+        // 活跃窗口高亮（黄色）
         if session.sessionID == CoderBridgeService.shared.activeSessionID {
             row.wantsLayer = true
-            row.layer?.backgroundColor = NSColor(calibratedRed: 0.36, green: 0.50, blue: 1.0, alpha: 0.3).cgColor
-            // 左侧蓝色竖线
+            row.layer?.backgroundColor = NSColor.systemOrange.withAlphaComponent(0.15).cgColor
+            // 左侧黄色竖线
             let activeLine = NSView()
             activeLine.wantsLayer = true
-            activeLine.layer?.backgroundColor = NSColor(calibratedRed: 0.36, green: 0.50, blue: 1.0, alpha: 1.0).cgColor
+            activeLine.layer?.backgroundColor = NSColor.systemOrange.cgColor
             activeLine.translatesAutoresizingMaskIntoConstraints = false
             row.addSubview(activeLine)
             NSLayoutConstraint.activate([
@@ -607,39 +607,44 @@ extension QuickPanelView {
     }
 
     private func handleSessionClick(_ session: CoderSession) {
+        // 1. 先高亮选中行（立即视觉反馈）
+        CoderBridgeService.shared.activeSessionID = session.sessionID
         CoderBridgeService.shared.updateLastInteraction(sid: session.sessionID)
+        forceReload()
 
+        // 2. 延迟一帧后再做窗口切换（让高亮先渲染）
+        DispatchQueue.main.async { [weak self] in
+            self?.performWindowSwitch(session)
+        }
+    }
+
+    private func performWindowSwitch(_ session: CoderSession) {
         // 1. manualWindowID（强绑定）
         if let manual = session.manualWindowID {
             if CoderBridgeService.shared.windowExists(manual) {
                 let allWindows = AppMonitor.shared.runningApps.flatMap { $0.windows }
                 if let windowInfo = allWindows.first(where: { $0.id == manual }) {
-                    WindowService.shared.activateWindow(windowInfo)
-                    CoderBridgeService.shared.activeSessionID = session.sessionID
                     CoderBridgeService.shared.markAsRead(sid: session.sessionID)
+                    WindowService.shared.activateWindow(windowInfo)
                     (self.window as? QuickPanelWindow)?.yieldLevel()
                     return
                 }
             }
-            // 失效，清空
             CoderBridgeService.shared.clearManualWindowID(sid: session.sessionID)
         }
 
-        // 2. autoWindowID（弱绑定）— 冲突或失效时跳过，不清空
+        // 2. autoWindowID（弱绑定）— 冲突或失效时跳过
         if let auto = session.autoWindowID {
             if CoderBridgeService.shared.windowExists(auto)
                 && !CoderBridgeService.shared.isAutoWindowConflicted(for: session) {
-                // 有效且无冲突，切换
                 let allWindows = AppMonitor.shared.runningApps.flatMap { $0.windows }
                 if let windowInfo = allWindows.first(where: { $0.id == auto }) {
-                    WindowService.shared.activateWindow(windowInfo)
-                    CoderBridgeService.shared.activeSessionID = session.sessionID
                     CoderBridgeService.shared.markAsRead(sid: session.sessionID)
+                    WindowService.shared.activateWindow(windowInfo)
                     (self.window as? QuickPanelWindow)?.yieldLevel()
                     return
                 }
             }
-            // 失效或冲突 → 不清空 autoWindowID，继续到引导绑定
         }
 
         // 3. 未绑定/冲突/失效 → 引导手动绑定
