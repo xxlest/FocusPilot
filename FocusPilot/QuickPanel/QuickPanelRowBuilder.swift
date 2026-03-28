@@ -653,38 +653,31 @@ extension QuickPanelView {
 
     /// 弹出绑定引导对话框
     private func promptBindToCurrentWindow(sid: String) {
-        // 获取前台 app（排除 FocusPilot 自身）
-        let myBundleID = Bundle.main.bundleIdentifier ?? ""
-        let runningApps = NSWorkspace.shared.runningApplications
-            .filter { $0.isActive || $0.ownsMenuBar }
-            .filter { $0.bundleIdentifier != myBundleID }
-
-        // 优先取最近活跃的非自身 app
-        guard let frontApp = runningApps.first ?? NSWorkspace.shared.runningApplications.first(where: {
-            $0.bundleIdentifier != myBundleID && $0.activationPolicy == .regular
-        }) else { return }
-
-        guard let frontBundleID = frontApp.bundleIdentifier else { return }
-
-        let pid = frontApp.processIdentifier
+        let myPID = ProcessInfo.processInfo.processIdentifier
         guard let windowList = CGWindowListCopyWindowInfo([.optionOnScreenOnly, .excludeDesktopElements], kCGNullWindowID) as? [[String: Any]] else { return }
 
+        // 从 CGWindowList（z-order）找第一个非 FocusPilot 的普通窗口
         var targetWindowID: CGWindowID?
         var targetTitle = ""
+        var targetPID: pid_t = 0
         for windowInfo in windowList {
             guard let ownerPID = windowInfo[kCGWindowOwnerPID as String] as? pid_t,
-                  ownerPID == pid,
+                  ownerPID != myPID,
                   let layer = windowInfo[kCGWindowLayer as String] as? Int,
                   layer == 0,
                   let wid = windowInfo[kCGWindowNumber as String] as? CGWindowID else { continue }
             targetWindowID = wid
             targetTitle = windowInfo[kCGWindowName as String] as? String ?? ""
+            targetPID = ownerPID
             break
         }
 
         guard let wid = targetWindowID else { return }
 
-        let appName = frontApp.localizedName ?? frontBundleID
+        // 通过 PID 找 app 名
+        let frontApp = NSWorkspace.shared.runningApplications.first(where: { $0.processIdentifier == targetPID })
+
+        let appName = frontApp?.localizedName ?? "未知应用"
         let displayTitle = targetTitle.isEmpty ? appName : "\(appName) — \(targetTitle)"
 
         let alert = NSAlert()
