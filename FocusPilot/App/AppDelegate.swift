@@ -29,6 +29,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         // 启动 App 监控
         AppMonitor.shared.startMonitoring()
 
+        // 启动 AI 会话桥接服务
+        CoderBridgeService.shared.start()
+
         // 检查辅助功能权限，未授权则提示用户
         if !PermissionManager.shared.checkAccessibility() {
             PermissionManager.shared.requestAccessibility()
