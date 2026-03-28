@@ -236,13 +236,12 @@ extension QuickPanelView {
         let menu = NSMenu()
 
         // 编辑主题
-        let editItem = NSMenuItem(title: "编辑主题...", action: #selector(handleEditTaskName(_:)), keyEquivalent: "")
+        let editItem = NSMenuItem(title: "编辑主题...", action: #selector(handleEditTopic(_:)), keyEquivalent: "")
         editItem.target = self
         editItem.representedObject = [
             "sessionID": session.sessionID,
             "cwdBasename": session.cwdBasename,
-            "currentTopic": session.topic ?? "",
-            "defaultSummary": CoderBridgeService.shared.latestQuerySummary(for: session) ?? ""
+            "currentTopic": session.topic ?? session.autoTopic ?? ""
         ] as [String: String]
         menu.addItem(editItem)
 
@@ -268,60 +267,34 @@ extension QuickPanelView {
         return menu
     }
 
-    @objc func handleEditTaskName(_ sender: NSMenuItem) {
+    @objc func handleEditTopic(_ sender: NSMenuItem) {
         guard let info = sender.representedObject as? [String: String],
               let sessionID = info["sessionID"],
               let cwdBasename = info["cwdBasename"],
-              let currentTopic = info["currentTopic"],
-              let defaultSummary = info["defaultSummary"] else { return }
+              let currentTopic = info["currentTopic"] else { return }
 
         let alert = NSAlert()
         alert.messageText = "编辑主题"
         alert.informativeText = "项目：\(cwdBasename)"
         alert.addButton(withTitle: "确定")
         alert.addButton(withTitle: "取消")
+        alert.addButton(withTitle: "重置主题")
 
-        // 输入框 + "重置主题"按钮 水平排列
-        let container = NSView(frame: NSRect(x: 0, y: 0, width: 340, height: 28))
-
-        let input = NSTextField(frame: NSRect(x: 0, y: 2, width: 240, height: 24))
-        input.stringValue = currentTopic.isEmpty ? "" : currentTopic
-        input.placeholderString = defaultSummary.isEmpty ? "输入主题..." : defaultSummary
-        container.addSubview(input)
-
-        let resetBtn = NSButton(title: "重置主题", target: nil, action: nil)
-        resetBtn.bezelStyle = .rounded
-        resetBtn.frame = NSRect(x: 248, y: 0, width: 88, height: 28)
-        resetBtn.target = nil
-        resetBtn.action = nil
-        container.addSubview(resetBtn)
-
-        // 点击"重置主题"时填入默认摘要
-        class ResetHandler: NSObject {
-            let input: NSTextField
-            let defaultValue: String
-            init(input: NSTextField, defaultValue: String) {
-                self.input = input
-                self.defaultValue = defaultValue
-            }
-            @objc func reset(_ sender: Any?) {
-                input.stringValue = defaultValue
-                input.selectText(nil)
-            }
-        }
-        let handler = ResetHandler(input: input, defaultValue: defaultSummary)
-        resetBtn.target = handler
-        resetBtn.action = #selector(ResetHandler.reset(_:))
-        // 防止 handler 被释放
-        objc_setAssociatedObject(alert, "resetHandler", handler, .OBJC_ASSOCIATION_RETAIN)
-
-        alert.accessoryView = container
+        let input = NSTextField(frame: NSRect(x: 0, y: 0, width: 300, height: 24))
+        input.stringValue = currentTopic
+        input.placeholderString = "输入主题..."
+        alert.accessoryView = input
         alert.window.initialFirstResponder = input
 
         let response = alert.runModal()
         if response == .alertFirstButtonReturn {
-            let newName = input.stringValue.trimmingCharacters(in: .whitespaces)
-            CoderBridgeService.shared.updateTopic(sid: sessionID, topic: newName.isEmpty ? nil : newName)
+            // 确定
+            let newTopic = input.stringValue.trimmingCharacters(in: .whitespaces)
+            CoderBridgeService.shared.updateTopic(sid: sessionID, topic: newTopic.isEmpty ? nil : newTopic)
+            forceReload()
+        } else if response == .alertThirdButtonReturn {
+            // 重置主题：清空 topic 和 autoTopic，恢复自动模式
+            CoderBridgeService.shared.resetTopic(sid: sessionID)
             forceReload()
         }
     }

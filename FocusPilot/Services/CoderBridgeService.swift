@@ -89,6 +89,7 @@ class CoderBridgeService: NSObject {
             matchConfidence: .none,
             lastInteraction: nil,
             topic: nil,
+            autoTopic: nil,
             manualWindowID: nil
         )
 
@@ -111,6 +112,13 @@ class CoderBridgeService: NSObject {
         }
         sessions[index].lastSeq = seq
         sessions[index].lastUpdate = Date()
+
+        // 自动主题：如果 autoTopic 为空，尝试用最新 query 初始化一次
+        if sessions[index].autoTopic == nil && sessions[index].topic == nil {
+            if let summary = latestQuerySummary(for: sessions[index], maxLength: 50) {
+                sessions[index].autoTopic = summary
+            }
+        }
 
         postSessionChanged()
     }
@@ -232,7 +240,6 @@ class CoderBridgeService: NSObject {
         // sanitized-cwd：把 / 替换为 -，去掉开头的 -
         let sanitized = session.cwdNormalized
             .replacingOccurrences(of: "/", with: "-")
-            .trimmingCharacters(in: CharacterSet(charactersIn: "-"))
         let jsonlPath = claudeProjectsDir + "/" + sanitized + "/" + session.sessionID + ".jsonl"
         if fm.fileExists(atPath: jsonlPath) { return jsonlPath }
 
@@ -320,11 +327,16 @@ class CoderBridgeService: NSObject {
         postSessionChanged()
     }
 
+    func resetTopic(sid: String) {
+        guard let index = sessions.firstIndex(where: { $0.sessionID == sid }) else { return }
+        sessions[index].topic = nil
+        sessions[index].autoTopic = nil  // 清空后下次 update 时重新初始化
+        postSessionChanged()
+    }
+
     func bindSessionToWindow(sid: String, windowID: CGWindowID) {
         guard let index = sessions.firstIndex(where: { $0.sessionID == sid }) else { return }
-        sessions[index].initialCandidateWindowID = windowID
-        sessions[index].candidateWindowID = windowID
-        sessions[index].matchConfidence = .high
+        sessions[index].manualWindowID = windowID
         postSessionChanged()
     }
 

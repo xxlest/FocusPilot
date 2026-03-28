@@ -504,7 +504,7 @@ extension QuickPanelView {
         let topicText: String
         if let userTopic = session.topic, !userTopic.isEmpty {
             topicText = userTopic
-        } else if let autoTopic = CoderBridgeService.shared.latestQuerySummary(for: session, maxLength: 50) {
+        } else if let autoTopic = session.autoTopic, !autoTopic.isEmpty {
             topicText = autoTopic
         } else {
             topicText = "未命名主题"
