@@ -241,7 +241,7 @@ extension QuickPanelView {
         editItem.representedObject = [
             "sessionID": session.sessionID,
             "cwdBasename": session.cwdBasename,
-            "currentTopic": session.topic ?? session.autoTopic ?? ""
+            "currentTopic": session.topic ?? ""
         ] as [String: String]
         menu.addItem(editItem)
 

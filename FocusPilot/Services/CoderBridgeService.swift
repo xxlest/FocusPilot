@@ -89,18 +89,13 @@ class CoderBridgeService: NSObject {
             matchConfidence: .none,
             lastInteraction: nil,
             topic: nil,
-            autoTopic: nil,
             manualWindowID: nil
         )
 
-        // 初始窗口关联：取当前前台宿主窗口
-        // 同宿主 App 有多个窗口时降为 .low（无法确定是哪个窗口启动的）
-        session.initialCandidateWindowID = resolveFrontmostWindow(hostApp: hostApp)
-        if session.initialCandidateWindowID != nil {
-            session.candidateWindowID = session.initialCandidateWindowID
-            let hostWindowCount = findWindowsForHostApp(hostApp).count
-            session.matchConfidence = hostWindowCount <= 1 ? .high : .low
-        }
+        // 不做自动初始绑定（存在 race condition：用户可能已切走窗口）
+        // 窗口绑定仅通过：
+        //   1. 用户手动"绑定到当前窗口"（写入 manualWindowID）
+        //   2. 点击时回退匹配（cwd basename 匹配窗口标题）
 
         sessions.append(session)
         postSessionChanged()
@@ -115,13 +110,6 @@ class CoderBridgeService: NSObject {
         }
         sessions[index].lastSeq = seq
         sessions[index].lastUpdate = Date()
-
-        // 自动主题：如果 autoTopic 为空，尝试用最新 query 初始化一次
-        if sessions[index].autoTopic == nil && sessions[index].topic == nil {
-            if let summary = latestQuerySummary(for: sessions[index], maxLength: 50) {
-                sessions[index].autoTopic = summary
-            }
-        }
 
         postSessionChanged()
     }
@@ -179,11 +167,7 @@ class CoderBridgeService: NSObject {
             }
         }
 
-        // 第一层：初始关联仍有效？
-        if let initial = session.initialCandidateWindowID, windowExists(initial) {
-            return (initial, .high)
-        }
-
+        // 回退匹配：按 hostApp 找候选窗口
         let candidateWindows = findWindowsForHostApp(session.hostApp)
 
         if candidateWindows.isEmpty {
@@ -327,13 +311,6 @@ class CoderBridgeService: NSObject {
     func updateTopic(sid: String, topic: String?) {
         guard let index = sessions.firstIndex(where: { $0.sessionID == sid }) else { return }
         sessions[index].topic = topic
-        postSessionChanged()
-    }
-
-    func resetTopic(sid: String) {
-        guard let index = sessions.firstIndex(where: { $0.sessionID == sid }) else { return }
-        sessions[index].topic = nil
-        sessions[index].autoTopic = nil  // 清空后下次 update 时重新初始化
         postSessionChanged()
     }
 

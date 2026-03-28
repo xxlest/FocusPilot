@@ -501,14 +501,8 @@ extension QuickPanelView {
         verticalStack.addArrangedSubview(firstLine)
 
         // === 第二行：主题（Topic） ===
-        let topicText: String
-        if let userTopic = session.topic, !userTopic.isEmpty {
-            topicText = userTopic
-        } else if let autoTopic = session.autoTopic, !autoTopic.isEmpty {
-            topicText = autoTopic
-        } else {
-            topicText = "未命名主题"
-        }
+        // 仅用户手动编辑后才显示自定义主题，否则固定"未命名主题"
+        let topicText = (session.topic != nil && !session.topic!.isEmpty) ? session.topic! : "未命名主题"
         let topicLabel = createLabel(topicText, size: 10, color: theme.nsTextSecondary)
         topicLabel.lineBreakMode = .byTruncatingTail
         topicLabel.translatesAutoresizingMaskIntoConstraints = false
