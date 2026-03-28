@@ -338,12 +338,14 @@ extension QuickPanelView {
         // 弹性空间
         rowStack.addArrangedSubview(createSpacer())
 
-        // 选中高亮状态
+        // 橙色 hover/selected（和 AI Tab 一致）
+        row.hoverColor = NSColor.systemOrange.withAlphaComponent(0.15)
+        row.selectedColor = NSColor.systemOrange.withAlphaComponent(0.15)
+        row.indicatorColor = .systemOrange
+
+        // 恢复上次的选中状态
         if highlightedWindowID == windowInfo.id {
-            row.isHighlighted = true
-            row.wantsLayer = true
-            row.layer?.backgroundColor = colors.nsAccent.withAlphaComponent(0.15).cgColor
-            row.layer?.cornerRadius = 6
+            row.isSelected = true
         }
 
         // 设置右键菜单
@@ -351,16 +353,25 @@ extension QuickPanelView {
             self?.createWindowContextMenu(bundleID: bundleID, windowInfo: windowInfo)
         }
 
-        // 点击窗口行：高亮 + 前置窗口
+        // 点击窗口行：即时橙色高亮 + 前置窗口（不 forceReload，列表不跳动）
         row.clickHandler = { [weak self] in
             guard let self = self else { return }
-            WindowService.shared.debugLog("QuickPanel: 点击窗口行 wid=\(windowInfo.id) title=\(windowInfo.title)")
+
+            // 清除所有窗口行的 selected（通过 windowRowViewMap 跨 app 清除）
+            for (_, existingRow) in self.windowRowViewMap {
+                if existingRow.isSelected {
+                    existingRow.isSelected = false
+                    existingRow.updateAppearance()
+                }
+            }
+
+            // 即时选中高亮
+            row.isSelected = true
             self.highlightedWindowID = windowInfo.id
+
+            // 切换窗口
             WindowService.shared.activateWindow(windowInfo)
-            // 面板临时让位，让目标窗口显示在前面
             (self.window as? QuickPanelWindow)?.yieldLevel()
-            // 刷新以更新高亮状态
-            self.forceReload()
         }
 
         return row

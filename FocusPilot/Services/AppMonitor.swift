@@ -209,7 +209,8 @@ class AppMonitor: ObservableObject {
                     let stillOffScreen = cached.filter { !cgIDs.contains($0.id) }
                     windows.append(contentsOf: stillOffScreen)
                 }
-                app.windows = windows
+                // 稳定排序：已有窗口保持原位置，新窗口追加到末尾
+                app.windows = Self.mergeWindowsStable(existing: app.windows, incoming: windows)
             } else {
                 app.windows = []
             }
@@ -265,7 +266,7 @@ class AppMonitor: ObservableObject {
                     if let extra = offScreenWindows[pid] {
                         windows.append(contentsOf: extra)
                     }
-                    app.windows = windows
+                    app.windows = Self.mergeWindowsStable(existing: app.windows, incoming: windows)
                 }
             }
             NotificationCenter.default.post(name: Constants.Notifications.windowsChanged, object: nil)
@@ -275,9 +276,33 @@ class AppMonitor: ObservableObject {
     /// 刷新指定 App 的窗口
     func refreshWindows(for bundleID: String) {
         if let app = runningApps.first(where: { $0.bundleID == bundleID }) {
-            app.windows = WindowService.shared.listWindows(for: bundleID)
+            let incoming = WindowService.shared.listWindows(for: bundleID)
+            app.windows = Self.mergeWindowsStable(existing: app.windows, incoming: incoming)
             NotificationCenter.default.post(name: Constants.Notifications.windowsChanged, object: nil)
         }
+    }
+
+    // MARK: - 窗口排序稳定化
+
+    /// 合并窗口列表：已有窗口保持原位置（更新标题等属性），新窗口追加到末尾，已关闭窗口移除
+    static func mergeWindowsStable(existing: [WindowInfo], incoming: [WindowInfo]) -> [WindowInfo] {
+        let incomingMap = Dictionary(uniqueKeysWithValues: incoming.map { ($0.id, $0) })
+
+        // 1. 保留已有窗口中仍然存在的（保持原顺序，更新属性）
+        var result = existing.compactMap { old -> WindowInfo? in
+            guard let updated = incomingMap[old.id] else { return nil }  // 已关闭，移除
+            return updated  // 用新数据（标题可能更新了），但位置保持
+        }
+
+        // 2. 追加新窗口（不在 existing 中的）
+        let existingIDs = Set(existing.map { $0.id })
+        for window in incoming {
+            if !existingIDs.contains(window.id) {
+                result.append(window)
+            }
+        }
+
+        return result
     }
 
     // MARK: - 已安装 App 扫描
