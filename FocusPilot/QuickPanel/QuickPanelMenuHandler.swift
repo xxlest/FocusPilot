@@ -285,32 +285,48 @@ extension QuickPanelView {
 
     @objc func handleBindToCurrentWindow(_ sender: NSMenuItem) {
         guard let sid = sender.representedObject as? String else { return }
+        guard let session = CoderBridgeService.shared.sessions.first(where: { $0.sessionID == sid }) else { return }
 
-        guard let frontApp = NSWorkspace.shared.frontmostApplication,
-              let frontBundleID = frontApp.bundleIdentifier else { return }
-
-        let pid = frontApp.processIdentifier
+        let myPID = ProcessInfo.processInfo.processIdentifier
         guard let windowList = CGWindowListCopyWindowInfo([.optionOnScreenOnly, .excludeDesktopElements], kCGNullWindowID) as? [[String: Any]] else { return }
 
+        // 找第一个非 FocusPilot 的普通窗口
         var targetWindowID: CGWindowID?
         var targetTitle = ""
+        var targetPID: pid_t = 0
         for windowInfo in windowList {
             guard let ownerPID = windowInfo[kCGWindowOwnerPID as String] as? pid_t,
-                  ownerPID == pid,
+                  ownerPID != myPID,
                   let layer = windowInfo[kCGWindowLayer as String] as? Int,
                   layer == 0,
                   let wid = windowInfo[kCGWindowNumber as String] as? CGWindowID else { continue }
             targetWindowID = wid
             targetTitle = windowInfo[kCGWindowName as String] as? String ?? ""
+            targetPID = ownerPID
             break
         }
 
         guard let wid = targetWindowID else { return }
 
-        let appName = frontApp.localizedName ?? frontBundleID
+        let frontApp = NSWorkspace.shared.runningApplications.first(where: { $0.processIdentifier == targetPID })
+        let frontBundleID = frontApp?.bundleIdentifier ?? ""
+        let appName = frontApp?.localizedName ?? "未知应用"
         let displayTitle = targetTitle.isEmpty ? appName : "\(appName) — \(targetTitle)"
 
         let alert = NSAlert()
+
+        // hostApp 校验
+        if !session.hostApp.isEmpty,
+           let expectedBundleID = HostAppMapping.bundleID(for: session.hostApp),
+           frontBundleID != expectedBundleID {
+            let expectedName = HostAppMapping.displayName(for: session.hostApp)
+            alert.messageText = "窗口不匹配"
+            alert.informativeText = "此会话的宿主应用是「\(expectedName)」，当前窗口属于「\(appName)」。\n请先切换到「\(expectedName)」的窗口再绑定。"
+            alert.addButton(withTitle: "确定")
+            alert.runModal()
+            return
+        }
+
         alert.messageText = "绑定到当前窗口"
 
         if let occupierSid = CoderBridgeService.shared.sessionOccupyingWindow(wid, excludingSid: sid) {

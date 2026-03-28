@@ -612,8 +612,8 @@ extension QuickPanelView {
         CoderBridgeService.shared.updateLastInteraction(sid: session.sessionID)
         forceReload()
 
-        // 2. 延迟一帧后再做窗口切换（让高亮先渲染）
-        DispatchQueue.main.async { [weak self] in
+        // 2. 延迟 0.15s 后再做窗口切换（让高亮先渲染，用户能看到选中效果）
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) { [weak self] in
             self?.performWindowSwitch(session)
         }
     }
@@ -653,6 +653,9 @@ extension QuickPanelView {
 
     /// 弹出绑定引导对话框
     private func promptBindToCurrentWindow(sid: String) {
+        // 获取 session 信息用于 hostApp 校验
+        guard let session = CoderBridgeService.shared.sessions.first(where: { $0.sessionID == sid }) else { return }
+
         let myPID = ProcessInfo.processInfo.processIdentifier
         guard let windowList = CGWindowListCopyWindowInfo([.optionOnScreenOnly, .excludeDesktopElements], kCGNullWindowID) as? [[String: Any]] else { return }
 
@@ -674,13 +677,29 @@ extension QuickPanelView {
 
         guard let wid = targetWindowID else { return }
 
-        // 通过 PID 找 app 名
+        // 通过 PID 找 app
         let frontApp = NSWorkspace.shared.runningApplications.first(where: { $0.processIdentifier == targetPID })
+        let frontBundleID = frontApp?.bundleIdentifier ?? ""
 
         let appName = frontApp?.localizedName ?? "未知应用"
         let displayTitle = targetTitle.isEmpty ? appName : "\(appName) — \(targetTitle)"
 
         let alert = NSAlert()
+
+        // hostApp 校验：目标窗口必须属于 session 的宿主 app
+        if !session.hostApp.isEmpty,
+           let expectedBundleID = HostAppMapping.bundleID(for: session.hostApp),
+           frontBundleID != expectedBundleID {
+            let expectedName = HostAppMapping.displayName(for: session.hostApp)
+            alert.messageText = "窗口不匹配"
+            alert.informativeText = "此会话的宿主应用是「\(expectedName)」，当前窗口属于「\(appName)」。\n请先切换到「\(expectedName)」的窗口再绑定。"
+            alert.addButton(withTitle: "确定")
+            alert.runModal()
+            // 切换失败，清除高亮
+            CoderBridgeService.shared.activeSessionID = nil
+            forceReload()
+            return
+        }
 
         // 冲突检测：窗口已被其他 session 手动绑定
         if let occupierSid = CoderBridgeService.shared.sessionOccupyingWindow(wid, excludingSid: sid) {
@@ -690,6 +709,8 @@ extension QuickPanelView {
             alert.informativeText = "「\(displayTitle)」当前已被会话 \(occupierName) 绑定。\n请先切换到目标窗口再重新绑定。"
             alert.addButton(withTitle: "确定")
             alert.runModal()
+            CoderBridgeService.shared.activeSessionID = nil
+            forceReload()
             return
         }
 
@@ -700,6 +721,10 @@ extension QuickPanelView {
 
         if alert.runModal() == .alertFirstButtonReturn {
             CoderBridgeService.shared.bindSessionToWindow(sid: sid, windowID: wid)
+            forceReload()
+        } else {
+            // 取消绑定，清除高亮
+            CoderBridgeService.shared.activeSessionID = nil
             forceReload()
         }
     }
