@@ -85,6 +85,7 @@ enum Constants {
         static let lastPanelTab = "FocusCopilot.lastPanelTab"
         static let focusTimerSettings = "FocusCopilot.focusTimerSettings"
         static let focusRestIntensity = "FocusCopilot.focusRestIntensity"
+        static let sessionPreferences = "FocusCopilot.sessionPreferences"
     }
 
     // MARK: - 通知名称
@@ -119,5 +120,7 @@ enum Constants {
         static let focusRestCompleted = Notification.Name("FocusCopilot.focusRestCompleted")
         /// 引导休息步骤切换
         static let focusGuidedStepChanged = Notification.Name("FocusCopilot.focusGuidedStepChanged")
+        /// Coder-Bridge 会话状态变化
+        static let coderBridgeSessionChanged = Notification.Name("FocusCopilot.coderBridgeSessionChanged")
     }
 }
