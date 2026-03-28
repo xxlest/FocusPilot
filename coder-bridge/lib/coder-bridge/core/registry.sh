@@ -9,17 +9,72 @@ source "$REGISTRY_DIR/../utils/detect.sh"
 # DistributedNotification name (FocusPilot listens on this)
 NOTIFICATION_NAME="com.focuscopilot.coder-bridge"
 
-# Session state directory
+# Session state directory (for seq counter files)
 SESSION_DIR="$HOME/.coder-bridge/sessions"
+
+# --- hostApp normalization ---
+
+normalize_host_app() {
+    case "${TERM_PROGRAM:-}" in
+        Apple_Terminal)     echo "terminal" ;;
+        iTerm.app|iTerm2)   echo "iterm2" ;;
+        WezTerm)            echo "wezterm" ;;
+        WarpTerminal)       echo "warp" ;;
+        vscode)             echo "vscode" ;;
+        cursor)             echo "cursor" ;;
+        *)                  echo "" ;;
+    esac
+}
+
+# --- cwdNormalized computation ---
+
+compute_cwd_normalized() {
+    local cwd="$1"
+    local normalized
+    normalized=$(git -C "$cwd" rev-parse --show-toplevel 2>/dev/null)
+    if [[ -z "$normalized" ]]; then
+        normalized=$(realpath "$cwd" 2>/dev/null || echo "$cwd")
+    fi
+    echo "$normalized"
+}
+
+# --- seq counter (per session, monotonically increasing) ---
+
+ensure_session_dir() {
+    mkdir -p "$SESSION_DIR"
+}
+
+next_seq() {
+    local sid="$1"
+    ensure_session_dir
+    local seq_file="$SESSION_DIR/${sid}.seq"
+    local current=0
+    if [[ -f "$seq_file" ]]; then
+        current=$(cat "$seq_file" 2>/dev/null || echo "0")
+    fi
+    local next=$((current + 1))
+    echo "$next" > "$seq_file"
+    echo "$next"
+}
+
+cleanup_seq() {
+    local sid="$1"
+    rm -f "$SESSION_DIR/${sid}.seq"
+}
 
 # --- DistributedNotification sender ---
 
 send_to_focuspilot() {
-    local action="$1"    # start | stop | complete | idle | error | unregister
-    local tool="$2"      # claude | codex | gemini
-    local session_id="$3"
-    local cwd="$4"
-    local extra="$5"     # optional JSON fragment
+    local event="$1"     # session.start | session.update | session.end
+    local sid="$2"
+    local seq="$3"
+    local tool="$4"
+    local cwd="$5"
+    local cwd_normalized="$6"
+    local status="$7"    # registered | working | idle | done | error
+    local host_app="$8"
+    local ts
+    ts=$(date +%s)
 
     swift -e '
 import Foundation
@@ -27,120 +82,68 @@ DistributedNotificationCenter.default().post(
     name: .init("'"$NOTIFICATION_NAME"'"),
     object: nil,
     userInfo: [
-        "action": "'"$action"'",
+        "event": "'"$event"'",
+        "sid": "'"$sid"'",
+        "seq": "'"$seq"'",
         "tool": "'"$tool"'",
-        "sessionId": "'"$session_id"'",
         "cwd": "'"$cwd"'",
-        "extra": "'"${extra:-{}}"'",
-        "timestamp": "\(Int(Date().timeIntervalSince1970))"
+        "cwdNormalized": "'"$cwd_normalized"'",
+        "status": "'"$status"'",
+        "hostApp": "'"$host_app"'",
+        "ts": "'"$ts"'"
     ],
     deliverImmediately: true
 )
 ' 2>/dev/null
 }
 
-# --- Local session file management ---
+# --- High-level session operations ---
 
-ensure_session_dir() {
-    mkdir -p "$SESSION_DIR"
-}
-
-register_session() {
+session_start() {
     local tool="$1"
-    local session_id="$2"
+    local sid="$2"
     local cwd="$3"
-    local pid="${4:-$$}"
 
-    ensure_session_dir
+    local host_app
+    host_app=$(normalize_host_app)
+    local cwd_normalized
+    cwd_normalized=$(compute_cwd_normalized "$cwd")
+    local seq
+    seq=$(next_seq "$sid")
 
-    local session_file="$SESSION_DIR/${tool}_${session_id}.json"
-    cat > "$session_file" <<EOF
-{
-    "tool": "$tool",
-    "sessionId": "$session_id",
-    "cwd": "$cwd",
-    "pid": $pid,
-    "status": "running",
-    "startTime": $(date +%s),
-    "lastUpdate": $(date +%s)
-}
-EOF
-
-    send_to_focuspilot "start" "$tool" "$session_id" "$cwd"
+    send_to_focuspilot "session.start" "$sid" "$seq" "$tool" "$cwd" "$cwd_normalized" "registered" "$host_app"
 }
 
-update_session_status() {
+session_update() {
     local tool="$1"
-    local session_id="$2"
-    local status="$3"   # running | idle | complete | error
+    local sid="$2"
+    local cwd="$3"
+    local status="$4"   # working | idle | done | error
 
-    local session_file="$SESSION_DIR/${tool}_${session_id}.json"
+    local host_app
+    host_app=$(normalize_host_app)
+    local cwd_normalized
+    cwd_normalized=$(compute_cwd_normalized "$cwd")
+    local seq
+    seq=$(next_seq "$sid")
 
-    if [[ -f "$session_file" ]]; then
-        local cwd
-        cwd=$(python3 -c "import json,sys; print(json.load(open('$session_file'))['cwd'])" 2>/dev/null || echo "")
-
-        # Update status and lastUpdate timestamp
-        python3 -c "
-import json, time
-with open('$session_file', 'r') as f:
-    data = json.load(f)
-data['status'] = '$status'
-data['lastUpdate'] = int(time.time())
-with open('$session_file', 'w') as f:
-    json.dump(data, f, indent=4)
-" 2>/dev/null
-
-        send_to_focuspilot "$status" "$tool" "$session_id" "$cwd"
-    fi
+    send_to_focuspilot "session.update" "$sid" "$seq" "$tool" "$cwd" "$cwd_normalized" "$status" "$host_app"
 }
 
-unregister_session() {
+session_end() {
     local tool="$1"
-    local session_id="$2"
+    local sid="$2"
+    local cwd="$3"
 
-    local session_file="$SESSION_DIR/${tool}_${session_id}.json"
+    local host_app
+    host_app=$(normalize_host_app)
+    local cwd_normalized
+    cwd_normalized=$(compute_cwd_normalized "$cwd")
+    local seq
+    seq=$(next_seq "$sid")
 
-    if [[ -f "$session_file" ]]; then
-        local cwd
-        cwd=$(python3 -c "import json,sys; print(json.load(open('$session_file'))['cwd'])" 2>/dev/null || echo "")
+    send_to_focuspilot "session.end" "$sid" "$seq" "$tool" "$cwd" "$cwd_normalized" "" "$host_app"
 
-        rm -f "$session_file"
-        send_to_focuspilot "unregister" "$tool" "$session_id" "$cwd"
-    fi
-}
-
-# --- Query helpers ---
-
-list_sessions() {
-    local tool_filter="${1:-}"  # optional: claude | codex | gemini
-
-    ensure_session_dir
-
-    for f in "$SESSION_DIR"/*.json; do
-        [[ -f "$f" ]] || continue
-        if [[ -z "$tool_filter" ]] || [[ "$(basename "$f")" == "${tool_filter}_"* ]]; then
-            cat "$f"
-            echo ""
-        fi
-    done
-}
-
-cleanup_stale_sessions() {
-    ensure_session_dir
-
-    for f in "$SESSION_DIR"/*.json; do
-        [[ -f "$f" ]] || continue
-
-        local pid
-        pid=$(python3 -c "import json; print(json.load(open('$f'))['pid'])" 2>/dev/null || echo "0")
-
-        if [[ "$pid" -gt 0 ]] && ! kill -0 "$pid" 2>/dev/null; then
-            local tool session_id
-            tool=$(python3 -c "import json; print(json.load(open('$f'))['tool'])" 2>/dev/null)
-            session_id=$(python3 -c "import json; print(json.load(open('$f'))['sessionId'])" 2>/dev/null)
-            rm -f "$f"
-            send_to_focuspilot "unregister" "$tool" "$session_id" ""
-        fi
-    done
+    # Clean up seq file
+    cleanup_seq "$sid"
 }
