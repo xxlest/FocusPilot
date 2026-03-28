@@ -183,12 +183,12 @@ SessionEnd → lifecycle=ended
    - 失效时自动清空，降级到 fallback
 2. fallback 匹配（自动，每次点击时执行）
    - 排除已被其他 session 的 manualWindowID 占用的窗口
-   - cwd basename 匹配窗口标题 → .high（仅当唯一命中且未占用时）
-   - 同宿主 App 只有一个未占用窗口 → .low
-   - 多个未占用窗口无法区分 → .none
-   - 全部候选已被占用 → .none
+   - cwd basename 匹配窗口标题且唯一命中且未占用 → .high
+   - 其他情况 → .none（不做弱猜测）
 3. .none → 只激活宿主 App，提示用户手动绑定
 ```
+
+**设计决策**：fallback 不再提供 `.low` 结果。没有直接证据时一律返回 `.none`，贯彻"宁可不绑定也不要绑错"。用户通过右键"绑定到当前窗口"建立明确关系。
 
 ### 4.3 占用检测规则
 
@@ -202,6 +202,12 @@ var occupiedWindowIDs: Set<CGWindowID> {
     })
 }
 ```
+
+### 4.4 已知限制
+
+- `manualWindowID` 冲突已解决：同一窗口不会被两个 session 同时手动绑定
+- fallback 仍可能在多个未手动绑定的 session 间命中同一窗口（basename 匹配相同标题），这是当前版本接受的已知限制
+- 根本解决需要 P2/P3 的宿主特定强映射能力（如 terminal session ID → window ID）
 
 ### 4.4 手动绑定
 
@@ -336,7 +342,7 @@ var occupiedWindowIDs: Set<CGWindowID> {
 | 5 | buildAITabContent 改为分组 | QuickPanelView.swift | 目录组行 + session 列表 + 折叠 |
 | 6 | createSessionRow 重写 | QuickPanelRowBuilder.swift | shortID + hostApp + status + query 摘要 |
 | 7 | 右键菜单重写 | QuickPanelMenuHandler.swift | 绑定当前窗口 + 复制 Session ID + 移除 |
-| 8 | 删除残留代码 | 多文件 | topic/isHidden/hideSession/unhideSession/editTopic/displayName 相关 |
+| 8 | 删除 AI Tab 中已废弃的使用路径 | 多文件 | topic/isHidden/editTopic 相关 UI 和 Service 代码。不删除 CoderSessionPreference 结构本身 |
 
 ---
 
