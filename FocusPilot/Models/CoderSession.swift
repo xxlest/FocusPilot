@@ -31,7 +31,7 @@ enum SessionLifecycle: String {
 }
 
 enum MatchConfidence: String {
-    case high, low, none
+    case high, none
 }
 
 // MARK: - CoderSession
@@ -46,48 +46,41 @@ struct CoderSession: Identifiable {
     var lifecycle: SessionLifecycle
     var lastSeq: Int
     var lastUpdate: Date
-    var isHidden: Bool
+    var lastInteraction: Date?
 
-    var lastInteraction: Date?           // 用户点击此 session 的时间，nil 表示未操作过
-    var topic: String?                   // 主题：仅用户手动编辑后才有值，nil 时显示"未命名主题"
-    var manualWindowID: CGWindowID?      // 用户手动绑定的窗口，优先级最高，失效时自动清空
+    var manualWindowID: CGWindowID?
+    var resolvedWindowID: CGWindowID?
 
     var id: String { sessionID }
 
-    var preferenceKey: String {
-        "\(tool.rawValue):\(cwdNormalized):\(hostApp)"
+    var shortID: String {
+        String(sessionID.prefix(8))
     }
 
     var cwdBasename: String {
         let homePath = NSHomeDirectory()
-        if cwd == homePath || cwd == homePath + "/" {
-            return "~"
-        }
+        if cwd == homePath || cwd == homePath + "/" { return "~" }
         let name = (cwd as NSString).lastPathComponent
         return name.isEmpty ? "~" : name
+    }
+
+    var sortDate: Date {
+        lastInteraction ?? lastUpdate
+    }
+
+    var sortTier: Int {
+        lifecycle == .ended ? 2 : 1
     }
 
     var isActionable: Bool {
         switch (status, lifecycle) {
         case (.idle, .active),
-             (.done, .active),
-             (.done, .ended),
-             (.error, .active),
-             (.error, .ended):
+             (.done, .active), (.done, .ended),
+             (.error, .active), (.error, .ended):
             return true
         default:
             return false
         }
-    }
-
-    var sortTier: Int {
-        if lifecycle == .ended { return 2 }
-        return 1
-    }
-
-    /// 排序用的时间：lastInteraction 优先，无则退回 lastUpdate
-    var sortDate: Date {
-        lastInteraction ?? lastUpdate
     }
 
     var statusText: String {
@@ -99,10 +92,7 @@ struct CoderSession: Identifiable {
         case .done:       base = "已完成"
         case .error:      base = "出错"
         }
-        if lifecycle == .ended {
-            return "\(base) · 已结束"
-        }
-        return base
+        return lifecycle == .ended ? "\(base) · 已结束" : base
     }
 
     func statusDotColor(theme: ThemeColors) -> NSColor {
@@ -129,9 +119,29 @@ struct CoderSession: Identifiable {
         default: return 0.5
         }
     }
+
+    var hostAppDisplayName: String {
+        switch hostApp {
+        case "cursor":   return "Cursor"
+        case "vscode":   return "VSCode"
+        case "terminal": return "Terminal"
+        case "iterm2":   return "iTerm2"
+        case "wezterm":  return "WezTerm"
+        case "warp":     return "Warp"
+        default:         return hostApp
+        }
+    }
 }
 
-// MARK: - CoderSessionPreference
+// MARK: - SessionGroup
+
+struct SessionGroup {
+    let cwdNormalized: String
+    var displayName: String
+    var sessions: [CoderSession]
+}
+
+// MARK: - CoderSessionPreference（本轮不扩展）
 
 struct CoderSessionPreference: Codable {
     let key: String
