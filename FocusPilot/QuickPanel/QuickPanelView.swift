@@ -2286,70 +2286,36 @@ final class HoverableRowView: NSView {
         trackingArea = area
     }
 
-    // MARK: - 统一渲染
+    // MARK: - 渲染
 
-    /// 更新视觉状态：hover 时始终显示 hover 效果（即使 isSelected）
-    /// 鼠标离开时恢复 isSelected 效果（如果有的话）
+    /// 全局唯一选中行（点击哪个就高亮哪个，其他全部清除）
+    static weak var currentlySelectedRow: HoverableRowView?
+
     func updateAppearance() {
-        let defaultHover = ConfigStore.shared.currentThemeColors.nsTextPrimary.withAlphaComponent(0.08)
-
-        if isHovered {
-            // hover 状态（最高视觉优先级，鼠标在哪哪亮）
-            layer?.backgroundColor = (hoverColor ?? defaultHover).cgColor
-            layer?.cornerRadius = (hoverColor != nil) ? 0 : 6
+        if isSelected {
+            layer?.backgroundColor = (selectedColor ?? NSColor.systemOrange.withAlphaComponent(0.15)).cgColor
             if let color = indicatorColor {
                 indicatorLine.layer?.backgroundColor = color.cgColor
                 indicatorLine.isHidden = false
-            } else {
-                indicatorLine.isHidden = true
-            }
-        } else if isSelected {
-            // 选中状态（鼠标离开后恢复固定高亮）
-            layer?.backgroundColor = (selectedColor ?? hoverColor ?? defaultHover).cgColor
-            if let color = indicatorColor {
-                indicatorLine.layer?.backgroundColor = color.cgColor
-                indicatorLine.isHidden = false
-            } else {
-                indicatorLine.isHidden = true
             }
         } else {
-            // 默认状态
-            if !isHighlighted {
-                layer?.backgroundColor = nil
-            }
+            layer?.backgroundColor = nil
             indicatorLine.isHidden = true
         }
     }
 
-    /// 全局追踪：当前被 hover 的行（弱引用，避免循环）
-    private static weak var currentlyHoveredRow: HoverableRowView?
-    /// 全局追踪：当前被 selected 的行（弱引用）
-    static weak var currentlySelectedRow: HoverableRowView?
-
     override func mouseEntered(with event: NSEvent) {
         isHovered = true
-        // 如果有其他行正在被 selected 且不是自己，暂时隐藏它的高亮
-        if let prev = Self.currentlySelectedRow, prev !== self {
-            prev.layer?.backgroundColor = nil
-            prev.indicatorLine.isHidden = true
+        if !isSelected {
+            layer?.backgroundColor = ConfigStore.shared.currentThemeColors.nsTextPrimary.withAlphaComponent(0.08).cgColor
+            layer?.cornerRadius = 6
         }
-        Self.currentlyHoveredRow = self
-        updateAppearance()
     }
 
     override func mouseExited(with event: NSEvent) {
         isHovered = false
         if !isSelected {
-            updateAppearance()
-        }
-        if Self.currentlyHoveredRow === self {
-            Self.currentlyHoveredRow = nil
-        }
-        // 延迟一帧：无 hover 时恢复 selected 行
-        DispatchQueue.main.async {
-            if Self.currentlyHoveredRow == nil, let sel = Self.currentlySelectedRow {
-                sel.updateAppearance()
-            }
+            layer?.backgroundColor = nil
         }
     }
 
