@@ -88,7 +88,7 @@ class CoderBridgeService: NSObject {
             candidateWindowID: nil,
             matchConfidence: .none,
             lastInteraction: nil,
-            taskName: nil,
+            topic: nil,
             manualWindowID: nil
         )
 
@@ -308,12 +308,15 @@ class CoderBridgeService: NSObject {
     func updateLastInteraction(sid: String) {
         guard let index = sessions.firstIndex(where: { $0.sessionID == sid }) else { return }
         sessions[index].lastInteraction = Date()
-        postSessionChanged()
+        // 延迟 0.5 秒再刷新排序，让窗口切换先完成
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
+            self?.postSessionChanged()
+        }
     }
 
-    func updateTaskName(sid: String, taskName: String?) {
+    func updateTopic(sid: String, topic: String?) {
         guard let index = sessions.firstIndex(where: { $0.sessionID == sid }) else { return }
-        sessions[index].taskName = taskName
+        sessions[index].topic = topic
         postSessionChanged()
     }
 

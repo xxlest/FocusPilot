@@ -235,13 +235,13 @@ extension QuickPanelView {
     func createSessionContextMenu(session: CoderSession) -> NSMenu? {
         let menu = NSMenu()
 
-        // 编辑任务名
-        let editItem = NSMenuItem(title: "编辑任务名...", action: #selector(handleEditTaskName(_:)), keyEquivalent: "")
+        // 编辑主题
+        let editItem = NSMenuItem(title: "编辑主题...", action: #selector(handleEditTaskName(_:)), keyEquivalent: "")
         editItem.target = self
         editItem.representedObject = [
             "sessionID": session.sessionID,
             "cwdBasename": session.cwdBasename,
-            "currentTaskName": session.taskName ?? "",
+            "currentTopic": session.topic ?? "",
             "defaultSummary": CoderBridgeService.shared.latestQuerySummary(for: session) ?? ""
         ] as [String: String]
         menu.addItem(editItem)
@@ -272,31 +272,31 @@ extension QuickPanelView {
         guard let info = sender.representedObject as? [String: String],
               let sessionID = info["sessionID"],
               let cwdBasename = info["cwdBasename"],
-              let currentTaskName = info["currentTaskName"],
+              let currentTopic = info["currentTopic"],
               let defaultSummary = info["defaultSummary"] else { return }
 
         let alert = NSAlert()
-        alert.messageText = "编辑任务名"
+        alert.messageText = "编辑主题"
         alert.informativeText = "项目：\(cwdBasename)"
         alert.addButton(withTitle: "确定")
         alert.addButton(withTitle: "取消")
 
-        // 输入框 + "用默认值"按钮 水平排列
+        // 输入框 + "重置主题"按钮 水平排列
         let container = NSView(frame: NSRect(x: 0, y: 0, width: 340, height: 28))
 
         let input = NSTextField(frame: NSRect(x: 0, y: 2, width: 240, height: 24))
-        input.stringValue = currentTaskName.isEmpty ? "" : currentTaskName
-        input.placeholderString = defaultSummary.isEmpty ? "输入任务名..." : defaultSummary
+        input.stringValue = currentTopic.isEmpty ? "" : currentTopic
+        input.placeholderString = defaultSummary.isEmpty ? "输入主题..." : defaultSummary
         container.addSubview(input)
 
-        let resetBtn = NSButton(title: "用默认值", target: nil, action: nil)
+        let resetBtn = NSButton(title: "重置主题", target: nil, action: nil)
         resetBtn.bezelStyle = .rounded
         resetBtn.frame = NSRect(x: 248, y: 0, width: 88, height: 28)
         resetBtn.target = nil
         resetBtn.action = nil
         container.addSubview(resetBtn)
 
-        // 点击"用默认值"时填入默认摘要
+        // 点击"重置主题"时填入默认摘要
         class ResetHandler: NSObject {
             let input: NSTextField
             let defaultValue: String
@@ -321,7 +321,7 @@ extension QuickPanelView {
         let response = alert.runModal()
         if response == .alertFirstButtonReturn {
             let newName = input.stringValue.trimmingCharacters(in: .whitespaces)
-            CoderBridgeService.shared.updateTaskName(sid: sessionID, taskName: newName.isEmpty ? nil : newName)
+            CoderBridgeService.shared.updateTopic(sid: sessionID, topic: newName.isEmpty ? nil : newName)
             forceReload()
         }
     }

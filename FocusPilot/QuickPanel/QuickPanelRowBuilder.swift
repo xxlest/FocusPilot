@@ -424,21 +424,15 @@ extension QuickPanelView {
         let theme = ConfigStore.shared.currentThemeColors
         let row = HoverableRowView()
         row.translatesAutoresizingMaskIntoConstraints = false
-        row.heightAnchor.constraint(greaterThanOrEqualToConstant: 32).isActive = true
 
-        let stack = NSStackView()
-        stack.orientation = .horizontal
-        stack.alignment = .centerY
-        stack.spacing = Constants.Design.Spacing.sm
-        stack.translatesAutoresizingMaskIntoConstraints = false
-        row.addSubview(stack)
-        NSLayoutConstraint.activate([
-            stack.leadingAnchor.constraint(equalTo: row.leadingAnchor, constant: Constants.Design.Spacing.sm),
-            stack.trailingAnchor.constraint(equalTo: row.trailingAnchor, constant: -Constants.Design.Spacing.sm),
-            stack.centerYAnchor.constraint(equalTo: row.centerYAnchor),
-        ])
+        // === 第一行：项目名 + 工具图标 + 状态 ===
+        let firstLine = NSStackView()
+        firstLine.orientation = .horizontal
+        firstLine.alignment = .centerY
+        firstLine.spacing = Constants.Design.Spacing.sm
+        firstLine.translatesAutoresizingMaskIntoConstraints = false
 
-        // 1. 状态圆点（6px）
+        // 状态圆点（6px）
         let dot = NSView()
         dot.wantsLayer = true
         dot.translatesAutoresizingMaskIntoConstraints = false
@@ -455,9 +449,9 @@ extension QuickPanelView {
             dot.widthAnchor.constraint(equalToConstant: 6),
             dot.heightAnchor.constraint(equalToConstant: 6),
         ])
-        stack.addArrangedSubview(dot)
+        firstLine.addArrangedSubview(dot)
 
-        // 2. 工具图标（14px）
+        // 工具图标（14px）
         if let toolImage = Self.cachedSymbol(name: session.tool.symbolName, size: 14, weight: .regular) {
             let toolIcon = NSImageView(image: toolImage)
             toolIcon.contentTintColor = theme.nsTextSecondary
@@ -466,20 +460,20 @@ extension QuickPanelView {
                 toolIcon.widthAnchor.constraint(equalToConstant: 14),
                 toolIcon.heightAnchor.constraint(equalToConstant: 14),
             ])
-            stack.addArrangedSubview(toolIcon)
+            firstLine.addArrangedSubview(toolIcon)
         }
 
-        // 3. displayName（preference 优先，否则 cwd basename）
-        let displayName = CoderBridgeService.shared.displayName(for: session)
-        let nameLabel = createLabel(displayName, size: 12, color: theme.nsTextPrimary)
+        // 项目名（cwdBasename，固定不可编辑）
+        let projectName = session.cwdBasename
+        let nameLabel = createLabel(projectName, size: 12, color: theme.nsTextPrimary)
         nameLabel.lineBreakMode = .byTruncatingTail
         nameLabel.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
-        stack.addArrangedSubview(nameLabel)
+        firstLine.addArrangedSubview(nameLabel)
 
         // spacer
-        stack.addArrangedSubview(createSpacer())
+        firstLine.addArrangedSubview(createSpacer())
 
-        // 4. 宿主 App 图标（16px）
+        // 宿主 App 图标（16px）
         if !session.hostApp.isEmpty,
            let bundleID = HostAppMapping.bundleID(for: session.hostApp),
            let appURL = NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleID) {
@@ -491,67 +485,70 @@ extension QuickPanelView {
                 hostIconView.widthAnchor.constraint(equalToConstant: 16),
                 hostIconView.heightAnchor.constraint(equalToConstant: 16),
             ])
-            stack.addArrangedSubview(hostIconView)
+            firstLine.addArrangedSubview(hostIconView)
         }
 
-        // 5. 状态文字
+        // 状态文字
         let statusLabel = createLabel(session.statusText, size: 11, color: theme.nsTextSecondary)
-        stack.addArrangedSubview(statusLabel)
+        firstLine.addArrangedSubview(statusLabel)
 
-        // 第二行：任务名（仅在用户编辑过时显示）
-        // 第三行：最近 query 摘要（始终尝试显示）
-        let hasTaskName = session.taskName != nil && !session.taskName!.isEmpty
-        let querySummary = CoderBridgeService.shared.latestQuerySummary(for: session, maxLength: 50)
+        // === 垂直容器 ===
+        let verticalStack = NSStackView()
+        verticalStack.orientation = .vertical
+        verticalStack.alignment = .leading
+        verticalStack.spacing = 2
+        verticalStack.translatesAutoresizingMaskIntoConstraints = false
+        verticalStack.addArrangedSubview(firstLine)
 
-        if hasTaskName || querySummary != nil {
-            // 需要多行，包裹进垂直容器
-            stack.removeFromSuperview()
-
-            let verticalStack = NSStackView()
-            verticalStack.orientation = .vertical
-            verticalStack.alignment = .leading
-            verticalStack.spacing = 2
-            verticalStack.translatesAutoresizingMaskIntoConstraints = false
-            verticalStack.addArrangedSubview(stack)
-
-            if hasTaskName {
-                let taskLabel = createLabel("任务：\(session.taskName!)", size: 10, color: theme.nsTextSecondary)
-                taskLabel.lineBreakMode = .byTruncatingTail
-                taskLabel.translatesAutoresizingMaskIntoConstraints = false
-                verticalStack.addArrangedSubview(taskLabel)
-                NSLayoutConstraint.activate([
-                    taskLabel.leadingAnchor.constraint(equalTo: verticalStack.leadingAnchor, constant: 20),
-                    taskLabel.trailingAnchor.constraint(lessThanOrEqualTo: verticalStack.trailingAnchor),
-                ])
-            }
-
-            if let query = querySummary {
-                let queryLabel = createLabel("\"\(query)\"", size: 10, color: theme.nsTextTertiary)
-                queryLabel.lineBreakMode = .byTruncatingTail
-                queryLabel.translatesAutoresizingMaskIntoConstraints = false
-                verticalStack.addArrangedSubview(queryLabel)
-                NSLayoutConstraint.activate([
-                    queryLabel.leadingAnchor.constraint(equalTo: verticalStack.leadingAnchor, constant: 20),
-                    queryLabel.trailingAnchor.constraint(lessThanOrEqualTo: verticalStack.trailingAnchor),
-                ])
-            }
-
-            row.addSubview(verticalStack)
-            NSLayoutConstraint.activate([
-                verticalStack.leadingAnchor.constraint(equalTo: row.leadingAnchor, constant: Constants.Design.Spacing.sm),
-                verticalStack.trailingAnchor.constraint(equalTo: row.trailingAnchor, constant: -Constants.Design.Spacing.sm),
-                verticalStack.centerYAnchor.constraint(equalTo: row.centerYAnchor),
-            ])
-
-            // 行高：有任务名+query 时 52，只有一个时 44
-            let extraHeight: CGFloat = (hasTaskName && querySummary != nil) ? 52 : 44
-            row.heightAnchor.constraint(greaterThanOrEqualToConstant: extraHeight).isActive = true
+        // === 第二行：主题（Topic） ===
+        let topicText: String
+        if let userTopic = session.topic, !userTopic.isEmpty {
+            topicText = userTopic
+        } else if let autoTopic = CoderBridgeService.shared.latestQuerySummary(for: session, maxLength: 50) {
+            topicText = autoTopic
+        } else {
+            topicText = "未命名主题"
         }
+        let topicLabel = createLabel(topicText, size: 10, color: theme.nsTextSecondary)
+        topicLabel.lineBreakMode = .byTruncatingTail
+        topicLabel.translatesAutoresizingMaskIntoConstraints = false
+        verticalStack.addArrangedSubview(topicLabel)
+        NSLayoutConstraint.activate([
+            topicLabel.leadingAnchor.constraint(equalTo: verticalStack.leadingAnchor, constant: 20),
+            topicLabel.trailingAnchor.constraint(lessThanOrEqualTo: verticalStack.trailingAnchor),
+        ])
+
+        // === 第三行：Query ===
+        let queryText: String
+        if let query = CoderBridgeService.shared.latestQuerySummary(for: session, maxLength: 60) {
+            queryText = "\"\(query)\""
+        } else {
+            queryText = "等待输入..."
+        }
+        let queryLabel = createLabel(queryText, size: 10, color: theme.nsTextTertiary)
+        queryLabel.lineBreakMode = .byTruncatingTail
+        queryLabel.translatesAutoresizingMaskIntoConstraints = false
+        verticalStack.addArrangedSubview(queryLabel)
+        NSLayoutConstraint.activate([
+            queryLabel.leadingAnchor.constraint(equalTo: verticalStack.leadingAnchor, constant: 20),
+            queryLabel.trailingAnchor.constraint(lessThanOrEqualTo: verticalStack.trailingAnchor),
+        ])
+
+        // 布局
+        row.addSubview(verticalStack)
+        NSLayoutConstraint.activate([
+            verticalStack.leadingAnchor.constraint(equalTo: row.leadingAnchor, constant: Constants.Design.Spacing.sm),
+            verticalStack.trailingAnchor.constraint(equalTo: row.trailingAnchor, constant: -Constants.Design.Spacing.sm),
+            verticalStack.centerYAnchor.constraint(equalTo: row.centerYAnchor),
+        ])
+
+        // 固定三行高度
+        row.heightAnchor.constraint(greaterThanOrEqualToConstant: 52).isActive = true
 
         // 行透明度
         row.alphaValue = session.rowAlpha
 
-        // 点击处理：切换到对应窗口
+        // 点击：先切窗口，延迟更新排序
         row.clickHandler = { [weak self] in
             self?.handleSessionClick(session)
         }

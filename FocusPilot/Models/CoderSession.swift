@@ -53,7 +53,7 @@ struct CoderSession: Identifiable {
     var matchConfidence: MatchConfidence
 
     var lastInteraction: Date?           // 用户点击此 session 的时间，nil 表示未操作过
-    var taskName: String?                // 用户手动编辑的任务名，nil 时显示 query 摘要
+    var topic: String?                   // 主题：用户手动编辑过则固定，否则自动取 query 摘要
     var manualWindowID: CGWindowID?      // 用户手动绑定的窗口，优先级最高，失效时自动清空
 
     var id: String { sessionID }
