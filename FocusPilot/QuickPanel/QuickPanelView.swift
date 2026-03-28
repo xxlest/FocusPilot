@@ -2219,7 +2219,18 @@ final class HoverableRowView: NSView {
     var indicatorColor: NSColor?
     /// 是否处于选中状态（点击后固定，优先级高于 hover）
     var isSelected = false {
-        didSet { updateAppearance() }
+        didSet {
+            if isSelected {
+                // 清除上一个 selected 行
+                if let prev = Self.currentlySelectedRow, prev !== self {
+                    prev.isSelected = false
+                }
+                Self.currentlySelectedRow = self
+            } else if Self.currentlySelectedRow === self {
+                Self.currentlySelectedRow = nil
+            }
+            updateAppearance()
+        }
     }
 
     /// 左侧竖线（创建一次，通过 isHidden 切换）
@@ -2310,44 +2321,19 @@ final class HoverableRowView: NSView {
         }
     }
 
-    /// 向上查找最顶层的 contentStack，遍历所有 HoverableRowView（跨 app 组）
-    private func allHoverableRows() -> [HoverableRowView] {
-        // 向上找到 contentStack（NSStackView 且包含多个子视图）
-        var current: NSView? = superview
-        while let view = current {
-            if let stack = view as? NSStackView, stack.arrangedSubviews.count > 2 {
-                // 递归收集所有 HoverableRowView
-                return Self.collectHoverableRows(in: stack)
-            }
-            current = view.superview
-        }
-        // fallback：只看同级
-        if let parent = superview as? NSStackView {
-            return parent.arrangedSubviews.compactMap { $0 as? HoverableRowView }
-        }
-        return []
-    }
-
-    private static func collectHoverableRows(in view: NSView) -> [HoverableRowView] {
-        var result: [HoverableRowView] = []
-        for sub in view.subviews {
-            if let row = sub as? HoverableRowView {
-                result.append(row)
-            }
-            result.append(contentsOf: collectHoverableRows(in: sub))
-        }
-        return result
-    }
+    /// 全局追踪：当前被 hover 的行（弱引用，避免循环）
+    private static weak var currentlyHoveredRow: HoverableRowView?
+    /// 全局追踪：当前被 selected 的行（弱引用）
+    static weak var currentlySelectedRow: HoverableRowView?
 
     override func mouseEntered(with event: NSEvent) {
         isHovered = true
-        // 全局隐藏所有 selected 行的高亮（跨 app 组）
-        for row in allHoverableRows() {
-            if row !== self && row.isSelected {
-                row.layer?.backgroundColor = nil
-                row.indicatorLine.isHidden = true
-            }
+        // 如果有其他行正在被 selected 且不是自己，暂时隐藏它的高亮
+        if let prev = Self.currentlySelectedRow, prev !== self {
+            prev.layer?.backgroundColor = nil
+            prev.indicatorLine.isHidden = true
         }
+        Self.currentlyHoveredRow = self
         updateAppearance()
     }
 
@@ -2356,15 +2342,13 @@ final class HoverableRowView: NSView {
         if !isSelected {
             updateAppearance()
         }
-        // 延迟一帧后检查：全局无 hover 时恢复 selected 行
-        DispatchQueue.main.async { [weak self] in
-            guard let self = self else { return }
-            let allRows = self.allHoverableRows()
-            let anyHovered = allRows.contains { $0.isHovered }
-            if !anyHovered {
-                for row in allRows where row.isSelected {
-                    row.updateAppearance()
-                }
+        if Self.currentlyHoveredRow === self {
+            Self.currentlyHoveredRow = nil
+        }
+        // 延迟一帧：无 hover 时恢复 selected 行
+        DispatchQueue.main.async {
+            if Self.currentlyHoveredRow == nil, let sel = Self.currentlySelectedRow {
+                sel.updateAppearance()
             }
         }
     }

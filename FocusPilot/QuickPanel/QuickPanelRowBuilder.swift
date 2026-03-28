@@ -357,15 +357,7 @@ extension QuickPanelView {
         row.clickHandler = { [weak self] in
             guard let self = self else { return }
 
-            // 清除所有窗口行的 selected（通过 windowRowViewMap 跨 app 清除）
-            for (_, existingRow) in self.windowRowViewMap {
-                if existingRow.isSelected {
-                    existingRow.isSelected = false
-                    existingRow.updateAppearance()
-                }
-            }
-
-            // 即时选中高亮
+            // 即时选中高亮（didSet 自动清除上一个 selected 行）
             row.isSelected = true
             self.highlightedWindowID = windowInfo.id
 
@@ -609,17 +601,7 @@ extension QuickPanelView {
     }
 
     private func handleSessionClick(_ session: CoderSession, row: HoverableRowView) {
-        // 1. 清除所有兄弟行的 selected 状态（确保同一时间只有一个）
-        if let parent = row.superview as? NSStackView {
-            for view in parent.arrangedSubviews {
-                if let sibling = view as? HoverableRowView, sibling !== row, sibling.isSelected {
-                    sibling.isSelected = false
-                    sibling.updateAppearance()
-                }
-            }
-        }
-
-        // 2. 即时选中高亮（毫秒级，无延迟）
+        // 即时选中高亮（didSet 自动清除上一个 selected 行）
         row.isSelected = true
         CoderBridgeService.shared.activeSessionID = session.sessionID
         CoderBridgeService.shared.updateLastInteraction(sid: session.sessionID)
