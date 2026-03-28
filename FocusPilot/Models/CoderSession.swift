@@ -100,7 +100,7 @@ struct CoderSession: Identifiable {
         if lifecycle == .ended { return NSColor(calibratedWhite: 0.35, alpha: 1.0) }
         switch status {
         case .working:    return .systemGreen
-        case .idle:       return NSColor(calibratedRed: 1.0, green: 0.84, blue: 0.04, alpha: 1.0)
+        case .idle:       return .systemOrange
         case .done:       return isRead ? NSColor(calibratedWhite: 0.35, alpha: 1.0) : .systemGreen
         case .error:      return .systemRed
         case .registered: return theme.nsTextSecondary
@@ -110,7 +110,7 @@ struct CoderSession: Identifiable {
     func statusDotColor(theme: ThemeColors) -> NSColor {
         switch status {
         case .working:    return .systemGreen
-        case .idle:       return NSColor(calibratedRed: 1.0, green: 0.84, blue: 0.04, alpha: 1.0) // 黄色
+        case .idle:       return .systemOrange
         case .done:       return isRead ? NSColor(calibratedWhite: 0.35, alpha: 1.0) : .systemGreen
         case .error:      return .systemRed
         case .registered: return NSColor(calibratedWhite: 0.35, alpha: 1.0) // 灰色
