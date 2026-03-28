@@ -573,30 +573,21 @@ extension QuickPanelView {
         ])
 
         row.heightAnchor.constraint(greaterThanOrEqualToConstant: 40).isActive = true
-        // row 宽度撑满父容器（通过 contentStack 的宽度传递）
         row.setContentHuggingPriority(.defaultLow, for: .horizontal)
         row.alphaValue = session.rowAlpha
 
-        // 活跃窗口高亮（黄色）
+        // AI session 行：橙色 hover + selected
+        row.hoverColor = NSColor.systemOrange.withAlphaComponent(0.15)
+        row.selectedColor = NSColor.systemOrange.withAlphaComponent(0.15)
+        row.indicatorColor = .systemOrange
+
+        // 恢复上次的选中状态
         if session.sessionID == CoderBridgeService.shared.activeSessionID {
-            row.wantsLayer = true
-            row.layer?.backgroundColor = NSColor.systemOrange.withAlphaComponent(0.15).cgColor
-            // 左侧黄色竖线
-            let activeLine = NSView()
-            activeLine.wantsLayer = true
-            activeLine.layer?.backgroundColor = NSColor.systemOrange.cgColor
-            activeLine.translatesAutoresizingMaskIntoConstraints = false
-            row.addSubview(activeLine)
-            NSLayoutConstraint.activate([
-                activeLine.leadingAnchor.constraint(equalTo: row.leadingAnchor),
-                activeLine.topAnchor.constraint(equalTo: row.topAnchor),
-                activeLine.bottomAnchor.constraint(equalTo: row.bottomAnchor),
-                activeLine.widthAnchor.constraint(equalToConstant: 5),
-            ])
+            row.isSelected = true
         }
 
         row.clickHandler = { [weak self] in
-            self?.handleSessionClick(session)
+            self?.handleSessionClick(session, row: row)
         }
 
         row.contextMenuProvider = { [weak self] in
@@ -606,19 +597,17 @@ extension QuickPanelView {
         return row
     }
 
-    private func handleSessionClick(_ session: CoderSession) {
-        // 1. 先高亮选中行（立即视觉反馈）
+    private func handleSessionClick(_ session: CoderSession, row: HoverableRowView) {
+        // 1. 即时选中高亮（毫秒级，无延迟）
+        row.isSelected = true
         CoderBridgeService.shared.activeSessionID = session.sessionID
         CoderBridgeService.shared.updateLastInteraction(sid: session.sessionID)
-        forceReload()
 
-        // 2. 延迟 0.15s 后再做窗口切换（让高亮先渲染，用户能看到选中效果）
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) { [weak self] in
-            self?.performWindowSwitch(session)
-        }
+        // 2. 直接执行窗口切换
+        performWindowSwitch(session, row: row)
     }
 
-    private func performWindowSwitch(_ session: CoderSession) {
+    private func performWindowSwitch(_ session: CoderSession, row: HoverableRowView? = nil) {
         // 1. manualWindowID（强绑定）
         if let manual = session.manualWindowID {
             if CoderBridgeService.shared.windowExists(manual) {

@@ -2202,10 +2202,41 @@ final class HoverableRowView: NSView {
     /// 点击处理闭包
     var clickHandler: (() -> Void)?
 
+    // MARK: - 状态
+
     private var trackingArea: NSTrackingArea?
     private var isHovered = false
     /// 标记该行是否处于选中高亮状态（由外部设置）
     var isHighlighted = false
+
+    // MARK: - 可配置颜色（AI session 行设置，其他行不设置走默认灰色）
+
+    /// hover 时的背景色（nil = 默认灰色 0.08）
+    var hoverColor: NSColor?
+    /// 选中时的背景色（nil = 同 hoverColor 或默认灰色）
+    var selectedColor: NSColor?
+    /// 左侧竖线颜色（nil = 不显示竖线）
+    var indicatorColor: NSColor?
+    /// 是否处于选中状态（点击后固定，优先级高于 hover）
+    var isSelected = false {
+        didSet { updateAppearance() }
+    }
+
+    /// 左侧竖线（创建一次，通过 isHidden 切换）
+    private lazy var indicatorLine: NSView = {
+        let line = NSView()
+        line.wantsLayer = true
+        line.isHidden = true
+        line.translatesAutoresizingMaskIntoConstraints = false
+        addSubview(line)
+        NSLayoutConstraint.activate([
+            line.leadingAnchor.constraint(equalTo: leadingAnchor),
+            line.topAnchor.constraint(equalTo: topAnchor),
+            line.bottomAnchor.constraint(equalTo: bottomAnchor),
+            line.widthAnchor.constraint(equalToConstant: 5),
+        ])
+        return line
+    }()
 
     override init(frame frameRect: NSRect) {
         super.init(frame: frameRect)
@@ -2244,20 +2275,48 @@ final class HoverableRowView: NSView {
         trackingArea = area
     }
 
+    // MARK: - 统一渲染
+
+    private func updateAppearance() {
+        let defaultHover = ConfigStore.shared.currentThemeColors.nsTextPrimary.withAlphaComponent(0.08)
+
+        if isSelected {
+            // 选中状态（最高优先级）
+            layer?.backgroundColor = (selectedColor ?? hoverColor ?? defaultHover).cgColor
+            if let color = indicatorColor {
+                indicatorLine.layer?.backgroundColor = color.cgColor
+                indicatorLine.isHidden = false
+            }
+        } else if isHovered {
+            // hover 状态
+            layer?.backgroundColor = (hoverColor ?? defaultHover).cgColor
+            layer?.cornerRadius = (hoverColor != nil) ? 0 : 6
+            if let color = indicatorColor {
+                indicatorLine.layer?.backgroundColor = color.cgColor
+                indicatorLine.isHidden = false
+            } else {
+                indicatorLine.isHidden = true
+            }
+        } else {
+            // 默认状态
+            if !isHighlighted {
+                layer?.backgroundColor = nil
+            }
+            indicatorLine.isHidden = true
+        }
+    }
+
     override func mouseEntered(with event: NSEvent) {
         isHovered = true
-        // hover 高亮不覆盖选中高亮（选中高亮由 QuickPanelView 在构建行时设置）
-        if !isHighlighted {
-            layer?.backgroundColor = ConfigStore.shared.currentThemeColors.nsTextPrimary.withAlphaComponent(0.08).cgColor
-            layer?.cornerRadius = 6
+        if !isHighlighted && !isSelected {
+            updateAppearance()
         }
     }
 
     override func mouseExited(with event: NSEvent) {
         isHovered = false
-        // 恢复时检查是否有选中高亮，避免清除选中状态
-        if !isHighlighted {
-            layer?.backgroundColor = nil
+        if !isSelected {
+            updateAppearance()
         }
     }
 
