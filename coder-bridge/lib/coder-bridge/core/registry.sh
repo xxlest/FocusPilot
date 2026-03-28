@@ -15,13 +15,21 @@ SESSION_DIR="$HOME/.coder-bridge/sessions"
 # --- hostApp normalization ---
 
 normalize_host_app() {
+    # Cursor fork 自 VS Code，$TERM_PROGRAM 也是 vscode
+    # 用 CURSOR_TRACE_ID（Cursor 独有）区分
+    if [[ "${TERM_PROGRAM:-}" == "vscode" ]]; then
+        if [[ -n "${CURSOR_TRACE_ID:-}" ]]; then
+            echo "cursor"
+        else
+            echo "vscode"
+        fi
+        return
+    fi
     case "${TERM_PROGRAM:-}" in
         Apple_Terminal)     echo "terminal" ;;
         iTerm.app|iTerm2)   echo "iterm2" ;;
         WezTerm)            echo "wezterm" ;;
         WarpTerminal)       echo "warp" ;;
-        vscode)             echo "vscode" ;;
-        cursor)             echo "cursor" ;;
         *)                  echo "" ;;
     esac
 }
