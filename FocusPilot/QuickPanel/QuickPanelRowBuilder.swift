@@ -596,8 +596,6 @@ extension QuickPanelView {
 
     private func handleSessionClick(_ session: CoderSession) {
         CoderBridgeService.shared.updateLastInteraction(sid: session.sessionID)
-        // 点击 done 状态的 session 时标记已读
-        CoderBridgeService.shared.markAsRead(sid: session.sessionID)
 
         // 1. manualWindowID（强绑定）
         if let manual = session.manualWindowID {
@@ -606,6 +604,7 @@ extension QuickPanelView {
                 if let windowInfo = allWindows.first(where: { $0.id == manual }) {
                     WindowService.shared.activateWindow(windowInfo)
                     CoderBridgeService.shared.activeSessionID = session.sessionID
+                    CoderBridgeService.shared.markAsRead(sid: session.sessionID)
                     (self.window as? QuickPanelWindow)?.yieldLevel()
                     return
                 }
@@ -623,6 +622,7 @@ extension QuickPanelView {
                 if let windowInfo = allWindows.first(where: { $0.id == auto }) {
                     WindowService.shared.activateWindow(windowInfo)
                     CoderBridgeService.shared.activeSessionID = session.sessionID
+                    CoderBridgeService.shared.markAsRead(sid: session.sessionID)
                     (self.window as? QuickPanelWindow)?.yieldLevel()
                     return
                 }

@@ -1930,6 +1930,21 @@ final class QuickPanelView: NSView {
                 self?.forceReload()
             }
 
+            // 目录组右键菜单（置顶）
+            let isFirstGroup = (groups.first?.cwdNormalized == cwdKey)
+            if !isFirstGroup {
+                groupRow.contextMenuProvider = { [weak self] in
+                    let menu = NSMenu()
+                    let pinItem = NSMenuItem(title: "置顶", action: nil, keyEquivalent: "")
+                    pinItem.target = nil
+                    menu.addItem(pinItem)
+                    pinItem.target = self
+                    pinItem.action = #selector(self?.handlePinGroup(_:))
+                    pinItem.representedObject = cwdKey
+                    return menu
+                }
+            }
+
             contentStack.addArrangedSubview(groupRow)
 
             if !isCollapsed {

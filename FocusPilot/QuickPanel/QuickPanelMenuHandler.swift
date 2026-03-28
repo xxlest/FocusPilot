@@ -249,6 +249,16 @@ extension QuickPanelView {
             menu.addItem(unbindItem)
         }
 
+        // 置顶（如果不是组内第一个）
+        let groups = CoderBridgeService.shared.groupedSessions
+        let isFirstInGroup = groups.first(where: { $0.sessions.contains(where: { $0.sessionID == session.sessionID }) })?.sessions.first?.sessionID == session.sessionID
+        if !isFirstInGroup {
+            let pinItem = NSMenuItem(title: "置顶", action: #selector(handlePinSession(_:)), keyEquivalent: "")
+            pinItem.target = self
+            pinItem.representedObject = session.sessionID
+            menu.addItem(pinItem)
+        }
+
         menu.addItem(NSMenuItem.separator())
 
         // 复制 Session ID
@@ -340,5 +350,19 @@ extension QuickPanelView {
 
     @objc func handleRemoveAllEndedSessions() {
         CoderBridgeService.shared.removeEndedSessions()
+    }
+
+    // MARK: - 置顶
+
+    @objc func handlePinGroup(_ sender: NSMenuItem) {
+        guard let cwdNormalized = sender.representedObject as? String else { return }
+        CoderBridgeService.shared.pinGroup(cwdNormalized)
+        forceReload()
+    }
+
+    @objc func handlePinSession(_ sender: NSMenuItem) {
+        guard let sid = sender.representedObject as? String else { return }
+        CoderBridgeService.shared.pinSession(sid)
+        forceReload()
     }
 }

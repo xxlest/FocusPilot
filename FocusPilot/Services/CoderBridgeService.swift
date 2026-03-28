@@ -216,23 +216,50 @@ class CoderBridgeService: NSObject {
         return runningApp.windows.map { ($0.id, $0.title) }
     }
 
+    // MARK: - Pinning
+
+    /// 置顶的目录组（cwdNormalized），按置顶顺序排列
+    var pinnedGroups: [String] = []
+
+    /// 置顶的 session（sessionID），按置顶顺序排列（组内置顶）
+    var pinnedSessions: [String] = []
+
+    func pinGroup(_ cwdNormalized: String) {
+        pinnedGroups.removeAll { $0 == cwdNormalized }
+        pinnedGroups.insert(cwdNormalized, at: 0)
+        postSessionChanged()
+    }
+
+    func pinSession(_ sid: String) {
+        pinnedSessions.removeAll { $0 == sid }
+        pinnedSessions.insert(sid, at: 0)
+        postSessionChanged()
+    }
+
     // MARK: - Session Queries
 
-    /// 按目录分组，组内排序，组间按最新 sortDate 排序
+    /// 按目录分组，保持注册顺序，支持置顶
     var groupedSessions: [SessionGroup] {
+        // 按注册顺序收集目录组（保持首次出现的顺序）
+        var orderedKeys: [String] = []
         var groupMap: [String: [CoderSession]] = [:]
         for session in sessions {
+            if groupMap[session.cwdNormalized] == nil {
+                orderedKeys.append(session.cwdNormalized)
+            }
             groupMap[session.cwdNormalized, default: []].append(session)
         }
 
+        // 同名消歧
         var basenameCount: [String: Int] = [:]
-        for key in groupMap.keys {
+        for key in orderedKeys {
             let basename = (key as NSString).lastPathComponent
             basenameCount[basename, default: 0] += 1
         }
 
         var groups: [SessionGroup] = []
-        for (cwdNormalized, sessions) in groupMap {
+        for cwdNormalized in orderedKeys {
+            guard let sessions = groupMap[cwdNormalized] else { continue }
             let basename = (cwdNormalized as NSString).lastPathComponent
             let displayName: String
             if basenameCount[basename, default: 1] > 1 {
@@ -242,18 +269,27 @@ class CoderBridgeService: NSObject {
                 displayName = basename.isEmpty ? "~" : basename
             }
 
+            // 组内排序：置顶的在前，其余保持注册顺序
             let sorted = sessions.sorted { a, b in
-                if a.sortTier != b.sortTier { return a.sortTier < b.sortTier }
-                return a.sortDate > b.sortDate
+                let aPinned = pinnedSessions.firstIndex(of: a.sessionID)
+                let bPinned = pinnedSessions.firstIndex(of: b.sessionID)
+                if let ai = aPinned, let bi = bPinned { return ai < bi }
+                if aPinned != nil { return true }
+                if bPinned != nil { return false }
+                return false // 保持注册顺序
             }
 
             groups.append(SessionGroup(cwdNormalized: cwdNormalized, displayName: displayName, sessions: sorted))
         }
 
+        // 组间排序：置顶的在前，其余保持注册顺序
         groups.sort { a, b in
-            let aDate = a.sessions.first?.sortDate ?? .distantPast
-            let bDate = b.sessions.first?.sortDate ?? .distantPast
-            return aDate > bDate
+            let aPinned = pinnedGroups.firstIndex(of: a.cwdNormalized)
+            let bPinned = pinnedGroups.firstIndex(of: b.cwdNormalized)
+            if let ai = aPinned, let bi = bPinned { return ai < bi }
+            if aPinned != nil { return true }
+            if bPinned != nil { return false }
+            return false // 保持注册顺序
         }
 
         return groups
