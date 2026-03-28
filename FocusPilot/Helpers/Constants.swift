@@ -13,7 +13,7 @@ enum Constants {
     // MARK: - 快捷面板
     enum Panel {
         static let width: CGFloat = 280               // 面板宽度
-        static let minWidth: CGFloat = 220             // 面板最小宽度
+        static let minWidth: CGFloat = 180             // 面板最小宽度
         static let maxWidth: CGFloat = 500             // 面板最大宽度
         static let minHeight: CGFloat = 200            // 面板最小高度
         static let cornerRadius: CGFloat = 14          // 圆角半径（对齐 macOS 15 系统面板）

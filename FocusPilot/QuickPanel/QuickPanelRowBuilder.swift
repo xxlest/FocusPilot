@@ -571,6 +571,8 @@ extension QuickPanelView {
         ])
 
         row.heightAnchor.constraint(greaterThanOrEqualToConstant: 40).isActive = true
+        // row 宽度撑满父容器（通过 contentStack 的宽度传递）
+        row.setContentHuggingPriority(.defaultLow, for: .horizontal)
         row.alphaValue = session.rowAlpha
 
         // 活跃窗口高亮

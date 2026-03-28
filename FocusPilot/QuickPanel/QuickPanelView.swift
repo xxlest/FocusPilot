@@ -1883,6 +1883,7 @@ final class QuickPanelView: NSView {
             let groupRow = HoverableRowView()
             groupRow.translatesAutoresizingMaskIntoConstraints = false
             groupRow.heightAnchor.constraint(equalToConstant: Constants.Panel.appRowHeight).isActive = true
+            groupRow.setContentHuggingPriority(.defaultLow, for: .horizontal)
 
             let groupStack = NSStackView()
             groupStack.orientation = .horizontal
