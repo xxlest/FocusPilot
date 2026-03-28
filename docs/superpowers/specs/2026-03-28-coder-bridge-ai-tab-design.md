@@ -538,26 +538,36 @@ coder-bridge hook 脚本
 
 ## 8. 分期计划
 
-### P0：MVP
+### P0：MVP ✅ 已完成
 
 - CoderSession 模型 + 状态机（status + lifecycle 双维度）
-- DistributedNotification 收发
+- DistributedNotification 收发（osascript + ObjC bridge）
 - **前台宿主窗口初始关联**（session.start 时记录）
-- 简单回退匹配（cwd basename + 最近活跃兜底）
+- 简单回退匹配（cwd basename + z-order 最前窗口兜底）
 - AI Tab 基础 UI（session 列表 + 状态显示 + 排序 + 角标）
 - 点击切换（初始关联优先 → 回退匹配 → 激活宿主 App）
-- Claude Code adapter
+- Claude Code adapter + hook 配置
 - cwdNormalized 规范化路径计算
+- Cursor/VSCode 区分（CURSOR_TRACE_ID）
+- session.update 自动创建不存在的 session（兼容已运行会话）
+- coder-bridge 安装到 ~/.coder-bridge/（通用路径）
 
 ### P1：体验补齐
 
-- 右键改名 + displayName 持久化偏好
-- WindowHint 手动绑定（增强能力）
-- 隐藏会话 + 恢复入口
+- **右键改名**：NSAlert + NSTextField，持久化到 CoderSessionPreference.displayName
+- **显示名统一**：默认 cwdBasename，home 目录显示 ~，用户可通过改名覆盖
+- **最近 query 摘要**：从 session transcript 文件（~/.claude/projects/<sanitized-cwd>/<session-id>.jsonl）提取最近一条用户消息（顶层 type=="user" 且 message.role=="user"），截断显示在 session 行第二行（10pt nsTextTertiary）
+- **WindowHint 手动绑定**（增强能力，非主路径）
+- **隐藏会话 + 恢复入口**
 - ended 清理策略完善
-- 标题 token stopwords 优化
 
 ### P2：扩展
 
-- Codex / Gemini CLI adapter 实现
+- **query 历史**：基于 transcript 解析，右键菜单"查看 query 历史"，弹出轻量列表面板
+- **Gemini CLI adapter**：需单独调研 Gemini CLI 的 hook / session 事件机制后接入
+- **Codex adapter**
 - heartbeat 心跳机制
+
+### 不做
+
+- ~~右键断开会话~~：FocusPilot 只被动读取真实 session 状态，不伪造或修改远端会话生命周期
