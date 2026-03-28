@@ -198,6 +198,80 @@ class CoderBridgeService: NSObject {
 
     // MARK: - Session Queries
 
+    /// 获取 session 的显示名（preference 优先，否则 cwdBasename）
+    func displayName(for session: CoderSession) -> String {
+        if let pref = ConfigStore.shared.sessionPreferences[session.preferenceKey],
+           !pref.displayName.isEmpty {
+            return pref.displayName
+        }
+        return session.cwdBasename
+    }
+
+    /// 定位 session 对应的 transcript 文件路径
+    func transcriptPath(for session: CoderSession) -> String? {
+        let claudeProjectsDir = NSHomeDirectory() + "/.claude/projects"
+        let fm = FileManager.default
+        guard fm.fileExists(atPath: claudeProjectsDir) else { return nil }
+
+        // sanitized-cwd：把 / 替换为 -，去掉开头的 -
+        let sanitized = session.cwdNormalized
+            .replacingOccurrences(of: "/", with: "-")
+            .trimmingCharacters(in: CharacterSet(charactersIn: "-"))
+        let jsonlPath = claudeProjectsDir + "/" + sanitized + "/" + session.sessionID + ".jsonl"
+        if fm.fileExists(atPath: jsonlPath) { return jsonlPath }
+
+        // 兜底：遍历 projects 目录找匹配的 sessionID
+        if let dirs = try? fm.contentsOfDirectory(atPath: claudeProjectsDir) {
+            for dir in dirs {
+                let candidate = claudeProjectsDir + "/" + dir + "/" + session.sessionID + ".jsonl"
+                if fm.fileExists(atPath: candidate) { return candidate }
+            }
+        }
+        return nil
+    }
+
+    /// 从 transcript 文件中提取最近一条用户 query 的摘要
+    func latestQuerySummary(for session: CoderSession, maxLength: Int = 40) -> String? {
+        guard let path = transcriptPath(for: session),
+              let data = FileManager.default.contents(atPath: path),
+              let content = String(data: data, encoding: .utf8) else {
+            return nil
+        }
+
+        let lines = content.components(separatedBy: "\n").reversed()
+        for line in lines {
+            guard !line.isEmpty,
+                  let lineData = line.data(using: .utf8),
+                  let json = try? JSONSerialization.jsonObject(with: lineData) as? [String: Any],
+                  let type = json["type"] as? String,
+                  type == "user",
+                  let message = json["message"] as? [String: Any],
+                  let role = message["role"] as? String,
+                  role == "user" else {
+                continue
+            }
+
+            var text = ""
+            if let contentStr = message["content"] as? String {
+                text = contentStr
+            } else if let contentArr = message["content"] as? [[String: Any]] {
+                for block in contentArr {
+                    if let blockType = block["type"] as? String, blockType == "text",
+                       let blockText = block["text"] as? String {
+                        text = blockText
+                        break
+                    }
+                }
+            }
+            if text.isEmpty { continue }
+
+            text = text.replacingOccurrences(of: "\n", with: " ").trimmingCharacters(in: .whitespaces)
+            if text.count > maxLength { text = String(text.prefix(maxLength)) + "..." }
+            return text
+        }
+        return nil
+    }
+
     var sortedVisibleSessions: [CoderSession] {
         sessions
             .filter { !$0.isHidden }
@@ -214,6 +288,30 @@ class CoderBridgeService: NSObject {
     }
 
     // MARK: - Session Actions
+
+    func hideSession(_ sid: String) {
+        guard let index = sessions.firstIndex(where: { $0.sessionID == sid }) else { return }
+        sessions[index].isHidden = true
+        postSessionChanged()
+    }
+
+    func unhideSession(_ sid: String) {
+        guard let index = sessions.firstIndex(where: { $0.sessionID == sid }) else { return }
+        sessions[index].isHidden = false
+        postSessionChanged()
+    }
+
+    var hiddenSessions: [CoderSession] {
+        sessions.filter { $0.isHidden }
+    }
+
+    func bindSessionToWindow(sid: String, windowID: CGWindowID) {
+        guard let index = sessions.firstIndex(where: { $0.sessionID == sid }) else { return }
+        sessions[index].initialCandidateWindowID = windowID
+        sessions[index].candidateWindowID = windowID
+        sessions[index].matchConfidence = .high
+        postSessionChanged()
+    }
 
     func removeSession(_ sid: String) {
         sessions.removeAll { $0.sessionID == sid }
