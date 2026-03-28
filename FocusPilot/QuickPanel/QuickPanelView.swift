@@ -1962,11 +1962,14 @@ final class QuickPanelView: NSView {
             }
 
             contentStack.addArrangedSubview(groupRow)
+            groupRow.widthAnchor.constraint(equalTo: contentStack.widthAnchor).isActive = true
 
             if !isCollapsed {
                 for session in group.sessions {
                     let row = createSessionRow(session: session)
                     contentStack.addArrangedSubview(row)
+                    // 行宽撑满 contentStack
+                    row.widthAnchor.constraint(equalTo: contentStack.widthAnchor).isActive = true
                 }
             }
         }
