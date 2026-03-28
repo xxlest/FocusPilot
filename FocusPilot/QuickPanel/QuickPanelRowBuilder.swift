@@ -418,21 +418,27 @@ extension QuickPanelView {
         return container
     }
 
-    // MARK: - AI Session Row
+    // MARK: - AI Session Row (V2)
 
     func createSessionRow(session: CoderSession) -> NSView {
         let theme = ConfigStore.shared.currentThemeColors
         let row = HoverableRowView()
         row.translatesAutoresizingMaskIntoConstraints = false
 
-        // === 第一行：项目名 + 工具图标 + 状态 ===
+        let verticalStack = NSStackView()
+        verticalStack.orientation = .vertical
+        verticalStack.alignment = .leading
+        verticalStack.spacing = 2
+        verticalStack.translatesAutoresizingMaskIntoConstraints = false
+
+        // === 第一行：● Claude · shortID    hostApp  状态 ===
         let firstLine = NSStackView()
         firstLine.orientation = .horizontal
         firstLine.alignment = .centerY
-        firstLine.spacing = Constants.Design.Spacing.sm
+        firstLine.spacing = 4
         firstLine.translatesAutoresizingMaskIntoConstraints = false
 
-        // 状态圆点（6px）
+        // 状态圆点
         let dot = NSView()
         dot.wantsLayer = true
         dot.translatesAutoresizingMaskIntoConstraints = false
@@ -451,68 +457,26 @@ extension QuickPanelView {
         ])
         firstLine.addArrangedSubview(dot)
 
-        // 工具图标（14px）
-        if let toolImage = Self.cachedSymbol(name: session.tool.symbolName, size: 14, weight: .regular) {
-            let toolIcon = NSImageView(image: toolImage)
-            toolIcon.contentTintColor = theme.nsTextSecondary
-            toolIcon.translatesAutoresizingMaskIntoConstraints = false
-            NSLayoutConstraint.activate([
-                toolIcon.widthAnchor.constraint(equalToConstant: 14),
-                toolIcon.heightAnchor.constraint(equalToConstant: 14),
-            ])
-            firstLine.addArrangedSubview(toolIcon)
-        }
+        // "Claude · a1b2c3d4"
+        let idText = "\(session.tool.displayName) · \(session.shortID)"
+        let idLabel = createLabel(idText, size: 11, color: theme.nsTextPrimary)
+        firstLine.addArrangedSubview(idLabel)
 
-        // 项目名（cwdBasename，固定不可编辑）
-        let projectName = session.cwdBasename
-        let nameLabel = createLabel(projectName, size: 12, color: theme.nsTextPrimary)
-        nameLabel.lineBreakMode = .byTruncatingTail
-        nameLabel.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
-        firstLine.addArrangedSubview(nameLabel)
-
-        // spacer
         firstLine.addArrangedSubview(createSpacer())
 
-        // 宿主 App 图标（16px）
-        if !session.hostApp.isEmpty,
-           let bundleID = HostAppMapping.bundleID(for: session.hostApp),
-           let appURL = NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleID) {
-            let appIcon = NSWorkspace.shared.icon(forFile: appURL.path)
-            appIcon.size = NSSize(width: 16, height: 16)
-            let hostIconView = NSImageView(image: appIcon)
-            hostIconView.translatesAutoresizingMaskIntoConstraints = false
-            NSLayoutConstraint.activate([
-                hostIconView.widthAnchor.constraint(equalToConstant: 16),
-                hostIconView.heightAnchor.constraint(equalToConstant: 16),
-            ])
-            firstLine.addArrangedSubview(hostIconView)
+        // hostApp 显示名
+        if !session.hostApp.isEmpty {
+            let hostLabel = createLabel(session.hostAppDisplayName, size: 10, color: theme.nsTextTertiary)
+            firstLine.addArrangedSubview(hostLabel)
         }
 
         // 状态文字
-        let statusLabel = createLabel(session.statusText, size: 11, color: theme.nsTextSecondary)
+        let statusLabel = createLabel(session.statusText, size: 10, color: theme.nsTextSecondary)
         firstLine.addArrangedSubview(statusLabel)
 
-        // === 垂直容器 ===
-        let verticalStack = NSStackView()
-        verticalStack.orientation = .vertical
-        verticalStack.alignment = .leading
-        verticalStack.spacing = 2
-        verticalStack.translatesAutoresizingMaskIntoConstraints = false
         verticalStack.addArrangedSubview(firstLine)
 
-        // === 第二行：主题（Topic） ===
-        // 仅用户手动编辑后才显示自定义主题，否则固定"未命名主题"
-        let topicText = (session.topic != nil && !session.topic!.isEmpty) ? session.topic! : "未命名主题"
-        let topicLabel = createLabel(topicText, size: 10, color: theme.nsTextSecondary)
-        topicLabel.lineBreakMode = .byTruncatingTail
-        topicLabel.translatesAutoresizingMaskIntoConstraints = false
-        verticalStack.addArrangedSubview(topicLabel)
-        NSLayoutConstraint.activate([
-            topicLabel.leadingAnchor.constraint(equalTo: verticalStack.leadingAnchor, constant: 20),
-            topicLabel.trailingAnchor.constraint(lessThanOrEqualTo: verticalStack.trailingAnchor),
-        ])
-
-        // === 第三行：Query ===
+        // === 第二行：query 摘要 ===
         let queryText: String
         if let query = CoderBridgeService.shared.latestQuerySummary(for: session, maxLength: 60) {
             queryText = "\"\(query)\""
@@ -523,31 +487,22 @@ extension QuickPanelView {
         queryLabel.lineBreakMode = .byTruncatingTail
         queryLabel.translatesAutoresizingMaskIntoConstraints = false
         verticalStack.addArrangedSubview(queryLabel)
-        NSLayoutConstraint.activate([
-            queryLabel.leadingAnchor.constraint(equalTo: verticalStack.leadingAnchor, constant: 20),
-            queryLabel.trailingAnchor.constraint(lessThanOrEqualTo: verticalStack.trailingAnchor),
-        ])
 
-        // 布局
+        // 布局（缩进 windowIndent）
         row.addSubview(verticalStack)
         NSLayoutConstraint.activate([
-            verticalStack.leadingAnchor.constraint(equalTo: row.leadingAnchor, constant: Constants.Design.Spacing.sm),
+            verticalStack.leadingAnchor.constraint(equalTo: row.leadingAnchor, constant: Constants.Panel.windowIndent),
             verticalStack.trailingAnchor.constraint(equalTo: row.trailingAnchor, constant: -Constants.Design.Spacing.sm),
             verticalStack.centerYAnchor.constraint(equalTo: row.centerYAnchor),
         ])
 
-        // 固定三行高度
-        row.heightAnchor.constraint(greaterThanOrEqualToConstant: 52).isActive = true
-
-        // 行透明度
+        row.heightAnchor.constraint(greaterThanOrEqualToConstant: 40).isActive = true
         row.alphaValue = session.rowAlpha
 
-        // 点击：先切窗口，延迟更新排序
         row.clickHandler = { [weak self] in
             self?.handleSessionClick(session)
         }
 
-        // 右键菜单
         row.contextMenuProvider = { [weak self] in
             self?.createSessionContextMenu(session: session)
         }
@@ -559,30 +514,11 @@ extension QuickPanelView {
         CoderBridgeService.shared.updateLastInteraction(sid: session.sessionID)
         let (windowID, confidence) = CoderBridgeService.shared.resolveWindowForSession(session)
 
-        if let wid = windowID {
+        if let wid = windowID, confidence == .high {
             let allWindows = AppMonitor.shared.runningApps.flatMap { $0.windows }
             if let windowInfo = allWindows.first(where: { $0.id == wid }) {
                 WindowService.shared.activateWindow(windowInfo)
                 (self.window as? QuickPanelWindow)?.yieldLevel()
-
-                // .low 时短暂闪烁行背景
-                if confidence == .low {
-                    let flashColor = ConfigStore.shared.currentThemeColors.nsAccent.withAlphaComponent(0.15)
-                    // 找到刚点击的 session 行并闪烁
-                    for view in contentStack.arrangedSubviews {
-                        if let hoverRow = view as? HoverableRowView, hoverRow.clickHandler != nil {
-                            hoverRow.wantsLayer = true
-                            hoverRow.layer?.backgroundColor = flashColor.cgColor
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
-                                NSAnimationContext.runAnimationGroup { ctx in
-                                    ctx.duration = Constants.Design.Anim.normal
-                                    hoverRow.layer?.backgroundColor = NSColor.clear.cgColor
-                                }
-                            }
-                            break
-                        }
-                    }
-                }
                 return
             }
         }
