@@ -235,20 +235,99 @@ extension QuickPanelView {
     func createSessionContextMenu(session: CoderSession) -> NSMenu? {
         let menu = NSMenu()
 
+        // 改名
+        let renameItem = NSMenuItem(title: "改名...", action: #selector(handleRenameSession(_:)), keyEquivalent: "")
+        renameItem.target = self
+        renameItem.representedObject = [
+            "sessionID": session.sessionID,
+            "cwdBasename": session.cwdBasename,
+            "preferenceKey": session.preferenceKey,
+            "displayName": CoderBridgeService.shared.displayName(for: session)
+        ] as [String: String]
+        menu.addItem(renameItem)
+
+        // 手动绑定窗口 → 子菜单
+        if !session.hostApp.isEmpty,
+           let bundleID = HostAppMapping.bundleID(for: session.hostApp),
+           let runningApp = AppMonitor.shared.runningApps.first(where: { $0.bundleID == bundleID }),
+           !runningApp.windows.isEmpty {
+            let bindItem = NSMenuItem(title: "绑定到窗口", action: nil, keyEquivalent: "")
+            let bindSubmenu = NSMenu()
+            for windowInfo in runningApp.windows {
+                let title = windowInfo.title.isEmpty ? "(无标题)" : windowInfo.title
+                let windowItem = NSMenuItem(title: title, action: #selector(handleBindToWindow(_:)), keyEquivalent: "")
+                windowItem.target = self
+                windowItem.representedObject = ["sid": session.sessionID, "wid": windowInfo.id] as [String: Any]
+                bindSubmenu.addItem(windowItem)
+            }
+            bindItem.submenu = bindSubmenu
+            menu.addItem(bindItem)
+        }
+
+        menu.addItem(NSMenuItem.separator())
+
+        // 隐藏此会话
+        let hideItem = NSMenuItem(title: "隐藏此会话", action: #selector(handleHideSession(_:)), keyEquivalent: "")
+        hideItem.target = self
+        hideItem.representedObject = session.sessionID
+        menu.addItem(hideItem)
+
         if session.lifecycle == .ended {
+            menu.addItem(NSMenuItem.separator())
+
             let removeItem = NSMenuItem(title: "移除此会话", action: #selector(handleRemoveSession(_:)), keyEquivalent: "")
             removeItem.target = self
             removeItem.representedObject = session.sessionID
             menu.addItem(removeItem)
-
-            menu.addItem(NSMenuItem.separator())
 
             let removeAllItem = NSMenuItem(title: "移除所有已结束会话", action: #selector(handleRemoveAllEndedSessions), keyEquivalent: "")
             removeAllItem.target = self
             menu.addItem(removeAllItem)
         }
 
-        return menu.items.isEmpty ? nil : menu
+        return menu
+    }
+
+    @objc func handleRenameSession(_ sender: NSMenuItem) {
+        guard let info = sender.representedObject as? [String: String],
+              let _ = info["sessionID"],
+              let cwdBasename = info["cwdBasename"],
+              let preferenceKey = info["preferenceKey"],
+              let currentDisplayName = info["displayName"] else { return }
+
+        let alert = NSAlert()
+        alert.messageText = "重命名 AI 会话"
+        alert.informativeText = "为 \(cwdBasename) 会话设置自定义名称"
+        alert.addButton(withTitle: "确定")
+        alert.addButton(withTitle: "取消")
+
+        let input = NSTextField(frame: NSRect(x: 0, y: 0, width: 260, height: 24))
+        input.stringValue = currentDisplayName
+        input.placeholderString = cwdBasename
+        alert.accessoryView = input
+        alert.window.initialFirstResponder = input
+
+        let response = alert.runModal()
+        if response == .alertFirstButtonReturn {
+            let newName = input.stringValue.trimmingCharacters(in: .whitespaces)
+            if !newName.isEmpty {
+                ConfigStore.shared.updateSessionPreference(key: preferenceKey, displayName: newName)
+                forceReload()
+            }
+        }
+    }
+
+    @objc func handleBindToWindow(_ sender: NSMenuItem) {
+        guard let info = sender.representedObject as? [String: Any],
+              let sid = info["sid"] as? String,
+              let wid = info["wid"] as? CGWindowID else { return }
+        CoderBridgeService.shared.bindSessionToWindow(sid: sid, windowID: wid)
+        forceReload()
+    }
+
+    @objc func handleHideSession(_ sender: NSMenuItem) {
+        guard let sid = sender.representedObject as? String else { return }
+        CoderBridgeService.shared.hideSession(sid)
     }
 
     @objc func handleRemoveSession(_ sender: NSMenuItem) {
