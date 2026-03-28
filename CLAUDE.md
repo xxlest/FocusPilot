@@ -116,6 +116,9 @@ coder-bridge/
 - **两层窗口匹配**：第一层 session.start 时记录前台宿主窗口 → 第二层回退匹配（cwd basename + z-order 最前窗口兜底）
 - **Cursor/VSCode 区分**：coder-bridge 通过 CURSOR_TRACE_ID 环境变量区分 Cursor 和 VS Code（两者 $TERM_PROGRAM 均为 vscode）
 - **会话不持久化**：CoderSession 列表纯运行时，FocusPilot 重启后清空（AI 工具中断后需重新启动注册）
+- **AI 会话偏好持久化**：CoderSessionPreference 按 tool+cwdNormalized+hostApp 索引，存储 displayName；新 session 自动继承同 key 的偏好
+- **Transcript 读取**：从 ~/.claude/projects/<sanitized-cwd>/<session-id>.jsonl 提取用户消息（type=="user" + message.role=="user"），用于 query 摘要
+- **双行 Session 行**：第一行主信息（工具图标+displayName+宿主图标+状态），第二行最近 query 摘要（10pt nsTextTertiary）
 - **Notion 风格主题系统**：AppTheme 枚举 8 种预设 → ThemeColors 9 色槽（ns* + sw* 双套，含 sidebarBackground），覆盖全 UI
 - **主题刷新链路**：PreferencesView → @Published → AppDelegate.applyPreferences → NSApp.appearance + quickPanelWindow.applyTheme + themeChanged 通知
 - **FocusByTime 番茄钟**：FocusTimerService 单例管理状态机（idle/running/paused × work/rest），通过 NotificationCenter 驱动 QuickPanel 底部计时器栏和 FloatingBall 进度环
