@@ -498,9 +498,10 @@ extension QuickPanelView {
         let statusLabel = createLabel(session.statusText, size: 11, color: theme.nsTextSecondary)
         stack.addArrangedSubview(statusLabel)
 
-        // query 摘要（第二行）
-        if let summary = CoderBridgeService.shared.latestQuerySummary(for: session) {
-            let summaryLabel = createLabel(summary, size: 10, color: theme.nsTextTertiary)
+        // 副标题：taskName 优先，nil 时取 query 摘要
+        let subtitle = session.taskName ?? CoderBridgeService.shared.latestQuerySummary(for: session)
+        if let subtitle = subtitle, !subtitle.isEmpty {
+            let summaryLabel = createLabel(subtitle, size: 10, color: theme.nsTextTertiary)
             summaryLabel.lineBreakMode = .byTruncatingTail
             summaryLabel.translatesAutoresizingMaskIntoConstraints = false
 
@@ -545,6 +546,7 @@ extension QuickPanelView {
     }
 
     private func handleSessionClick(_ session: CoderSession) {
+        CoderBridgeService.shared.updateLastInteraction(sid: session.sessionID)
         let (windowID, confidence) = CoderBridgeService.shared.resolveWindowForSession(session)
 
         if let wid = windowID {

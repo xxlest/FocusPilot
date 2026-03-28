@@ -235,42 +235,22 @@ extension QuickPanelView {
     func createSessionContextMenu(session: CoderSession) -> NSMenu? {
         let menu = NSMenu()
 
-        // 改名
-        let renameItem = NSMenuItem(title: "改名...", action: #selector(handleRenameSession(_:)), keyEquivalent: "")
-        renameItem.target = self
-        renameItem.representedObject = [
+        // 编辑任务名
+        let editItem = NSMenuItem(title: "编辑任务名...", action: #selector(handleEditTaskName(_:)), keyEquivalent: "")
+        editItem.target = self
+        editItem.representedObject = [
             "sessionID": session.sessionID,
             "cwdBasename": session.cwdBasename,
-            "preferenceKey": session.preferenceKey,
-            "displayName": CoderBridgeService.shared.displayName(for: session)
+            "currentTaskName": session.taskName ?? "",
+            "defaultSummary": CoderBridgeService.shared.latestQuerySummary(for: session) ?? ""
         ] as [String: String]
-        menu.addItem(renameItem)
+        menu.addItem(editItem)
 
-        // 手动绑定窗口 → 子菜单
-        if !session.hostApp.isEmpty,
-           let bundleID = HostAppMapping.bundleID(for: session.hostApp),
-           let runningApp = AppMonitor.shared.runningApps.first(where: { $0.bundleID == bundleID }),
-           !runningApp.windows.isEmpty {
-            let bindItem = NSMenuItem(title: "绑定到窗口", action: nil, keyEquivalent: "")
-            let bindSubmenu = NSMenu()
-            for windowInfo in runningApp.windows {
-                let title = windowInfo.title.isEmpty ? "(无标题)" : windowInfo.title
-                let windowItem = NSMenuItem(title: title, action: #selector(handleBindToWindow(_:)), keyEquivalent: "")
-                windowItem.target = self
-                windowItem.representedObject = ["sid": session.sessionID, "wid": windowInfo.id] as [String: Any]
-                bindSubmenu.addItem(windowItem)
-            }
-            bindItem.submenu = bindSubmenu
-            menu.addItem(bindItem)
-        }
-
-        menu.addItem(NSMenuItem.separator())
-
-        // 隐藏此会话
-        let hideItem = NSMenuItem(title: "隐藏此会话", action: #selector(handleHideSession(_:)), keyEquivalent: "")
-        hideItem.target = self
-        hideItem.representedObject = session.sessionID
-        menu.addItem(hideItem)
+        // 绑定到当前窗口
+        let bindItem = NSMenuItem(title: "绑定到当前窗口", action: #selector(handleBindToCurrentWindow(_:)), keyEquivalent: "")
+        bindItem.target = self
+        bindItem.representedObject = session.sessionID
+        menu.addItem(bindItem)
 
         if session.lifecycle == .ended {
             menu.addItem(NSMenuItem.separator())
@@ -288,46 +268,77 @@ extension QuickPanelView {
         return menu
     }
 
-    @objc func handleRenameSession(_ sender: NSMenuItem) {
+    @objc func handleEditTaskName(_ sender: NSMenuItem) {
         guard let info = sender.representedObject as? [String: String],
-              let _ = info["sessionID"],
+              let sessionID = info["sessionID"],
               let cwdBasename = info["cwdBasename"],
-              let preferenceKey = info["preferenceKey"],
-              let currentDisplayName = info["displayName"] else { return }
+              let currentTaskName = info["currentTaskName"],
+              let defaultSummary = info["defaultSummary"] else { return }
 
         let alert = NSAlert()
-        alert.messageText = "重命名 AI 会话"
-        alert.informativeText = "为 \(cwdBasename) 会话设置自定义名称"
+        alert.messageText = "编辑任务名"
+        alert.informativeText = "项目：\(cwdBasename)"
         alert.addButton(withTitle: "确定")
         alert.addButton(withTitle: "取消")
+        alert.addButton(withTitle: "重置为默认")
 
-        let input = NSTextField(frame: NSRect(x: 0, y: 0, width: 260, height: 24))
-        input.stringValue = currentDisplayName
-        input.placeholderString = cwdBasename
+        let input = NSTextField(frame: NSRect(x: 0, y: 0, width: 300, height: 24))
+        input.stringValue = currentTaskName.isEmpty ? defaultSummary : currentTaskName
+        input.placeholderString = defaultSummary.isEmpty ? "输入任务名..." : defaultSummary
         alert.accessoryView = input
         alert.window.initialFirstResponder = input
 
         let response = alert.runModal()
         if response == .alertFirstButtonReturn {
+            // 确定
             let newName = input.stringValue.trimmingCharacters(in: .whitespaces)
-            if !newName.isEmpty {
-                ConfigStore.shared.updateSessionPreference(key: preferenceKey, displayName: newName)
-                forceReload()
-            }
+            CoderBridgeService.shared.updateTaskName(sid: sessionID, taskName: newName.isEmpty ? nil : newName)
+            forceReload()
+        } else if response == .alertThirdButtonReturn {
+            // 重置为默认（清空 taskName，恢复为 query 摘要）
+            CoderBridgeService.shared.updateTaskName(sid: sessionID, taskName: nil)
+            forceReload()
         }
     }
 
-    @objc func handleBindToWindow(_ sender: NSMenuItem) {
-        guard let info = sender.representedObject as? [String: Any],
-              let sid = info["sid"] as? String,
-              let wid = info["wid"] as? CGWindowID else { return }
-        CoderBridgeService.shared.bindSessionToWindow(sid: sid, windowID: wid)
-        forceReload()
-    }
-
-    @objc func handleHideSession(_ sender: NSMenuItem) {
+    @objc func handleBindToCurrentWindow(_ sender: NSMenuItem) {
         guard let sid = sender.representedObject as? String else { return }
-        CoderBridgeService.shared.hideSession(sid)
+
+        // 获取当前前台窗口
+        guard let frontApp = NSWorkspace.shared.frontmostApplication,
+              let frontBundleID = frontApp.bundleIdentifier else { return }
+
+        let pid = frontApp.processIdentifier
+        guard let windowList = CGWindowListCopyWindowInfo([.optionOnScreenOnly, .excludeDesktopElements], kCGNullWindowID) as? [[String: Any]] else { return }
+
+        var targetWindowID: CGWindowID?
+        var targetTitle = ""
+        for windowInfo in windowList {
+            guard let ownerPID = windowInfo[kCGWindowOwnerPID as String] as? pid_t,
+                  ownerPID == pid,
+                  let layer = windowInfo[kCGWindowLayer as String] as? Int,
+                  layer == 0,
+                  let wid = windowInfo[kCGWindowNumber as String] as? CGWindowID else { continue }
+            targetWindowID = wid
+            targetTitle = windowInfo[kCGWindowName as String] as? String ?? ""
+            break
+        }
+
+        guard let wid = targetWindowID else { return }
+
+        let appName = frontApp.localizedName ?? frontBundleID
+        let displayTitle = targetTitle.isEmpty ? appName : "\(appName) — \(targetTitle)"
+
+        let alert = NSAlert()
+        alert.messageText = "绑定到当前窗口"
+        alert.informativeText = "确定将此会话绑定到「\(displayTitle)」？"
+        alert.addButton(withTitle: "确定")
+        alert.addButton(withTitle: "取消")
+
+        if alert.runModal() == .alertFirstButtonReturn {
+            CoderBridgeService.shared.bindSessionToWindow(sid: sid, windowID: wid)
+            forceReload()
+        }
     }
 
     @objc func handleRemoveSession(_ sender: NSMenuItem) {

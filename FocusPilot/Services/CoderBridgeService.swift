@@ -311,20 +311,10 @@ class CoderBridgeService: NSObject {
         postSessionChanged()
     }
 
-    func hideSession(_ sid: String) {
+    func updateTaskName(sid: String, taskName: String?) {
         guard let index = sessions.firstIndex(where: { $0.sessionID == sid }) else { return }
-        sessions[index].isHidden = true
+        sessions[index].taskName = taskName
         postSessionChanged()
-    }
-
-    func unhideSession(_ sid: String) {
-        guard let index = sessions.firstIndex(where: { $0.sessionID == sid }) else { return }
-        sessions[index].isHidden = false
-        postSessionChanged()
-    }
-
-    var hiddenSessions: [CoderSession] {
-        sessions.filter { $0.isHidden }
     }
 
     func bindSessionToWindow(sid: String, windowID: CGWindowID) {
