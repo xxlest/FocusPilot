@@ -516,15 +516,18 @@ extension QuickPanelView {
             }
         }
 
-        // "Claude · a1b2c3d4"
+        // "Claude · a1b2c3d4"（可截断）
         let idText = "\(session.tool.displayName) · \(session.shortID)"
         let idLabel = createLabel(idText, size: 11, color: theme.nsTextPrimary)
+        idLabel.lineBreakMode = .byTruncatingTail
+        idLabel.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
         firstLine.addArrangedSubview(idLabel)
 
         firstLine.addArrangedSubview(createSpacer())
 
-        // 状态文字
+        // 状态文字（不被挤压）
         let statusLabel = createLabel(session.statusText, size: 10, color: session.statusTextColor(theme: theme))
+        statusLabel.setContentCompressionResistancePriority(.required, for: .horizontal)
         firstLine.addArrangedSubview(statusLabel)
 
         // done 未读标签
@@ -540,7 +543,10 @@ extension QuickPanelView {
             firstLine.addArrangedSubview(badge)
         }
 
+        firstLine.translatesAutoresizingMaskIntoConstraints = false
         verticalStack.addArrangedSubview(firstLine)
+        // firstLine 宽度跟随 verticalStack
+        firstLine.widthAnchor.constraint(equalTo: verticalStack.widthAnchor).isActive = true
 
         // === 第二行：query 摘要 ===
         let queryText: String
@@ -553,6 +559,8 @@ extension QuickPanelView {
         queryLabel.lineBreakMode = .byTruncatingTail
         queryLabel.translatesAutoresizingMaskIntoConstraints = false
         verticalStack.addArrangedSubview(queryLabel)
+        // query 行宽度跟随 verticalStack
+        queryLabel.widthAnchor.constraint(lessThanOrEqualTo: verticalStack.widthAnchor).isActive = true
 
         // 布局（缩进 windowIndent）
         row.addSubview(verticalStack)

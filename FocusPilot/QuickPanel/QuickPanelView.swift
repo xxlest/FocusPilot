@@ -1909,15 +1909,18 @@ final class QuickPanelView: NSView {
                 groupStack.addArrangedSubview(chevron)
             }
 
-            // 目录名
+            // 目录名（可截断）
             let dirLabel = createLabel(group.displayName, size: 12, color: theme.nsTextPrimary)
             dirLabel.font = .systemFont(ofSize: 12, weight: .medium)
+            dirLabel.lineBreakMode = .byTruncatingTail
+            dirLabel.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
             groupStack.addArrangedSubview(dirLabel)
 
             groupStack.addArrangedSubview(createSpacer())
 
-            // session 数量
+            // session 数量（不被挤掉）
             let countLabel = createLabel("(\(group.sessions.count))", size: 11, color: theme.nsTextTertiary)
+            countLabel.setContentCompressionResistancePriority(.required, for: .horizontal)
             groupStack.addArrangedSubview(countLabel)
 
             let cwdKey = group.cwdNormalized
