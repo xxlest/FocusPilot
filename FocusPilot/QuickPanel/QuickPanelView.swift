@@ -2310,15 +2310,42 @@ final class HoverableRowView: NSView {
         }
     }
 
+    /// 向上查找最顶层的 contentStack，遍历所有 HoverableRowView（跨 app 组）
+    private func allHoverableRows() -> [HoverableRowView] {
+        // 向上找到 contentStack（NSStackView 且包含多个子视图）
+        var current: NSView? = superview
+        while let view = current {
+            if let stack = view as? NSStackView, stack.arrangedSubviews.count > 2 {
+                // 递归收集所有 HoverableRowView
+                return Self.collectHoverableRows(in: stack)
+            }
+            current = view.superview
+        }
+        // fallback：只看同级
+        if let parent = superview as? NSStackView {
+            return parent.arrangedSubviews.compactMap { $0 as? HoverableRowView }
+        }
+        return []
+    }
+
+    private static func collectHoverableRows(in view: NSView) -> [HoverableRowView] {
+        var result: [HoverableRowView] = []
+        for sub in view.subviews {
+            if let row = sub as? HoverableRowView {
+                result.append(row)
+            }
+            result.append(contentsOf: collectHoverableRows(in: sub))
+        }
+        return result
+    }
+
     override func mouseEntered(with event: NSEvent) {
         isHovered = true
-        // 隐藏同级其他行的 selected 高亮（直接操作 layer，不触发 updateAppearance 避免闪烁）
-        if let parent = superview as? NSStackView {
-            for view in parent.arrangedSubviews {
-                if let sibling = view as? HoverableRowView, sibling !== self, sibling.isSelected {
-                    sibling.layer?.backgroundColor = nil
-                    sibling.indicatorLine.isHidden = true
-                }
+        // 全局隐藏所有 selected 行的高亮（跨 app 组）
+        for row in allHoverableRows() {
+            if row !== self && row.isSelected {
+                row.layer?.backgroundColor = nil
+                row.indicatorLine.isHidden = true
             }
         }
         updateAppearance()
@@ -2326,20 +2353,17 @@ final class HoverableRowView: NSView {
 
     override func mouseExited(with event: NSEvent) {
         isHovered = false
-        // 非 selected 行：立即清除 hover 效果
-        // selected 行：不清除（保持高亮直到其他行 hover 时隐藏）
         if !isSelected {
             updateAppearance()
         }
-        // 延迟一帧后检查：如果没有任何兄弟行处于 hover，恢复所有 selected 行
+        // 延迟一帧后检查：全局无 hover 时恢复 selected 行
         DispatchQueue.main.async { [weak self] in
-            guard let parent = self?.superview as? NSStackView else { return }
-            let anyHovered = parent.arrangedSubviews.contains { ($0 as? HoverableRowView)?.isHovered == true }
+            guard let self = self else { return }
+            let allRows = self.allHoverableRows()
+            let anyHovered = allRows.contains { $0.isHovered }
             if !anyHovered {
-                for view in parent.arrangedSubviews {
-                    if let sibling = view as? HoverableRowView, sibling.isSelected {
-                        sibling.updateAppearance()
-                    }
+                for row in allRows where row.isSelected {
+                    row.updateAppearance()
                 }
             }
         }
