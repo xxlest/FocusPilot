@@ -3,7 +3,7 @@ import AppKit
 /// 管理 AI 编码工具会话的服务
 /// 通过 DistributedNotificationCenter 接收 coder-bridge 事件
 /// 维护纯运行时的 CoderSession 列表
-class CoderBridgeService {
+class CoderBridgeService: NSObject {
     static let shared = CoderBridgeService()
 
     /// 当前活跃的 AI 会话列表（运行时，不持久化）
@@ -12,7 +12,9 @@ class CoderBridgeService {
     /// 清理定时器
     private var cleanupTimer: Timer?
 
-    private init() {}
+    private override init() {
+        super.init()
+    }
 
     // MARK: - Lifecycle
 
