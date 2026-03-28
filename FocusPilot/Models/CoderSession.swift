@@ -59,7 +59,12 @@ struct CoderSession: Identifiable {
     }
 
     var cwdBasename: String {
-        (cwd as NSString).lastPathComponent
+        let homePath = NSHomeDirectory()
+        if cwd == homePath || cwd == homePath + "/" {
+            return "~"
+        }
+        let name = (cwd as NSString).lastPathComponent
+        return name.isEmpty ? "~" : name
     }
 
     var isActionable: Bool {

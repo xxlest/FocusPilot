@@ -53,6 +53,10 @@ class CoderBridgeService: NSObject {
             case "session.start":
                 self?.handleSessionStart(sid: sid, seq: seq, toolStr: toolStr, cwd: cwd, cwdNormalized: cwdNormalized, hostApp: hostApp)
             case "session.update":
+                // 如果 session 不存在（已打开的会话），自动创建后再更新
+                if self?.sessions.contains(where: { $0.sessionID == sid }) != true {
+                    self?.handleSessionStart(sid: sid, seq: 0, toolStr: toolStr, cwd: cwd, cwdNormalized: cwdNormalized, hostApp: hostApp)
+                }
                 self?.handleSessionUpdate(sid: sid, seq: seq, statusStr: statusStr)
             case "session.end":
                 self?.handleSessionEnd(sid: sid, seq: seq)
