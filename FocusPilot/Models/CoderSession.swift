@@ -47,7 +47,7 @@ struct CoderSession: Identifiable {
     var lastSeq: Int
     var lastUpdate: Date
     var lastInteraction: Date?
-    var isRead: Bool = false             // done 状态时是否已读（点击过则已读）
+    var isRead: Bool = false             // 当前 actionable 状态是否已查看（成功切换窗口后标记已读）
 
     var autoWindowID: CGWindowID?       // session.start 时自动采样（弱绑定，不参与占用仲裁）
     var manualWindowID: CGWindowID?
@@ -74,10 +74,9 @@ struct CoderSession: Identifiable {
     }
 
     var isActionable: Bool {
-        switch (status, lifecycle) {
-        case (.idle, .active),
-             (.done, .active), (.done, .ended),
-             (.error, .active), (.error, .ended):
+        guard lifecycle == .active, !isRead else { return false }
+        switch status {
+        case .done, .idle, .error:
             return true
         default:
             return false
@@ -100,34 +99,36 @@ struct CoderSession: Identifiable {
         if lifecycle == .ended { return NSColor(calibratedWhite: 0.35, alpha: 1.0) }
         switch status {
         case .working:    return .systemGreen
-        case .idle:       return .systemOrange
-        case .done:       return isRead ? NSColor(calibratedWhite: 0.35, alpha: 1.0) : .systemGreen
-        case .error:      return .systemRed
+        case .idle:       return .systemOrange                    // 始终橙色，不受 isRead 影响
+        case .done:       return isRead ? NSColor(calibratedWhite: 0.35, alpha: 1.0) : .systemGreen  // 仅 done 已读变灰
+        case .error:      return .systemRed                       // 始终红色，不受 isRead 影响
         case .registered: return theme.nsTextSecondary
         }
     }
 
     func statusDotColor(theme: ThemeColors) -> NSColor {
+        if lifecycle == .ended { return NSColor(calibratedWhite: 0.35, alpha: 1.0) }
         switch status {
         case .working:    return .systemGreen
-        case .idle:       return .systemOrange
-        case .done:       return isRead ? NSColor(calibratedWhite: 0.35, alpha: 1.0) : .systemGreen
-        case .error:      return .systemRed
-        case .registered: return NSColor(calibratedWhite: 0.35, alpha: 1.0) // 灰色
+        case .idle:       return .systemOrange                    // 始终橙色
+        case .done:       return isRead ? NSColor(calibratedWhite: 0.35, alpha: 1.0) : .systemGreen  // 仅 done 已读变灰
+        case .error:      return .systemRed                       // 始终红色
+        case .registered: return NSColor(calibratedWhite: 0.35, alpha: 1.0)
         }
     }
 
     var statusDotHasGlow: Bool {
+        if lifecycle == .ended { return false }
         switch status {
-        case .working, .idle, .error: return true
-        case .done: return !isRead
+        case .working, .idle, .error: return true                 // 始终发光
+        case .done: return !isRead                                // 仅 done 已读后不发光
         default: return false
         }
     }
 
     var rowAlpha: CGFloat {
         if lifecycle == .ended { return 0.4 }
-        if status == .done && isRead { return 0.6 }
+        if status == .done && isRead { return 0.6 }              // 仅 done 已读降亮度
         return 1.0
     }
 
