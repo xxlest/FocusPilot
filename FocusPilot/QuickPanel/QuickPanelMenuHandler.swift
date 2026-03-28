@@ -230,9 +230,33 @@ extension QuickPanelView {
         NSWorkspace.shared.open(URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility")!)
     }
 
-    // MARK: - AI Session 右键菜单（占位，Task 7 实现）
+    // MARK: - AI Session 右键菜单
 
     func createSessionContextMenu(session: CoderSession) -> NSMenu? {
-        return nil
+        let menu = NSMenu()
+
+        if session.lifecycle == .ended {
+            let removeItem = NSMenuItem(title: "移除此会话", action: #selector(handleRemoveSession(_:)), keyEquivalent: "")
+            removeItem.target = self
+            removeItem.representedObject = session.sessionID
+            menu.addItem(removeItem)
+
+            menu.addItem(NSMenuItem.separator())
+
+            let removeAllItem = NSMenuItem(title: "移除所有已结束会话", action: #selector(handleRemoveAllEndedSessions), keyEquivalent: "")
+            removeAllItem.target = self
+            menu.addItem(removeAllItem)
+        }
+
+        return menu.items.isEmpty ? nil : menu
+    }
+
+    @objc func handleRemoveSession(_ sender: NSMenuItem) {
+        guard let sid = sender.representedObject as? String else { return }
+        CoderBridgeService.shared.removeSession(sid)
+    }
+
+    @objc func handleRemoveAllEndedSessions() {
+        CoderBridgeService.shared.removeEndedSessions()
     }
 }
