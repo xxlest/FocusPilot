@@ -2326,8 +2326,12 @@ final class HoverableRowView: NSView {
 
     override func mouseExited(with event: NSEvent) {
         isHovered = false
-        updateAppearance()
-        // 延迟一帧后检查：如果没有任何兄弟行处于 hover，恢复 selected 行
+        // 非 selected 行：立即清除 hover 效果
+        // selected 行：不清除（保持高亮直到其他行 hover 时隐藏）
+        if !isSelected {
+            updateAppearance()
+        }
+        // 延迟一帧后检查：如果没有任何兄弟行处于 hover，恢复所有 selected 行
         DispatchQueue.main.async { [weak self] in
             guard let parent = self?.superview as? NSStackView else { return }
             let anyHovered = parent.arrangedSubviews.contains { ($0 as? HoverableRowView)?.isHovered == true }
