@@ -191,15 +191,18 @@ session.start 到达时：
 - 不是强绑定，不保证准确
 - 多个 session 可以暂时拥有相同的 `autoWindowID`（不互斥）
 - 只能挡住跨 App 误绑，挡不住同宿主多窗口误绑
+- `autoWindowID` 每次点击前先做 `windowExists` 校验，失效则自动清空并降级到"未绑定"路径
 
 ### 4.3 点击切换优先级
 
 ```
-1. manualWindowID 有效 → 直接切换（强绑定）
-2. autoWindowID 有效 → 尝试切换（弱绑定，不参与占用检测）
+1. manualWindowID → windowExists 校验 → 有效则直接切换（强绑定）
+   - 失效 → 清空 manualWindowID，继续第 2 步
+2. autoWindowID → windowExists 校验 → 有效则尝试切换（弱绑定）
+   - 失效 → 清空 autoWindowID，继续第 3 步
 3. 都无 → 弹对话框："此会话尚未绑定窗口，是否绑定到当前窗口？"
    - 用户确认 → 写入 manualWindowID（强绑定）
-   - 用户取消 → 只激活宿主 App
+   - 用户取消 → 不做任何跳转（不激活宿主 App）
 ```
 
 ### 4.4 手动绑定
