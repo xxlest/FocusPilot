@@ -30,9 +30,9 @@ struct CoderSession: Identifiable {
     var lastUpdate: Date
     var lastInteraction: Date?           // 用户点击此 session 的时间
 
-    // 窗口绑定（运行时）
-    var manualWindowID: CGWindowID?      // 用户手动绑定，优先级最高，失效时自动清空
-    var resolvedWindowID: CGWindowID?    // 最近一次 fallback 解析结果（仅弱记录，不用于强占用仲裁）
+    // 窗口绑定（运行时，不持久化）
+    var autoWindowID: CGWindowID?        // session.start 时自动采样的弱绑定（不参与占用仲裁）
+    var manualWindowID: CGWindowID?      // 用户确认的强绑定（参与占用仲裁，有排他性）
 
     var id: String { sessionID }
 
@@ -137,10 +137,9 @@ struct CoderSessionPreference: Codable {
 ### 1.4 关键设计决策
 
 - `sessionID` 是 Claude 会话身份，不是 macOS 窗口 ID
-- `manualWindowID` 是用户确认的强绑定，有排他性（用于 occupiedWindowIDs）
-- `resolvedWindowID` 仅记录最近一次 fallback 结果，**不用于强占用仲裁**，只用于调试和弱提示
+- **自动采样 = 弱绑定（`autoWindowID`）**：session.start 时自动采样得到的候选窗口。不保证准确，不参与占用仲裁。多个 session 可以暂时拥有相同的 `autoWindowID`。只能挡住跨 App 误绑（Terminal→Cursor），挡不住同宿主多窗口误绑（iTerm2 窗口 A → iTerm2 窗口 B）
+- **用户确认 = 强绑定（`manualWindowID`）**：右键"绑定到当前窗口"或点击未绑定 session 后确认对话框写入。有排他性，参与 `occupiedWindowIDs` 冲突检测
 - `isActionable` 和 `actionableCount` 保留，驱动 AI Tab 角标
-- `isHidden` 已删除，不再支持隐藏会话
 
 ---
 
@@ -175,26 +174,50 @@ SessionEnd → lifecycle=ended
 - 点击的是 session（Claude 会话），不是窗口标题
 - `sessionID` 保证内容/状态显示正确（通过 transcript 文件）
 - 窗口切换依赖 `session → window` 绑定关系
+- 自动采样 = 弱绑定，用户确认 = 强绑定，二者不可混用同一字段
 
-### 4.2 绑定优先级
+### 4.2 自动采样（session.start 时）
 
 ```
-1. manualWindowID（用户手动绑定，优先级最高）
-   - 失效时自动清空，降级到 fallback
-2. fallback 匹配（自动，每次点击时执行）
-   - 排除已被其他 session 的 manualWindowID 占用的窗口
-   - cwd basename 匹配窗口标题且唯一命中且未占用 → .high
-   - 其他情况 → .none（不做弱猜测）
-3. .none → 只激活宿主 App，提示用户手动绑定
+session.start 到达时：
+  1. 获取 NSWorkspace.shared.frontmostApplication
+  2. 前台 app bundleID == HostAppMapping.bundleID(for: hostApp)？
+     - 是 → autoWindowID = 该 app 的 z-order 最前窗口
+     - 否 → autoWindowID = nil
 ```
 
-**设计决策**：fallback 不再提供 `.low` 结果。没有直接证据时一律返回 `.none`，贯彻"宁可不绑定也不要绑错"。用户通过右键"绑定到当前窗口"建立明确关系。
+**语义约束**：
+- `autoWindowID` 只表示"启动瞬间自动采样得到的候选窗口"
+- 不是强绑定，不保证准确
+- 多个 session 可以暂时拥有相同的 `autoWindowID`（不互斥）
+- 只能挡住跨 App 误绑，挡不住同宿主多窗口误绑
 
-### 4.3 占用检测规则
+### 4.3 点击切换优先级
+
+```
+1. manualWindowID 有效 → 直接切换（强绑定）
+2. autoWindowID 有效 → 尝试切换（弱绑定，不参与占用检测）
+3. 都无 → 弹对话框："此会话尚未绑定窗口，是否绑定到当前窗口？"
+   - 用户确认 → 写入 manualWindowID（强绑定）
+   - 用户取消 → 只激活宿主 App
+```
+
+### 4.4 手动绑定
+
+**触发路径**：
+- 右键 → "绑定到当前窗口"
+- 点击未绑定 session 时弹出确认对话框
+
+**流程**：
+- 获取当前前台窗口 + 确认对话框
+- 冲突检测：如果目标窗口已被其他 session 的 `manualWindowID` 占用，提示并替换
+- 写入 `manualWindowID`（session 级临时状态，不持久化）
+
+### 4.5 占用检测规则
 
 ```swift
 /// 只统计 active session 的 manualWindowID（手动绑定 = 强占用）
-/// resolvedWindowID 不参与占用仲裁（自动猜测 ≠ 强占用）
+/// autoWindowID 不参与占用仲裁（自动采样 ≠ 强占用）
 var occupiedWindowIDs: Set<CGWindowID> {
     Set(sessions.compactMap { s in
         guard s.lifecycle == .active else { return nil }
@@ -203,18 +226,20 @@ var occupiedWindowIDs: Set<CGWindowID> {
 }
 ```
 
-### 4.4 已知限制
+### 4.6 UI 图标状态
 
-- `manualWindowID` 冲突已解决：同一窗口不会被两个 session 同时手动绑定
-- fallback 仍可能在多个未手动绑定的 session 间命中同一窗口（basename 匹配相同标题），这是当前版本接受的已知限制
-- 根本解决需要 P2/P3 的宿主特定强映射能力（如 terminal session ID → window ID）
+| 绑定状态 | App 图标 | 含义 |
+|---------|---------|------|
+| `manualWindowID` 有值 | 宿主 App 图标（正常） | 已手动绑定 |
+| 仅 `autoWindowID` 有值 | 宿主 App 图标 + 右下角 `?` 角标 | 自动关联（弱绑定） |
+| 都无 | 红色 `xmark.square` | 未绑定 |
 
-### 4.4 手动绑定
+### 4.7 已知限制
 
-- 右键 → "绑定到当前窗口"
-- 获取当前前台窗口 + 确认对话框
-- 冲突检测：如果目标窗口已被其他 session 的 `manualWindowID` 占用，提示并替换
-- 绑定为 session 级临时状态，不持久化
+- `manualWindowID` 冲突已解决：同一窗口不会被两个 session 同时强绑定
+- `autoWindowID` 可能采错（同宿主多窗口场景），这是弱绑定的固有限制
+- 多个未手动绑定的 session 可能共享相同的 `autoWindowID`，这是当前版本接受的已知限制
+- 根本解决需要 P2/P3 的宿主特定强映射能力
 
 ---
 
