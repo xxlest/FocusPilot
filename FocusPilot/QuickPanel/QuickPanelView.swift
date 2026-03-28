@@ -154,7 +154,7 @@ final class QuickPanelView: NSView {
         label.alignment = .center
         label.wantsLayer = true
         label.layer?.cornerRadius = 6
-        label.layer?.backgroundColor = ConfigStore.shared.currentThemeColors.nsAccent.cgColor
+        label.layer?.backgroundColor = NSColor.systemRed.cgColor
         label.isHidden = true
         return label
     }()
@@ -1663,7 +1663,7 @@ final class QuickPanelView: NSView {
         topSeparator.layer?.backgroundColor = colors.nsSeparator.withAlphaComponent(0.8).cgColor
         tabSeparator.layer?.backgroundColor = colors.nsSeparator.withAlphaComponent(0.8).cgColor
         tabSeparator2.layer?.backgroundColor = colors.nsSeparator.withAlphaComponent(0.8).cgColor
-        aiBadgeLabel.layer?.backgroundColor = colors.nsAccent.cgColor
+        aiBadgeLabel.layer?.backgroundColor = NSColor.systemRed.cgColor
         bottomSeparator.layer?.backgroundColor = colors.nsSeparator.withAlphaComponent(0.9).cgColor
         timerBar.layer?.backgroundColor = colors.nsTextPrimary.withAlphaComponent(0.08).cgColor
         timerProgressBg.layer?.backgroundColor = colors.nsTextPrimary.withAlphaComponent(0.08).cgColor
@@ -2277,20 +2277,24 @@ final class HoverableRowView: NSView {
 
     // MARK: - 统一渲染
 
-    private func updateAppearance() {
+    /// 更新视觉状态：hover 时始终显示 hover 效果（即使 isSelected）
+    /// 鼠标离开时恢复 isSelected 效果（如果有的话）
+    func updateAppearance() {
         let defaultHover = ConfigStore.shared.currentThemeColors.nsTextPrimary.withAlphaComponent(0.08)
 
-        if isSelected {
-            // 选中状态（最高优先级）
-            layer?.backgroundColor = (selectedColor ?? hoverColor ?? defaultHover).cgColor
+        if isHovered {
+            // hover 状态（最高视觉优先级，鼠标在哪哪亮）
+            layer?.backgroundColor = (hoverColor ?? defaultHover).cgColor
+            layer?.cornerRadius = (hoverColor != nil) ? 0 : 6
             if let color = indicatorColor {
                 indicatorLine.layer?.backgroundColor = color.cgColor
                 indicatorLine.isHidden = false
+            } else {
+                indicatorLine.isHidden = true
             }
-        } else if isHovered {
-            // hover 状态
-            layer?.backgroundColor = (hoverColor ?? defaultHover).cgColor
-            layer?.cornerRadius = (hoverColor != nil) ? 0 : 6
+        } else if isSelected {
+            // 选中状态（鼠标离开后恢复固定高亮）
+            layer?.backgroundColor = (selectedColor ?? hoverColor ?? defaultHover).cgColor
             if let color = indicatorColor {
                 indicatorLine.layer?.backgroundColor = color.cgColor
                 indicatorLine.isHidden = false
@@ -2308,15 +2312,28 @@ final class HoverableRowView: NSView {
 
     override func mouseEntered(with event: NSEvent) {
         isHovered = true
-        if !isHighlighted && !isSelected {
-            updateAppearance()
+        // 暂时隐藏同级其他行的 selected 高亮（同一时间只亮一个）
+        if let parent = superview as? NSStackView {
+            for view in parent.arrangedSubviews {
+                if let sibling = view as? HoverableRowView, sibling !== self, sibling.isSelected {
+                    sibling.layer?.backgroundColor = nil
+                    sibling.indicatorLine.isHidden = true
+                }
+            }
         }
+        updateAppearance()
     }
 
     override func mouseExited(with event: NSEvent) {
         isHovered = false
-        if !isSelected {
-            updateAppearance()
+        updateAppearance()
+        // 恢复同级 selected 行的高亮
+        if let parent = superview as? NSStackView {
+            for view in parent.arrangedSubviews {
+                if let sibling = view as? HoverableRowView, sibling !== self, sibling.isSelected {
+                    sibling.updateAppearance()
+                }
+            }
         }
     }
 
