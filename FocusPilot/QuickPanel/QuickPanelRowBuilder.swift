@@ -588,8 +588,18 @@ extension QuickPanelView {
 
     /// 弹出绑定引导对话框
     private func promptBindToCurrentWindow(sid: String) {
-        guard let frontApp = NSWorkspace.shared.frontmostApplication,
-              let frontBundleID = frontApp.bundleIdentifier else { return }
+        // 获取前台 app（排除 FocusPilot 自身）
+        let myBundleID = Bundle.main.bundleIdentifier ?? ""
+        let runningApps = NSWorkspace.shared.runningApplications
+            .filter { $0.isActive || $0.ownsMenuBar }
+            .filter { $0.bundleIdentifier != myBundleID }
+
+        // 优先取最近活跃的非自身 app
+        guard let frontApp = runningApps.first ?? NSWorkspace.shared.runningApplications.first(where: {
+            $0.bundleIdentifier != myBundleID && $0.activationPolicy == .regular
+        }) else { return }
+
+        guard let frontBundleID = frontApp.bundleIdentifier else { return }
 
         let pid = frontApp.processIdentifier
         guard let windowList = CGWindowListCopyWindowInfo([.optionOnScreenOnly, .excludeDesktopElements], kCGNullWindowID) as? [[String: Any]] else { return }
