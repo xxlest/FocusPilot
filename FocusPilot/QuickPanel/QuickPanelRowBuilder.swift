@@ -469,8 +469,9 @@ extension QuickPanelView {
             stack.addArrangedSubview(toolIcon)
         }
 
-        // 3. displayName（cwd basename）
-        let nameLabel = createLabel(session.cwdBasename, size: 12, color: theme.nsTextPrimary)
+        // 3. displayName（preference 优先，否则 cwd basename）
+        let displayName = CoderBridgeService.shared.displayName(for: session)
+        let nameLabel = createLabel(displayName, size: 12, color: theme.nsTextPrimary)
         nameLabel.lineBreakMode = .byTruncatingTail
         nameLabel.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
         stack.addArrangedSubview(nameLabel)
@@ -496,6 +497,36 @@ extension QuickPanelView {
         // 5. 状态文字
         let statusLabel = createLabel(session.statusText, size: 11, color: theme.nsTextSecondary)
         stack.addArrangedSubview(statusLabel)
+
+        // query 摘要（第二行）
+        if let summary = CoderBridgeService.shared.latestQuerySummary(for: session) {
+            let summaryLabel = createLabel(summary, size: 10, color: theme.nsTextTertiary)
+            summaryLabel.lineBreakMode = .byTruncatingTail
+            summaryLabel.translatesAutoresizingMaskIntoConstraints = false
+
+            // 移除 stack 的现有约束，包裹进垂直容器
+            stack.removeFromSuperview()
+
+            let verticalStack = NSStackView()
+            verticalStack.orientation = .vertical
+            verticalStack.alignment = .leading
+            verticalStack.spacing = 2
+            verticalStack.translatesAutoresizingMaskIntoConstraints = false
+            verticalStack.addArrangedSubview(stack)
+            verticalStack.addArrangedSubview(summaryLabel)
+
+            row.addSubview(verticalStack)
+            NSLayoutConstraint.activate([
+                verticalStack.leadingAnchor.constraint(equalTo: row.leadingAnchor, constant: Constants.Design.Spacing.sm),
+                verticalStack.trailingAnchor.constraint(equalTo: row.trailingAnchor, constant: -Constants.Design.Spacing.sm),
+                verticalStack.centerYAnchor.constraint(equalTo: row.centerYAnchor),
+                summaryLabel.leadingAnchor.constraint(equalTo: verticalStack.leadingAnchor, constant: 20),
+                summaryLabel.trailingAnchor.constraint(lessThanOrEqualTo: verticalStack.trailingAnchor),
+            ])
+
+            // 有摘要时行高增加
+            row.heightAnchor.constraint(greaterThanOrEqualToConstant: 44).isActive = true
+        }
 
         // 行透明度
         row.alphaValue = session.rowAlpha
