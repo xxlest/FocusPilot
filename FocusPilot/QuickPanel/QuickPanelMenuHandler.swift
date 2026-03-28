@@ -278,7 +278,6 @@ extension QuickPanelView {
         alert.informativeText = "项目：\(cwdBasename)"
         alert.addButton(withTitle: "确定")
         alert.addButton(withTitle: "取消")
-        alert.addButton(withTitle: "重置主题")
 
         let input = NSTextField(frame: NSRect(x: 0, y: 0, width: 300, height: 24))
         input.stringValue = currentTopic
@@ -286,15 +285,11 @@ extension QuickPanelView {
         alert.accessoryView = input
         alert.window.initialFirstResponder = input
 
-        let response = alert.runModal()
-        if response == .alertFirstButtonReturn {
-            // 确定
+        if alert.runModal() == .alertFirstButtonReturn {
             let newTopic = input.stringValue.trimmingCharacters(in: .whitespaces)
-            CoderBridgeService.shared.updateTopic(sid: sessionID, topic: newTopic.isEmpty ? nil : newTopic)
-            forceReload()
-        } else if response == .alertThirdButtonReturn {
-            // 重置主题：清空 topic 和 autoTopic，恢复自动模式
-            CoderBridgeService.shared.resetTopic(sid: sessionID)
+            if !newTopic.isEmpty {
+                CoderBridgeService.shared.updateTopic(sid: sessionID, topic: newTopic)
+            }
             forceReload()
         }
     }
