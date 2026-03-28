@@ -457,7 +457,7 @@ extension QuickPanelView {
         ])
         firstLine.addArrangedSubview(dot)
 
-        // App 图标（16px）：有 hostApp 时显示 app 图标，否则红色 ✕
+        // App 图标（16px）
         if !session.hostApp.isEmpty,
            let bundleID = HostAppMapping.bundleID(for: session.hostApp),
            let appURL = NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleID) {
@@ -470,15 +470,32 @@ extension QuickPanelView {
                 iconView.heightAnchor.constraint(equalToConstant: 16),
             ])
             firstLine.addArrangedSubview(iconView)
+        }
+
+        // 绑定状态标记（紧跟图标后面）
+        if session.manualWindowID != nil {
+            // 已手动绑定：不加标记（正常状态）
+        } else if session.autoWindowID != nil {
+            // 自动关联（弱绑定）：加 ? 标记
+            if let qImage = Self.cachedSymbol(name: "questionmark.circle", size: 10, weight: .regular) {
+                let qView = NSImageView(image: qImage)
+                qView.contentTintColor = theme.nsTextTertiary
+                qView.translatesAutoresizingMaskIntoConstraints = false
+                NSLayoutConstraint.activate([
+                    qView.widthAnchor.constraint(equalToConstant: 12),
+                    qView.heightAnchor.constraint(equalToConstant: 12),
+                ])
+                firstLine.addArrangedSubview(qView)
+            }
         } else {
-            // 未关联：红色 ✕
-            if let xImage = Self.cachedSymbol(name: "xmark.square", size: 14, weight: .medium) {
+            // 未绑定：红色 ✕
+            if let xImage = Self.cachedSymbol(name: "xmark.square", size: 12, weight: .medium) {
                 let xView = NSImageView(image: xImage)
                 xView.contentTintColor = .systemRed
                 xView.translatesAutoresizingMaskIntoConstraints = false
                 NSLayoutConstraint.activate([
-                    xView.widthAnchor.constraint(equalToConstant: 16),
-                    xView.heightAnchor.constraint(equalToConstant: 16),
+                    xView.widthAnchor.constraint(equalToConstant: 12),
+                    xView.heightAnchor.constraint(equalToConstant: 12),
                 ])
                 firstLine.addArrangedSubview(xView)
             }
@@ -533,24 +550,75 @@ extension QuickPanelView {
 
     private func handleSessionClick(_ session: CoderSession) {
         CoderBridgeService.shared.updateLastInteraction(sid: session.sessionID)
-        let (windowID, confidence) = CoderBridgeService.shared.resolveWindowForSession(session)
 
-        if let wid = windowID, confidence == .high {
-            let allWindows = AppMonitor.shared.runningApps.flatMap { $0.windows }
-            if let windowInfo = allWindows.first(where: { $0.id == wid }) {
-                WindowService.shared.activateWindow(windowInfo)
-                (self.window as? QuickPanelWindow)?.yieldLevel()
-                return
+        // 1. manualWindowID（强绑定）
+        if let manual = session.manualWindowID {
+            if CoderBridgeService.shared.windowExists(manual) {
+                let allWindows = AppMonitor.shared.runningApps.flatMap { $0.windows }
+                if let windowInfo = allWindows.first(where: { $0.id == manual }) {
+                    WindowService.shared.activateWindow(windowInfo)
+                    (self.window as? QuickPanelWindow)?.yieldLevel()
+                    return
+                }
             }
+            // 失效，清空
+            CoderBridgeService.shared.clearManualWindowID(sid: session.sessionID)
         }
 
-        // .none: 只激活宿主 App
-        if !session.hostApp.isEmpty,
-           let bundleID = HostAppMapping.bundleID(for: session.hostApp),
-           let appURL = NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleID) {
-            let config = NSWorkspace.OpenConfiguration()
-            NSWorkspace.shared.openApplication(at: appURL, configuration: config)
-            (self.window as? QuickPanelWindow)?.yieldLevel()
+        // 2. autoWindowID（弱绑定）
+        if let auto = session.autoWindowID {
+            if CoderBridgeService.shared.windowExists(auto) {
+                let allWindows = AppMonitor.shared.runningApps.flatMap { $0.windows }
+                if let windowInfo = allWindows.first(where: { $0.id == auto }) {
+                    WindowService.shared.activateWindow(windowInfo)
+                    (self.window as? QuickPanelWindow)?.yieldLevel()
+                    return
+                }
+            }
+            // 失效，清空
+            CoderBridgeService.shared.clearAutoWindowID(sid: session.sessionID)
         }
+
+        // 3. 都无 → 引导手动绑定
+        promptBindToCurrentWindow(sid: session.sessionID)
+    }
+
+    /// 弹出绑定引导对话框
+    private func promptBindToCurrentWindow(sid: String) {
+        guard let frontApp = NSWorkspace.shared.frontmostApplication,
+              let frontBundleID = frontApp.bundleIdentifier else { return }
+
+        let pid = frontApp.processIdentifier
+        guard let windowList = CGWindowListCopyWindowInfo([.optionOnScreenOnly, .excludeDesktopElements], kCGNullWindowID) as? [[String: Any]] else { return }
+
+        var targetWindowID: CGWindowID?
+        var targetTitle = ""
+        for windowInfo in windowList {
+            guard let ownerPID = windowInfo[kCGWindowOwnerPID as String] as? pid_t,
+                  ownerPID == pid,
+                  let layer = windowInfo[kCGWindowLayer as String] as? Int,
+                  layer == 0,
+                  let wid = windowInfo[kCGWindowNumber as String] as? CGWindowID else { continue }
+            targetWindowID = wid
+            targetTitle = windowInfo[kCGWindowName as String] as? String ?? ""
+            break
+        }
+
+        guard let wid = targetWindowID else { return }
+
+        let appName = frontApp.localizedName ?? frontBundleID
+        let displayTitle = targetTitle.isEmpty ? appName : "\(appName) — \(targetTitle)"
+
+        let alert = NSAlert()
+        alert.messageText = "此会话尚未绑定窗口"
+        alert.informativeText = "是否绑定到当前窗口「\(displayTitle)」？"
+        alert.addButton(withTitle: "绑定")
+        alert.addButton(withTitle: "取消")
+
+        if alert.runModal() == .alertFirstButtonReturn {
+            CoderBridgeService.shared.bindSessionToWindow(sid: sid, windowID: wid)
+            forceReload()
+        }
+        // 取消后不做任何跳转
     }
 }

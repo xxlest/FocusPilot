@@ -48,6 +48,7 @@ struct CoderSession: Identifiable {
     var lastUpdate: Date
     var lastInteraction: Date?
 
+    var autoWindowID: CGWindowID?       // session.start 时自动采样（弱绑定，不参与占用仲裁）
     var manualWindowID: CGWindowID?
 
     var id: String { sessionID }

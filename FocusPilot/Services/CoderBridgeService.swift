@@ -62,7 +62,7 @@ class CoderBridgeService: NSObject {
     private func handleSessionStart(sid: String, seq: Int, toolStr: String, cwd: String, cwdNormalized: String, hostApp: String) {
         if sessions.contains(where: { $0.sessionID == sid }) { return }
 
-        let session = CoderSession(
+        var session = CoderSession(
             sessionID: sid,
             tool: CoderTool(rawValue: toolStr) ?? .claude,
             cwd: cwd,
@@ -73,8 +73,12 @@ class CoderBridgeService: NSObject {
             lastSeq: seq,
             lastUpdate: Date(),
             lastInteraction: nil,
+            autoWindowID: nil,
             manualWindowID: nil
         )
+
+        // 自动采样：前台 app 与 hostApp 一致时记录弱绑定
+        session.autoWindowID = resolveFrontmostWindow(hostApp: hostApp)
 
         sessions.append(session)
         postSessionChanged()
@@ -104,6 +108,34 @@ class CoderBridgeService: NSObject {
 
     // MARK: - Window Resolution
 
+    /// 获取当前前台宿主窗口（用于 session.start 自动采样）
+    private func resolveFrontmostWindow(hostApp: String) -> CGWindowID? {
+        guard !hostApp.isEmpty,
+              let expectedBundleID = HostAppMapping.bundleID(for: hostApp),
+              let frontApp = NSWorkspace.shared.frontmostApplication,
+              frontApp.bundleIdentifier == expectedBundleID else {
+            return nil
+        }
+
+        let pid = frontApp.processIdentifier
+        guard let windowList = CGWindowListCopyWindowInfo([.optionOnScreenOnly, .excludeDesktopElements], kCGNullWindowID) as? [[String: Any]] else {
+            return nil
+        }
+
+        for windowInfo in windowList {
+            guard let ownerPID = windowInfo[kCGWindowOwnerPID as String] as? pid_t,
+                  ownerPID == pid,
+                  let layer = windowInfo[kCGWindowLayer as String] as? Int,
+                  layer == 0,
+                  let windowID = windowInfo[kCGWindowNumber as String] as? CGWindowID else {
+                continue
+            }
+            return windowID
+        }
+
+        return nil
+    }
+
     /// 只统计 active session 的 manualWindowID（手动绑定 = 强占用）
     private var occupiedWindowIDs: Set<CGWindowID> {
         Set(sessions.compactMap { s in
@@ -120,6 +152,18 @@ class CoderBridgeService: NSObject {
             } else {
                 if let index = sessions.firstIndex(where: { $0.sessionID == session.sessionID }) {
                     sessions[index].manualWindowID = nil
+                }
+            }
+        }
+
+        // 第二优先：自动采样弱绑定
+        if let auto = session.autoWindowID {
+            if windowExists(auto) {
+                return (auto, .high)
+            } else {
+                // 失效，清空
+                if let index = sessions.firstIndex(where: { $0.sessionID == session.sessionID }) {
+                    sessions[index].autoWindowID = nil
                 }
             }
         }
@@ -144,7 +188,7 @@ class CoderBridgeService: NSObject {
         return (nil, .none)
     }
 
-    private func windowExists(_ windowID: CGWindowID) -> Bool {
+    func windowExists(_ windowID: CGWindowID) -> Bool {
         guard let windowList = CGWindowListCopyWindowInfo([.optionOnScreenOnly, .excludeDesktopElements], kCGNullWindowID) as? [[String: Any]] else {
             return false
         }
@@ -289,6 +333,18 @@ class CoderBridgeService: NSObject {
         }
 
         sessions[index].manualWindowID = windowID
+        postSessionChanged()
+    }
+
+    func clearManualWindowID(sid: String) {
+        guard let index = sessions.firstIndex(where: { $0.sessionID == sid }) else { return }
+        sessions[index].manualWindowID = nil
+        postSessionChanged()
+    }
+
+    func clearAutoWindowID(sid: String) {
+        guard let index = sessions.firstIndex(where: { $0.sessionID == sid }) else { return }
+        sessions[index].autoWindowID = nil
         postSessionChanged()
     }
 
