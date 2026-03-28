@@ -10,6 +10,7 @@ class ConfigStore: ObservableObject {
     @Published var ballPosition: BallPosition = .default
     @Published var onboardingCompleted: Bool = false
     @Published var windowRenames: [String: String] = [:]
+    var sessionPreferences: [String: CoderSessionPreference] = [:]
     @Published var panelSize: PanelSize = .default
     /// 快捷面板上次选择的 Tab（持久化，面板关闭再打开时恢复）
     @Published var lastPanelTab: String = QuickPanelTab.running.rawValue
@@ -59,6 +60,10 @@ class ConfigStore: ObservableObject {
             panelSize = size
         }
         lastPanelTab = defaults.string(forKey: Constants.Keys.lastPanelTab) ?? QuickPanelTab.running.rawValue
+        if let data = defaults.data(forKey: Constants.Keys.sessionPreferences),
+           let prefs = try? decoder.decode([String: CoderSessionPreference].self, from: data) {
+            sessionPreferences = prefs
+        }
     }
 
     // MARK: - 保存配置
@@ -238,5 +243,22 @@ class ConfigStore: ObservableObject {
         if let data = try? encoder.encode(windowRenames) {
             defaults.set(data, forKey: Constants.Keys.windowRenames)
         }
+    }
+
+    /// 仅保存 AI 会话偏好
+    func saveSessionPreferences() {
+        if let data = try? encoder.encode(sessionPreferences) {
+            defaults.set(data, forKey: Constants.Keys.sessionPreferences)
+        }
+    }
+
+    func updateSessionPreference(key: String, displayName: String) {
+        if var pref = sessionPreferences[key] {
+            pref.displayName = displayName
+            sessionPreferences[key] = pref
+        } else {
+            sessionPreferences[key] = CoderSessionPreference(key: key, displayName: displayName)
+        }
+        saveSessionPreferences()
     }
 }
