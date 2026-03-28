@@ -438,24 +438,37 @@ extension QuickPanelView {
         firstLine.spacing = 4
         firstLine.translatesAutoresizingMaskIntoConstraints = false
 
-        // 状态圆点
+        // 状态圆点（10px，支持闪烁）
+        let dotSize: CGFloat = session.lifecycle == .ended ? 8 : 10
         let dot = NSView()
         dot.wantsLayer = true
         dot.translatesAutoresizingMaskIntoConstraints = false
         let dotColor = session.statusDotColor(theme: theme)
         dot.layer?.backgroundColor = dotColor.cgColor
-        dot.layer?.cornerRadius = 3
+        dot.layer?.cornerRadius = dotSize / 2
         if session.statusDotHasGlow {
             dot.layer?.shadowColor = dotColor.cgColor
-            dot.layer?.shadowRadius = 3
-            dot.layer?.shadowOpacity = 0.5
+            dot.layer?.shadowRadius = 4
+            dot.layer?.shadowOpacity = 0.6
             dot.layer?.shadowOffset = .zero
         }
         NSLayoutConstraint.activate([
-            dot.widthAnchor.constraint(equalToConstant: 6),
-            dot.heightAnchor.constraint(equalToConstant: 6),
+            dot.widthAnchor.constraint(equalToConstant: dotSize),
+            dot.heightAnchor.constraint(equalToConstant: dotSize),
         ])
         firstLine.addArrangedSubview(dot)
+
+        // working 状态：绿点闪烁动画
+        if session.status == .working && session.lifecycle == .active {
+            let pulseAnim = CABasicAnimation(keyPath: "opacity")
+            pulseAnim.fromValue = 1.0
+            pulseAnim.toValue = 0.3
+            pulseAnim.duration = 0.8
+            pulseAnim.autoreverses = true
+            pulseAnim.repeatCount = .infinity
+            pulseAnim.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
+            dot.layer?.add(pulseAnim, forKey: "pulse")
+        }
 
         // App 图标（16px）
         if !session.hostApp.isEmpty,
@@ -511,8 +524,21 @@ extension QuickPanelView {
         firstLine.addArrangedSubview(createSpacer())
 
         // 状态文字
-        let statusLabel = createLabel(session.statusText, size: 10, color: theme.nsTextSecondary)
+        let statusLabel = createLabel(session.statusText, size: 10, color: session.statusTextColor(theme: theme))
         firstLine.addArrangedSubview(statusLabel)
+
+        // done 未读标签
+        if session.status == .done && !session.isRead && session.lifecycle == .active {
+            let badge = NSTextField(labelWithString: " 未读 ")
+            badge.font = .systemFont(ofSize: 9, weight: .semibold)
+            badge.textColor = .white
+            badge.wantsLayer = true
+            badge.layer?.backgroundColor = NSColor.systemGreen.cgColor
+            badge.layer?.cornerRadius = 3
+            badge.alignment = .center
+            badge.translatesAutoresizingMaskIntoConstraints = false
+            firstLine.addArrangedSubview(badge)
+        }
 
         verticalStack.addArrangedSubview(firstLine)
 
@@ -539,6 +565,24 @@ extension QuickPanelView {
         row.heightAnchor.constraint(greaterThanOrEqualToConstant: 40).isActive = true
         row.alphaValue = session.rowAlpha
 
+        // 活跃窗口高亮
+        if session.sessionID == CoderBridgeService.shared.activeSessionID {
+            row.wantsLayer = true
+            row.layer?.backgroundColor = NSColor(calibratedRed: 0.36, green: 0.50, blue: 1.0, alpha: 0.06).cgColor
+            // 左侧蓝色竖线（用一个子 view）
+            let activeLine = NSView()
+            activeLine.wantsLayer = true
+            activeLine.layer?.backgroundColor = NSColor(calibratedRed: 0.36, green: 0.50, blue: 1.0, alpha: 1.0).cgColor
+            activeLine.translatesAutoresizingMaskIntoConstraints = false
+            row.addSubview(activeLine)
+            NSLayoutConstraint.activate([
+                activeLine.leadingAnchor.constraint(equalTo: row.leadingAnchor),
+                activeLine.topAnchor.constraint(equalTo: row.topAnchor),
+                activeLine.bottomAnchor.constraint(equalTo: row.bottomAnchor),
+                activeLine.widthAnchor.constraint(equalToConstant: 2),
+            ])
+        }
+
         row.clickHandler = { [weak self] in
             self?.handleSessionClick(session)
         }
@@ -552,6 +596,8 @@ extension QuickPanelView {
 
     private func handleSessionClick(_ session: CoderSession) {
         CoderBridgeService.shared.updateLastInteraction(sid: session.sessionID)
+        // 点击 done 状态的 session 时标记已读
+        CoderBridgeService.shared.markAsRead(sid: session.sessionID)
 
         // 1. manualWindowID（强绑定）
         if let manual = session.manualWindowID {
@@ -559,6 +605,7 @@ extension QuickPanelView {
                 let allWindows = AppMonitor.shared.runningApps.flatMap { $0.windows }
                 if let windowInfo = allWindows.first(where: { $0.id == manual }) {
                     WindowService.shared.activateWindow(windowInfo)
+                    CoderBridgeService.shared.activeSessionID = session.sessionID
                     (self.window as? QuickPanelWindow)?.yieldLevel()
                     return
                 }
@@ -575,6 +622,7 @@ extension QuickPanelView {
                 let allWindows = AppMonitor.shared.runningApps.flatMap { $0.windows }
                 if let windowInfo = allWindows.first(where: { $0.id == auto }) {
                     WindowService.shared.activateWindow(windowInfo)
+                    CoderBridgeService.shared.activeSessionID = session.sessionID
                     (self.window as? QuickPanelWindow)?.yieldLevel()
                     return
                 }

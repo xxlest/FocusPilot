@@ -47,6 +47,7 @@ struct CoderSession: Identifiable {
     var lastSeq: Int
     var lastUpdate: Date
     var lastInteraction: Date?
+    var isRead: Bool = false             // done 状态时是否已读（点击过则已读）
 
     var autoWindowID: CGWindowID?       // session.start 时自动采样（弱绑定，不参与占用仲裁）
     var manualWindowID: CGWindowID?
@@ -95,29 +96,39 @@ struct CoderSession: Identifiable {
         return lifecycle == .ended ? "\(base) · 已结束" : base
     }
 
+    func statusTextColor(theme: ThemeColors) -> NSColor {
+        if lifecycle == .ended { return NSColor(calibratedWhite: 0.35, alpha: 1.0) }
+        switch status {
+        case .working:    return .systemGreen
+        case .idle:       return NSColor(calibratedRed: 1.0, green: 0.84, blue: 0.04, alpha: 1.0)
+        case .done:       return isRead ? NSColor(calibratedWhite: 0.35, alpha: 1.0) : .systemGreen
+        case .error:      return .systemRed
+        case .registered: return theme.nsTextSecondary
+        }
+    }
+
     func statusDotColor(theme: ThemeColors) -> NSColor {
         switch status {
-        case .idle:       return theme.nsAccent
-        case .done:       return .systemGreen
+        case .working:    return .systemGreen
+        case .idle:       return NSColor(calibratedRed: 1.0, green: 0.84, blue: 0.04, alpha: 1.0) // 黄色
+        case .done:       return isRead ? NSColor(calibratedWhite: 0.35, alpha: 1.0) : .systemGreen
         case .error:      return .systemRed
-        case .working:    return theme.nsAccent
-        case .registered: return theme.nsAccent
+        case .registered: return NSColor(calibratedWhite: 0.35, alpha: 1.0) // 灰色
         }
     }
 
     var statusDotHasGlow: Bool {
         switch status {
-        case .idle, .done, .error: return true
+        case .working, .idle, .error: return true
+        case .done: return !isRead
         default: return false
         }
     }
 
     var rowAlpha: CGFloat {
-        switch (status, lifecycle) {
-        case (_, .active): return 1.0
-        case (.done, .ended), (.error, .ended), (.working, .ended): return 0.7
-        default: return 0.5
-        }
+        if lifecycle == .ended { return 0.4 }
+        if status == .done && isRead { return 0.6 }
+        return 1.0
     }
 
 }

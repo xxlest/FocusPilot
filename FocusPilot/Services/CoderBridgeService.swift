@@ -89,6 +89,10 @@ class CoderBridgeService: NSObject {
         if seq <= sessions[index].lastSeq { return }
 
         if let newStatus = SessionStatus(rawValue: statusStr) {
+            // 状态变化时重置已读标记
+            if newStatus != sessions[index].status {
+                sessions[index].isRead = false
+            }
             sessions[index].status = newStatus
         }
         sessions[index].lastSeq = seq
@@ -320,6 +324,16 @@ class CoderBridgeService: NSObject {
     }
 
     // MARK: - Session Actions
+
+    /// 最近一次成功切换的 session ID（用于 UI 高亮）
+    var activeSessionID: String?
+
+    func markAsRead(sid: String) {
+        guard let index = sessions.firstIndex(where: { $0.sessionID == sid }) else { return }
+        guard sessions[index].status == .done && !sessions[index].isRead else { return }
+        sessions[index].isRead = true
+        postSessionChanged()
+    }
 
     func updateLastInteraction(sid: String) {
         guard let index = sessions.firstIndex(where: { $0.sessionID == sid }) else { return }
