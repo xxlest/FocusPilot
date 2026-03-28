@@ -457,18 +457,39 @@ extension QuickPanelView {
         ])
         firstLine.addArrangedSubview(dot)
 
+        // App 图标（16px）：有 hostApp 时显示 app 图标，否则红色 ✕
+        if !session.hostApp.isEmpty,
+           let bundleID = HostAppMapping.bundleID(for: session.hostApp),
+           let appURL = NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleID) {
+            let appIcon = NSWorkspace.shared.icon(forFile: appURL.path)
+            appIcon.size = NSSize(width: 16, height: 16)
+            let iconView = NSImageView(image: appIcon)
+            iconView.translatesAutoresizingMaskIntoConstraints = false
+            NSLayoutConstraint.activate([
+                iconView.widthAnchor.constraint(equalToConstant: 16),
+                iconView.heightAnchor.constraint(equalToConstant: 16),
+            ])
+            firstLine.addArrangedSubview(iconView)
+        } else {
+            // 未关联：红色 ✕
+            if let xImage = Self.cachedSymbol(name: "xmark.square", size: 14, weight: .medium) {
+                let xView = NSImageView(image: xImage)
+                xView.contentTintColor = .systemRed
+                xView.translatesAutoresizingMaskIntoConstraints = false
+                NSLayoutConstraint.activate([
+                    xView.widthAnchor.constraint(equalToConstant: 16),
+                    xView.heightAnchor.constraint(equalToConstant: 16),
+                ])
+                firstLine.addArrangedSubview(xView)
+            }
+        }
+
         // "Claude · a1b2c3d4"
         let idText = "\(session.tool.displayName) · \(session.shortID)"
         let idLabel = createLabel(idText, size: 11, color: theme.nsTextPrimary)
         firstLine.addArrangedSubview(idLabel)
 
         firstLine.addArrangedSubview(createSpacer())
-
-        // hostApp 显示名
-        if !session.hostApp.isEmpty {
-            let hostLabel = createLabel(HostAppMapping.displayName(for: session.hostApp), size: 10, color: theme.nsTextTertiary)
-            firstLine.addArrangedSubview(hostLabel)
-        }
 
         // 状态文字
         let statusLabel = createLabel(session.statusText, size: 10, color: theme.nsTextSecondary)
