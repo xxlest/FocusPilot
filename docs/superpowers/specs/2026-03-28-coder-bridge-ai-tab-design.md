@@ -94,42 +94,42 @@ struct WindowHint: Codable {
 
 **业务态（status）**：AI 工具当前在做什么
 
-| 状态 | 含义 |
-|------|------|
+| 状态         | 含义                     |
+| ------------ | ------------------------ |
 | `registered` | 刚注册，尚未收到后续事件 |
-| `working` | AI 正在输出 / 执行工具 |
-| `idle` | AI 停下等待用户输入 |
-| `done` | AI 完成本轮任务 |
-| `error` | 本轮因 API 错误终止 |
+| `working`    | AI 正在输出 / 执行工具   |
+| `idle`       | AI 停下等待用户输入      |
+| `done`       | AI 完成本轮任务          |
+| `error`      | 本轮因 API 错误终止      |
 
 **生命周期态（lifecycle）**：session 本身的存活状态
 
-| 状态 | 含义 |
-|------|------|
-| `active` | 正常运行中 |
-| `ended` | 收到 session.end，保留显示等用户确认或超时 |
+| 状态     | 含义                                       |
+| -------- | ------------------------------------------ |
+| `active` | 正常运行中                                 |
+| `ended`  | 收到 session.end，保留显示等用户确认或超时 |
 
 ### 2.2 事件与状态迁移
 
 **3 个核心事件**：
 
-| 事件 | hook 来源 | 迁移 |
-|------|----------|------|
-| `session.start` | SessionStart hook | → status=registered, lifecycle=active；同时记录前台宿主窗口为 initialCandidateWindowID |
-| `session.update` | Stop / Notification hook | → status 由字段指定（working/idle/done/error），lifecycle 不变 |
-| `session.end` | SessionEnd hook | → lifecycle=ended，status 保持不变 |
+| 事件             | hook 来源                | 迁移                                                                                   |
+| ---------------- | ------------------------ | -------------------------------------------------------------------------------------- |
+| `session.start`  | SessionStart hook        | → status=registered, lifecycle=active；同时记录前台宿主窗口为 initialCandidateWindowID |
+| `session.update` | Stop / Notification hook | → status 由字段指定（working/idle/done/error），lifecycle 不变                         |
+| `session.end`    | SessionEnd hook          | → lifecycle=ended，status 保持不变                                                     |
 
 **乱序防护**：每个事件携带 `seq`（session 内单调递增）。`if seq <= lastSeq then drop`。
 
 ### 2.3 清理策略
 
-| 条件 | 动作 |
-|------|------|
-| done/error + ended → 用户右键菜单"移除已结束的会话" | 移除 |
-| done/error + ended → 30 分钟超时 | 移除 |
-| working/idle/registered + ended → 5 分钟超时 | 移除 |
-| ended + session.start（同 sid） | 拒绝，sid 不复用 |
-| FocusPilot 重启 | 清空所有 session（等重新注册） |
+| 条件                                                | 动作                           |
+| --------------------------------------------------- | ------------------------------ |
+| done/error + ended → 用户右键菜单"移除已结束的会话" | 移除                           |
+| done/error + ended → 30 分钟超时                    | 移除                           |
+| working/idle/registered + ended → 5 分钟超时        | 移除                           |
+| ended + session.start（同 sid）                     | 拒绝，sid 不复用               |
+| FocusPilot 重启                                     | 清空所有 session（等重新注册） |
 
 ---
 
@@ -145,19 +145,20 @@ coder-bridge（shell 脚本）→ macOS DistributedNotificationCenter → FocusP
 
 ```json
 {
-    "event": "session.start | session.update | session.end",
-    "sid": "uuid-v4",
-    "seq": 1,
-    "tool": "claude | codex | gemini",
-    "cwd": "/absolute/path",
-    "cwdNormalized": "/repo/root/path",
-    "status": "working | idle | done | error",
-    "hostApp": "cursor | terminal | iterm2 | vscode | ...",
-    "ts": 1711584000
+  "event": "session.start | session.update | session.end",
+  "sid": "uuid-v4",
+  "seq": 1,
+  "tool": "claude | codex | gemini",
+  "cwd": "/absolute/path",
+  "cwdNormalized": "/repo/root/path",
+  "status": "working | idle | done | error",
+  "hostApp": "cursor | terminal | iterm2 | vscode | ...",
+  "ts": 1711584000
 }
 ```
 
 **字段说明**：
+
 - `event` + `status` 分离：event 决定操作类型，status 决定业务态
 - `seq`：session 内单调递增，防乱序覆盖
 - `cwd`：原始工作目录
@@ -181,15 +182,15 @@ DistributedNotificationCenter.default().addObserver(
 
 coder-bridge 侧根据 `$TERM_PROGRAM` 环境变量归一化为标准值：
 
-| `$TERM_PROGRAM` 原始值 | 归一化 hostApp | 对应 bundleID |
-|------------------------|---------------|---------------|
-| `Apple_Terminal` | `terminal` | `com.apple.Terminal` |
-| `iTerm.app` / `iTerm2` | `iterm2` | `com.googlecode.iterm2` |
-| `WezTerm` | `wezterm` | `com.github.wez.wezterm` |
-| `WarpTerminal` | `warp` | `dev.warp.Warp-Stable` |
-| `vscode` | `vscode` | `com.microsoft.VSCode` |
-| `cursor` | `cursor` | `com.todesktop.230313mzl4w4u92` |
-| 其他 / 未设置 | `""` (空) | — |
+| `$TERM_PROGRAM` 原始值 | 归一化 hostApp | 对应 bundleID                   |
+| ---------------------- | -------------- | ------------------------------- |
+| `Apple_Terminal`       | `terminal`     | `com.apple.Terminal`            |
+| `iTerm.app` / `iTerm2` | `iterm2`       | `com.googlecode.iterm2`         |
+| `WezTerm`              | `wezterm`      | `com.github.wez.wezterm`        |
+| `WarpTerminal`         | `warp`         | `dev.warp.Warp-Stable`          |
+| `vscode`               | `vscode`       | `com.microsoft.VSCode`          |
+| `cursor`               | `cursor`       | `com.todesktop.230313mzl4w4u92` |
+| 其他 / 未设置          | `""` (空)      | —                               |
 
 ```bash
 # coder-bridge 侧归一化逻辑
@@ -221,17 +222,18 @@ FocusPilot 侧维护一张 `hostApp → bundleID` 映射表，用于 `session.st
 **第一层：初始关联（主路径）**
 
 `session.start` 事件到达时：
+
 1. FocusPilot 立即读取当前前台窗口（`NSWorkspace.shared.frontmostApplication` + CGWindowList 获取该 app 的最前窗口）
 2. 如果前台窗口所属 app 与 `hostApp` 一致，记为 `initialCandidateWindowID`
 3. 如果不一致或无法获取，`initialCandidateWindowID` 为 nil，退回第二层
 
 **场景说明**：
 
-| 场景 | 行为 |
-|------|------|
-| 独立终端（iTerm2 / Terminal.app） | 用户在前台终端窗口启动 AI 工具 → 关联到该终端窗口 |
-| IDE 集成终端（Cursor / VSCode） | 用户在 IDE 内置 terminal 启动 AI 工具 → 关联到当前 IDE 主窗口（不尝试识别底部 terminal tab） |
-| 前台窗口与 hostApp 不一致 | 用户可能通过脚本等方式启动 → 不做初始关联，退回第二层 |
+| 场景                              | 行为                                                                                         |
+| --------------------------------- | -------------------------------------------------------------------------------------------- |
+| 独立终端（iTerm2 / Terminal.app） | 用户在前台终端窗口启动 AI 工具 → 关联到该终端窗口                                            |
+| IDE 集成终端（Cursor / VSCode）   | 用户在 IDE 内置 terminal 启动 AI 工具 → 关联到当前 IDE 主窗口（不尝试识别底部 terminal tab） |
+| 前台窗口与 hostApp 不一致         | 用户可能通过脚本等方式启动 → 不做初始关联，退回第二层                                        |
 
 **第二层：回退匹配**
 
@@ -254,6 +256,7 @@ P1 增强规则（插入到规则 1 和 2 之间）：
 ```
 
 **Token stopwords 过滤**（P1 启用，不参与匹配的低信息词）：
+
 ```
 users, home, workspace, documents, desktop, code, projects,
 src, app, web, server, client, lib, packages, repos, dev,
@@ -345,26 +348,26 @@ let actionable: [(SessionStatus, SessionLifecycle)] = [
 
 #### 状态圆点 + 文字（组合态总表）
 
-| status | lifecycle | 状态文字 | 圆点颜色 | 行透明度 | 排序档 | 角标 |
-|--------|-----------|---------|---------|---------|--------|------|
-| idle | active | "等待输入" | 蓝+光晕 | 1.0 | 1 | ✅ |
-| done | active | "已完成" | 绿+光晕 | 1.0 | 1 | ✅ |
-| done | ended | "已完成 · 已结束" | 绿+光晕 | 0.7 | 1 | ✅ |
-| error | active | "出错" | 红+光晕 | 1.0 | 1 | ✅ |
-| error | ended | "出错 · 已结束" | 红+光晕 | 0.7 | 1 | ✅ |
-| working | active | "执行中" | 蓝 | 1.0 | 2 | ❌ |
-| working | ended | "执行中 · 已结束" | 蓝 | 0.7 | 2 | ❌ |
-| registered | active | "已连接" | 灰 | 1.0 | 2 | ❌ |
-| idle | ended | "等待输入 · 已结束" | 蓝 | 0.5 | 3 | ❌ |
-| registered | ended | "已连接 · 已结束" | 灰 | 0.5 | 3 | ❌ |
+| status     | lifecycle | 状态文字            | 圆点颜色 | 行透明度 | 排序档 | 角标 |
+| ---------- | --------- | ------------------- | -------- | -------- | ------ | ---- |
+| idle       | active    | "等待输入"          | 蓝+光晕  | 1.0      | 1      | ✅   |
+| done       | active    | "已完成"            | 绿+光晕  | 1.0      | 1      | ✅   |
+| done       | ended     | "已完成 · 已结束"   | 绿+光晕  | 0.7      | 1      | ✅   |
+| error      | active    | "出错"              | 红+光晕  | 1.0      | 1      | ✅   |
+| error      | ended     | "出错 · 已结束"     | 红+光晕  | 0.7      | 1      | ✅   |
+| working    | active    | "执行中"            | 蓝       | 1.0      | 2      | ❌   |
+| working    | ended     | "执行中 · 已结束"   | 蓝       | 0.7      | 2      | ❌   |
+| registered | active    | "已连接"            | 灰       | 1.0      | 2      | ❌   |
+| idle       | ended     | "等待输入 · 已结束" | 蓝       | 0.5      | 3      | ❌   |
+| registered | ended     | "已连接 · 已结束"   | 灰       | 0.5      | 3      | ❌   |
 
 #### 工具图标（14px）
 
-| 工具 | 图标 | SF Symbol |
-|------|------|----------|
-| Claude | ⬡ | `hexagon` |
-| Codex | ◈ | `diamond` |
-| Gemini | ✦ | `sparkle` |
+| 工具   | 图标 | SF Symbol |
+| ------ | ---- | --------- |
+| Claude | ⬡    | `hexagon` |
+| Codex  | ◈    | `diamond` |
+| Gemini | ✦    | `sparkle` |
 
 颜色：`nsTextSecondary`，不用品牌色。
 
@@ -373,6 +376,7 @@ let actionable: [(SessionStatus, SessionLifecycle)] = [
 使用宿主 app 的 NSImage（和 Running tab 的 app icon 一样取法）。hostApp 为空时不显示。
 
 匹配 confidence 反馈：
+
 - `.high`：正常显示
 - `.low`：宿主图标右下角加 `?` 小角标
 - `.none`：宿主图标正常显示，右下角加 `✕` 标记
@@ -384,6 +388,7 @@ let actionable: [(SessionStatus, SessionLifecycle)] = [
 ### 5.4 右键菜单
 
 P0：
+
 ```
 移除此会话           ← 仅删当前这条 ended session
 ────
@@ -391,6 +396,7 @@ P0：
 ```
 
 P1：
+
 ```
 改名...
 绑定到窗口 →  （子菜单列出同宿主 App 的窗口）
@@ -467,32 +473,48 @@ fi
 ```json
 {
   "hooks": {
-    "SessionStart": [{
-      "hooks": [{
-        "type": "command",
-        "command": "/path/to/coder-bridge/lib/coder-bridge/adapters/claude.sh SessionStart"
-      }]
-    }],
-    "Stop": [{
-      "matcher": "",
-      "hooks": [{
-        "type": "command",
-        "command": "/path/to/coder-bridge/lib/coder-bridge/adapters/claude.sh Stop"
-      }]
-    }],
-    "Notification": [{
-      "matcher": "",
-      "hooks": [{
-        "type": "command",
-        "command": "/path/to/coder-bridge/lib/coder-bridge/adapters/claude.sh Notification"
-      }]
-    }],
-    "SessionEnd": [{
-      "hooks": [{
-        "type": "command",
-        "command": "/path/to/coder-bridge/lib/coder-bridge/adapters/claude.sh SessionEnd"
-      }]
-    }]
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/path/to/coder-bridge/lib/coder-bridge/adapters/claude.sh SessionStart"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/path/to/coder-bridge/lib/coder-bridge/adapters/claude.sh Stop"
+          }
+        ]
+      }
+    ],
+    "Notification": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/path/to/coder-bridge/lib/coder-bridge/adapters/claude.sh Notification"
+          }
+        ]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/path/to/coder-bridge/lib/coder-bridge/adapters/claude.sh SessionEnd"
+          }
+        ]
+      }
+    ]
   }
 }
 ```
@@ -503,21 +525,21 @@ fi
 
 ### 7.1 新增文件
 
-| 文件 | 职责 |
-|------|------|
+| 文件                                | 职责                                                                                                      |
+| ----------------------------------- | --------------------------------------------------------------------------------------------------------- |
 | `Services/CoderBridgeService.swift` | DistributedNotification 监听、CoderSession 列表管理（纯运行时）、前台窗口初始关联、清理定时器、偏好持久化 |
-| `Models/CoderSession.swift` | CoderSession + CoderSessionPreference + WindowHint 数据结构 |
+| `Models/CoderSession.swift`         | CoderSession + CoderSessionPreference + WindowHint 数据结构                                               |
 
 ### 7.2 集成点
 
-| 现有文件 | 改动 |
-|---------|------|
-| `AppDelegate.swift` | 初始化 CoderBridgeService，转发通知 |
-| `QuickPanelView.swift` | 新增 AI Tab 按钮、buildAITabContent()、Tab 角标 |
-| `QuickPanelRowBuilder.swift` | 新增 createSessionRow() 方法 |
-| `QuickPanelMenuHandler.swift` | 新增 session 右键菜单处理 |
-| `Constants.swift` | 新增 coderBridgeSessionChanged 通知名 |
-| `ConfigStore.swift` | 新增 sessionPreferences 持久化 |
+| 现有文件                      | 改动                                            |
+| ----------------------------- | ----------------------------------------------- |
+| `AppDelegate.swift`           | 初始化 CoderBridgeService，转发通知             |
+| `QuickPanelView.swift`        | 新增 AI Tab 按钮、buildAITabContent()、Tab 角标 |
+| `QuickPanelRowBuilder.swift`  | 新增 createSessionRow() 方法                    |
+| `QuickPanelMenuHandler.swift` | 新增 session 右键菜单处理                       |
+| `Constants.swift`             | 新增 coderBridgeSessionChanged 通知名           |
+| `ConfigStore.swift`           | 新增 sessionPreferences 持久化                  |
 
 ### 7.3 数据流
 

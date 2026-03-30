@@ -131,6 +131,7 @@ coder-bridge/
 - **独立休息模式**：`isStandaloneRest` 标记直接休息（非工作→休息流程），休息结束后直接 reset 回 idle，不弹"充电完毕"对话框
 - **休息选择 UI 共享**：`buildRestSelectionAccessoryView()` 提取引导/自由休息 radio 选择 UI，`handleWorkCompleted()` 和 `restDirectTapped()` 共用
 - **FocusByTime 弹窗全失焦关闭**：所有弹窗均失焦自动关闭（NSApp.didResignActive → abortModal）。阶段完成弹窗关闭后，FocusPendingAction 保留待处理动作，计时器栏显示 pending pill 徽章供用户点击重新弹出
+- **弹窗层级处理**：NSAlert.runModal() 会重置 layout() 阶段设置的 window level，因此必须通过 `didBecomeKey` 回调延迟设置层级。当前方案：prepareAlert() 先降低面板到 .normal（兜底防遮挡），再用 didBecomeKey 提升弹窗到 alertLevel（floatingBallLevel + 10）；restoreAfterAlert() 恢复面板层级。位置走系统默认居中，不做自定义定位
 
 ### 配置迁移
 
