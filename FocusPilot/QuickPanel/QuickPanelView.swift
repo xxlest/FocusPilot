@@ -628,6 +628,9 @@ final class QuickPanelView: NSView {
         if let btn = event.trackingArea?.userInfo?["tabButton"] as? NSButton,
            let panelWindow = window as? QuickPanelWindow,
            !panelWindow.isPanelPinned {
+            // 子视图 hover 也要取消面板收起计时器
+            panelWindow.cancelDismissTimer()
+            panelWindow.restoreLevel()
             if btn === runningTabButton {
                 hoverPreviewTab(.running)
             } else if btn === favoritesTabButton {
@@ -641,6 +644,11 @@ final class QuickPanelView: NSView {
         // App 容器 hover（非固定模式下展开窗口列表）
         if let bundleID = event.trackingArea?.userInfo?["hoverExpandBundleID"] as? String,
            isUnpinnedMode {
+            // 子视图 hover 也要取消面板收起计时器
+            if let panelWindow = window as? QuickPanelWindow {
+                panelWindow.cancelDismissTimer()
+                panelWindow.restoreLevel()
+            }
             // 中心化：先收起上一个展开的列表
             if let oldID = hoverExpandedBundleID, oldID != bundleID,
                let oldList = hoverWindowListMap[oldID] {

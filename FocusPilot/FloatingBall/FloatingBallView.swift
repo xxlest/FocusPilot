@@ -75,16 +75,17 @@ final class FloatingBallView: NSView {
         return imageView
     }()
 
-    /// 角标视图（药丸形状）
+    /// 角标视图（药丸形状，红底白字）
     private let badgeLabel: NSTextField = {
         let label = NSTextField(labelWithString: "")
         label.font = .systemFont(ofSize: 9, weight: .bold)
         label.textColor = .white
         label.alignment = .center
-        label.backgroundColor = .systemRed
+        label.drawsBackground = false
         label.isBezeled = false
         label.isEditable = false
         label.wantsLayer = true
+        label.layer?.backgroundColor = NSColor.systemRed.cgColor
         label.layer?.cornerRadius = 8
         label.layer?.masksToBounds = true
         label.layer?.borderWidth = 1.5
