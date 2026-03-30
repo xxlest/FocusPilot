@@ -262,11 +262,11 @@ class TodoService {
 
 ### 折叠状态管理
 
-复用现有 `collapsedGroups` 模式，新增：
-- `collapsedTodoGroups: Set<String>`：按 cwdNormalized 追踪任务区折叠状态
-- `collapsedDoneGroups: Set<String>`：按 cwdNormalized 追踪 Done 区折叠状态
+新增（注意：与 `collapsedGroups` 语义相反，采用正向命名）：
+- `expandedTodoGroups: Set<String>`：按 cwdNormalized 追踪任务区**展开**状态
+- `expandedDoneGroups: Set<String>`：按 cwdNormalized 追踪 Done 区**展开**状态
 
-默认值：任务区折叠，Done 区折叠。
+默认值：空集 = 全部折叠（任务区折叠，Done 区折叠）。
 
 ## 刷新闭环
 
@@ -283,7 +283,7 @@ todo.md 数据在以下时机重新从文件读取：
 
 ### 折叠状态与 UI 刷新
 
-`collapsedTodoGroups` / `collapsedDoneGroups` 的变更通过直接调用 `forceReload()` 触发 UI 更新（与现有 `collapsedGroups` 处理方式一致），不纳入 `buildStructuralKey` 差分逻辑。
+`expandedTodoGroups` / `expandedDoneGroups` 的变更通过直接调用 `forceReload()` 触发 UI 更新（与现有 `collapsedGroups` 处理方式一致），不纳入 `buildStructuralKey` 差分逻辑。
 
 ## 设计约束
 
