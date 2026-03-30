@@ -32,6 +32,11 @@ final class QuickPanelView: NSView {
     /// 非固定模式下 bundleID → windowList 视图映射（用于中心化收起旧列表）
     var hoverWindowListMap: [String: NSView] = [:]
 
+    /// 当前是否处于非固定模式（便于各处判断）
+    var isUnpinnedMode: Bool {
+        (window as? QuickPanelWindow)?.isPanelPinned == false
+    }
+
     /// AI Tab 目录组折叠状态（按 cwdNormalized 跟踪）
     var collapsedGroups: Set<String> = []
     var expandedTodoGroups: Set<String> = []    // 任务区展开状态（默认折叠）
@@ -576,6 +581,17 @@ final class QuickPanelView: NSView {
         displayTab = selectedTab
         updateTabButtonStyles()
 
+        // Tab 按钮 hover tracking（非固定模式下 hover 切换 Tab）
+        for btn in [runningTabButton, favoritesTabButton, aiTabButton] {
+            let area = NSTrackingArea(
+                rect: .zero,
+                options: [.mouseEnteredAndExited, .activeAlways, .inVisibleRect],
+                owner: self,
+                userInfo: ["tabButton": btn]
+            )
+            btn.addTrackingArea(area)
+        }
+
         // 初始化计时器 UI
         updateTimerUI()
     }
@@ -608,6 +624,33 @@ final class QuickPanelView: NSView {
             updateTimerBarHover()
             return
         }
+        // Tab 按钮 hover（非固定模式下自动切换 Tab）
+        if let btn = event.trackingArea?.userInfo?["tabButton"] as? NSButton,
+           let panelWindow = window as? QuickPanelWindow,
+           !panelWindow.isPanelPinned {
+            if btn === runningTabButton {
+                hoverPreviewTab(.running)
+            } else if btn === favoritesTabButton {
+                hoverPreviewTab(.favorites)
+            } else if btn === aiTabButton {
+                hoverPreviewTab(.ai)
+            }
+            return
+        }
+
+        // App 容器 hover（非固定模式下展开窗口列表）
+        if let bundleID = event.trackingArea?.userInfo?["hoverExpandBundleID"] as? String,
+           isUnpinnedMode {
+            // 中心化：先收起上一个展开的列表
+            if let oldID = hoverExpandedBundleID, oldID != bundleID,
+               let oldList = hoverWindowListMap[oldID] {
+                oldList.isHidden = true
+            }
+            hoverExpandedBundleID = bundleID
+            hoverWindowListMap[bundleID]?.isHidden = false
+            return
+        }
+
         if let panelWindow = window as? QuickPanelWindow {
             // 鼠标进入面板：取消收起计时器
             panelWindow.cancelDismissTimer()
@@ -621,6 +664,15 @@ final class QuickPanelView: NSView {
         if event.trackingArea === timerBarTrackingArea {
             isTimerBarHovered = false
             updateTimerBarHover()
+            return
+        }
+        // App 容器 hover 结束（非固定模式下折叠窗口列表）
+        if let bundleID = event.trackingArea?.userInfo?["hoverExpandBundleID"] as? String,
+           isUnpinnedMode {
+            if hoverExpandedBundleID == bundleID {
+                hoverExpandedBundleID = nil
+                hoverWindowListMap[bundleID]?.isHidden = true
+            }
             return
         }
         // 钉住模式下不触发收起
@@ -1724,6 +1776,7 @@ final class QuickPanelView: NSView {
             // 结构变了 → 全量重建（清空映射 + 重建所有视图）
             windowTitleLabels.removeAll()
             windowRowViewMap.removeAll()
+            hoverWindowListMap.removeAll()
             contentStack.arrangedSubviews.forEach { $0.removeFromSuperview() }
             buildContent()
             lastStructuralKey = structuralKey
@@ -1745,7 +1798,7 @@ final class QuickPanelView: NSView {
             let apps = AppMonitor.shared.runningApps.filter { !$0.windows.isEmpty }
             for app in apps {
                 let windowIDs = app.windows.map { String($0.id) }.joined(separator: ",")
-                let collapsed = collapsedApps.contains(app.bundleID) ? "C" : "E"
+                let collapsed = isUnpinnedMode ? "H" : (collapsedApps.contains(app.bundleID) ? "C" : "E")
                 let fav = ConfigStore.shared.isFavorite(app.bundleID) ? "F" : ""
                 parts.append("\(app.bundleID):\(app.isRunning):\(windowIDs):\(collapsed):\(fav)")
             }
@@ -1756,7 +1809,7 @@ final class QuickPanelView: NSView {
                 let running = runningApps.first(where: { $0.bundleID == config.bundleID })
                 let isRunning = running?.isRunning ?? false
                 let windowIDs = running?.windows.map { String($0.id) }.joined(separator: ",") ?? ""
-                let collapsed = collapsedApps.contains(config.bundleID) ? "C" : "E"
+                let collapsed = isUnpinnedMode ? "H" : (collapsedApps.contains(config.bundleID) ? "C" : "E")
                 parts.append("\(config.bundleID):\(isRunning):\(windowIDs):\(collapsed)")
             }
         case .ai:
@@ -1811,6 +1864,46 @@ final class QuickPanelView: NSView {
         lastStructuralKey = ""  // 清除快照，确保下次打开时强制刷新
     }
 
+    /// 创建 hover 展开容器（App 行 + 窗口列表，非固定模式专用）
+    private func createHoverExpandContainer(appRow: NSView, windowList: NSView, bundleID: String) -> NSView {
+        let container = NSView()
+        container.translatesAutoresizingMaskIntoConstraints = false
+        container.wantsLayer = true
+
+        let stack = NSStackView()
+        stack.orientation = .vertical
+        stack.spacing = 0
+        stack.translatesAutoresizingMaskIntoConstraints = false
+        container.addSubview(stack)
+
+        NSLayoutConstraint.activate([
+            stack.topAnchor.constraint(equalTo: container.topAnchor),
+            stack.bottomAnchor.constraint(equalTo: container.bottomAnchor),
+            stack.leadingAnchor.constraint(equalTo: container.leadingAnchor),
+            stack.trailingAnchor.constraint(equalTo: container.trailingAnchor),
+        ])
+
+        stack.addArrangedSubview(appRow)
+        stack.addArrangedSubview(windowList)
+
+        // 默认折叠，hover 展开时恢复
+        windowList.isHidden = (hoverExpandedBundleID != bundleID)
+
+        // 注册到映射表（用于中心化收起）
+        hoverWindowListMap[bundleID] = windowList
+
+        // Tracking area for hover expand/collapse
+        let area = NSTrackingArea(
+            rect: .zero,
+            options: [.mouseEnteredAndExited, .activeAlways, .inVisibleRect],
+            owner: self,
+            userInfo: ["hoverExpandBundleID": bundleID]
+        )
+        container.addTrackingArea(area)
+
+        return container
+    }
+
     // MARK: - 内容构建
 
     private func buildContent() {
@@ -1847,12 +1940,23 @@ final class QuickPanelView: NSView {
 
         for app in apps {
             let appRow = createRunningAppRow(app: app)
-            contentStack.addArrangedSubview(appRow)
 
-            if hasAccessibility, !app.windows.isEmpty,
-               !(collapsedApps.contains(app.bundleID)) {
+            if hasAccessibility, !app.windows.isEmpty {
                 let windowList = createWindowList(windows: app.windows, bundleID: app.bundleID)
-                contentStack.addArrangedSubview(windowList)
+
+                if isUnpinnedMode {
+                    let container = createHoverExpandContainer(
+                        appRow: appRow, windowList: windowList, bundleID: app.bundleID
+                    )
+                    contentStack.addArrangedSubview(container)
+                } else {
+                    contentStack.addArrangedSubview(appRow)
+                    if !collapsedApps.contains(app.bundleID) {
+                        contentStack.addArrangedSubview(windowList)
+                    }
+                }
+            } else {
+                contentStack.addArrangedSubview(appRow)
             }
         }
 
@@ -1879,13 +1983,23 @@ final class QuickPanelView: NSView {
             let isRunning = running?.isRunning ?? false
 
             let appRow = createFavoriteAppRow(config: config, runningApp: running, isRunning: isRunning)
-            contentStack.addArrangedSubview(appRow)
 
-            // 窗口列表（运行中且有权限时显示）
-            if hasAccessibility, let app = running, !app.windows.isEmpty,
-               !collapsedApps.contains(config.bundleID) {
+            if hasAccessibility, let app = running, !app.windows.isEmpty {
                 let windowList = createWindowList(windows: app.windows, bundleID: config.bundleID)
-                contentStack.addArrangedSubview(windowList)
+
+                if isUnpinnedMode {
+                    let container = createHoverExpandContainer(
+                        appRow: appRow, windowList: windowList, bundleID: config.bundleID
+                    )
+                    contentStack.addArrangedSubview(container)
+                } else {
+                    contentStack.addArrangedSubview(appRow)
+                    if !collapsedApps.contains(config.bundleID) {
+                        contentStack.addArrangedSubview(windowList)
+                    }
+                }
+            } else {
+                contentStack.addArrangedSubview(appRow)
             }
         }
 

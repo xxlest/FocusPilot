@@ -253,7 +253,12 @@ extension QuickPanelView {
             let countLabel = createLabel("\(windows.count) 个窗口", size: 11, color: colors.nsTextSecondary)
             rowStack.addArrangedSubview(countLabel)
 
-            let isCollapsed = collapsedApps.contains(bundleID)
+            let isCollapsed: Bool
+            if isUnpinnedMode {
+                isCollapsed = (hoverExpandedBundleID != bundleID)
+            } else {
+                isCollapsed = collapsedApps.contains(bundleID)
+            }
             let chevronName = isCollapsed ? "chevron.right" : "chevron.down"
             let chevronView = NSImageView()
             chevronView.translatesAutoresizingMaskIntoConstraints = false
@@ -276,25 +281,40 @@ extension QuickPanelView {
     /// 配置 App 行点击行为（P2-#5：从 createAppRow 提取）
     private func configureClickHandler(row: HoverableRowView, bundleID: String, isRunning: Bool, hasWindows: Bool) {
         if !isRunning {
-            // 未运行 App：灰度显示，点击启动
             row.alphaValue = 0.5
             row.toolTip = "点击启动"
             row.clickHandler = { [weak self] in
                 self?.launchApp(bundleID: bundleID)
             }
         } else if hasWindows {
-            // 运行中 App（有窗口）：点击切换折叠/展开
-            row.clickHandler = { [weak self] in
-                guard let self = self else { return }
-                if self.collapsedApps.contains(bundleID) {
-                    self.collapsedApps.remove(bundleID)
-                } else {
-                    self.collapsedApps.insert(bundleID)
+            if isUnpinnedMode {
+                // 非固定模式：点击激活第一个窗口（展开/折叠由 hover 驱动）
+                row.clickHandler = { [weak self] in
+                    guard let self = self else { return }
+                    if let runApp = AppMonitor.shared.runningApps.first(where: { $0.bundleID == bundleID }),
+                       let firstWindow = runApp.windows.first {
+                        self.highlightedWindowID = firstWindow.id
+                        WindowService.shared.activateWindow(firstWindow)
+                        (self.window as? QuickPanelWindow)?.yieldLevel()
+                        self.forceReload()
+                    } else {
+                        WindowService.shared.activateApp(bundleID)
+                        (self.window as? QuickPanelWindow)?.yieldLevel()
+                    }
                 }
-                self.forceReload()
+            } else {
+                // 固定模式：点击切换折叠/展开
+                row.clickHandler = { [weak self] in
+                    guard let self = self else { return }
+                    if self.collapsedApps.contains(bundleID) {
+                        self.collapsedApps.remove(bundleID)
+                    } else {
+                        self.collapsedApps.insert(bundleID)
+                    }
+                    self.forceReload()
+                }
             }
         } else {
-            // 运行中但无窗口 App：点击激活 App
             row.clickHandler = { [weak self] in
                 guard let self = self else { return }
                 if let runApp = AppMonitor.shared.runningApps.first(where: { $0.bundleID == bundleID }),
