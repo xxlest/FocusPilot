@@ -523,8 +523,10 @@ extension QuickPanelView {
             }
         }
 
-        // "Claude · a1b2c3d4"（可截断）
-        let idText = "\(session.tool.displayName) · \(session.shortID)"
+        // 有自定义名："自定义名 · a1b2c3d4"，否则 "Claude · a1b2c3d4"
+        let customName = ConfigStore.shared.sessionPreferences[session.preferenceKey]?.displayName
+        let prefix = customName ?? session.tool.displayName
+        let idText = "\(prefix) · \(session.shortID)"
         let idLabel = createLabel(idText, size: 11, color: theme.nsTextPrimary)
         idLabel.lineBreakMode = .byTruncatingTail
         idLabel.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
@@ -635,6 +637,279 @@ extension QuickPanelView {
         case .autoConflicted, .missing:
             // 未绑定或冲突 → 直接引导手动绑定，不走 fallback 匹配
             promptBindToCurrentWindow(sid: session.sessionID)
+        }
+    }
+
+    // MARK: - Todo Kanban Rows
+
+    /// 任务折叠行：📋 任务 2/5 ✎
+    func createTodoFoldRow(todoFile: TodoFile, cwdNormalized: String, isExpanded: Bool) -> HoverableRowView {
+        let theme = ConfigStore.shared.currentThemeColors
+        let row = HoverableRowView()
+        row.translatesAutoresizingMaskIntoConstraints = false
+        row.heightAnchor.constraint(equalToConstant: Constants.Panel.appRowHeight).isActive = true
+
+        let stack = NSStackView()
+        stack.orientation = .horizontal
+        stack.alignment = .centerY
+        stack.spacing = Constants.Design.Spacing.sm
+        stack.translatesAutoresizingMaskIntoConstraints = false
+        row.addSubview(stack)
+        NSLayoutConstraint.activate([
+            stack.leadingAnchor.constraint(equalTo: row.leadingAnchor, constant: Constants.Panel.windowIndent),
+            stack.trailingAnchor.constraint(equalTo: row.trailingAnchor, constant: -Constants.Design.Spacing.sm),
+            stack.centerYAnchor.constraint(equalTo: row.centerYAnchor),
+        ])
+
+        // 折叠箭头
+        let chevronName = isExpanded ? "chevron.down" : "chevron.right"
+        if let img = Self.cachedSymbol(name: chevronName, size: 9, weight: .medium) {
+            let chevron = NSImageView(image: img)
+            chevron.contentTintColor = theme.nsTextTertiary
+            chevron.translatesAutoresizingMaskIntoConstraints = false
+            chevron.widthAnchor.constraint(equalToConstant: 12).isActive = true
+            chevron.heightAnchor.constraint(equalToConstant: 12).isActive = true
+            stack.addArrangedSubview(chevron)
+        }
+
+        // checklist 图标
+        if let img = Self.cachedSymbol(name: "checklist", size: 11, weight: .regular) {
+            let icon = NSImageView(image: img)
+            icon.contentTintColor = theme.nsTextSecondary
+            icon.translatesAutoresizingMaskIntoConstraints = false
+            icon.widthAnchor.constraint(equalToConstant: 14).isActive = true
+            icon.heightAnchor.constraint(equalToConstant: 14).isActive = true
+            stack.addArrangedSubview(icon)
+        }
+
+        // "任务" 标签
+        let label = createLabel("任务", size: 12, color: theme.nsTextSecondary)
+        label.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+        stack.addArrangedSubview(label)
+
+        stack.addArrangedSubview(createSpacer())
+
+        // 进度摘要 "2/5"
+        let progress = createLabel(todoFile.progressSummary, size: 11, color: theme.nsTextTertiary)
+        progress.setContentCompressionResistancePriority(.required, for: .horizontal)
+        stack.addArrangedSubview(progress)
+
+        // ✎ 打开编辑器按钮
+        if let editImg = Self.cachedSymbol(name: "pencil", size: 10, weight: .regular) {
+            let editBtn = NSImageView(image: editImg)
+            editBtn.contentTintColor = theme.nsTextTertiary.withAlphaComponent(0.35)
+            editBtn.translatesAutoresizingMaskIntoConstraints = false
+            editBtn.widthAnchor.constraint(equalToConstant: 14).isActive = true
+            editBtn.heightAnchor.constraint(equalToConstant: 14).isActive = true
+            stack.addArrangedSubview(editBtn)
+        }
+
+        // 折叠/展开点击
+        let cwd = cwdNormalized
+        row.clickHandler = { [weak self] in
+            if self?.expandedTodoGroups.contains(cwd) == true {
+                self?.expandedTodoGroups.remove(cwd)
+            } else {
+                self?.expandedTodoGroups.insert(cwd)
+            }
+            self?.forceReload()
+        }
+
+        return row
+    }
+
+    /// 任务条目行：● 标题 ▶ ✕
+    func createTodoItemRow(item: TodoItem, cwdNormalized: String, isDone: Bool) -> HoverableRowView {
+        let theme = ConfigStore.shared.currentThemeColors
+        let row = HoverableRowView()
+        row.translatesAutoresizingMaskIntoConstraints = false
+        row.heightAnchor.constraint(greaterThanOrEqualToConstant: Constants.Panel.windowRowHeight).isActive = true
+
+        let stack = NSStackView()
+        stack.orientation = .horizontal
+        stack.alignment = .centerY
+        stack.spacing = Constants.Design.Spacing.xs
+        stack.translatesAutoresizingMaskIntoConstraints = false
+        row.addSubview(stack)
+        NSLayoutConstraint.activate([
+            stack.leadingAnchor.constraint(equalTo: row.leadingAnchor, constant: Constants.Panel.todoIndent),
+            stack.trailingAnchor.constraint(equalTo: row.trailingAnchor, constant: -Constants.Design.Spacing.sm),
+            stack.centerYAnchor.constraint(equalTo: row.centerYAnchor),
+        ])
+
+        // 色点
+        let dot = NSView()
+        dot.wantsLayer = true
+        dot.translatesAutoresizingMaskIntoConstraints = false
+        let dotSize: CGFloat = isDone ? 8 : 10
+        dot.layer?.backgroundColor = item.status.dotColor.cgColor
+        dot.layer?.cornerRadius = dotSize / 2
+        NSLayoutConstraint.activate([
+            dot.widthAnchor.constraint(equalToConstant: dotSize),
+            dot.heightAnchor.constraint(equalToConstant: dotSize),
+        ])
+        stack.addArrangedSubview(dot)
+
+        // 标题文字
+        let titleLabel = createLabel(item.title, size: 12, color: isDone ? theme.nsTextTertiary : theme.nsTextPrimary)
+        titleLabel.lineBreakMode = .byTruncatingTail
+        titleLabel.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+        if isDone {
+            let attrStr = NSMutableAttributedString(string: item.title)
+            attrStr.addAttribute(.strikethroughStyle, value: NSUnderlineStyle.single.rawValue, range: NSRange(location: 0, length: attrStr.length))
+            attrStr.addAttribute(.foregroundColor, value: theme.nsTextTertiary, range: NSRange(location: 0, length: attrStr.length))
+            attrStr.addAttribute(.font, value: NSFont.systemFont(ofSize: 12), range: NSRange(location: 0, length: attrStr.length))
+            titleLabel.attributedStringValue = attrStr
+        }
+        stack.addArrangedSubview(titleLabel)
+
+        stack.addArrangedSubview(createSpacer())
+
+        // ▶ 执行按钮（Done 条目不显示）
+        if !isDone {
+            if let playImg = Self.cachedSymbol(name: "play.fill", size: 9, weight: .regular) {
+                let playBtn = NSImageView(image: playImg)
+                playBtn.contentTintColor = theme.nsTextTertiary.withAlphaComponent(0.35)
+                playBtn.translatesAutoresizingMaskIntoConstraints = false
+                playBtn.widthAnchor.constraint(equalToConstant: 14).isActive = true
+                playBtn.heightAnchor.constraint(equalToConstant: 14).isActive = true
+                stack.addArrangedSubview(playBtn)
+            }
+        }
+
+        // ✕ 删除按钮
+        if let xImg = Self.cachedSymbol(name: "xmark", size: 9, weight: .regular) {
+            let xBtn = NSImageView(image: xImg)
+            xBtn.contentTintColor = theme.nsTextTertiary.withAlphaComponent(0.35)
+            xBtn.translatesAutoresizingMaskIntoConstraints = false
+            xBtn.widthAnchor.constraint(equalToConstant: 14).isActive = true
+            xBtn.heightAnchor.constraint(equalToConstant: 14).isActive = true
+            stack.addArrangedSubview(xBtn)
+        }
+
+        if isDone {
+            row.alphaValue = 0.5
+        }
+
+        // 点击处理
+        let capturedItem = item
+        let capturedCwd = cwdNormalized
+        row.clickHandler = { [weak self] in
+            guard let self = self, let window = self.window else { return }
+            let mouseInWindow = window.mouseLocationOutsideOfEventStream
+            let mouseInRow = row.convert(mouseInWindow, from: nil)
+            let rowWidth = row.bounds.width
+            let trailingArea: CGFloat = isDone ? 20 : 40
+
+            if mouseInRow.x > rowWidth - trailingArea {
+                if isDone || mouseInRow.x > rowWidth - 20 {
+                    // ✕ 删除
+                    TodoService.shared.deleteItem(capturedItem, cwd: capturedCwd)
+                    self.forceReload()
+                } else {
+                    // ▶ 复制到 AI 执行
+                    self.handleTodoCopyToAI(item: capturedItem, cwd: capturedCwd)
+                }
+            } else {
+                // 色点或标题区域：切换状态
+                TodoService.shared.cycleStatus(item: capturedItem, cwd: capturedCwd)
+                self.forceReload()
+            }
+        }
+
+        return row
+    }
+
+    /// Done 摘要行：▶ ✓ N 项已完成
+    func createDoneSummaryRow(doneCount: Int, cwdNormalized: String, isExpanded: Bool) -> HoverableRowView {
+        let theme = ConfigStore.shared.currentThemeColors
+        let row = HoverableRowView()
+        row.translatesAutoresizingMaskIntoConstraints = false
+        row.heightAnchor.constraint(equalToConstant: Constants.Panel.windowRowHeight).isActive = true
+
+        let stack = NSStackView()
+        stack.orientation = .horizontal
+        stack.alignment = .centerY
+        stack.spacing = Constants.Design.Spacing.xs
+        stack.translatesAutoresizingMaskIntoConstraints = false
+        row.addSubview(stack)
+        NSLayoutConstraint.activate([
+            stack.leadingAnchor.constraint(equalTo: row.leadingAnchor, constant: Constants.Panel.todoIndent),
+            stack.trailingAnchor.constraint(equalTo: row.trailingAnchor, constant: -Constants.Design.Spacing.sm),
+            stack.centerYAnchor.constraint(equalTo: row.centerYAnchor),
+        ])
+
+        // 折叠箭头
+        let chevronName = isExpanded ? "chevron.down" : "chevron.right"
+        if let img = Self.cachedSymbol(name: chevronName, size: 8, weight: .medium) {
+            let chevron = NSImageView(image: img)
+            chevron.contentTintColor = theme.nsTextTertiary
+            chevron.translatesAutoresizingMaskIntoConstraints = false
+            chevron.widthAnchor.constraint(equalToConstant: 10).isActive = true
+            chevron.heightAnchor.constraint(equalToConstant: 10).isActive = true
+            stack.addArrangedSubview(chevron)
+        }
+
+        let label = createLabel("✓ \(doneCount) 项已完成", size: 11, color: theme.nsTextTertiary)
+        stack.addArrangedSubview(label)
+
+        let cwd = cwdNormalized
+        row.clickHandler = { [weak self] in
+            if self?.expandedDoneGroups.contains(cwd) == true {
+                self?.expandedDoneGroups.remove(cwd)
+            } else {
+                self?.expandedDoneGroups.insert(cwd)
+            }
+            self?.forceReload()
+        }
+
+        return row
+    }
+
+    /// 复制到 AI 执行 + 智能窗口切换
+    private func handleTodoCopyToAI(item: TodoItem, cwd: String) {
+        TodoService.shared.copyToPasteboard(item: item)
+
+        let activeSessions = CoderBridgeService.shared.sessions.filter {
+            $0.cwdNormalized == cwd && $0.lifecycle == .active
+        }
+
+        if activeSessions.count == 1 {
+            let session = activeSessions[0]
+            let (windowID, confidence) = CoderBridgeService.shared.resolveWindowForSession(session)
+            if let wid = windowID, confidence == .high {
+                let allWindows = AppMonitor.shared.runningApps.flatMap { $0.windows }
+                if let windowInfo = allWindows.first(where: { $0.id == wid }) {
+                    WindowService.shared.activateWindow(windowInfo)
+                    (self.window as? QuickPanelWindow)?.yieldLevel()
+                }
+            }
+        } else if activeSessions.count > 1 {
+            let menu = NSMenu(title: "选择会话")
+            for session in activeSessions {
+                let displayName = session.tool.displayName + " · " + session.shortID
+                let menuItem = NSMenuItem(title: displayName, action: #selector(handleTodoSessionSelected(_:)), keyEquivalent: "")
+                menuItem.target = self
+                menuItem.representedObject = ["session": session, "cwd": cwd] as [String: Any]
+                menu.addItem(menuItem)
+            }
+            if let event = NSApp.currentEvent {
+                NSMenu.popUpContextMenu(menu, with: event, for: self)
+            }
+        }
+    }
+
+    @objc private func handleTodoSessionSelected(_ sender: NSMenuItem) {
+        guard let info = sender.representedObject as? [String: Any],
+              let session = info["session"] as? CoderSession else { return }
+
+        let (windowID, confidence) = CoderBridgeService.shared.resolveWindowForSession(session)
+        if let wid = windowID, confidence == .high {
+            let allWindows = AppMonitor.shared.runningApps.flatMap { $0.windows }
+            if let windowInfo = allWindows.first(where: { $0.id == wid }) {
+                WindowService.shared.activateWindow(windowInfo)
+                (self.window as? QuickPanelWindow)?.yieldLevel()
+            }
         }
     }
 
