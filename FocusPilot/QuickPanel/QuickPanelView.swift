@@ -1977,10 +1977,59 @@ final class QuickPanelView: NSView {
             groupRow.widthAnchor.constraint(equalTo: contentStack.widthAnchor).isActive = true
 
             if !isCollapsed {
+                // === 任务区（todo.md 存在时渲染）===
+                if let todoFile = TodoService.shared.parse(cwd: cwdKey) {
+                    let isTodoExpanded = expandedTodoGroups.contains(cwdKey)
+
+                    // 任务折叠行
+                    let foldRow = createTodoFoldRow(todoFile: todoFile, cwdNormalized: cwdKey, isExpanded: isTodoExpanded)
+                    contentStack.addArrangedSubview(foldRow)
+                    foldRow.widthAnchor.constraint(equalTo: contentStack.widthAnchor).isActive = true
+
+                    if isTodoExpanded {
+                        // 活跃任务（Todo + In Progress）
+                        for item in todoFile.activeItems {
+                            let itemRow = createTodoItemRow(item: item, cwdNormalized: cwdKey, isDone: false)
+                            contentStack.addArrangedSubview(itemRow)
+                            itemRow.widthAnchor.constraint(equalTo: contentStack.widthAnchor).isActive = true
+                        }
+
+                        // Done 摘要行（有 done 任务时才显示）
+                        if todoFile.doneCount > 0 {
+                            let isDoneExpanded = expandedDoneGroups.contains(cwdKey)
+                            let doneRow = createDoneSummaryRow(doneCount: todoFile.doneCount, cwdNormalized: cwdKey, isExpanded: isDoneExpanded)
+                            contentStack.addArrangedSubview(doneRow)
+                            doneRow.widthAnchor.constraint(equalTo: contentStack.widthAnchor).isActive = true
+
+                            if isDoneExpanded {
+                                for item in todoFile.doneItems {
+                                    let itemRow = createTodoItemRow(item: item, cwdNormalized: cwdKey, isDone: true)
+                                    contentStack.addArrangedSubview(itemRow)
+                                    itemRow.widthAnchor.constraint(equalTo: contentStack.widthAnchor).isActive = true
+                                }
+                            }
+                        }
+                    }
+
+                    // 分隔线（任务区和 session 区之间）
+                    if !group.sessions.isEmpty {
+                        let separator = NSView()
+                        separator.wantsLayer = true
+                        separator.layer?.backgroundColor = theme.nsSeparator.cgColor
+                        separator.translatesAutoresizingMaskIntoConstraints = false
+                        contentStack.addArrangedSubview(separator)
+                        NSLayoutConstraint.activate([
+                            separator.widthAnchor.constraint(equalTo: contentStack.widthAnchor, constant: -Constants.Panel.windowIndent * 2),
+                            separator.heightAnchor.constraint(equalToConstant: 1),
+                            separator.leadingAnchor.constraint(equalTo: contentStack.leadingAnchor, constant: Constants.Panel.windowIndent),
+                        ])
+                    }
+                }
+
+                // === Session 行（已有逻辑）===
                 for session in group.sessions {
                     let row = createSessionRow(session: session)
                     contentStack.addArrangedSubview(row)
-                    // 行宽撑满 contentStack
                     row.widthAnchor.constraint(equalTo: contentStack.widthAnchor).isActive = true
                 }
             }
