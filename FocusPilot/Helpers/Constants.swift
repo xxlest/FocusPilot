@@ -27,6 +27,7 @@ enum Constants {
         static let appRowHeight: CGFloat = 28          // App 行高度（宽松布局）
         static let windowRowHeight: CGFloat = 24       // 窗口行高度（宽松布局）
         static let windowIndent: CGFloat = 28          // 窗口列表缩进
+        static let todoIndent: CGFloat = 44           // 任务条目缩进（比 windowIndent 多一级）
         static let topBarHeight: CGFloat = 32          // 顶部栏高度
         static let timerBarHeight: CGFloat = 46        // 计时器栏高度
     }
