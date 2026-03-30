@@ -674,6 +674,10 @@ final class QuickPanelView: NSView {
             updateTimerBarHover()
             return
         }
+        // Tab 按钮 hover 结束（不触发收起，由主 tracking area 负责）
+        if event.trackingArea?.userInfo?["tabButton"] != nil {
+            return
+        }
         // App 容器 hover 结束（非固定模式下折叠窗口列表）
         if let bundleID = event.trackingArea?.userInfo?["hoverExpandBundleID"] as? String,
            isUnpinnedMode {
