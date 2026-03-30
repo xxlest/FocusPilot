@@ -110,13 +110,15 @@ AI Tab
 Todo → In Progress → Done → Todo 三态循环。
 
 写回 todo.md 的操作：
-1. 从文件重新读取（确保最新）
-2. 将该任务条目（标题行 + 内容行）从原看板列移除
-3. 追加到目标看板列末尾
-4. 如果是移到 Done：将 `- [ ]` 改为 `- [x]`
-5. 如果是从 Done 移出：将 `- [x]` 改为 `- [ ]`
-6. 写回文件
-7. 重新解析刷新面板
+1. 从文件重新读取并重新 `parse()`（确保最新）
+2. 用 **title + status + content hash** 三元组匹配目标条目（不依赖 lineRange）；同 section 内重名任务用出现顺序（index）辅助区分
+3. 匹配失败（条目被外部删除/大改）：操作静默失败，刷新面板显示最新状态
+4. 匹配成功：将该任务条目（标题行 + 内容行）从原看板列移除
+5. 追加到目标看板列末尾；如果目标 `##` section 不存在，在文件末尾自动追加 section 标题
+6. 如果是移到 Done：将 `- [ ]` 改为 `- [x]`
+7. 如果是从 Done 移出：将 `- [x]` 改为 `- [ ]`
+8. 写回文件
+9. 重新解析刷新面板
 
 ### 复制到 AI 执行（点击 ▶）
 
@@ -132,10 +134,11 @@ Todo → In Progress → Done → Todo 三态循环。
 
 ### 删除条目（点击 ✕）
 
-1. 从文件重新读取
-2. 移除该条目的标题行和所有缩进内容行
-3. 写回文件
-4. 重新解析刷新面板
+1. 从文件重新读取并重新 `parse()`
+2. 用 title + status + content hash 匹配目标条目；匹配失败则静默失败 + 刷新
+3. 移除该条目的标题行和所有缩进内容行
+4. 写回文件
+5. 重新解析刷新面板
 
 ### 在编辑器中打开（点击 ✎）
 
@@ -150,7 +153,8 @@ struct TodoItem {
     let title: String           // 任务标题（- [ ] 后的文字）
     let content: String?        // 任务内容（缩进块文字，nil 表示无内容）
     let status: TodoStatus      // todo / inProgress / done
-    let lineRange: Range<Int>   // 在文件中的起止行号（标题行到最后一行内容行）
+    let sectionIndex: Int       // 在同 section 内的出现顺序（用于重名区分）
+    let contentHash: Int        // title + content 的 hashValue（用于写回时条目匹配）
 }
 ```
 
@@ -260,6 +264,23 @@ class TodoService {
 - `collapsedDoneGroups: Set<String>`：按 cwdNormalized 追踪 Done 区折叠状态
 
 默认值：任务区折叠，Done 区折叠。
+
+## 刷新闭环
+
+### 面板刷新时机
+
+todo.md 数据在以下时机重新从文件读取：
+
+1. **面板显示时**：面板从隐藏变为可见，触发 `forceReload()`，AI Tab 重新渲染时调用 `TodoService.parse(cwd)`
+2. **Tab 切换到 AI 时**：`switchToAITab()` 触发 `forceReload()`，同上
+3. **任务操作后**：状态流转/删除写回文件后，立即调用 `forceReload()` 重新解析
+4. **自适应刷新定时器**：面板可见时已有 1s~3s 定时刷新，AI Tab 重新渲染时自然重新 parse
+
+不使用 FSEvents 文件监听——面板隐藏时无需感知，面板可见时定时刷新已足够覆盖外部修改。
+
+### 折叠状态与 UI 刷新
+
+`collapsedTodoGroups` / `collapsedDoneGroups` 的变更通过直接调用 `forceReload()` 触发 UI 更新（与现有 `collapsedGroups` 处理方式一致），不纳入 `buildStructuralKey` 差分逻辑。
 
 ## 设计约束
 
