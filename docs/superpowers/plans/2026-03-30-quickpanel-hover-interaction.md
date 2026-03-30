@@ -127,6 +127,7 @@
         // displayTab 回退到 selectedTab（hover 预览不残留）
         displayTab = selectedTab
         hoverExpandedBundleID = nil
+        hoverWindowListMap.removeAll()
         collapsedApps.removeAll()
         windowTitleLabels.removeAll()
         windowRowViewMap.removeAll()
@@ -158,16 +159,18 @@ git commit -m "refactor: Tab 双状态模型 — currentTab 拆分为 selectedTa
 - Modify: `FocusPilot/QuickPanel/QuickPanelView.swift:634-691` (setupNotifications)
 - Modify: `FocusPilot/QuickPanel/QuickPanelView.swift:1623-1634` (Tab 切换区)
 
-- [ ] **Step 1: 声明 `hoverExpandedBundleID`**
+- [ ] **Step 1: 声明 `hoverExpandedBundleID` + `hoverWindowListMap`**
 
 在 `QuickPanelView.swift` 的状态区域（`collapsedApps` 声明之后，约第 27 行），添加：
 
 ```swift
     /// 非固定模式下当前 hover 展开的 App（按 bundleID 跟踪）
     var hoverExpandedBundleID: String?
+    /// 非固定模式下 bundleID → windowList 视图映射（用于中心化收起旧列表）
+    var hoverWindowListMap: [String: NSView] = [:]
 ```
 
-注意：如果 Task 1 Step 6 中已经添加了占位声明，将其替换为带注释的版本。
+注意：如果 Task 1 Step 6 中已经添加了占位声明，将其替换为带注释的版本。`hoverWindowListMap` 在每次 `reloadData` 全量重建时随 `createHoverExpandContainer` 重新填充。
 
 - [ ] **Step 2: 添加 `hoverPreviewTab()` 方法**
 
@@ -209,6 +212,7 @@ git commit -m "refactor: Tab 双状态模型 — currentTab 拆分为 selectedTa
             // 切回固定模式：displayTab 回退到 selectedTab，清空 hover 展开态
             displayTab = selectedTab
             hoverExpandedBundleID = nil
+            hoverWindowListMap.removeAll()
             updateTabButtonStyles()
             forceReload()
         }
@@ -346,7 +350,17 @@ git commit -m "feat: Tab 按钮 hover 触发（非固定模式自动切换，不
     }
 ```
 
-- [ ] **Step 2: 重构 `buildRunningAppList` — 容器包装 + hover 展开**
+- [ ] **Step 2: 在 `reloadData` 全量重建时清空 `hoverWindowListMap`**
+
+在 `QuickPanelView.swift` 的 `reloadData()` 方法中，全量重建分支的 `windowTitleLabels.removeAll()` 之后，添加一行：
+
+```swift
+            hoverWindowListMap.removeAll()
+```
+
+（映射会在随后的 `buildContent()` → `createHoverExpandContainer()` 中重新填充。）
+
+- [ ] **Step 3: 重构 `buildRunningAppList` — 容器包装 + hover 展开**
 
 将 `QuickPanelView.swift` 中 `buildRunningAppList` 方法内的 for 循环部分：
 
@@ -391,7 +405,7 @@ git commit -m "feat: Tab 按钮 hover 触发（非固定模式自动切换，不
         }
 ```
 
-- [ ] **Step 3: 重构 `buildFavoritesTabContent` — 同样的容器包装**
+- [ ] **Step 4: 重构 `buildFavoritesTabContent` — 同样的容器包装**
 
 将 `QuickPanelView.swift` 中 `buildFavoritesTabContent` 方法内的 for 循环部分：
 
@@ -441,7 +455,7 @@ git commit -m "feat: Tab 按钮 hover 触发（非固定模式自动切换，不
         }
 ```
 
-- [ ] **Step 4: 添加 `createHoverExpandContainer` 方法**
+- [ ] **Step 5: 添加 `createHoverExpandContainer` 方法**
 
 在 `QuickPanelView.swift` 的 `buildContent()` 方法之前（MARK: - 内容构建 区域），添加：
 
@@ -471,12 +485,15 @@ git commit -m "feat: Tab 按钮 hover 触发（非固定模式自动切换，不
         // 默认折叠，hover 展开时恢复
         windowList.isHidden = (hoverExpandedBundleID != bundleID)
 
+        // 注册到映射表（用于中心化收起）
+        hoverWindowListMap[bundleID] = windowList
+
         // Tracking area for hover expand/collapse
         let area = NSTrackingArea(
             rect: .zero,
             options: [.mouseEnteredAndExited, .activeAlways, .inVisibleRect],
             owner: self,
-            userInfo: ["hoverExpandBundleID": bundleID, "windowList": windowList]
+            userInfo: ["hoverExpandBundleID": bundleID]
         )
         container.addTrackingArea(area)
 
@@ -484,7 +501,7 @@ git commit -m "feat: Tab 按钮 hover 触发（非固定模式自动切换，不
     }
 ```
 
-- [ ] **Step 5: 在 `mouseEntered` / `mouseExited` 中处理 hover 展开/折叠**
+- [ ] **Step 6: 在 `mouseEntered` / `mouseExited` 中处理 hover 展开/折叠**
 
 在 `mouseEntered(with:)` 中，Tab 按钮 hover 处理之后，添加 App 容器 hover 处理：
 
@@ -493,10 +510,14 @@ git commit -m "feat: Tab 按钮 hover 触发（非固定模式自动切换，不
 ```swift
         // App 容器 hover（非固定模式下展开窗口列表）
         if let bundleID = event.trackingArea?.userInfo?["hoverExpandBundleID"] as? String,
-           let windowList = event.trackingArea?.userInfo?["windowList"] as? NSView,
            isUnpinnedMode {
+            // 中心化：先收起上一个展开的列表（解决 entered(B) 先于 exited(A) 时 A 残留的问题）
+            if let oldID = hoverExpandedBundleID, oldID != bundleID,
+               let oldList = hoverWindowListMap[oldID] {
+                oldList.isHidden = true
+            }
             hoverExpandedBundleID = bundleID
-            windowList.isHidden = false
+            hoverWindowListMap[bundleID]?.isHidden = false
             return
         }
 ```
@@ -506,17 +527,17 @@ git commit -m "feat: Tab 按钮 hover 触发（非固定模式自动切换，不
 ```swift
         // App 容器 hover 结束（非固定模式下折叠窗口列表）
         if let bundleID = event.trackingArea?.userInfo?["hoverExpandBundleID"] as? String,
-           let windowList = event.trackingArea?.userInfo?["windowList"] as? NSView,
            isUnpinnedMode {
+            // 只有当前 hover owner 未变时才折叠（如果已被新容器的 entered 覆盖则跳过）
             if hoverExpandedBundleID == bundleID {
                 hoverExpandedBundleID = nil
-                windowList.isHidden = true
+                hoverWindowListMap[bundleID]?.isHidden = true
             }
             return
         }
 ```
 
-- [ ] **Step 6: 编译验证**
+- [ ] **Step 7: 编译验证**
 
 ```bash
 make build
@@ -524,11 +545,11 @@ make build
 
 Expected: 编译通过。
 
-- [ ] **Step 7: 提交**
+- [ ] **Step 8: 提交**
 
 ```bash
 git add FocusPilot/QuickPanel/QuickPanelView.swift
-git commit -m "feat: App 行 hover 展开/折叠容器（非固定模式，isHidden 轻量切换）"
+git commit -m "feat: App 行 hover 展开/折叠容器（中心化收起 + hoverWindowListMap）"
 ```
 
 ---
