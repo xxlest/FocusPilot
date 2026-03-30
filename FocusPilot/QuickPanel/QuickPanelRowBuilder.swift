@@ -490,11 +490,15 @@ extension QuickPanelView {
         }
 
         // 绑定状态标记（紧跟图标后面）
-        let autoConflicted = CoderBridgeService.shared.isAutoWindowConflicted(for: session)
-        if session.manualWindowID != nil {
-            // 已手动绑定：不加标记（正常状态）
-        } else if session.autoWindowID != nil && !autoConflicted {
-            // 自动关联（弱绑定，无冲突）：加 ? 标记
+        let state = CoderBridgeService.shared.bindingState(for: session)
+        switch state {
+        case .manual:
+            break  // 无标记
+        case .autoValid:
+            if session.hostKind == .ide {
+                break  // IDE auto 不显示标记
+            }
+            // terminal auto：显示 ? 标记
             if let qImage = Self.cachedSymbol(name: "questionmark.circle", size: 10, weight: .regular) {
                 let qView = NSImageView(image: qImage)
                 qView.contentTintColor = theme.nsTextTertiary
@@ -505,9 +509,8 @@ extension QuickPanelView {
                 ])
                 firstLine.addArrangedSubview(qView)
             }
-        } else {
-            // 未绑定 或 autoWindowID 冲突：红色 ✕
-            // 未绑定：红色 ✕
+        case .autoConflicted, .missing:
+            // 红色 ✕
             if let xImage = Self.cachedSymbol(name: "xmark.square", size: 12, weight: .medium) {
                 let xView = NSImageView(image: xImage)
                 xView.contentTintColor = .systemRed
@@ -611,35 +614,20 @@ extension QuickPanelView {
     }
 
     private func performWindowSwitch(_ session: CoderSession, row: HoverableRowView? = nil) {
-        // 1. manualWindowID（强绑定）
-        if let manual = session.manualWindowID {
-            if CoderBridgeService.shared.windowExists(manual) {
-                let allWindows = AppMonitor.shared.runningApps.flatMap { $0.windows }
-                if let windowInfo = allWindows.first(where: { $0.id == manual }) {
-                    CoderBridgeService.shared.markAsRead(sid: session.sessionID)
-                    WindowService.shared.activateWindow(windowInfo)
-                    (self.window as? QuickPanelWindow)?.yieldLevel()
-                    return
-                }
-            }
-            CoderBridgeService.shared.clearManualWindowID(sid: session.sessionID)
-        }
+        let (windowID, confidence) = CoderBridgeService.shared.resolveWindowForSession(session)
 
-        // 2. autoWindowID（弱绑定）— 冲突或失效时跳过
-        if let auto = session.autoWindowID {
-            if CoderBridgeService.shared.windowExists(auto)
-                && !CoderBridgeService.shared.isAutoWindowConflicted(for: session) {
-                let allWindows = AppMonitor.shared.runningApps.flatMap { $0.windows }
-                if let windowInfo = allWindows.first(where: { $0.id == auto }) {
-                    CoderBridgeService.shared.markAsRead(sid: session.sessionID)
-                    WindowService.shared.activateWindow(windowInfo)
-                    (self.window as? QuickPanelWindow)?.yieldLevel()
-                    return
-                }
+        if let wid = windowID, confidence == .high {
+            // 有有效窗口，直接激活
+            let allWindows = AppMonitor.shared.runningApps.flatMap { $0.windows }
+            if let windowInfo = allWindows.first(where: { $0.id == wid }) {
+                CoderBridgeService.shared.markAsRead(sid: session.sessionID)
+                WindowService.shared.activateWindow(windowInfo)
+                (self.window as? QuickPanelWindow)?.yieldLevel()
+                return
             }
         }
 
-        // 3. 未绑定/冲突/失效 → 引导手动绑定
+        // 无有效窗口 → 引导手动绑定
         promptBindToCurrentWindow(sid: session.sessionID)
     }
 
@@ -695,8 +683,9 @@ extension QuickPanelView {
             return
         }
 
-        // 冲突检测：窗口已被其他 session 手动绑定
-        if let occupierSid = CoderBridgeService.shared.sessionOccupyingWindow(wid, excludingSid: sid) {
+        // 冲突检测：仅 terminal 类型才拦截
+        if session.hostKind == .terminal,
+           let occupierSid = CoderBridgeService.shared.sessionOccupyingWindow(wid, excludingSid: sid) {
             let occupierSession = CoderBridgeService.shared.sessions.first(where: { $0.sessionID == occupierSid })
             let occupierName = occupierSession?.shortID ?? "其他会话"
             alert.messageText = "该窗口已被绑定"

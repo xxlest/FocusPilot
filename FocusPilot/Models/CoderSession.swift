@@ -34,6 +34,11 @@ enum MatchConfidence: String {
     case high, none
 }
 
+enum HostKind: String {
+    case ide
+    case terminal
+}
+
 // MARK: - CoderSession
 
 struct CoderSession: Identifiable {
@@ -42,6 +47,7 @@ struct CoderSession: Identifiable {
     var cwd: String
     var cwdNormalized: String
     var hostApp: String
+    var hostKind: HostKind
     var status: SessionStatus
     var lifecycle: SessionLifecycle
     var lastSeq: Int

@@ -15,22 +15,24 @@ SESSION_DIR="$HOME/.coder-bridge/sessions"
 # --- hostApp normalization ---
 
 normalize_host_app() {
+    # 输出 "hostApp hostKind"（空格分隔两个词）
+    # hostKind: ide（IDE 内嵌终端）或 terminal（独立终端）
     # Cursor fork 自 VS Code，$TERM_PROGRAM 也是 vscode
     # 用 CURSOR_TRACE_ID（Cursor 独有）区分
     if [[ "${TERM_PROGRAM:-}" == "vscode" ]]; then
         if [[ -n "${CURSOR_TRACE_ID:-}" ]]; then
-            echo "cursor"
+            echo "cursor ide"
         else
-            echo "vscode"
+            echo "vscode ide"
         fi
         return
     fi
     case "${TERM_PROGRAM:-}" in
-        Apple_Terminal)     echo "terminal" ;;
-        iTerm.app|iTerm2)   echo "iterm2" ;;
-        WezTerm)            echo "wezterm" ;;
-        WarpTerminal)       echo "warp" ;;
-        *)                  echo "" ;;
+        Apple_Terminal)     echo "terminal terminal" ;;
+        iTerm.app|iTerm2)   echo "iterm2 terminal" ;;
+        WezTerm)            echo "wezterm terminal" ;;
+        WarpTerminal)       echo "warp terminal" ;;
+        *)                  echo " terminal" ;;  # 未知情况：空 hostApp + terminal 兜底
     esac
 }
 
@@ -81,6 +83,7 @@ send_to_focuspilot() {
     local cwd_normalized="$6"
     local status="$7"    # registered | working | idle | done | error
     local host_app="$8"
+    local host_kind="$9" # ide | terminal
     local ts
     ts=$(date +%s)
 
@@ -98,6 +101,7 @@ send_to_focuspilot() {
         info.setObjectForKey("'"$cwd_normalized"'", "cwdNormalized");
         info.setObjectForKey("'"$status"'", "status");
         info.setObjectForKey("'"$host_app"'", "hostApp");
+        info.setObjectForKey("'"$host_kind"'", "hostKind");
         info.setObjectForKey("'"$ts"'", "ts");
         nc.postNotificationNameObjectUserInfoDeliverImmediately(
             "'"$NOTIFICATION_NAME"'", $(), info, true
@@ -112,14 +116,16 @@ session_start() {
     local sid="$2"
     local cwd="$3"
 
-    local host_app
-    host_app=$(normalize_host_app)
+    local host_info
+    host_info=$(normalize_host_app)
+    local host_app="${host_info%% *}"     # 第一个词
+    local host_kind="${host_info##* }"    # 第二个词
     local cwd_normalized
     cwd_normalized=$(compute_cwd_normalized "$cwd")
     local seq
     seq=$(next_seq "$sid")
 
-    send_to_focuspilot "session.start" "$sid" "$seq" "$tool" "$cwd" "$cwd_normalized" "registered" "$host_app"
+    send_to_focuspilot "session.start" "$sid" "$seq" "$tool" "$cwd" "$cwd_normalized" "registered" "$host_app" "$host_kind"
 }
 
 session_update() {
@@ -128,14 +134,16 @@ session_update() {
     local cwd="$3"
     local status="$4"   # working | idle | done | error
 
-    local host_app
-    host_app=$(normalize_host_app)
+    local host_info
+    host_info=$(normalize_host_app)
+    local host_app="${host_info%% *}"     # 第一个词
+    local host_kind="${host_info##* }"    # 第二个词
     local cwd_normalized
     cwd_normalized=$(compute_cwd_normalized "$cwd")
     local seq
     seq=$(next_seq "$sid")
 
-    send_to_focuspilot "session.update" "$sid" "$seq" "$tool" "$cwd" "$cwd_normalized" "$status" "$host_app"
+    send_to_focuspilot "session.update" "$sid" "$seq" "$tool" "$cwd" "$cwd_normalized" "$status" "$host_app" "$host_kind"
 }
 
 session_end() {
@@ -143,14 +151,16 @@ session_end() {
     local sid="$2"
     local cwd="$3"
 
-    local host_app
-    host_app=$(normalize_host_app)
+    local host_info
+    host_info=$(normalize_host_app)
+    local host_app="${host_info%% *}"     # 第一个词
+    local host_kind="${host_info##* }"    # 第二个词
     local cwd_normalized
     cwd_normalized=$(compute_cwd_normalized "$cwd")
     local seq
     seq=$(next_seq "$sid")
 
-    send_to_focuspilot "session.end" "$sid" "$seq" "$tool" "$cwd" "$cwd_normalized" "" "$host_app"
+    send_to_focuspilot "session.end" "$sid" "$seq" "$tool" "$cwd" "$cwd_normalized" "" "$host_app" "$host_kind"
 
     # Clean up seq file
     cleanup_seq "$sid"

@@ -333,11 +333,14 @@ extension QuickPanelView {
 
         alert.messageText = "绑定到当前窗口"
 
-        if let occupierSid = CoderBridgeService.shared.sessionOccupyingWindow(wid, excludingSid: sid) {
+        if session.hostKind == .terminal,
+           let occupierSid = CoderBridgeService.shared.sessionOccupyingWindow(wid, excludingSid: sid) {
+            // terminal：保持替换确认逻辑
             let occupierSession = CoderBridgeService.shared.sessions.first(where: { $0.sessionID == occupierSid })
             let occupierName = occupierSession?.shortID ?? "其他会话"
             alert.informativeText = "「\(displayTitle)」当前已被会话 \(occupierName) 绑定。\n确定替换绑定？（旧绑定将被清除）"
         } else {
+            // ide 或无冲突：直接确认绑定
             alert.informativeText = "确定将此会话绑定到「\(displayTitle)」？"
         }
 

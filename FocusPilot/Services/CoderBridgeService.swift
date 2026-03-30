@@ -7,6 +7,21 @@ class CoderBridgeService: NSObject {
     private var cleanupTimer: Timer?
     private var queryCache: [String: (summary: String, timestamp: Date)] = [:]
 
+    enum BindingState {
+        case manual           // manualWindowID != nil
+        case autoValid        // manualWindowID == nil, autoWindowID != nil, 无冲突
+        case autoConflicted   // manualWindowID == nil, autoWindowID != nil, 有冲突（仅 terminal）
+        case missing          // 两个 ID 都是 nil
+    }
+
+    func bindingState(for session: CoderSession) -> BindingState {
+        if session.manualWindowID != nil { return .manual }
+        if session.autoWindowID != nil {
+            return isAutoWindowConflicted(for: session) ? .autoConflicted : .autoValid
+        }
+        return .missing
+    }
+
     private override init() {
         super.init()
     }
@@ -39,16 +54,18 @@ class CoderBridgeService: NSObject {
         let cwdNormalized = userInfo["cwdNormalized"] as? String ?? cwd
         let statusStr = userInfo["status"] as? String ?? ""
         let hostApp = userInfo["hostApp"] as? String ?? ""
+        let hostKindStr = userInfo["hostKind"] as? String ?? "terminal"
+        let hostKind = HostKind(rawValue: hostKindStr) ?? .terminal
 
         guard !sid.isEmpty else { return }
 
         DispatchQueue.main.async { [weak self] in
             switch event {
             case "session.start":
-                self?.handleSessionStart(sid: sid, seq: seq, toolStr: toolStr, cwd: cwd, cwdNormalized: cwdNormalized, hostApp: hostApp)
+                self?.handleSessionStart(sid: sid, seq: seq, toolStr: toolStr, cwd: cwd, cwdNormalized: cwdNormalized, hostApp: hostApp, hostKind: hostKind)
             case "session.update":
                 if self?.sessions.contains(where: { $0.sessionID == sid }) != true {
-                    self?.handleSessionStart(sid: sid, seq: 0, toolStr: toolStr, cwd: cwd, cwdNormalized: cwdNormalized, hostApp: hostApp)
+                    self?.handleSessionStart(sid: sid, seq: 0, toolStr: toolStr, cwd: cwd, cwdNormalized: cwdNormalized, hostApp: hostApp, hostKind: hostKind)
                 }
                 self?.handleSessionUpdate(sid: sid, seq: seq, statusStr: statusStr)
             case "session.end":
@@ -59,7 +76,7 @@ class CoderBridgeService: NSObject {
         }
     }
 
-    private func handleSessionStart(sid: String, seq: Int, toolStr: String, cwd: String, cwdNormalized: String, hostApp: String) {
+    private func handleSessionStart(sid: String, seq: Int, toolStr: String, cwd: String, cwdNormalized: String, hostApp: String, hostKind: HostKind) {
         if sessions.contains(where: { $0.sessionID == sid }) { return }
 
         var session = CoderSession(
@@ -68,6 +85,7 @@ class CoderBridgeService: NSObject {
             cwd: cwd,
             cwdNormalized: cwdNormalized,
             hostApp: hostApp,
+            hostKind: hostKind,
             status: .registered,
             lifecycle: .active,
             lastSeq: seq,
@@ -89,9 +107,15 @@ class CoderBridgeService: NSObject {
         if seq <= sessions[index].lastSeq { return }
 
         if let newStatus = SessionStatus(rawValue: statusStr) {
-            // 状态变化时重置已读标记
-            if newStatus != sessions[index].status {
-                sessions[index].isRead = false
+            let oldStatus = sessions[index].status
+            // 状态变化且进入 actionable 状态时重置已读标记
+            if newStatus != oldStatus {
+                switch newStatus {
+                case .done, .idle, .error:
+                    sessions[index].isRead = false
+                default:
+                    break
+                }
             }
             sessions[index].status = newStatus
         }
@@ -140,16 +164,19 @@ class CoderBridgeService: NSObject {
         return nil
     }
 
-    /// 只统计 active session 的 manualWindowID（手动绑定 = 强占用）
+    /// 只统计 terminal 类型 active session 的 manualWindowID（手动绑定 = 强占用）
     private var occupiedWindowIDs: Set<CGWindowID> {
         Set(sessions.compactMap { s in
-            guard s.lifecycle == .active else { return nil }
+            guard s.lifecycle == .active, s.hostKind == .terminal else { return nil }
             return s.manualWindowID
         })
     }
 
     /// 检查某个 autoWindowID 是否与其他 active session 冲突（多个 session 指向同一窗口）
     func isAutoWindowConflicted(for session: CoderSession) -> Bool {
+        // IDE 内嵌终端：多 session 共享同窗口是正常的
+        if session.hostKind == .ide { return false }
+
         guard let auto = session.autoWindowID else { return false }
         let count = sessions.filter {
             $0.sessionID != session.sessionID && $0.lifecycle == .active && $0.autoWindowID == auto
@@ -183,10 +210,10 @@ class CoderBridgeService: NSObject {
             // 有效但冲突 → 跳过，不使用
         }
 
-        // fallback：排除已被手动绑定占用的窗口
+        // fallback：排除已被手动绑定占用的窗口（IDE 不排除，多 session 可共享）
         let occupied = occupiedWindowIDs
         let candidateWindows = findWindowsForHostApp(session.hostApp)
-            .filter { !occupied.contains($0.0) }
+            .filter { session.hostKind == .ide || !occupied.contains($0.0) }
 
         if candidateWindows.isEmpty {
             return (nil, .none)
@@ -366,7 +393,7 @@ class CoderBridgeService: NSObject {
 
     func markAsRead(sid: String) {
         guard let index = sessions.firstIndex(where: { $0.sessionID == sid }) else { return }
-        guard sessions[index].status == .done && !sessions[index].isRead else { return }
+        guard sessions[index].isActionable else { return }
         sessions[index].isRead = true
         postSessionChanged()
     }
@@ -381,16 +408,19 @@ class CoderBridgeService: NSObject {
 
     func sessionOccupyingWindow(_ windowID: CGWindowID, excludingSid: String) -> String? {
         sessions.first(where: {
-            $0.sessionID != excludingSid && $0.lifecycle == .active && $0.manualWindowID == windowID
+            $0.sessionID != excludingSid && $0.lifecycle == .active && $0.hostKind == .terminal && $0.manualWindowID == windowID
         })?.sessionID
     }
 
     func bindSessionToWindow(sid: String, windowID: CGWindowID) {
         guard let index = sessions.firstIndex(where: { $0.sessionID == sid }) else { return }
 
-        if let occupierSid = sessionOccupyingWindow(windowID, excludingSid: sid),
-           let occupierIndex = sessions.firstIndex(where: { $0.sessionID == occupierSid }) {
-            sessions[occupierIndex].manualWindowID = nil
+        // 仅 terminal 类型才驱逐已有绑定
+        if sessions[index].hostKind == .terminal {
+            if let occupierSid = sessionOccupyingWindow(windowID, excludingSid: sid),
+               let occupierIndex = sessions.firstIndex(where: { $0.sessionID == occupierSid }) {
+                sessions[occupierIndex].manualWindowID = nil
+            }
         }
 
         sessions[index].manualWindowID = windowID
