@@ -1988,32 +1988,38 @@ final class QuickPanelView: NSView {
 
             if !isCollapsed {
                 // === 任务区（todo.md 存在时渲染）===
-                if let todoFile = TodoService.shared.parse(cwd: cwdKey) {
+                if let board = TodoService.shared.parse(cwd: cwdKey) {
                     let isTodoExpanded = expandedTodoGroups.contains(cwdKey)
 
                     // 任务折叠行
-                    let foldRow = createTodoFoldRow(todoFile: todoFile, cwdNormalized: cwdKey, isExpanded: isTodoExpanded)
+                    let foldRow = createTodoFoldRow(todoBoard: board, cwdNormalized: cwdKey, isExpanded: isTodoExpanded)
                     contentStack.addArrangedSubview(foldRow)
                     foldRow.widthAnchor.constraint(equalTo: contentStack.widthAnchor).isActive = true
 
                     if isTodoExpanded {
-                        // 活跃任务（Todo + In Progress）
-                        for item in todoFile.activeItems {
-                            let itemRow = createTodoItemRow(item: item, cwdNormalized: cwdKey, isDone: false)
+                        // Todo 区
+                        for (i, item) in board.todo.enumerated() {
+                            let itemRow = createTodoItemRow(item: item, section: .todo, index: i, cwdNormalized: cwdKey)
+                            contentStack.addArrangedSubview(itemRow)
+                            itemRow.widthAnchor.constraint(equalTo: contentStack.widthAnchor).isActive = true
+                        }
+                        // In Progress 区
+                        for (i, item) in board.inProgress.enumerated() {
+                            let itemRow = createTodoItemRow(item: item, section: .inProgress, index: i, cwdNormalized: cwdKey)
                             contentStack.addArrangedSubview(itemRow)
                             itemRow.widthAnchor.constraint(equalTo: contentStack.widthAnchor).isActive = true
                         }
 
-                        // Done 摘要行（有 done 任务时才显示）
-                        if todoFile.doneCount > 0 {
+                        // Done 摘要行
+                        if board.doneCount > 0 {
                             let isDoneExpanded = expandedDoneGroups.contains(cwdKey)
-                            let doneRow = createDoneSummaryRow(doneCount: todoFile.doneCount, cwdNormalized: cwdKey, isExpanded: isDoneExpanded)
+                            let doneRow = createDoneSummaryRow(doneCount: board.doneCount, cwdNormalized: cwdKey, isExpanded: isDoneExpanded)
                             contentStack.addArrangedSubview(doneRow)
                             doneRow.widthAnchor.constraint(equalTo: contentStack.widthAnchor).isActive = true
 
                             if isDoneExpanded {
-                                for item in todoFile.doneItems {
-                                    let itemRow = createTodoItemRow(item: item, cwdNormalized: cwdKey, isDone: true)
+                                for (i, item) in board.done.enumerated() {
+                                    let itemRow = createTodoItemRow(item: item, section: .done, index: i, cwdNormalized: cwdKey)
                                     contentStack.addArrangedSubview(itemRow)
                                     itemRow.widthAnchor.constraint(equalTo: contentStack.widthAnchor).isActive = true
                                 }

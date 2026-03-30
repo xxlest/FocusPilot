@@ -8,7 +8,6 @@ import ObjectiveC
 private final class TodoClickableIcon: NSButton {
     private var clickAction: (() -> Void)?
 
-    /// SF Symbol 图标按钮（▶ 执行、✕ 删除）
     init(systemSymbolName: String, size: CGFloat, color: NSColor, action: @escaping () -> Void) {
         self.clickAction = action
         super.init(frame: .zero)
@@ -33,7 +32,6 @@ private final class TodoClickableIcon: NSButton {
         self.action = #selector(handleClick)
     }
 
-    /// 色点按钮（状态切换）
     init(dotColor: NSColor, dotSize: CGFloat, action: @escaping () -> Void) {
         self.clickAction = action
         super.init(frame: .zero)
@@ -706,7 +704,7 @@ extension QuickPanelView {
     // MARK: - Todo Kanban Rows
 
     /// 任务折叠行：📋 任务 2/5 ✎
-    func createTodoFoldRow(todoFile: TodoFile, cwdNormalized: String, isExpanded: Bool) -> HoverableRowView {
+    func createTodoFoldRow(todoBoard: TodoBoard, cwdNormalized: String, isExpanded: Bool) -> HoverableRowView {
         let theme = ConfigStore.shared.currentThemeColors
         let row = HoverableRowView()
         row.translatesAutoresizingMaskIntoConstraints = false
@@ -753,7 +751,7 @@ extension QuickPanelView {
         stack.addArrangedSubview(createSpacer())
 
         // 进度摘要 "2/5"
-        let progress = createLabel(todoFile.progressSummary, size: 11, color: theme.nsTextTertiary)
+        let progress = createLabel(todoBoard.progressSummary, size: 11, color: theme.nsTextTertiary)
         progress.setContentCompressionResistancePriority(.required, for: .horizontal)
         stack.addArrangedSubview(progress)
 
@@ -781,9 +779,10 @@ extension QuickPanelView {
         return row
     }
 
-    /// 任务条目行：● 标题 ▶ ✕
-    func createTodoItemRow(item: TodoItem, cwdNormalized: String, isDone: Bool) -> HoverableRowView {
+    /// 任务条目行：● 标题 ▶ ✕（用 section + index 定位）
+    func createTodoItemRow(item: TodoItem, section: TodoStatus, index: Int, cwdNormalized: String) -> HoverableRowView {
         let theme = ConfigStore.shared.currentThemeColors
+        let isDone = (section == .done)
         let row = HoverableRowView()
         row.translatesAutoresizingMaskIntoConstraints = false
         row.heightAnchor.constraint(greaterThanOrEqualToConstant: Constants.Panel.windowRowHeight).isActive = true
@@ -800,16 +799,15 @@ extension QuickPanelView {
             stack.centerYAnchor.constraint(equalTo: row.centerYAnchor),
         ])
 
-        // 色点按钮（单击切换状态）
-        let capturedItem = item
         let capturedCwd = cwdNormalized
-        let dotBtn = TodoClickableIcon(dotColor: item.status.dotColor, dotSize: isDone ? 8 : 10) { [weak self] in
-            TodoService.shared.cycleStatus(item: capturedItem, cwd: capturedCwd)
+        let capturedSection = section
+        let capturedIndex = index
+        let dotBtn = TodoClickableIcon(dotColor: section.dotColor, dotSize: isDone ? 8 : 10) { [weak self] in
+            TodoService.shared.cycleStatus(section: capturedSection, index: capturedIndex, cwd: capturedCwd)
             self?.forceReload()
         }
         stack.addArrangedSubview(dotBtn)
 
-        // 标题文字
         let titleLabel = createLabel(item.title, size: 12, color: isDone ? theme.nsTextTertiary : theme.nsTextPrimary)
         titleLabel.lineBreakMode = .byTruncatingTail
         titleLabel.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
@@ -824,7 +822,7 @@ extension QuickPanelView {
 
         stack.addArrangedSubview(createSpacer())
 
-        // ▶ 执行按钮（Done 条目不显示）
+        let capturedItem = item
         if !isDone {
             let playBtn = TodoClickableIcon(systemSymbolName: "play.fill", size: 9, color: theme.nsTextTertiary.withAlphaComponent(0.35)) { [weak self] in
                 self?.handleTodoCopyToAI(item: capturedItem, cwd: capturedCwd)
@@ -832,9 +830,8 @@ extension QuickPanelView {
             stack.addArrangedSubview(playBtn)
         }
 
-        // ✕ 删除按钮
         let deleteBtn = TodoClickableIcon(systemSymbolName: "xmark", size: 9, color: theme.nsTextTertiary.withAlphaComponent(0.35)) { [weak self] in
-            TodoService.shared.deleteItem(capturedItem, cwd: capturedCwd)
+            TodoService.shared.deleteItem(section: capturedSection, index: capturedIndex, cwd: capturedCwd)
             self?.forceReload()
         }
         stack.addArrangedSubview(deleteBtn)

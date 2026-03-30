@@ -406,7 +406,7 @@ extension QuickPanelView {
     @objc func handleCreateTodoFile(_ sender: NSMenuItem) {
         guard let cwd = sender.representedObject as? String else { return }
         let path = (cwd as NSString).appendingPathComponent("todo.md")
-        let content = "## Todo\n- [ ] 在这里添加你的第一个任务\n  任务描述写在缩进行（可选）\n\n## In Progress\n\n## Done\n"
+        let content = "\(TodoStatus.todo.sectionTitle)\n- [ ] 在这里添加你的第一个任务\n  任务描述写在缩进行（可选）\n\n\(TodoStatus.inProgress.sectionTitle)\n\n\(TodoStatus.done.sectionTitle)\n"
         FileManager.default.createFile(atPath: path, contents: content.data(using: .utf8))
         expandedTodoGroups.insert(cwd)
         forceReload()
@@ -444,8 +444,8 @@ extension QuickPanelView {
         textField.bezelStyle = .roundedBezel
 
         // 读取任务列表（使用 cwdNormalized 与面板一致）
-        let todoFile = TodoService.shared.parse(cwd: session.cwdNormalized)
-        let activeItems = todoFile?.activeItems ?? []
+        let todoBoard = TodoService.shared.parse(cwd: session.cwdNormalized)
+        let activeItems = todoBoard?.activeItems ?? []
 
         if activeItems.isEmpty {
             // 无任务：纯输入框
