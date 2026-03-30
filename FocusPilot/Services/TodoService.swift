@@ -171,4 +171,184 @@ class TodoService {
         }
         return date.timeIntervalSince1970
     }
+
+    // MARK: - 写回操作
+
+    /// 在 file 中找到与 item 匹配的条目（fingerprint + status + sectionIndex）
+    private func findMatchingItem(_ item: TodoItem, in file: TodoFile) -> TodoItem? {
+        let candidates = file.items.filter { $0.status == item.status && $0.fingerprint == item.fingerprint }
+        if candidates.count == 1 { return candidates[0] }
+        return candidates.first(where: { $0.sectionIndex == item.sectionIndex })
+    }
+
+    /// 循环切换任务状态，写回文件
+    @discardableResult
+    func cycleStatus(item: TodoItem, cwd: String) -> Bool {
+        guard let file = parse(cwd: cwd),
+              let matched = findMatchingItem(item, in: file) else {
+            return false
+        }
+
+        let targetStatus = matched.status.next
+        let newItem = TodoItem(
+            title: matched.title,
+            content: matched.content,
+            status: targetStatus,
+            sectionIndex: 0,
+            fingerprint: matched.fingerprint
+        )
+
+        return rewriteFile(file: file, removing: matched, inserting: newItem)
+    }
+
+    /// 从文件中删除任务条目
+    @discardableResult
+    func deleteItem(_ item: TodoItem, cwd: String) -> Bool {
+        guard let file = parse(cwd: cwd),
+              let matched = findMatchingItem(item, in: file) else {
+            return false
+        }
+
+        return rewriteFile(file: file, removing: matched, inserting: nil)
+    }
+
+    /// 核心写回逻辑：从文件移除一条任务，可选地追加到新 section
+    private func rewriteFile(file: TodoFile, removing: TodoItem, inserting: TodoItem?) -> Bool {
+        guard let data = FileManager.default.contents(atPath: file.path),
+              let text = String(data: data, encoding: .utf8) else {
+            return false
+        }
+
+        var lines = text.components(separatedBy: "\n")
+
+        let removeResult = removeTodoLines(from: &lines, matching: removing)
+        guard removeResult else { return false }
+
+        if let newItem = inserting {
+            let targetSection = newItem.status.sectionTitle
+            insertTodoLines(into: &lines, item: newItem, targetSection: targetSection)
+        }
+
+        let output = lines.joined(separator: "\n")
+        do {
+            try output.write(toFile: file.path, atomically: true, encoding: .utf8)
+            return true
+        } catch {
+            return false
+        }
+    }
+
+    /// 从 lines 中移除匹配条目的标题行 + 缩进内容行
+    private func removeTodoLines(from lines: inout [String], matching item: TodoItem) -> Bool {
+        let checkbox = item.status == .done ? "- [x] " : "- [ ] "
+        let targetLine = checkbox + item.title
+
+        var currentSection: TodoStatus? = nil
+        var matchCount = 0
+
+        for i in 0..<lines.count {
+            let line = lines[i]
+            if line.hasPrefix("## ") {
+                let title = String(line.dropFirst(3))
+                currentSection = TodoStatus.from(sectionTitle: title)
+            }
+            if currentSection == item.status && line == targetLine {
+                if matchCount == item.sectionIndex {
+                    var endIdx = i + 1
+                    while endIdx < lines.count {
+                        let nextLine = lines[endIdx]
+                        if nextLine.hasPrefix("  ") && !nextLine.trimmingCharacters(in: .whitespaces).isEmpty {
+                            endIdx += 1
+                        } else if nextLine.trimmingCharacters(in: .whitespaces).isEmpty {
+                            if endIdx + 1 < lines.count && lines[endIdx + 1].hasPrefix("  ") {
+                                endIdx += 1
+                            } else {
+                                endIdx += 1
+                                break
+                            }
+                        } else {
+                            break
+                        }
+                    }
+                    lines.removeSubrange(i..<endIdx)
+                    return true
+                }
+                matchCount += 1
+            }
+        }
+        return false
+    }
+
+    /// 将新条目追加到目标 section 末尾；section 不存在时在文件末尾创建
+    private func insertTodoLines(into lines: inout [String], item: TodoItem, targetSection: String) {
+        let newLines = item.rawLines
+
+        var sectionStart: Int? = nil
+        for i in 0..<lines.count {
+            if lines[i] == targetSection {
+                sectionStart = i
+                break
+            }
+        }
+
+        if let start = sectionStart {
+            var insertAt = start + 1
+            while insertAt < lines.count {
+                if lines[insertAt].hasPrefix("## ") { break }
+                insertAt += 1
+            }
+            while insertAt > start + 1 && lines[insertAt - 1].trimmingCharacters(in: .whitespaces).isEmpty {
+                insertAt -= 1
+            }
+            var toInsert = newLines
+            toInsert.append("")
+            lines.insert(contentsOf: toInsert, at: insertAt)
+        } else {
+            if let last = lines.last, !last.trimmingCharacters(in: .whitespaces).isEmpty {
+                lines.append("")
+            }
+            lines.append(targetSection)
+            lines.append(contentsOf: newLines)
+            lines.append("")
+        }
+    }
+
+    // MARK: - 复制与打开
+
+    /// 获取复制到 AI 执行的内容：有内容返回内容，无内容返回标题
+    func copyContent(for item: TodoItem) -> String {
+        return item.content ?? item.title
+    }
+
+    /// 复制内容到剪贴板
+    func copyToPasteboard(item: TodoItem) {
+        let text = copyContent(for: item)
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString(text, forType: .string)
+    }
+
+    /// 在编辑器中打开 todo.md
+    func openInEditor(cwd: String) {
+        let path = (cwd as NSString).appendingPathComponent("todo.md")
+        let fileURL = URL(fileURLWithPath: path)
+
+        // 优先查找该项目下 hostKind == .ide 的 session 宿主窗口
+        let ideSessions = CoderBridgeService.shared.sessions.filter {
+            $0.cwdNormalized == cwd && $0.lifecycle == .active && $0.hostKind == .ide
+        }
+
+        if let ideSession = ideSessions.first {
+            let (windowID, confidence) = CoderBridgeService.shared.resolveWindowForSession(ideSession)
+            if let wid = windowID, confidence == .high {
+                let allWindows = AppMonitor.shared.runningApps.flatMap { $0.windows }
+                if let windowInfo = allWindows.first(where: { $0.id == wid }) {
+                    WindowService.shared.activateWindow(windowInfo)
+                    return
+                }
+            }
+        }
+
+        // 无 IDE 宿主窗口，用系统默认编辑器打开
+        NSWorkspace.shared.open(fileURL)
+    }
 }
