@@ -62,10 +62,8 @@ QuickPanelView 需要新增监听 `panelPinStateChanged` 通知。回调中当 `
 /// 非固定模式 hover 临时预览 Tab（不持久化，不改 selectedTab）
 private func hoverPreviewTab(_ tab: QuickPanelTab) {
     guard displayTab != tab else { return }
-    // 离开 running/favorites 时清理 hover 展开态
-    if tab == .ai {
-        hoverExpandedBundleID = nil
-    }
+    // Tab 切换时清理 hover 展开态（防止跨 Tab 残留）
+    hoverExpandedBundleID = nil
     displayTab = tab
     updateTabButtonStyles()
     forceReload()
@@ -121,7 +119,7 @@ if hoverExpandedBundleID == bundleID {  // 只有还是自己才清除
 
 `hoverExpandedBundleID` 在以下时机强制清空为 nil，防止陈旧状态导致误展开：
 
-1. **displayTab 离开 running/favorites**：`hoverPreviewTab()` 和 `switchTab()` 中，当新 Tab 为 `.ai` 时清空（此时原容器可能不会收到 mouseExited）
+1. **displayTab 发生任何切换**：`hoverPreviewTab()` 和 `switchTab()` 中，只要 displayTab 变化就清空。Tab 切换时鼠标已离开 app 容器区域，原容器可能不会收到 mouseExited；且 running/favorites 间可能存在同 bundleID 的 App，残留会导致意外展开。清空后仅由新 Tab 下的 app 容器 mouseEntered 重新建立 hover owner
 2. **进入固定模式**：`panelPinStateDidChange` 中清空（见上文）
 3. **面板关闭**：`resetToNormalMode()` 中清空
 
