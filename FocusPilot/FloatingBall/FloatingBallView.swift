@@ -75,20 +75,28 @@ final class FloatingBallView: NSView {
         return imageView
     }()
 
-    /// 角标视图（圆形红底白字，与 AI 面板角标风格一致）
+    /// AI 未读角标容器（红色圆角背景）
+    private let badgeContainer: NSView = {
+        let view = NSView()
+        view.wantsLayer = true
+        view.layer?.backgroundColor = NSColor.systemRed.cgColor
+        view.layer?.cornerRadius = 7
+        view.layer?.masksToBounds = true
+        view.isHidden = true
+        return view
+    }()
+
+    /// AI 未读角标文字
     private let badgeLabel: NSTextField = {
         let label = NSTextField(labelWithString: "")
-        label.font = .systemFont(ofSize: 9, weight: .bold)
+        label.font = .systemFont(ofSize: 9, weight: .semibold)
         label.textColor = .white
         label.alignment = .center
         label.drawsBackground = false
         label.isBezeled = false
         label.isEditable = false
-        label.wantsLayer = true
-        label.layer?.backgroundColor = NSColor.systemRed.cgColor
-        label.layer?.cornerRadius = 7
-        label.layer?.masksToBounds = true
-        label.isHidden = true
+        label.lineBreakMode = .byClipping
+        label.maximumNumberOfLines = 1
         return label
     }()
 
@@ -98,12 +106,14 @@ final class FloatingBallView: NSView {
         super.init(frame: frameRect)
         setupView()
         setupNotifications()
+        updateAIBadge()
     }
 
     required init?(coder: NSCoder) {
         super.init(coder: coder)
         setupView()
         setupNotifications()
+        updateAIBadge()
     }
 
     deinit {
@@ -157,14 +167,21 @@ final class FloatingBallView: NSView {
         iconView.layer?.masksToBounds = true
         addSubview(iconView)
 
-        // 角标（右上角偏外，pill 形状，宽度按内容弹性扩展）
+        // AI 未读角标（球内右上角，pill 形状）
+        badgeContainer.translatesAutoresizingMaskIntoConstraints = false
         badgeLabel.translatesAutoresizingMaskIntoConstraints = false
-        addSubview(badgeLabel)
+        badgeContainer.addSubview(badgeLabel)
+        addSubview(badgeContainer)
         NSLayoutConstraint.activate([
-            badgeLabel.heightAnchor.constraint(equalToConstant: 14),
-            badgeLabel.widthAnchor.constraint(greaterThanOrEqualToConstant: 14),
-            badgeLabel.trailingAnchor.constraint(equalTo: trailingAnchor, constant: 3),
-            badgeLabel.topAnchor.constraint(equalTo: topAnchor, constant: -3),
+            // 容器在球内右上角
+            badgeContainer.topAnchor.constraint(equalTo: topAnchor, constant: 4),
+            badgeContainer.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -4),
+            badgeContainer.heightAnchor.constraint(equalToConstant: 14),
+            badgeContainer.widthAnchor.constraint(greaterThanOrEqualToConstant: 14),
+            // label 在容器内居中，左右 4px padding
+            badgeLabel.leadingAnchor.constraint(equalTo: badgeContainer.leadingAnchor, constant: 4),
+            badgeLabel.trailingAnchor.constraint(equalTo: badgeContainer.trailingAnchor, constant: -4),
+            badgeLabel.centerYAnchor.constraint(equalTo: badgeContainer.centerYAnchor),
         ])
 
         // 添加鼠标追踪区域
@@ -493,18 +510,24 @@ final class FloatingBallView: NSView {
 
     // MARK: - 角标
 
+    /// AI 角标数字格式化（>=100 显示 99+）
+    private func badgeText(for count: Int) -> String {
+        count >= 100 ? "99+" : "\(count)"
+    }
+
     /// 更新 AI 消息数角标（非固定模式下显示 actionableCount）
     private func updateAIBadge() {
         guard !isPanelPinned else {
-            badgeLabel.isHidden = true
+            badgeContainer.isHidden = true
             return
         }
         let count = CoderBridgeService.shared.actionableCount
         if count > 0 {
-            badgeLabel.stringValue = "\(count)"
-            badgeLabel.isHidden = false
+            badgeLabel.stringValue = badgeText(for: count)
+            badgeLabel.invalidateIntrinsicContentSize()
+            badgeContainer.isHidden = false
         } else {
-            badgeLabel.isHidden = true
+            badgeContainer.isHidden = true
         }
     }
 
