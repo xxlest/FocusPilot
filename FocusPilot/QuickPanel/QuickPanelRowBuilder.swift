@@ -190,7 +190,7 @@ extension QuickPanelView {
         ])
 
         // 星号关注按钮（仅活跃 Tab 显示，位于最左侧）
-        if currentTab == .running {
+        if displayTab == .running {
             let isFav = ConfigStore.shared.isFavorite(bundleID)
             let starButton = NSButton()
             starButton.bezelStyle = .recessed

@@ -16,14 +16,21 @@ final class QuickPanelView: NSView {
 
     // MARK: - 状态（跨文件 extension 需访问，使用 internal）
 
-    /// 当前 Tab 页（setupView 中从 ConfigStore 恢复）
-    var currentTab: QuickPanelTab = .running
+    /// 用户点击选择的持久 Tab（写入 UserDefaults）
+    var selectedTab: QuickPanelTab = .running
+    /// 当前实际显示的 Tab（驱动 UI 渲染，hover 预览时可与 selectedTab 不同）
+    var displayTab: QuickPanelTab = .running
 
     /// 当前高亮的窗口行 ID（同一时间只有一个）
     var highlightedWindowID: CGWindowID?
 
     /// 多窗口 App 折叠状态（按 bundleID 跟踪）
     var collapsedApps: Set<String> = []
+
+    /// 非固定模式下当前 hover 展开的 App（按 bundleID 跟踪）
+    var hoverExpandedBundleID: String?
+    /// 非固定模式下 bundleID → windowList 视图映射（用于中心化收起旧列表）
+    var hoverWindowListMap: [String: NSView] = [:]
 
     /// AI Tab 目录组折叠状态（按 cwdNormalized 跟踪）
     var collapsedGroups: Set<String> = []
@@ -565,7 +572,8 @@ final class QuickPanelView: NSView {
         updateTrackingArea()
 
         // 从 ConfigStore 恢复上次选择的 Tab
-        currentTab = QuickPanelTab(rawValue: ConfigStore.shared.lastPanelTab) ?? .running
+        selectedTab = QuickPanelTab(rawValue: ConfigStore.shared.lastPanelTab) ?? .running
+        displayTab = selectedTab
         updateTabButtonStyles()
 
         // 初始化计时器 UI
@@ -1621,8 +1629,10 @@ final class QuickPanelView: NSView {
     // MARK: - Tab 切换
 
     private func switchTab(_ tab: QuickPanelTab) {
-        guard currentTab != tab else { return }
-        currentTab = tab
+        guard displayTab != tab else { return }
+        hoverExpandedBundleID = nil
+        selectedTab = tab
+        displayTab = tab
         ConfigStore.shared.saveLastPanelTab(tab)
         highlightedWindowID = nil
         updateTabButtonStyles()
@@ -1649,7 +1659,7 @@ final class QuickPanelView: NSView {
         // 设置选中 Tab 样式（加粗 + 强调色 + 底部指示条）
         let selectedButton: NSButton
         let selectedIndicator: NSView
-        switch currentTab {
+        switch displayTab {
         case .running:
             selectedButton = runningTabButton
             selectedIndicator = runningTabIndicator
@@ -1712,9 +1722,9 @@ final class QuickPanelView: NSView {
     /// 构建结构 key（不含窗口标题，标题变化属于内容级更新）
     private func buildStructuralKey() -> String {
         let ax = WindowService.shared.isAXApiAvailable() ? "AX1" : "AX0"
-        var parts: [String] = [currentTab.rawValue, ax]
+        var parts: [String] = [displayTab.rawValue, ax]
 
-        switch currentTab {
+        switch displayTab {
         case .running:
             let apps = AppMonitor.shared.runningApps.filter { !$0.windows.isEmpty }
             for app in apps {
@@ -1776,7 +1786,9 @@ final class QuickPanelView: NSView {
     /// 重置面板状态（面板关闭时调用，保留 Tab 记忆）
     func resetToNormalMode() {
         highlightedWindowID = nil
-        // 不重置 currentTab（Tab 记忆功能）
+        displayTab = selectedTab
+        hoverExpandedBundleID = nil
+        hoverWindowListMap.removeAll()
         collapsedApps.removeAll()
         windowTitleLabels.removeAll()
         windowRowViewMap.removeAll()
@@ -1786,7 +1798,7 @@ final class QuickPanelView: NSView {
     // MARK: - 内容构建
 
     private func buildContent() {
-        switch currentTab {
+        switch displayTab {
         case .running:
             buildRunningTabContent()
         case .favorites:
@@ -2067,7 +2079,7 @@ final class QuickPanelView: NSView {
         DispatchQueue.main.async { [weak self] in
             guard let self = self else { return }
             self.updateAIBadge()
-            if self.currentTab == .ai {
+            if self.displayTab == .ai {
                 self.forceReload()
             }
         }
