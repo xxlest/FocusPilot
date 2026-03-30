@@ -27,6 +27,8 @@ final class QuickPanelView: NSView {
 
     /// AI Tab 目录组折叠状态（按 cwdNormalized 跟踪）
     var collapsedGroups: Set<String> = []
+    var expandedTodoGroups: Set<String> = []    // 任务区展开状态（默认折叠）
+    var expandedDoneGroups: Set<String> = []    // Done 区展开状态（默认折叠）
 
     /// 上次渲染时的结构快照（用于判断是否需要全量重建）
     private var lastStructuralKey: String = ""
@@ -858,64 +860,29 @@ final class QuickPanelView: NSView {
 
     // MARK: - FocusByTime 对话框
 
-    /// 弹窗预处理：提升弹窗层级到所有自有窗口之上，智能定位到面板旁边
-    /// 所有从面板弹出的 NSAlert 必须调用此方法，runModal 结束后调用 restoreAfterAlert
+    /// 弹窗预处理：降低面板层级 + 提升弹窗层级，位置走系统默认居中
     func prepareAlert(_ alert: NSAlert) {
-        // 先 layout 让系统计算弹窗尺寸
-        alert.layout()
-
-        // 提升弹窗层级到悬浮球之上
-        alert.window.level = NSWindow.Level(rawValue: Int(Constants.alertLevel))
-
-        // 面板不可见或不在当前 Space → 仅提升层级，位置走系统默认居中
-        guard let panelWindow = self.window as? QuickPanelWindow,
-              panelWindow.isVisible,
-              panelWindow.isOnActiveSpace,
-              let screen = panelWindow.screen ?? NSScreen.main else {
-            return
+        if let panelWindow = self.window as? QuickPanelWindow {
+            panelWindow.level = .normal
         }
-
-        let alertSize = alert.window.frame.size
-        let panelFrame = panelWindow.frame
-        let screenFrame = screen.visibleFrame
-        let gap: CGFloat = 8
-
-        var origin = CGPoint.zero
-
-        // 垂直方向：优先面板上方，其次下方
-        let spaceAbove = screenFrame.maxY - panelFrame.maxY
-        let spaceBelow = panelFrame.minY - screenFrame.minY
-
-        if spaceAbove >= alertSize.height + gap {
-            // 上方有空间
-            origin.y = panelFrame.maxY + gap
-            origin.x = panelFrame.minX
-        } else if spaceBelow >= alertSize.height + gap {
-            // 下方有空间
-            origin.y = panelFrame.minY - alertSize.height - gap
-            origin.x = panelFrame.minX
-        } else {
-            // 上下都不够 → 放在面板侧边（与悬浮球相反方向）
-            let panelCenterX = panelFrame.midX
-            let screenCenterX = screenFrame.midX
-            if panelCenterX < screenCenterX {
-                origin.x = panelFrame.maxX + gap
-            } else {
-                origin.x = panelFrame.minX - alertSize.width - gap
-            }
-            origin.y = panelFrame.midY - alertSize.height / 2
+        // didBecomeKey 中提升弹窗层级（runModal 会重置 layout 阶段设置的 level）
+        let alertWindow = alert.window
+        var observer: NSObjectProtocol?
+        observer = NotificationCenter.default.addObserver(
+            forName: NSWindow.didBecomeKeyNotification,
+            object: alertWindow,
+            queue: .main
+        ) { _ in
+            if let obs = observer { NotificationCenter.default.removeObserver(obs) }
+            alertWindow.level = NSWindow.Level(rawValue: Int(Constants.alertLevel))
         }
-
-        // 统一边界裁剪（所有分支之后）
-        origin.x = max(screenFrame.minX, min(origin.x, screenFrame.maxX - alertSize.width))
-        origin.y = max(screenFrame.minY, min(origin.y, screenFrame.maxY - alertSize.height))
-
-        alert.window.setFrameOrigin(origin)
     }
 
-    /// 弹窗后恢复（面板层级不再被修改，保留方法签名避免修改所有调用点）
+    /// 弹窗后：恢复面板层级
     func restoreAfterAlert() {
-        // 面板层级未改变，无需恢复
+        if let panelWindow = self.window as? QuickPanelWindow {
+            panelWindow.level = NSWindow.Level(rawValue: Int(Constants.quickPanelLevel))
+        }
     }
 
     /// 构建休息选择 accessory view（引导休息 radio + 自由休息 radio）
@@ -1767,13 +1734,15 @@ final class QuickPanelView: NSView {
                 parts.append("\(config.bundleID):\(isRunning):\(windowIDs):\(collapsed)")
             }
         case .ai:
-            // 直接用 sessions 构建 key，不调用 groupedSessions 避免重复计算
             let sessionKeys = CoderBridgeService.shared.sessions
                 .map { "\($0.cwdNormalized):\($0.sessionID):\($0.status.rawValue):\($0.lifecycle.rawValue)" }
                 .sorted()
                 .joined(separator: "|")
             let collapsed = collapsedGroups.sorted().joined(separator: ",")
-            parts.append("AI:\(sessionKeys):C:\(collapsed)")
+            // todo.md mtime 纳入 key，外部修改时触发全量重建
+            let cwds = Set(CoderBridgeService.shared.sessions.map { $0.cwdNormalized })
+            let todoMtimes = cwds.sorted().map { "\($0):\(TodoService.shared.mtime(cwd: $0))" }.joined(separator: ",")
+            parts.append("AI:\(sessionKeys):C:\(collapsed):T:\(todoMtimes)")
         }
 
         parts.append("H:\(highlightedWindowID ?? 0)")
