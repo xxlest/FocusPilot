@@ -111,7 +111,7 @@ Todo → In Progress → Done → Todo 三态循环。
 
 写回 todo.md 的操作：
 1. 从文件重新读取并重新 `parse()`（确保最新）
-2. 用 **title + status + content hash** 三元组匹配目标条目（不依赖 lineRange）；同 section 内重名任务用出现顺序（index）辅助区分
+2. 用 **fingerprint + status** 三元组匹配目标条目（不依赖 lineRange）；同 section 内重名任务用出现顺序（index）辅助区分
 3. 匹配失败（条目被外部删除/大改）：操作静默失败，刷新面板显示最新状态
 4. 匹配成功：将该任务条目（标题行 + 内容行）从原看板列移除
 5. 追加到目标看板列末尾；如果目标 `##` section 不存在，在文件末尾自动追加 section 标题
@@ -126,7 +126,7 @@ Todo → In Progress → Done → Todo 三态循环。
    - 有内容块（缩进行）：复制内容块
    - 无内容块：复制标题
 2. 写入系统剪贴板（`NSPasteboard.general`）
-3. 智能窗口切换：
+3. 智能窗口切换（不区分 hostKind，IDE 和 terminal 均可作为目标）：
    - 查找该项目下所有 active 的 AI session
    - 单个 session：直接切换到其宿主窗口
    - 多个 session：弹出选择菜单，用户选择后切换
@@ -135,14 +135,17 @@ Todo → In Progress → Done → Todo 三态循环。
 ### 删除条目（点击 ✕）
 
 1. 从文件重新读取并重新 `parse()`
-2. 用 title + status + content hash 匹配目标条目；匹配失败则静默失败 + 刷新
+2. 用 fingerprint + status 匹配目标条目；匹配失败则静默失败 + 刷新
 3. 移除该条目的标题行和所有缩进内容行
 4. 写回文件
 5. 重新解析刷新面板
 
 ### 在编辑器中打开（点击 ✎）
 
-复用现有的窗口切换机制，打开 todo.md 所在项目的编辑器窗口。如果没有关联的编辑器窗口，调用 `NSWorkspace.shared.open(fileURL)` 用默认编辑器打开。
+窗口路由规则：
+1. 优先查找该项目下 `hostKind == .ide` 的 AI session 宿主窗口（Cursor / VSCode 等），切换到该窗口
+2. 无 IDE 宿主窗口时：调用 `NSWorkspace.shared.open(fileURL)` 用系统默认编辑器打开 todo.md
+3. 不使用 terminal 宿主窗口（terminal 不适合编辑 Markdown 文件）
 
 ## 数据模型
 
@@ -154,7 +157,7 @@ struct TodoItem {
     let content: String?        // 任务内容（缩进块文字，nil 表示无内容）
     let status: TodoStatus      // todo / inProgress / done
     let sectionIndex: Int       // 在同 section 内的出现顺序（用于重名区分）
-    let contentHash: Int        // title + content 的 hashValue（用于写回时条目匹配）
+    let fingerprint: String     // 规范化文本指纹：(title + "\n" + (content ?? ""))，用于写回时条目匹配。确定性字符串比较，不依赖 Swift hashValue 的进程随机种子
 }
 ```
 
@@ -274,9 +277,9 @@ todo.md 数据在以下时机重新从文件读取：
 1. **面板显示时**：面板从隐藏变为可见，触发 `forceReload()`，AI Tab 重新渲染时调用 `TodoService.parse(cwd)`
 2. **Tab 切换到 AI 时**：`switchToAITab()` 触发 `forceReload()`，同上
 3. **任务操作后**：状态流转/删除写回文件后，立即调用 `forceReload()` 重新解析
-4. **自适应刷新定时器**：面板可见时已有 1s~3s 定时刷新，AI Tab 重新渲染时自然重新 parse
+4. **外部修改感知（mtime 纳入 structural key）**：现有定时刷新走 `reloadData()`，当 structural key 不变时只走 `updateWindowTitles()` 轻量路径，不会重建 AI Tab。为让外部编辑器修改 todo.md 后面板自动感知，将各 group 的 todo.md mtime 纳入 `buildStructuralKey()`。具体做法：AI Tab 构建 structural key 时，对每个 SessionGroup 的 `cwdNormalized` 调用 `stat()` 获取 `todo.md` 的 mtime，拼入 key 字符串。mtime 变化 → structural key 变化 → `reloadData()` 走全量重建路径 → 重新 parse。`stat()` 开销极低（无 IO 读取），不影响刷新性能。
 
-不使用 FSEvents 文件监听——面板隐藏时无需感知，面板可见时定时刷新已足够覆盖外部修改。
+不使用 FSEvents 文件监听——面板隐藏时无需感知，mtime 检查已足够覆盖外部修改。
 
 ### 折叠状态与 UI 刷新
 
