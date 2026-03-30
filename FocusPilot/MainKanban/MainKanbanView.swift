@@ -20,6 +20,7 @@ enum KanbanTab: String, CaseIterable {
 struct MainKanbanView: View {
     @State private var selectedTab: KanbanTab = .appConfig
     @State private var showSidebar = true
+    @State private var scrollToMultiBind = false
     @ObservedObject private var configStore = ConfigStore.shared
     @ObservedObject private var appMonitor = AppMonitor.shared
 
@@ -50,6 +51,10 @@ struct MainKanbanView: View {
                 }
                 .help("切换侧边栏")
             }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: Notification.Name("FocusCopilot.switchToPreferencesMultiBind"))) { _ in
+            selectedTab = .preferences
+            scrollToMultiBind = true
         }
     }
 
@@ -95,7 +100,7 @@ struct MainKanbanView: View {
         case .ballPanel:
             BallPanelConfigView()
         case .preferences:
-            PreferencesView()
+            PreferencesView(scrollToMultiBind: $scrollToMultiBind)
         }
     }
 }

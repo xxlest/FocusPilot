@@ -495,10 +495,10 @@ extension QuickPanelView {
         case .manual:
             break  // 无标记
         case .autoValid:
-            if session.hostKind == .ide {
-                break  // IDE auto 不显示标记
+            if CoderBridgeService.shared.allowsSharedBinding(for: session) {
+                break  // 白名单 app auto 不显示标记
             }
-            // terminal auto：显示 ? 标记
+            // 独占类 auto：显示 ? 标记
             if let qImage = Self.cachedSymbol(name: "questionmark.circle", size: 10, weight: .regular) {
                 let qView = NSImageView(image: qImage)
                 qView.contentTintColor = theme.nsTextTertiary
@@ -690,17 +690,22 @@ extension QuickPanelView {
             return
         }
 
-        // 冲突检测：仅 terminal 类型才拦截
-        if session.hostKind == .terminal,
+        // 冲突检测：仅独占类（非白名单）才拦截
+        if !CoderBridgeService.shared.allowsSharedBinding(for: session),
            let occupierSid = CoderBridgeService.shared.sessionOccupyingWindow(wid, excludingSid: sid) {
             let occupierSession = CoderBridgeService.shared.sessions.first(where: { $0.sessionID == occupierSid })
             let occupierName = occupierSession?.shortID ?? "其他会话"
             alert.messageText = "该窗口已被绑定"
-            alert.informativeText = "「\(displayTitle)」当前已被会话 \(occupierName) 绑定。\n请先切换到目标窗口再重新绑定。"
+            alert.informativeText = "「\(displayTitle)」当前已被会话 \(occupierName) 绑定。\n可在偏好设置中将该应用加入「多会话绑定」白名单。"
+            alert.addButton(withTitle: "前往设置")
             alert.addButton(withTitle: "确定")
             prepareAlert(alert)
-            alert.runModal()
+            let result = alert.runModal()
             restoreAfterAlert()
+            if result == .alertFirstButtonReturn {
+                // 打开主看板偏好设置的多绑定区域
+                NotificationCenter.default.post(name: Constants.Notifications.showPreferencesMultiBind, object: nil)
+            }
             CoderBridgeService.shared.activeSessionID = nil
             forceReload()
             return

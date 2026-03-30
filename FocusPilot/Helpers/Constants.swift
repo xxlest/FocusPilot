@@ -123,5 +123,7 @@ enum Constants {
         static let focusGuidedStepChanged = Notification.Name("FocusCopilot.focusGuidedStepChanged")
         /// Coder-Bridge 会话状态变化
         static let coderBridgeSessionChanged = Notification.Name("FocusCopilot.coderBridgeSessionChanged")
+        /// 打开偏好设置 → 多绑定白名单区域
+        static let showPreferencesMultiBind = Notification.Name("FocusCopilot.showPreferencesMultiBind")
     }
 }

@@ -207,12 +207,14 @@ struct Preferences: Codable {
     var hotkeyToggle: HotkeyConfig = .toggleDefault
     var autoRetractOnHover: Bool = true
     var panelAnimationSpeed: CGFloat = 0.25  // 面板弹出动画时长（秒），0.1-0.6
+    var multiBindApps: Set<String> = ["cursor", "vscode"]  // 允许多 Session 绑定同一窗口的 hostApp 白名单
 
     // 自定义解码：兼容旧数据（保留旧字段 CodingKey 以避免解码崩溃）
     private enum CodingKeys: String, CodingKey {
         case ballSize, ballOpacity, panelOpacity, appTheme
         case launchAtLogin, hotkeyToggle
         case autoRetractOnHover, panelAnimationSpeed
+        case multiBindApps
         // 旧字段（解码时忽略，兼容升级）
         case colorTheme, ballColorStyle, ballCustomColorHex, hotkeyKanban
     }
@@ -227,6 +229,7 @@ struct Preferences: Codable {
         hotkeyToggle = (try? container.decode(HotkeyConfig.self, forKey: .hotkeyToggle)) ?? .toggleDefault
         autoRetractOnHover = try container.decodeIfPresent(Bool.self, forKey: .autoRetractOnHover) ?? true
         panelAnimationSpeed = try container.decodeIfPresent(CGFloat.self, forKey: .panelAnimationSpeed) ?? 0.25
+        multiBindApps = try container.decodeIfPresent(Set<String>.self, forKey: .multiBindApps) ?? ["cursor", "vscode"]
     }
 
     func encode(to encoder: Encoder) throws {
@@ -239,6 +242,7 @@ struct Preferences: Codable {
         try container.encode(hotkeyToggle, forKey: .hotkeyToggle)
         try container.encode(autoRetractOnHover, forKey: .autoRetractOnHover)
         try container.encode(panelAnimationSpeed, forKey: .panelAnimationSpeed)
+        try container.encode(multiBindApps, forKey: .multiBindApps)
     }
 
     init() {}

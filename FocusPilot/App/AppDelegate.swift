@@ -137,6 +137,12 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             name: Constants.Notifications.ballToggleQuickPanel,
             object: nil
         )
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(handleShowPreferencesMultiBind),
+            name: Constants.Notifications.showPreferencesMultiBind,
+            object: nil
+        )
     }
 
     @objc private func handleShowQuickPanel(_ notification: Notification) {
@@ -276,6 +282,15 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             mainKanbanWindow = MainKanbanWindow()
         }
         mainKanbanWindow?.show()
+    }
+
+    /// 打开主看板偏好设置的多绑定白名单区域
+    @objc private func handleShowPreferencesMultiBind() {
+        showMainKanban()
+        // 通知 MainKanbanView 切换到偏好设置 tab 并滚动到多绑定区域
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+            NotificationCenter.default.post(name: Notification.Name("FocusCopilot.switchToPreferencesMultiBind"), object: nil)
+        }
     }
 
     /// 切换主看板显示/隐藏

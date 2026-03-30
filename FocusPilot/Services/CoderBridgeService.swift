@@ -22,6 +22,11 @@ class CoderBridgeService: NSObject {
         return .missing
     }
 
+    /// 统一策略入口：该 session 的宿主 app 是否允许多 session 共享同一窗口
+    func allowsSharedBinding(for session: CoderSession) -> Bool {
+        ConfigStore.shared.preferences.multiBindApps.contains(session.hostApp)
+    }
+
     private override init() {
         super.init()
     }
@@ -164,18 +169,18 @@ class CoderBridgeService: NSObject {
         return nil
     }
 
-    /// 只统计 terminal 类型 active session 的 manualWindowID（手动绑定 = 强占用）
+    /// 只统计独占类（非白名单）active session 的 manualWindowID（手动绑定 = 强占用）
     private var occupiedWindowIDs: Set<CGWindowID> {
         Set(sessions.compactMap { s in
-            guard s.lifecycle == .active, s.hostKind == .terminal else { return nil }
+            guard s.lifecycle == .active, !allowsSharedBinding(for: s) else { return nil }
             return s.manualWindowID
         })
     }
 
     /// 检查某个 autoWindowID 是否与其他 active session 冲突（多个 session 指向同一窗口）
     func isAutoWindowConflicted(for session: CoderSession) -> Bool {
-        // IDE 内嵌终端：多 session 共享同窗口是正常的
-        if session.hostKind == .ide { return false }
+        // 白名单内的 app：多 session 共享同窗口是正常的
+        if allowsSharedBinding(for: session) { return false }
 
         guard let auto = session.autoWindowID else { return false }
         let count = sessions.filter {
@@ -210,10 +215,10 @@ class CoderBridgeService: NSObject {
             // 有效但冲突 → 跳过，不使用
         }
 
-        // fallback：排除已被手动绑定占用的窗口（IDE 不排除，多 session 可共享）
+        // fallback：排除已被手动绑定占用的窗口（白名单 app 不排除，多 session 可共享）
         let occupied = occupiedWindowIDs
         let candidateWindows = findWindowsForHostApp(session.hostApp)
-            .filter { session.hostKind == .ide || !occupied.contains($0.0) }
+            .filter { allowsSharedBinding(for: session) || !occupied.contains($0.0) }
 
         if candidateWindows.isEmpty {
             return (nil, .none)
@@ -408,15 +413,15 @@ class CoderBridgeService: NSObject {
 
     func sessionOccupyingWindow(_ windowID: CGWindowID, excludingSid: String) -> String? {
         sessions.first(where: {
-            $0.sessionID != excludingSid && $0.lifecycle == .active && $0.hostKind == .terminal && $0.manualWindowID == windowID
+            $0.sessionID != excludingSid && $0.lifecycle == .active && !allowsSharedBinding(for: $0) && $0.manualWindowID == windowID
         })?.sessionID
     }
 
     func bindSessionToWindow(sid: String, windowID: CGWindowID) {
         guard let index = sessions.firstIndex(where: { $0.sessionID == sid }) else { return }
 
-        // 仅 terminal 类型才驱逐已有绑定
-        if sessions[index].hostKind == .terminal {
+        // 仅独占类（非白名单）才驱逐已有绑定
+        if !allowsSharedBinding(for: sessions[index]) {
             if let occupierSid = sessionOccupyingWindow(windowID, excludingSid: sid),
                let occupierIndex = sessions.firstIndex(where: { $0.sessionID == occupierSid }) {
                 sessions[occupierIndex].manualWindowID = nil

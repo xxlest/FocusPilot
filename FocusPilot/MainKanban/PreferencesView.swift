@@ -5,18 +5,34 @@ import ServiceManagement
 /// 快捷键配置、主题选择、通用设置
 struct PreferencesView: View {
     @ObservedObject private var configStore = ConfigStore.shared
+    @Binding var scrollToMultiBind: Bool
+
+    init(scrollToMultiBind: Binding<Bool> = .constant(false)) {
+        _scrollToMultiBind = scrollToMultiBind
+    }
 
     /// 当前主题颜色（便捷访问）
     private var themeColors: ThemeColors { configStore.currentThemeColors }
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 28) {
-                hotkeySection
-                themeSection
-                generalSection
+        ScrollViewReader { proxy in
+            ScrollView {
+                VStack(alignment: .leading, spacing: 28) {
+                    hotkeySection
+                    themeSection
+                    generalSection
+                    multiBindSection
+                }
+                .padding()
             }
-            .padding()
+            .onChange(of: scrollToMultiBind) { _, newValue in
+                if newValue {
+                    withAnimation {
+                        proxy.scrollTo("multiBindSection", anchor: .top)
+                    }
+                    scrollToMultiBind = false
+                }
+            }
         }
         .background(themeColors.swBackground)
         .navigationTitle("")
@@ -156,6 +172,47 @@ struct PreferencesView: View {
                     }
                 }
         }
+    }
+
+    // MARK: - 多会话绑定白名单
+
+    /// 所有可配置的 hostApp 列表
+    private static let allHostApps: [(key: String, name: String)] = [
+        ("cursor", "Cursor"),
+        ("vscode", "VSCode"),
+        ("terminal", "Terminal"),
+        ("iterm2", "iTerm2"),
+        ("wezterm", "WezTerm"),
+        ("warp", "Warp"),
+    ]
+
+    private var multiBindSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("多会话绑定")
+                .font(.headline)
+                .foregroundStyle(themeColors.swTextPrimary)
+
+            Text("允许以下应用的多个 AI 会话绑定到同一窗口（如 IDE 内嵌终端）")
+                .font(.caption)
+                .foregroundStyle(themeColors.swTextTertiary)
+
+            VStack(alignment: .leading, spacing: 8) {
+                ForEach(Self.allHostApps, id: \.key) { app in
+                    Toggle(app.name, isOn: Binding(
+                        get: { configStore.preferences.multiBindApps.contains(app.key) },
+                        set: { enabled in
+                            if enabled {
+                                configStore.preferences.multiBindApps.insert(app.key)
+                            } else {
+                                configStore.preferences.multiBindApps.remove(app.key)
+                            }
+                        }
+                    ))
+                    .tint(themeColors.swAccent)
+                }
+            }
+        }
+        .id("multiBindSection")
     }
 }
 
