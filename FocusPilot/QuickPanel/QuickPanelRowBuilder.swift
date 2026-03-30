@@ -614,21 +614,28 @@ extension QuickPanelView {
     }
 
     private func performWindowSwitch(_ session: CoderSession, row: HoverableRowView? = nil) {
-        let (windowID, confidence) = CoderBridgeService.shared.resolveWindowForSession(session)
+        let state = CoderBridgeService.shared.bindingState(for: session)
 
-        if let wid = windowID, confidence == .high {
-            // 有有效窗口，直接激活
-            let allWindows = AppMonitor.shared.runningApps.flatMap { $0.windows }
-            if let windowInfo = allWindows.first(where: { $0.id == wid }) {
-                CoderBridgeService.shared.markAsRead(sid: session.sessionID)
-                WindowService.shared.activateWindow(windowInfo)
-                (self.window as? QuickPanelWindow)?.yieldLevel()
-                return
+        switch state {
+        case .manual, .autoValid:
+            // 有绑定（强或弱）→ 通过 resolveWindowForSession 获取窗口并激活
+            let (windowID, confidence) = CoderBridgeService.shared.resolveWindowForSession(session)
+            if let wid = windowID, confidence == .high {
+                let allWindows = AppMonitor.shared.runningApps.flatMap { $0.windows }
+                if let windowInfo = allWindows.first(where: { $0.id == wid }) {
+                    CoderBridgeService.shared.markAsRead(sid: session.sessionID)
+                    WindowService.shared.activateWindow(windowInfo)
+                    (self.window as? QuickPanelWindow)?.yieldLevel()
+                    return
+                }
             }
-        }
+            // 绑定的窗口已失效 → 走引导
+            promptBindToCurrentWindow(sid: session.sessionID)
 
-        // 无有效窗口 → 引导手动绑定
-        promptBindToCurrentWindow(sid: session.sessionID)
+        case .autoConflicted, .missing:
+            // 未绑定或冲突 → 直接引导手动绑定，不走 fallback 匹配
+            promptBindToCurrentWindow(sid: session.sessionID)
+        }
     }
 
     /// 弹出绑定引导对话框
