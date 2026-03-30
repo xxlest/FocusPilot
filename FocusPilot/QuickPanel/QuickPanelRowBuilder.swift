@@ -1,6 +1,69 @@
 import AppKit
 import ObjectiveC
 
+// MARK: - Todo 可点击图标按钮
+
+/// 轻量可点击图标按钮，用于 todo 行内的 ▶ 执行和 ✕ 删除
+/// 使用 NSButton 确保可靠的点击事件处理（NSButton 自动拦截 mouseDown/mouseUp）
+private final class TodoClickableIcon: NSButton {
+    private var clickAction: (() -> Void)?
+
+    /// SF Symbol 图标按钮（▶ 执行、✕ 删除）
+    init(systemSymbolName: String, size: CGFloat, color: NSColor, action: @escaping () -> Void) {
+        self.clickAction = action
+        super.init(frame: .zero)
+        translatesAutoresizingMaskIntoConstraints = false
+        isBordered = false
+        bezelStyle = .inline
+        title = ""
+
+        let config = NSImage.SymbolConfiguration(pointSize: size, weight: .regular)
+        if let img = NSImage(systemSymbolName: systemSymbolName, accessibilityDescription: nil)?.withSymbolConfiguration(config) {
+            image = img
+            contentTintColor = color
+            imagePosition = .imageOnly
+        }
+
+        NSLayoutConstraint.activate([
+            widthAnchor.constraint(equalToConstant: 20),
+            heightAnchor.constraint(equalToConstant: 20),
+        ])
+
+        target = self
+        self.action = #selector(handleClick)
+    }
+
+    /// 色点按钮（状态切换）
+    init(dotColor: NSColor, dotSize: CGFloat, action: @escaping () -> Void) {
+        self.clickAction = action
+        super.init(frame: .zero)
+        translatesAutoresizingMaskIntoConstraints = false
+        isBordered = false
+        bezelStyle = .inline
+        title = ""
+        imagePosition = .noImage
+
+        // 绘制圆形色点
+        wantsLayer = true
+        layer?.backgroundColor = dotColor.cgColor
+        layer?.cornerRadius = dotSize / 2
+
+        NSLayoutConstraint.activate([
+            widthAnchor.constraint(equalToConstant: dotSize),
+            heightAnchor.constraint(equalToConstant: dotSize),
+        ])
+
+        target = self
+        self.action = #selector(handleClick)
+    }
+
+    required init?(coder: NSCoder) { fatalError() }
+
+    @objc private func handleClick() {
+        clickAction?()
+    }
+}
+
 // MARK: - 行视图构建（extension QuickPanelView）
 // 从 QuickPanelView 主文件提取的行构建逻辑，包括 App 行、窗口行、权限引导视图、工具方法
 
@@ -524,7 +587,7 @@ extension QuickPanelView {
         }
 
         // 有自定义名："自定义名 · a1b2c3d4"，否则 "Claude · a1b2c3d4"
-        let customName = ConfigStore.shared.sessionPreferences[session.preferenceKey]?.displayName
+        let customName = ConfigStore.shared.sessionPreferences[session.sessionID]?.displayName
         let prefix = customName ?? session.tool.displayName
         let idText = "\(prefix) · \(session.shortID)"
         let idLabel = createLabel(idText, size: 11, color: theme.nsTextPrimary)
@@ -737,18 +800,14 @@ extension QuickPanelView {
             stack.centerYAnchor.constraint(equalTo: row.centerYAnchor),
         ])
 
-        // 色点
-        let dot = NSView()
-        dot.wantsLayer = true
-        dot.translatesAutoresizingMaskIntoConstraints = false
-        let dotSize: CGFloat = isDone ? 8 : 10
-        dot.layer?.backgroundColor = item.status.dotColor.cgColor
-        dot.layer?.cornerRadius = dotSize / 2
-        NSLayoutConstraint.activate([
-            dot.widthAnchor.constraint(equalToConstant: dotSize),
-            dot.heightAnchor.constraint(equalToConstant: dotSize),
-        ])
-        stack.addArrangedSubview(dot)
+        // 色点按钮（单击切换状态）
+        let capturedItem = item
+        let capturedCwd = cwdNormalized
+        let dotBtn = TodoClickableIcon(dotColor: item.status.dotColor, dotSize: isDone ? 8 : 10) { [weak self] in
+            TodoService.shared.cycleStatus(item: capturedItem, cwd: capturedCwd)
+            self?.forceReload()
+        }
+        stack.addArrangedSubview(dotBtn)
 
         // 标题文字
         let titleLabel = createLabel(item.title, size: 12, color: isDone ? theme.nsTextTertiary : theme.nsTextPrimary)
@@ -767,54 +826,21 @@ extension QuickPanelView {
 
         // ▶ 执行按钮（Done 条目不显示）
         if !isDone {
-            if let playImg = Self.cachedSymbol(name: "play.fill", size: 9, weight: .regular) {
-                let playBtn = NSImageView(image: playImg)
-                playBtn.contentTintColor = theme.nsTextTertiary.withAlphaComponent(0.35)
-                playBtn.translatesAutoresizingMaskIntoConstraints = false
-                playBtn.widthAnchor.constraint(equalToConstant: 14).isActive = true
-                playBtn.heightAnchor.constraint(equalToConstant: 14).isActive = true
-                stack.addArrangedSubview(playBtn)
+            let playBtn = TodoClickableIcon(systemSymbolName: "play.fill", size: 9, color: theme.nsTextTertiary.withAlphaComponent(0.35)) { [weak self] in
+                self?.handleTodoCopyToAI(item: capturedItem, cwd: capturedCwd)
             }
+            stack.addArrangedSubview(playBtn)
         }
 
         // ✕ 删除按钮
-        if let xImg = Self.cachedSymbol(name: "xmark", size: 9, weight: .regular) {
-            let xBtn = NSImageView(image: xImg)
-            xBtn.contentTintColor = theme.nsTextTertiary.withAlphaComponent(0.35)
-            xBtn.translatesAutoresizingMaskIntoConstraints = false
-            xBtn.widthAnchor.constraint(equalToConstant: 14).isActive = true
-            xBtn.heightAnchor.constraint(equalToConstant: 14).isActive = true
-            stack.addArrangedSubview(xBtn)
+        let deleteBtn = TodoClickableIcon(systemSymbolName: "xmark", size: 9, color: theme.nsTextTertiary.withAlphaComponent(0.35)) { [weak self] in
+            TodoService.shared.deleteItem(capturedItem, cwd: capturedCwd)
+            self?.forceReload()
         }
+        stack.addArrangedSubview(deleteBtn)
 
         if isDone {
             row.alphaValue = 0.5
-        }
-
-        // 点击处理
-        let capturedItem = item
-        let capturedCwd = cwdNormalized
-        row.clickHandler = { [weak self] in
-            guard let self = self, let window = self.window else { return }
-            let mouseInWindow = window.mouseLocationOutsideOfEventStream
-            let mouseInRow = row.convert(mouseInWindow, from: nil)
-            let rowWidth = row.bounds.width
-            let trailingArea: CGFloat = isDone ? 20 : 40
-
-            if mouseInRow.x > rowWidth - trailingArea {
-                if isDone || mouseInRow.x > rowWidth - 20 {
-                    // ✕ 删除
-                    TodoService.shared.deleteItem(capturedItem, cwd: capturedCwd)
-                    self.forceReload()
-                } else {
-                    // ▶ 复制到 AI 执行
-                    self.handleTodoCopyToAI(item: capturedItem, cwd: capturedCwd)
-                }
-            } else {
-                // 色点或标题区域：切换状态
-                TodoService.shared.cycleStatus(item: capturedItem, cwd: capturedCwd)
-                self.forceReload()
-            }
         }
 
         return row

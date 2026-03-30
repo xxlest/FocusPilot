@@ -4,6 +4,7 @@ import ObjectiveC
 // 关联对象 Key（星号关注按钮存储 bundleID 和 displayName）
 var bundleIDKey: UInt8 = 0
 var displayNameKey: UInt8 = 0
+var renameTextFieldKey: UInt8 = 0
 
 // MARK: - 菜单与事件处理（extension QuickPanelView）
 // 从 QuickPanelView 主文件提取的菜单、关注操作、App 启动等事件处理逻辑
@@ -263,6 +264,23 @@ extension QuickPanelView {
 
         menu.addItem(NSMenuItem.separator())
 
+        // 重命名
+        let renameItem = NSMenuItem(title: "重命名", action: #selector(handleRenameSession(_:)), keyEquivalent: "")
+        renameItem.target = self
+        renameItem.representedObject = session.sessionID
+        menu.addItem(renameItem)
+
+        // 重置名称（仅有自定义名时显示）
+        let hasCustomName = ConfigStore.shared.sessionPreferences[session.sessionID]?.displayName != nil
+        if hasCustomName {
+            let resetItem = NSMenuItem(title: "重置名称", action: #selector(handleResetSessionName(_:)), keyEquivalent: "")
+            resetItem.target = self
+            resetItem.representedObject = session.sessionID
+            menu.addItem(resetItem)
+        }
+
+        menu.addItem(NSMenuItem.separator())
+
         // 复制 Session ID
         let copyItem = NSMenuItem(title: "复制 Session ID", action: #selector(handleCopySessionID(_:)), keyEquivalent: "")
         copyItem.target = self
@@ -385,9 +403,141 @@ extension QuickPanelView {
         forceReload()
     }
 
+    @objc func handleCreateTodoFile(_ sender: NSMenuItem) {
+        guard let cwd = sender.representedObject as? String else { return }
+        let path = (cwd as NSString).appendingPathComponent("todo.md")
+        let content = "## Todo\n- [ ] 在这里添加你的第一个任务\n  任务描述写在缩进行（可选）\n\n## In Progress\n\n## Done\n"
+        FileManager.default.createFile(atPath: path, contents: content.data(using: .utf8))
+        expandedTodoGroups.insert(cwd)
+        forceReload()
+    }
+
     @objc func handlePinSession(_ sender: NSMenuItem) {
         guard let sid = sender.representedObject as? String else { return }
         CoderBridgeService.shared.pinSession(sid)
+        forceReload()
+    }
+
+    // MARK: - 重命名 / 重置名称
+
+    @objc func handleRenameSession(_ sender: NSMenuItem) {
+        guard let sid = sender.representedObject as? String,
+              let session = CoderBridgeService.shared.sessions.first(where: { $0.sessionID == sid }) else { return }
+
+        let key = session.sessionID
+        let currentName = ConfigStore.shared.sessionPreferences[key]?.displayName ?? ""
+
+        let alert = NSAlert()
+        alert.messageText = "重命名会话"
+        alert.informativeText = "\(session.tool.displayName) · \(session.shortID)"
+        alert.addButton(withTitle: "确定")
+        alert.addButton(withTitle: "取消")
+
+        let containerWidth: CGFloat = 260
+
+        // 输入框
+        let textField = NSTextField(frame: NSRect(x: 0, y: 0, width: containerWidth, height: 24))
+        textField.stringValue = currentName
+        textField.placeholderString = session.tool.displayName
+        textField.isEditable = true
+        textField.isBezeled = true
+        textField.bezelStyle = .roundedBezel
+
+        // 读取任务列表（使用 cwdNormalized 与面板一致）
+        let todoFile = TodoService.shared.parse(cwd: session.cwdNormalized)
+        let activeItems = todoFile?.activeItems ?? []
+
+        if activeItems.isEmpty {
+            // 无任务：纯输入框
+            alert.accessoryView = textField
+            alert.window.initialFirstResponder = textField
+        } else {
+            // 有任务：输入框 + 分隔线 + 标签 + 任务列表
+            let rowHeight: CGFloat = 22
+            let maxVisibleRows = min(activeItems.count, 5)
+            let listHeight = CGFloat(maxVisibleRows) * rowHeight
+            let labelHeight: CGFloat = 16
+            let sepHeight: CGFloat = 12
+            let totalHeight = 24 + sepHeight + labelHeight + 4 + listHeight
+
+            let container = NSView(frame: NSRect(x: 0, y: 0, width: containerWidth, height: totalHeight))
+
+            // 输入框（顶部）
+            textField.frame = NSRect(x: 0, y: totalHeight - 24, width: containerWidth, height: 24)
+            container.addSubview(textField)
+
+            // 分隔线
+            let sepY = totalHeight - 24 - sepHeight
+            let sep = NSView(frame: NSRect(x: 0, y: sepY + sepHeight / 2 - 0.5, width: containerWidth, height: 1))
+            sep.wantsLayer = true
+            sep.layer?.backgroundColor = NSColor.separatorColor.cgColor
+            container.addSubview(sep)
+
+            // 标签
+            let label = NSTextField(labelWithString: "从任务选择")
+            label.font = .systemFont(ofSize: 11)
+            label.textColor = .secondaryLabelColor
+            label.frame = NSRect(x: 0, y: sepY - labelHeight, width: containerWidth, height: labelHeight)
+            container.addSubview(label)
+
+            // 任务按钮列表
+            let listView = NSView(frame: NSRect(x: 0, y: 0, width: containerWidth, height: CGFloat(activeItems.count) * rowHeight))
+            for (i, item) in activeItems.enumerated() {
+                let y = CGFloat(activeItems.count - 1 - i) * rowHeight
+                let btn = NSButton(frame: NSRect(x: 0, y: y, width: containerWidth, height: rowHeight))
+                btn.title = item.title
+                btn.bezelStyle = .inline
+                btn.isBordered = false
+                btn.alignment = .left
+                btn.font = .systemFont(ofSize: 12)
+                btn.contentTintColor = .labelColor
+                btn.target = self
+                btn.action = #selector(handleTodoItemClicked(_:))
+                // 关联 textField 以便点击时填充
+                objc_setAssociatedObject(btn, &renameTextFieldKey, textField, .OBJC_ASSOCIATION_ASSIGN)
+                listView.addSubview(btn)
+            }
+
+            if activeItems.count > maxVisibleRows {
+                let scrollView = NSScrollView(frame: NSRect(x: 0, y: 0, width: containerWidth, height: listHeight))
+                scrollView.documentView = listView
+                scrollView.hasVerticalScroller = true
+                scrollView.drawsBackground = false
+                container.addSubview(scrollView)
+            } else {
+                listView.frame = NSRect(x: 0, y: 0, width: containerWidth, height: listHeight)
+                container.addSubview(listView)
+            }
+
+            alert.accessoryView = container
+            alert.window.initialFirstResponder = textField
+        }
+
+        prepareAlert(alert)
+        let response = alert.runModal()
+        restoreAfterAlert()
+
+        guard response == .alertFirstButtonReturn else { return }
+        let newName = textField.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
+        if newName.isEmpty {
+            ConfigStore.shared.removeSessionPreference(key: key)
+        } else {
+            ConfigStore.shared.updateSessionPreference(key: key, displayName: newName)
+        }
+        forceReload()
+    }
+
+    /// 任务项点击 → 填充到重命名输入框
+    @objc func handleTodoItemClicked(_ sender: NSButton) {
+        guard let textField = objc_getAssociatedObject(sender, &renameTextFieldKey) as? NSTextField else { return }
+        textField.stringValue = sender.title
+        textField.selectText(nil)
+    }
+
+    @objc func handleResetSessionName(_ sender: NSMenuItem) {
+        guard let sid = sender.representedObject as? String,
+              let session = CoderBridgeService.shared.sessions.first(where: { $0.sessionID == sid }) else { return }
+        ConfigStore.shared.removeSessionPreference(key: session.sessionID)
         forceReload()
     }
 }

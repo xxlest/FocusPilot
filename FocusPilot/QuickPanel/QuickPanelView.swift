@@ -1958,17 +1958,27 @@ final class QuickPanelView: NSView {
                 self?.forceReload()
             }
 
-            // 目录组右键菜单（置顶）
+            // 目录组右键菜单
             let isFirstGroup = (groups.first?.cwdNormalized == cwdKey)
-            if !isFirstGroup {
+            let hasTodoFile = FileManager.default.fileExists(atPath: (cwdKey as NSString).appendingPathComponent("todo.md"))
+            if !isFirstGroup || !hasTodoFile {
                 groupRow.contextMenuProvider = { [weak self] in
                     let menu = NSMenu()
-                    let pinItem = NSMenuItem(title: "置顶", action: nil, keyEquivalent: "")
-                    pinItem.target = nil
-                    menu.addItem(pinItem)
-                    pinItem.target = self
-                    pinItem.action = #selector(self?.handlePinGroup(_:))
-                    pinItem.representedObject = cwdKey
+                    if !isFirstGroup {
+                        let pinItem = NSMenuItem(title: "置顶", action: nil, keyEquivalent: "")
+                        pinItem.target = self
+                        pinItem.action = #selector(self?.handlePinGroup(_:))
+                        pinItem.representedObject = cwdKey
+                        menu.addItem(pinItem)
+                    }
+                    if !hasTodoFile {
+                        if menu.items.count > 0 { menu.addItem(NSMenuItem.separator()) }
+                        let todoItem = NSMenuItem(title: "创建任务看板", action: nil, keyEquivalent: "")
+                        todoItem.target = self
+                        todoItem.action = #selector(self?.handleCreateTodoFile(_:))
+                        todoItem.representedObject = cwdKey
+                        menu.addItem(todoItem)
+                    }
                     return menu
                 }
             }
@@ -2382,13 +2392,17 @@ final class HoverableRowView: NSView {
 
     // MARK: - 点击处理
 
+    var doubleClickHandler: (() -> Void)?
+
     override func mouseUp(with event: NSEvent) {
         let location = convert(event.locationInWindow, from: nil)
         if let hitView = hitTest(location), hitView is NSButton || hitView.superview is NSButton {
             super.mouseUp(with: event)
             return
         }
-        if let handler = clickHandler {
+        if event.clickCount == 2, let dblHandler = doubleClickHandler {
+            dblHandler()
+        } else if event.clickCount == 1, let handler = clickHandler {
             handler()
         } else {
             super.mouseUp(with: event)
