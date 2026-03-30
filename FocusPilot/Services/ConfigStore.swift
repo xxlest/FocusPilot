@@ -261,4 +261,9 @@ class ConfigStore: ObservableObject {
         }
         saveSessionPreferences()
     }
+
+    func removeSessionPreference(key: String) {
+        sessionPreferences.removeValue(forKey: key)
+        saveSessionPreferences()
+    }
 }

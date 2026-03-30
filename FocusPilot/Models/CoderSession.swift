@@ -64,6 +64,10 @@ struct CoderSession: Identifiable {
         String(sessionID.prefix(8))
     }
 
+    var preferenceKey: String {
+        CoderSessionPreference.makeKey(tool: tool.rawValue, cwdNormalized: cwdNormalized, hostApp: hostApp)
+    }
+
     var cwdBasename: String {
         let homePath = NSHomeDirectory()
         if cwd == homePath || cwd == homePath + "/" { return "~" }
@@ -148,7 +152,7 @@ struct SessionGroup {
     var sessions: [CoderSession]
 }
 
-// MARK: - CoderSessionPreference（本轮不扩展）
+// MARK: - CoderSessionPreference
 
 struct CoderSessionPreference: Codable {
     let key: String
@@ -159,6 +163,11 @@ struct CoderSessionPreference: Codable {
         self.key = key
         self.displayName = displayName
         self.isPinned = isPinned
+    }
+
+    /// 统一 key 生成（:: 分隔，避免路径中合法字符碰撞）
+    static func makeKey(tool: String, cwdNormalized: String, hostApp: String) -> String {
+        "\(tool)::\(cwdNormalized)::\(hostApp)"
     }
 }
 
