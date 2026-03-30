@@ -38,12 +38,34 @@
 
 现有所有读 `currentTab` 的地方改读 `displayTab`。`switchTab()` 同时设置两者 + `saveLastPanelTab()`。
 
+#### 固定模式回退的触发点
+
+QuickPanelView 需要新增监听 `panelPinStateChanged` 通知。回调中当 `isPinned == true` 时执行：
+
+```swift
+@objc private func panelPinStateDidChange(_ notification: Notification) {
+    let pinned = notification.userInfo?["isPinned"] as? Bool ?? false
+    if pinned {
+        displayTab = selectedTab
+        hoverExpandedBundleID = nil
+        updateTabButtonStyles()
+        forceReload()
+    }
+}
+```
+
+这是 `displayTab` 回退到 `selectedTab` 的唯一运行时入口（另一个入口 `resetToNormalMode` 在面板关闭时触发）。
+
 ### 新增方法
 
 ```swift
 /// 非固定模式 hover 临时预览 Tab（不持久化，不改 selectedTab）
 private func hoverPreviewTab(_ tab: QuickPanelTab) {
     guard displayTab != tab else { return }
+    // 离开 running/favorites 时清理 hover 展开态
+    if tab == .ai {
+        hoverExpandedBundleID = nil
+    }
     displayTab = tab
     updateTabButtonStyles()
     forceReload()
@@ -94,6 +116,14 @@ if hoverExpandedBundleID == bundleID {  // 只有还是自己才清除
 这样即使 exited 和 entered 顺序有微差（鼠标从 App A 容器滑向 App B 容器），新容器的 entered 先覆盖旧值，旧容器的 exited 发现值已变就不操作，不会闪烁。
 
 窗口列表的显示/隐藏通过 `isHidden` 切换，不触发 `forceReload`。
+
+#### hoverExpandedBundleID 清理规则
+
+`hoverExpandedBundleID` 在以下时机强制清空为 nil，防止陈旧状态导致误展开：
+
+1. **displayTab 离开 running/favorites**：`hoverPreviewTab()` 和 `switchTab()` 中，当新 Tab 为 `.ai` 时清空（此时原容器可能不会收到 mouseExited）
+2. **进入固定模式**：`panelPinStateDidChange` 中清空（见上文）
+3. **面板关闭**：`resetToNormalMode()` 中清空
 
 #### 与 reloadData 对齐
 
@@ -156,7 +186,7 @@ func updateAIBadge() {
 
 | 文件 | 改动 |
 |---|---|
-| `QuickPanelView.swift` | `currentTab` 拆分为 `selectedTab` + `displayTab`；新增 `hoverPreviewTab()`；新增 `hoverExpandedBundleID`；Tab 按钮添加 tracking area；非固定模式下容器构建 + hover 展开逻辑；`buildStructuralKey()` 非固定模式折叠态占位；`resetToNormalMode()` 回退 `displayTab` |
+| `QuickPanelView.swift` | `currentTab` 拆分为 `selectedTab` + `displayTab`；新增 `hoverPreviewTab()`；新增 `hoverExpandedBundleID`；Tab 按钮添加 tracking area；非固定模式下容器构建 + hover 展开逻辑；`buildStructuralKey()` 非固定模式折叠态占位；`resetToNormalMode()` 回退 `displayTab` + 清空 `hoverExpandedBundleID`；新增监听 `panelPinStateChanged` 通知 |
 | `QuickPanelRowBuilder.swift` | `createAppRow()` 返回的行 + 窗口列表包在容器中；`configureClickHandler()` 非固定模式下改为激活窗口 |
 | `FloatingBallView.swift` | 新增 `updateAIBadge()`；监听 `coderBridgeSessionChanged`；`panelPinStateChanged` 回调同步刷新 badge |
 
