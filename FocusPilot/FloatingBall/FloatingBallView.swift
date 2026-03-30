@@ -438,6 +438,13 @@ final class FloatingBallView: NSView {
             name: Constants.Notifications.focusTimerChanged,
             object: nil
         )
+        // AI 会话状态变化 → 更新角标
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(coderBridgeSessionsDidChange),
+            name: Constants.Notifications.coderBridgeSessionChanged,
+            object: nil
+        )
     }
 
     @objc private func handleFocusTimerChanged() {
@@ -475,13 +482,30 @@ final class FloatingBallView: NSView {
     @objc private func panelPinStateChanged(_ notification: Notification) {
         isPanelPinned = notification.userInfo?["isPinned"] as? Bool ?? false
         updatePinBadge(isPinned: isPanelPinned)
+        updateAIBadge()
+    }
+
+    @objc private func coderBridgeSessionsDidChange() {
+        DispatchQueue.main.async { [weak self] in
+            self?.updateAIBadge()
+        }
     }
 
     // MARK: - 角标
 
-    /// 更新角标（V3.0: 角标始终隐藏）
-    func updateBadge(_ count: Int) {
-        badgeLabel.isHidden = true
+    /// 更新 AI 消息数角标（非固定模式下显示 actionableCount）
+    private func updateAIBadge() {
+        guard !isPanelPinned else {
+            badgeLabel.isHidden = true
+            return
+        }
+        let count = CoderBridgeService.shared.actionableCount
+        if count > 0 {
+            badgeLabel.stringValue = "\(count)"
+            badgeLabel.isHidden = false
+        } else {
+            badgeLabel.isHidden = true
+        }
     }
 
     // MARK: - 品牌 Logo 绘制
