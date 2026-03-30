@@ -157,11 +157,15 @@ final class FloatingBallView: NSView {
         iconView.layer?.masksToBounds = true
         addSubview(iconView)
 
-        // 角标（右上角偏外，圆形）
-        let badgeSize: CGFloat = 14
-        badgeLabel.frame = NSRect(x: size - badgeSize + 3, y: size - badgeSize + 3, width: badgeSize, height: badgeSize)
-        badgeLabel.layer?.cornerRadius = 7
+        // 角标（右上角偏外，pill 形状，宽度按内容弹性扩展）
+        badgeLabel.translatesAutoresizingMaskIntoConstraints = false
         addSubview(badgeLabel)
+        NSLayoutConstraint.activate([
+            badgeLabel.heightAnchor.constraint(equalToConstant: 14),
+            badgeLabel.widthAnchor.constraint(greaterThanOrEqualToConstant: 14),
+            badgeLabel.trailingAnchor.constraint(equalTo: trailingAnchor, constant: 3),
+            badgeLabel.topAnchor.constraint(equalTo: topAnchor, constant: -3),
+        ])
 
         // 添加鼠标追踪区域
         updateTrackingArea()
@@ -199,8 +203,7 @@ final class FloatingBallView: NSView {
         let colors = currentGradientColors()
         iconView.image = createBrandLogo(size: iconSize, gradientColors: colors)
 
-        let bSize: CGFloat = 14
-        badgeLabel.frame = NSRect(x: size - bSize + 3, y: size - bSize + 3, width: bSize, height: bSize)
+        // badgeLabel 使用 Auto Layout，无需手动设置 frame
 
         // 同步更新圆形阴影路径
         layer?.shadowPath = CGPath(ellipseIn: CGRect(x: 0, y: 0, width: size, height: size), transform: nil)
