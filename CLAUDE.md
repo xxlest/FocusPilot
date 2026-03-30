@@ -70,14 +70,14 @@ FocusPilot/
 │   └── PreferencesView.swift       # 偏好设置（快捷键、主题选择、悬浮球外观）
 ├── Models/
 │   ├── Models.swift                # AppConfig, RunningApp, WindowInfo, Preferences, AppTheme, ThemeColors 等
-│   └── CoderSession.swift          # CoderSession, CoderTool, SessionStatus, SessionLifecycle, HostAppMapping, CoderSessionPreference
+│   └── CoderSession.swift          # CoderSession, CoderTool, SessionStatus, SessionLifecycle, HostKind, HostAppMapping, CoderSessionPreference
 ├── Services/
 │   ├── ConfigStore.swift           # UserDefaults 持久化 + 单字段保存（saveBallPosition/savePanelSize/saveWindowRenames）
 │   ├── WindowService.swift         # 窗口枚举(CGWindowList+AX)、两阶段刷新、AX 后台队列、titleCache
 │   ├── AppMonitor.swift            # App 运行监控、自适应刷新（1s→3s）、scanInstalledApps 后台线程
 │   ├── HotkeyManager.swift         # Carbon 全局快捷键（⌘⇧B 显示/隐藏）
 │   ├── FocusTimerService.swift     # FocusByTime 番茄钟服务（状态机、计时、阶段切换通知、时长持久化、FocusPendingAction、引导休息分步倒计时）
-│   └── CoderBridgeService.swift    # AI 编码工具会话管理（DistributedNotification 监听、session 列表、前台窗口关联、回退匹配、清理定时器）
+│   └── CoderBridgeService.swift    # AI 编码工具会话管理（DistributedNotification 监听、session 列表、BindingState 统一 helper、hostKind 策略分流、前台窗口关联、回退匹配、清理定时器）
 └── Helpers/
     └── Constants.swift             # Ball, Panel, Keys, Notifications 常量
 ```
@@ -92,7 +92,7 @@ coder-bridge/
 │   │   ├── codex.sh               # Codex 适配（预留）
 │   │   └── gemini.sh              # Gemini CLI 适配（预留）
 │   ├── core/
-│   │   ├── registry.sh            # 会话注册/状态更新/osascript DistributedNotification 发送
+│   │   ├── registry.sh            # 会话注册/状态更新/hostKind 上报/osascript DistributedNotification 发送
 │   │   ├── notifier.sh            # 桌面通知（原 code-notify）
 │   │   └── config.sh              # 配置管理
 │   └── utils/                     # colors.sh, detect.sh, help.sh, sound.sh, voice.sh
@@ -114,6 +114,9 @@ coder-bridge/
 - **Coder-Bridge AI Tab**：第三个 Tab「AI」展示 AI 编码工具会话，通过 DistributedNotificationCenter 接收 coder-bridge 事件
 - **AI 会话生命周期**：session.start（注册+前台窗口关联）→ session.update（状态变更）→ session.end（标记 ended 保留显示）
 - **两层窗口匹配**：第一层 session.start 时记录前台宿主窗口 → 第二层回退匹配（cwd basename + z-order 最前窗口兜底）
+- **HostKind 绑定策略分化**：coder-bridge 上报 hostKind（ide/terminal）作为启发式策略标签；IDE（Cursor/VSCode）允许多 session 共享同一窗口，Terminal 保持独占策略
+- **BindingState 统一 helper**：`bindingState(for:)` 枚举（manual/autoValid/autoConflicted/missing）统一供 UI 标记、窗口切换、绑定引导三处调用，消除重复判断
+- **两条绑定入口差异化**：promptBindToCurrentWindow（点击触发，隐式）对 terminal 冲突拦截不允许替换；handleBindToCurrentWindow（右键菜单，显式）对 terminal 冲突允许确认替换。IDE 两处均跳过冲突检测
 - **Cursor/VSCode 区分**：coder-bridge 通过 CURSOR_TRACE_ID 环境变量区分 Cursor 和 VS Code（两者 $TERM_PROGRAM 均为 vscode）
 - **会话不持久化**：CoderSession 列表纯运行时，FocusPilot 重启后清空（AI 工具中断后需重新启动注册）
 - **AI 会话偏好持久化**：CoderSessionPreference 按 tool+cwdNormalized+hostApp 索引，存储 displayName；新 session 自动继承同 key 的偏好
@@ -137,6 +140,7 @@ coder-bridge/
 - V3.8: 新增 FocusTimerService + QuickPanel 计时器栏 + FloatingBall 进度环
 - V3.9: FocusTimerService 新增引导休息（RestStep/RestMode/RestIntensity）+ QuickPanel 强度选择弹窗 + 步骤进度列表 + idle 双入口（专注/休息）+ 独立休息模式
 - V4.0: 新增 coder-bridge 模块 + CoderBridgeService + AI Tab（三 Tab 快捷面板）+ CoderSession 模型 + DistributedNotification IPC
+- V4.1: coder-bridge 新增 hostKind 上报 + CoderSession 新增 HostKind 字段 + BindingState 统一 helper + IDE/Terminal 绑定策略分化
 - AppConfig decoder 向后兼容（忽略旧字段）
 
 ## 构建
