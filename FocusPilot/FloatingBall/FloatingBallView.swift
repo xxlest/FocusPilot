@@ -75,7 +75,7 @@ final class FloatingBallView: NSView {
         return imageView
     }()
 
-    /// 角标视图（药丸形状，红底白字）
+    /// 角标视图（圆形红底白字，与 AI 面板角标风格一致）
     private let badgeLabel: NSTextField = {
         let label = NSTextField(labelWithString: "")
         label.font = .systemFont(ofSize: 9, weight: .bold)
@@ -86,10 +86,8 @@ final class FloatingBallView: NSView {
         label.isEditable = false
         label.wantsLayer = true
         label.layer?.backgroundColor = NSColor.systemRed.cgColor
-        label.layer?.cornerRadius = 8
+        label.layer?.cornerRadius = 7
         label.layer?.masksToBounds = true
-        label.layer?.borderWidth = 1.5
-        label.layer?.borderColor = NSColor.white.withAlphaComponent(0.8).cgColor
         label.isHidden = true
         return label
     }()
@@ -159,11 +157,10 @@ final class FloatingBallView: NSView {
         iconView.layer?.masksToBounds = true
         addSubview(iconView)
 
-        // 角标（右上角偏外，药丸形状）
-        let badgeWidth: CGFloat = 20
-        let badgeHeight: CGFloat = 16
-        badgeLabel.frame = NSRect(x: size - badgeWidth + 4, y: size - badgeHeight + 4, width: badgeWidth, height: badgeHeight)
-        badgeLabel.layer?.cornerRadius = badgeHeight / 2
+        // 角标（右上角偏外，圆形）
+        let badgeSize: CGFloat = 14
+        badgeLabel.frame = NSRect(x: size - badgeSize + 3, y: size - badgeSize + 3, width: badgeSize, height: badgeSize)
+        badgeLabel.layer?.cornerRadius = 7
         addSubview(badgeLabel)
 
         // 添加鼠标追踪区域
@@ -202,9 +199,8 @@ final class FloatingBallView: NSView {
         let colors = currentGradientColors()
         iconView.image = createBrandLogo(size: iconSize, gradientColors: colors)
 
-        let badgeWidth: CGFloat = 20
-        let badgeHeight: CGFloat = 16
-        badgeLabel.frame = NSRect(x: size - badgeWidth + 4, y: size - badgeHeight + 4, width: badgeWidth, height: badgeHeight)
+        let bSize: CGFloat = 14
+        badgeLabel.frame = NSRect(x: size - bSize + 3, y: size - bSize + 3, width: bSize, height: bSize)
 
         // 同步更新圆形阴影路径
         layer?.shadowPath = CGPath(ellipseIn: CGRect(x: 0, y: 0, width: size, height: size), transform: nil)
