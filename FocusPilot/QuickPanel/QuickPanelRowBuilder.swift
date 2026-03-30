@@ -686,7 +686,9 @@ extension QuickPanelView {
             alert.messageText = "窗口不匹配"
             alert.informativeText = "此会话的宿主应用是「\(expectedName)」，当前窗口属于「\(appName)」。\n请先切换到「\(expectedName)」的窗口再绑定。"
             alert.addButton(withTitle: "确定")
+            prepareAlert(alert)
             alert.runModal()
+            restoreAfterAlert()
             // 切换失败，清除高亮
             CoderBridgeService.shared.activeSessionID = nil
             forceReload()
@@ -700,7 +702,9 @@ extension QuickPanelView {
             alert.messageText = "该窗口已被绑定"
             alert.informativeText = "「\(displayTitle)」当前已被会话 \(occupierName) 绑定。\n请先切换到目标窗口再重新绑定。"
             alert.addButton(withTitle: "确定")
+            prepareAlert(alert)
             alert.runModal()
+            restoreAfterAlert()
             CoderBridgeService.shared.activeSessionID = nil
             forceReload()
             return
@@ -711,7 +715,10 @@ extension QuickPanelView {
         alert.addButton(withTitle: "绑定")
         alert.addButton(withTitle: "取消")
 
-        if alert.runModal() == .alertFirstButtonReturn {
+        prepareAlert(alert)
+        let result = alert.runModal()
+        restoreAfterAlert()
+        if result == .alertFirstButtonReturn {
             CoderBridgeService.shared.bindSessionToWindow(sid: sid, windowID: wid)
             forceReload()
         } else {

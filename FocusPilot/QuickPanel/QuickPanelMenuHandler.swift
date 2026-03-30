@@ -84,7 +84,9 @@ extension QuickPanelView {
         alert.accessoryView = textField
         alert.window.initialFirstResponder = textField
 
+        prepareAlert(alert)
         let response = alert.runModal()
+        restoreAfterAlert()
         guard response == .alertFirstButtonReturn else { return nil }
         return textField.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
     }
@@ -323,7 +325,9 @@ extension QuickPanelView {
             alert.messageText = "窗口不匹配"
             alert.informativeText = "此会话的宿主应用是「\(expectedName)」，当前窗口属于「\(appName)」。\n请先切换到「\(expectedName)」的窗口再绑定。"
             alert.addButton(withTitle: "确定")
+            prepareAlert(alert)
             alert.runModal()
+            restoreAfterAlert()
             return
         }
 
@@ -340,10 +344,12 @@ extension QuickPanelView {
         alert.addButton(withTitle: "确定")
         alert.addButton(withTitle: "取消")
 
+        prepareAlert(alert)
         if alert.runModal() == .alertFirstButtonReturn {
             CoderBridgeService.shared.bindSessionToWindow(sid: sid, windowID: wid)
             forceReload()
         }
+        restoreAfterAlert()
     }
 
     @objc func handleUnbindSession(_ sender: NSMenuItem) {

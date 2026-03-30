@@ -858,21 +858,64 @@ final class QuickPanelView: NSView {
 
     // MARK: - FocusByTime 对话框
 
-    /// 弹窗预处理：层级置顶 + 压缩图标空白
-    /// 所有从面板弹出的 NSAlert 必须调用此方法，确保不被面板遮挡
-    /// 弹窗前：临时降低面板层级，让弹窗自然显示在面板前面
+    /// 弹窗预处理：提升弹窗层级到所有自有窗口之上，智能定位到面板旁边
     /// 所有从面板弹出的 NSAlert 必须调用此方法，runModal 结束后调用 restoreAfterAlert
-    private func prepareAlert(_ alert: NSAlert) {
-        if let panelWindow = self.window as? QuickPanelWindow {
-            panelWindow.level = .normal
+    func prepareAlert(_ alert: NSAlert) {
+        // 先 layout 让系统计算弹窗尺寸
+        alert.layout()
+
+        // 提升弹窗层级到悬浮球之上
+        alert.window.level = NSWindow.Level(rawValue: Int(Constants.alertLevel))
+
+        // 面板不可见或不在当前 Space → 仅提升层级，位置走系统默认居中
+        guard let panelWindow = self.window as? QuickPanelWindow,
+              panelWindow.isVisible,
+              panelWindow.isOnActiveSpace,
+              let screen = panelWindow.screen ?? NSScreen.main else {
+            return
         }
+
+        let alertSize = alert.window.frame.size
+        let panelFrame = panelWindow.frame
+        let screenFrame = screen.visibleFrame
+        let gap: CGFloat = 8
+
+        var origin = CGPoint.zero
+
+        // 垂直方向：优先面板上方，其次下方
+        let spaceAbove = screenFrame.maxY - panelFrame.maxY
+        let spaceBelow = panelFrame.minY - screenFrame.minY
+
+        if spaceAbove >= alertSize.height + gap {
+            // 上方有空间
+            origin.y = panelFrame.maxY + gap
+            origin.x = panelFrame.minX
+        } else if spaceBelow >= alertSize.height + gap {
+            // 下方有空间
+            origin.y = panelFrame.minY - alertSize.height - gap
+            origin.x = panelFrame.minX
+        } else {
+            // 上下都不够 → 放在面板侧边（与悬浮球相反方向）
+            let panelCenterX = panelFrame.midX
+            let screenCenterX = screenFrame.midX
+            if panelCenterX < screenCenterX {
+                origin.x = panelFrame.maxX + gap
+            } else {
+                origin.x = panelFrame.minX - alertSize.width - gap
+            }
+            origin.y = panelFrame.midY - alertSize.height / 2
+        }
+
+        // 统一边界裁剪（所有分支之后）
+        origin.x = max(screenFrame.minX, min(origin.x, screenFrame.maxX - alertSize.width))
+        origin.y = max(screenFrame.minY, min(origin.y, screenFrame.maxY - alertSize.height))
+
+        alert.window.setFrameOrigin(origin)
     }
 
-    /// 弹窗后：恢复面板层级
-    private func restoreAfterAlert() {
-        if let panelWindow = self.window as? QuickPanelWindow {
-            panelWindow.level = NSWindow.Level(rawValue: Int(Constants.quickPanelLevel))
-        }
+    /// 弹窗后恢复（面板层级不再被修改，保留方法签名避免修改所有调用点）
+    func restoreAfterAlert() {
+        // 面板层级未改变，无需恢复
     }
 
     /// 构建休息选择 accessory view（引导休息 radio + 自由休息 radio）

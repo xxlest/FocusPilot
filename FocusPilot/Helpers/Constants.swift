@@ -73,6 +73,7 @@ enum Constants {
     // MARK: - 窗口层级
     static let floatingBallLevel = CGWindowLevelForKey(.statusWindow) + 100
     static let quickPanelLevel = CGWindowLevelForKey(.statusWindow) + 50
+    static let alertLevel = floatingBallLevel + 10  // 弹窗层级：高于悬浮球，确保不被任何自有窗口遮挡
 
     // MARK: - UserDefaults Keys
     enum Keys {
