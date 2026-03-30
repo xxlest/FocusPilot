@@ -122,6 +122,9 @@ coder-bridge/
 - **AI 会话偏好持久化**：CoderSessionPreference 按 tool+cwdNormalized+hostApp 索引，存储 displayName；新 session 自动继承同 key 的偏好
 - **Transcript 读取**：从 ~/.claude/projects/<sanitized-cwd>/<session-id>.jsonl 提取用户消息（type=="user" + message.role=="user"），用于 query 摘要
 - **双行 Session 行**：第一行主信息（工具图标+displayName+宿主图标+状态），第二行最近 query 摘要（10pt nsTextTertiary）
+- **Tab 双状态模型**：`selectedTab`（持久，写 UserDefaults）+ `displayTab`（渲染态，hover 预览临时切换）；面板关闭/进入固定模式时 displayTab 回退到 selectedTab
+- **Hover 展开/折叠**：非固定模式下 `hoverExpandedBundleID` 驱动，App 行+窗口列表容器包装，`isHidden` 轻量切换不触发 forceReload；displayTab 切换/进入固定模式/面板关闭时清空
+- **浮球 AI 角标**：非固定模式下复用 `badgeLabel` 显示 `CoderBridgeService.actionableCount`，监听 coderBridgeSessionChanged + panelPinStateChanged 自驱动
 - **Notion 风格主题系统**：AppTheme 枚举 8 种预设 → ThemeColors 9 色槽（ns* + sw* 双套，含 sidebarBackground），覆盖全 UI
 - **主题刷新链路**：PreferencesView → @Published → AppDelegate.applyPreferences → NSApp.appearance + quickPanelWindow.applyTheme + themeChanged 通知
 - **FocusByTime 番茄钟**：FocusTimerService 单例管理状态机（idle/running/paused × work/rest），通过 NotificationCenter 驱动 QuickPanel 底部计时器栏和 FloatingBall 进度环
@@ -142,6 +145,7 @@ coder-bridge/
 - V3.9: FocusTimerService 新增引导休息（RestStep/RestMode/RestIntensity）+ QuickPanel 强度选择弹窗 + 步骤进度列表 + idle 双入口（专注/休息）+ 独立休息模式
 - V4.0: 新增 coder-bridge 模块 + CoderBridgeService + AI Tab（三 Tab 快捷面板）+ CoderSession 模型 + DistributedNotification IPC
 - V4.1: coder-bridge 新增 hostKind 上报 + CoderSession 新增 HostKind 字段 + BindingState 统一 helper + IDE/Terminal 绑定策略分化
+- V4.2: QuickPanelView `currentTab` 拆分为 `selectedTab` + `displayTab`；新增 `hoverExpandedBundleID`；FloatingBallView 新增 AI 角标
 - AppConfig decoder 向后兼容（忽略旧字段）
 
 ## 构建

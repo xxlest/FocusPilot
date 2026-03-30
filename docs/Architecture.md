@@ -1,8 +1,8 @@
 # Focus Copilot 架构设计文档
 
-> **版本**：V3.8
-> **日期**：2026-03-06
-> **基于**：PRD V3.8
+> **版本**：V4.2
+> **日期**：2026-03-30
+> **基于**：PRD V4.2
 
 ---
 
@@ -52,6 +52,12 @@ FocusPilot/
 ```
 
 ### 版本变更说明
+
+**V4.2 相比 V4.1 的关键变更**：
+
+- QuickPanelView：`currentTab` 拆分为 `selectedTab`（持久态，写 UserDefaults）和 `displayTab`（渲染态，hover 预览临时切换）；Tab 按钮 hover 时仅更新 `displayTab`，点击才同步 `selectedTab`；面板关闭或进入固定模式时 `displayTab` 回退到 `selectedTab`
+- QuickPanelView：新增 `hoverExpandedBundleID: String?` 属性，在非固定模式下驱动 App 行 hover 展开/折叠；App 行 hover 进入时设置，离开时清空；displayTab 切换/进入固定模式/面板关闭时同步清空；展开/折叠通过 `isHidden` 轻量切换，不触发 forceReload
+- FloatingBallView：非固定模式下复用 `badgeLabel` 显示 `CoderBridgeService.actionableCount`；监听 `coderBridgeSessionChanged` 和 `panelPinStateChanged` 通知自驱动刷新；固定模式下角标隐藏
 
 **V3.9 相比 V3.8 的关键变更**：
 
@@ -587,11 +593,16 @@ FloatingBallView                   QuickPanelWindow
 ### 3.2 QuickPanel → Services 交互
 
 ```
-QuickPanelView（V3.2 交互模式）
+QuickPanelView（V4.2 交互模式）
      │
-     │── Tab 切换（活跃/关注） ──▶ 切换 currentTab，ConfigStore.saveLastPanelTab()
+     │── Tab hover（非固定模式） ──▶ displayTab 临时切换（不写 UserDefaults）
+     │── Tab 点击 ─────────────────▶ selectedTab 更新 + ConfigStore.saveLastPanelTab()
+     │                               displayTab 同步至 selectedTab
+     │── App 行 hover（非固定模式）─▶ hoverExpandedBundleID = bundleID（展开窗口列表）
+     │── App 行 hover 离开 ─────────▶ hoverExpandedBundleID = nil（折叠）
+     │── 进入固定模式 ──────────────▶ displayTab ← selectedTab，hoverExpandedBundleID = nil
      │── 点击单窗口 App 行 ──▶ WindowService.activateWindow(window)
-     │── 点击多窗口 App 行 ──▶ 切换折叠/展开（collapsedApps）
+     │── 点击多窗口 App 行（固定模式）▶ 切换折叠/展开（collapsedApps）
      │── 点击窗口行 ──────────▶ highlightedWindowID = window.id
      │                        + WindowService.activateWindow(window)
      │── 点击窗口行✕按钮 ──────▶ NSAlert 确认 → WindowService.closeWindow(window)
