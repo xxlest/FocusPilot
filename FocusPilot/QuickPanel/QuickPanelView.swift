@@ -696,6 +696,13 @@ final class QuickPanelView: NSView {
             name: Constants.Notifications.coderBridgeSessionChanged,
             object: nil
         )
+        // 面板钉住状态变化（hover 模式切换）
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(panelPinStateDidChange(_:)),
+            name: Constants.Notifications.panelPinStateChanged,
+            object: nil
+        )
     }
 
     @objc private func focusGuidedStepDidChange() {
@@ -1643,6 +1650,15 @@ final class QuickPanelView: NSView {
     @objc private func switchToFavoritesTab() { switchTab(.favorites) }
     @objc private func switchToAITab() { switchTab(.ai) }
 
+    /// 非固定模式 hover 临时预览 Tab（不持久化，不改 selectedTab）
+    private func hoverPreviewTab(_ tab: QuickPanelTab) {
+        guard displayTab != tab else { return }
+        hoverExpandedBundleID = nil
+        displayTab = tab
+        updateTabButtonStyles()
+        forceReload()
+    }
+
     private func updateTabButtonStyles() {
         let colors = ConfigStore.shared.currentThemeColors
         // 先全部重置为未选中样式
@@ -2082,6 +2098,17 @@ final class QuickPanelView: NSView {
             if self.displayTab == .ai {
                 self.forceReload()
             }
+        }
+    }
+
+    @objc private func panelPinStateDidChange(_ notification: Notification) {
+        let pinned = notification.userInfo?["isPinned"] as? Bool ?? false
+        if pinned {
+            displayTab = selectedTab
+            hoverExpandedBundleID = nil
+            hoverWindowListMap.removeAll()
+            updateTabButtonStyles()
+            forceReload()
         }
     }
 
