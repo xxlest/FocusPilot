@@ -1,199 +1,105 @@
 # Focus Copilot 架构设计文档
 
 > **版本**：V4.2
-> **日期**：2026-03-30
+> **日期**：2026-03-31
 > **基于**：PRD V4.2
+> **关联文档**：[PRD.md](PRD.md)（产品需求）、[DesignGuide.md](DesignGuide.md)（设计规范）
 
 ---
 
-## 1. 模块划分
+## 1. 技术栈与模块划分
 
-### 总览
+**技术栈**：Swift 5, macOS 14+, arm64, AppKit + SwiftUI, CGS Private API, AX API, Carbon API, DistributedNotificationCenter
+
+### 文件结构
 
 ```
 FocusPilot/
-├── FocusPilot/
-│   ├── App/
-│   │   ├── AppDelegate.swift          # 应用生命周期、窗口管理、菜单栏图标
-│   │   ├── FocusPilotApp.swift        # @main 入口
-│   │   └── PermissionManager.swift    # 辅助功能权限检测与引导
-│   ├── FloatingBall/
-│   │   ├── FloatingBallWindow.swift   # 悬浮球窗口（NSPanel）
-│   │   └── FloatingBallView.swift     # 悬浮球视图、拖拽、贴边、hover、品牌 Logo
-│   ├── QuickPanel/
-│   │   ├── QuickPanelWindow.swift     # 快捷面板窗口（NSPanel），钉住模式、resize、drag
-│   │   ├── QuickPanelView.swift       # 面板内容视图（活跃/关注 Tab、窗口行高亮+前置+关闭、Tab 记忆、FocusByTime 计时器栏）
-│   │   ├── QuickPanelRowBuilder.swift # App 行/窗口行构建、工具方法、SF Symbol 缓存（extension QuickPanelView）
-│   │   └── QuickPanelMenuHandler.swift # 右键菜单、@objc 事件处理、星号关注、App 关闭/启动（extension QuickPanelView）
-│   ├── MainKanban/
-│   │   ├── MainKanbanWindow.swift     # 主看板窗口管理
-│   │   ├── MainKanbanView.swift       # 主看板根视图（SwiftUI），侧边栏+底部双按钮
-│   │   ├── AppConfigView.swift        # 关注管理页面（SwiftUI），三 Tab 过滤 + 星标关注切换
-│   │   └── PreferencesView.swift      # 偏好设置页（SwiftUI）
-│   ├── Services/
-│   │   ├── WindowService.swift        # 窗口枚举、AX 操作、层级控制、关闭窗口、诊断日志
-│   │   ├── AppMonitor.swift           # 监听 App 启动/退出，维护运行列表（不依赖 ConfigStore）
-│   │   ├── HotkeyManager.swift        # 全局快捷键注册（Carbon API，支持多快捷键）
-│   │   ├── ConfigStore.swift          # 用户配置持久化（UserDefaults）、关注管理、Tab 记忆
-│   │   └── FocusTimerService.swift   # FocusByTime 番茄钟（状态机、计时、阶段切换通知、时长持久化、FocusPendingAction）
-│   ├── Models/
-│   │   └── Models.swift               # 数据模型定义
-│   ├── Helpers/
-│   │   ├── CGSPrivate.h               # Private API 桥接头
-│   │   └── Constants.swift            # 全局常量、通知名、窗口层级、UserDefaults Keys
-│   ├── Resources/
-│   │   ├── Assets.xcassets/           # 图标资源
-│   │   └── FocusPilot.entitlements     # 权限配置
-│   └── Info.plist
-├── FocusPilot.xcodeproj/
-└── docs/
-    ├── PRD.md
-    └── Architecture.md
+├── App/
+│   ├── FocusPilotApp.swift           # @main 入口（~16 行）
+│   ├── AppDelegate.swift             # 生命周期、窗口管理、菜单栏、快捷键、CoderBridgeService 初始化（~507 行）
+│   └── PermissionManager.swift       # 辅助功能权限检测（~92 行）
+├── FloatingBall/
+│   ├── FloatingBallWindow.swift      # NSPanel, 层级 statusWindow+100（~98 行）
+│   └── FloatingBallView.swift        # 毛玻璃圆球、拖拽吸附、hover 弹出、品牌 Logo、进度环、AI 角标（~1098 行）
+├── QuickPanel/
+│   ├── QuickPanelWindow.swift        # NSPanel, 层级 statusWindow+50, 动画/钉住/resize（~671 行）
+│   ├── QuickPanelView.swift          # UI 骨架、三 Tab 切换、reloadData、计时器栏、AI Tab 渲染（~2600 行）
+│   ├── QuickPanelRowBuilder.swift    # App 行/窗口行/AI Session 行构建（extension）（~1049 行）
+│   └── QuickPanelMenuHandler.swift   # 右键菜单、@objc 事件处理（extension）（~558 行）
+├── MainKanban/
+│   ├── MainKanbanWindow.swift        # NSWindow 包裹 SwiftUI（~55 行）
+│   ├── MainKanbanView.swift          # 侧边栏+内容区（~106 行）
+│   ├── AppConfigView.swift           # 关注管理（三 Tab + 星标）（~310 行）
+│   ├── PreferencesView.swift         # 偏好设置（快捷键、主题、外观）（~276 行）
+│   └── BallPanelConfigView.swift     # 悬浮球/面板外观配置（~143 行）
+├── Models/
+│   ├── Models.swift                  # AppConfig, Preferences, AppTheme, ThemeColors 等（~539 行）
+│   └── CoderSession.swift            # CoderSession, CoderTool, SessionStatus, HostKind 等（~209 行）
+├── Services/
+│   ├── ConfigStore.swift             # UserDefaults 持久化（~269 行）
+│   ├── WindowService.swift           # 窗口枚举/操作（CGWindowList+AX）（~797 行）
+│   ├── AppMonitor.swift              # App 运行监控、自适应刷新（~362 行）
+│   ├── HotkeyManager.swift           # Carbon 全局快捷键（~68 行）
+│   ├── FocusTimerService.swift       # 番茄钟状态机、引导休息（~411 行）
+│   ├── CoderBridgeService.swift      # AI 编码工具会话管理（~494 行）
+│   └── TodoService.swift             # Todo 看板数据服务（~269 行）
+└── Helpers/
+    └── Constants.swift               # Ball, Panel, Design Token, Notifications, Keys（~130 行）
 ```
 
-### 版本变更说明
+**合计**：~11127 行，24 个 .swift 文件
 
-**V4.2 相比 V4.1 的关键变更**：
-
-- QuickPanelView：`currentTab` 拆分为 `selectedTab`（持久态，写 UserDefaults）和 `displayTab`（渲染态，hover 预览临时切换）；Tab 按钮 hover 时仅更新 `displayTab`，点击才同步 `selectedTab`；面板关闭或进入固定模式时 `displayTab` 回退到 `selectedTab`
-- QuickPanelView：新增 `hoverExpandedBundleID: String?` 属性，在非固定模式下驱动 App 行 hover 展开/折叠；App 行 hover 进入时设置，离开时清空；displayTab 切换/进入固定模式/面板关闭时同步清空；展开/折叠通过 `isHidden` 轻量切换，不触发 forceReload
-- FloatingBallView：非固定模式下复用 `badgeLabel` 显示 `CoderBridgeService.actionableCount`；监听 `coderBridgeSessionChanged` 和 `panelPinStateChanged` 通知自驱动刷新；固定模式下角标隐藏
-
-**V3.9 相比 V3.8 的关键变更**：
-
-- FocusTimerService：新增引导休息类型（`RestCategory`/`RestStep`/`RestMode`/`RestIntensity`），三级强度预设步骤模板（轻度~3min/标准~5min/深度~8min），覆盖脑/眼/肌肉三维恢复，肌肉环节按强度分级（坐姿/站立/全链路核心激活）
-- FocusTimerService：新增 `startGuidedRest(intensity:)` 方法，分步倒计时自动推进，`currentStep`/`guidedProgress`/`stepDisplayTime` 计算属性
-- FocusTimerService：`progress`/`displayTime`/`phaseLabel` 适配引导模式，强度偏好持久化（`focusRestIntensity`），兼容旧值 `medium` → `standard`
-- Constants：新增 `Notifications.focusGuidedStepChanged`、`Keys.focusRestIntensity`
-- QuickPanelView：工作完成弹窗统一为 radio 模式（轻度/标准/深度引导 + 分隔线 + 自由休息 + ⓘ 科学依据），与「开始专注」弹窗对称布局，合并原 `showIntensityPicker` 为一步决策，`WorkCompleteHelper` 替换 `IntensityPickerHelper`
-- QuickPanelView：新增 `timerStepLabel`（步骤名·n/N），引导模式计时器栏显示步骤图标+步骤剩余时间+步骤标签
-- QuickPanelView：`buildRestGuideView()` 改为三维单行摘要（眼/脑/肌肉/禁忌），新增 `buildGuidedStepListView()` 步骤进度列表
-- QuickPanelView：`showRunningActionSheet()` 引导模式下显示步骤信息+步骤进度列表
-- QuickPanelView：ⓘ HoverInfoView popover 提供三维恢复科学依据（眼睛/大脑/肌肉/禁忌）
-
-**V3.8 相比 V3.7 的关键变更**：
-
-- 新增 `FocusTimerService.swift`：番茄钟单例服务，管理 idle/running/paused 状态机 × work/rest 阶段，Timer 计时，FocusPendingAction 保留弹窗失焦后的待处理动作，通过 NotificationCenter 通知 UI 层
-- Constants：新增 `Keys.focusTimerSettings`、`Notifications.focusTimerChanged`/`focusWorkCompleted`/`focusRestCompleted`
-- FloatingBallView：新增 `CAShapeLayer` 进度环（工作=accent，休息=green），`handleFocusTimerChanged` 通知处理
-- FloatingBallView：品牌 Logo 重设计为十字准星图标（外环+内环+中心点+4 刻度线），accent 光晕阴影，hover 缩放反馈
-- QuickPanelView：底部 48px 计时器栏（timerBar），整栏可点击（NSClickGestureRecognizer），栏内零按钮，hover 时底色加深 + 手形光标
-- QuickPanelView：计时器栏状态——idle 居中"▶  开始专注"，running 居中阶段+时间+进度条，paused 灰色调"已暂停"，pending pill 徽章
-- QuickPanelView：点击计时器栏根据状态分发：idle→编辑弹窗，running/paused→操作面板（暂停/继续+停止，休息中附加休息指南），pending→阶段转换弹窗
-- QuickPanelView：`buildRestGuideView()` 提取科学休息指南视图，复用于工作完成弹窗和休息中操作面板
-- QuickPanelView：所有弹窗失焦自动关闭（`didResignActiveNotification` → `abortModal`），阶段完成弹窗关闭后 pending 状态保留
-- Models.swift：默认白主题 accent 从蓝色(#2383E2)改为红色(#E53935)
-- AppDelegate：启动时自动展开快捷面板并钉住
-- 新增 `TimerEditHelper` 辅助类（`NSTextFieldDelegate`，处理 +/- 和推荐方案事件）
-
-**V3.7 相比 V3.6 的关键变更**：
-
-- Models.swift：新增 `AppTheme`（8 个 Notion 风格主题枚举）和 `ThemeColors`（9 色槽结构体，ns* + sw* 双套属性，含 sidebarBackground）
-- Preferences：新增 `appTheme: AppTheme = .defaultWhite`，移除 `colorTheme`/`ballColorStyle`/`ballCustomColorHex`（保留旧 CodingKey 兼容解码）
-- Constants：新增 `themeChanged` 通知名
-- ConfigStore：新增 `currentThemeColors` 便捷属性
-- QuickPanelWindow：新增 `effectView`/`bgOverlayView` 实例属性 + `applyTheme()` 方法，背景色叠加半透明主题层
-- QuickPanelView：所有 `.labelColor`/`.secondaryLabelColor`/`.controlAccentColor` 替换为 `colors.nsTextPrimary`/`nsTextSecondary`/`nsAccent`，新增 `applyTheme()` 方法
-- QuickPanelRowBuilder：`.systemYellow` → `colors.nsFavoriteStar`，运行状态点改为 NSView 圆点（主题色）替代 emoji
-- FloatingBallView：`currentGradientColors()` 改为读取 `appTheme.ballGradientColors`，不再依赖 BallColorStyle
-- PreferencesView：移除"悬浮球颜色"6 色圆点 + 自定义取色器 + "颜色主题" Picker，新增浅色 4 卡片 + 深色 4 卡片的主题选择网格
-- AppConfigView：运行状态点 → `swAccent`，关注星标 → `swFavoriteStar`
-- MainKanbanView：侧边栏背景 → `swBackground`
-- AppDelegate.applyPreferences：设置 `NSApp.appearance`（浅色/深色），调用 `quickPanelWindow.applyTheme()`，发送 `themeChanged` 通知
-
-**主题切换刷新链路**：
-```
-PreferencesView → @Published → AppDelegate.applyPreferences()
-  → NSApp.appearance 更新 → ballView.updateColorStyle()
-  → quickPanelWindow.applyTheme() → panelView.forceReload()
-  → post themeChanged 通知
-```
-
-**V3.3 相比 V3.2 的关键变更**：
-
-- QuickPanelView：删除 `panelPinButton` 及所有关联代码（`togglePanelPin`、`updatePanelPinButton`、`rotatedPinImage`、`panelPinStateChanged` 监听）
-- QuickPanelView 顶部栏布局：`openKanbanButton` 从左侧移到右侧（`trailingAnchor - 8`），Tab 按钮成为最左侧元素（`leadingAnchor + 32`）
-- FloatingBallView：新增 `pinGlowLayer`（红色发光边框环 CALayer），通过 `panelPinStateChanged` 通知驱动显隐和脉冲动画
-- Preferences：新增 `autoRetractOnHover: Bool = true`，控制 hover 离开后是否自动收起面板
-- QuickPanelWindow.ballMouseExited()：新增 `autoRetractOnHover` 检查（钉住优先 → 回缩开关 → dismissTimer）
-- QuickPanelView.mouseExited()：同步新增 `autoRetractOnHover` 检查
-- PreferencesView：新增 Toggle "hover 离开后自动收起面板"
-
-**V3.2 相比 V3.0 的关键变更**：
-
-- QuickPanelTab 枚举：`.selected/.favorites` → `.running/.favorites`（移除 `.all`）
-- AppConfig 移除 `isFavorite` 字段（在 `appConfigs` 中即为关注）
-- ConfigStore 移除 `toggleFavorite` / `favoriteAppConfigs`，新增 `isFavorite()` / `saveLastPanelTab()` / `lastPanelTab`
-- AppMonitor.refreshRunningApps() 不再依赖 ConfigStore，直接遍历所有 regular App
-- WindowService: `activateWindow` 改用 `NSWorkspace.openApplication`；新增 `raiseAndFocusWindowViaAX`、`closeWindow`
-- QuickPanelView：两个 Tab（活跃/关注）、Tab 记忆、窗口行关闭按钮、移除底部按钮栏、移除面板内关注操作
-- AppConfigView 重写为关注管理页面（三 Tab：全部/活跃/关注 + 显示数量）
-- MainKanban Tab 标题改为"关注管理"
-- V3.1 数据迁移：`migrateToV31` 保留旧 `isFavorite==true` 的 App
-- Constants 新增 `Keys.lastPanelTab`
-
-**V3.0 相比 V2.1 的变更**：
-
-- 彻底移除 Pin（标记/置顶）概念
-- 删除 `PinManager.swift` 和 `PinManageView.swift`
-
-### 模块职责与拆分理由
+### 模块职责
 
 | 模块 | 职责 | 独立变化理由 |
 |---|---|---|
 | **App/** | 应用入口、生命周期、权限管理 | 应用级初始化逻辑独立于具体 UI |
-| **FloatingBall/** | 悬浮球 UI、拖拽、贴边、hover 检测、品牌 Logo、钉住状态发光边框 | 悬浮球交互逻辑独立变化频率高 |
-| **QuickPanel/** | 快捷面板 UI、活跃/关注 Tab、Tab 记忆、窗口行高亮+前置+关闭（V3.3：移除面板内钉住按钮）。extension 拆分为 RowBuilder（视图构建）+ MenuHandler（菜单和事件） | 面板展示和交互独立于悬浮球 |
-| **MainKanban/** | 主看板 SwiftUI 界面（关注管理 + 偏好设置 + 底部双按钮） | SwiftUI 技术栈独立，页面布局频繁调整 |
-| **Services/** | 底层服务（窗口操作+关闭、App 监控、快捷键、配置存储+Tab 记忆、FocusByTime 计时） | 业务逻辑层与 UI 层分离 |
+| **FloatingBall/** | 悬浮球 UI、拖拽、贴边、hover、品牌 Logo、进度环、AI 角标 | 悬浮球交互逻辑独立变化频率高 |
+| **QuickPanel/** | 快捷面板 UI、三 Tab（活跃/关注/AI）、Tab 记忆、窗口操作、AI 会话交互。extension 拆分为 RowBuilder + MenuHandler | 面板展示和交互独立于悬浮球 |
+| **MainKanban/** | 主看板 SwiftUI 界面（关注管理 + 偏好设置） | SwiftUI 技术栈独立 |
+| **Services/** | 底层服务（窗口操作、App 监控、快捷键、配置存储、番茄钟、AI 会话管理、Todo） | 业务逻辑层与 UI 层分离 |
 | **Models/** | 数据模型 | 数据结构被多个模块共享 |
-| **Helpers/** | 桥接头、常量、通知名、UserDefaults Keys | 基础设施，极少变化 |
+| **Helpers/** | 桥接头、常量、通知名、Keys | 基础设施 |
 
 ### 防过度设计自查
 
-- [x] 文件数（~20）<= 功能点数（34）
+- [x] 文件数（24）<= 功能点数（38）
 - [x] 无多余抽象层：Services 直接暴露方法，无 Protocol 包装
 - [x] 没有为"未来可能"创建接口
 - [x] 没有只有一个实现的抽象层
 
 ---
 
-## 2. 接口契约
+## 2. 数据模型
 
-### 2.1 数据模型（Models.swift）
+### 2.1 核心模型（Models.swift）
 
 ```swift
-// 快捷面板 Tab 枚举（V3.2：.running/.favorites）
 enum QuickPanelTab: String {
     case running    = "running"   // 活跃
     case favorites  = "favorites" // 关注
+    case ai         = "ai"       // AI
 }
 
-// App 配置（持久化）
-// V3.2：移除 isFavorite 字段，在 appConfigs 中即为关注
 struct AppConfig: Codable, Identifiable, Equatable {
     var id: String { bundleID }
-    let bundleID: String          // App 唯一标识
-    var displayName: String       // 自定义显示名称
-    var order: Int                // 快捷面板中的排序
-
-    // 自定义 decoder：兼容旧数据（忽略旧 isFavorite / pinnedKeywords 字段）
-    init(from decoder: Decoder) throws { ... }
-    init(bundleID: String, displayName: String, order: Int)
+    let bundleID: String
+    var displayName: String
+    var order: Int
+    // 自定义 decoder 兼容旧数据（忽略旧 isFavorite / pinnedKeywords 字段）
 }
 
-// 运行中的 App 信息（运行时）
 class RunningApp: Identifiable, ObservableObject {
     var id: String { bundleID }
     let bundleID: String
     let localizedName: String
     let icon: NSImage
-    let nsApp: NSRunningApplication?  // 进程引用（未运行时为 nil）
+    let nsApp: NSRunningApplication?
     @Published var windows: [WindowInfo]
     @Published var isRunning: Bool
 }
 
-// 窗口信息（运行时）
 struct WindowInfo: Identifiable, Equatable {
     let id: CGWindowID
     let ownerBundleID: String
@@ -204,7 +110,6 @@ struct WindowInfo: Identifiable, Equatable {
     var isFullScreen: Bool
 }
 
-// 已安装 App 信息
 struct InstalledApp: Identifiable {
     var id: String { bundleID }
     let bundleID: String
@@ -213,702 +118,566 @@ struct InstalledApp: Identifiable {
     let url: URL
 }
 
-// 面板大小（持久化）
-struct PanelSize: Codable {
-    var width: CGFloat
-    var height: CGFloat
-    static let `default` = PanelSize(width: 280, height: 400)
-}
+struct PanelSize: Codable { var width: CGFloat; var height: CGFloat }
+struct BallPosition: Codable { var x: CGFloat; var y: CGFloat; var edge: ScreenEdge }
+enum ScreenEdge: String, Codable { case top, bottom, left, right }
 
-// 悬浮球位置（持久化）
-struct BallPosition: Codable {
-    var x: CGFloat
-    var y: CGFloat
-    var edge: ScreenEdge
-    static let `default` = BallPosition(x: 50, y: 300, edge: .left)
-}
-
-enum ScreenEdge: String, Codable {
-    case top, bottom, left, right
-}
-
-// 偏好设置（持久化）
 struct Preferences: Codable {
-    var ballSize: CGFloat = 35        // 30-60px
-    var ballOpacity: CGFloat = 0.8    // 0.3-1.0
-    var panelOpacity: CGFloat = 0.9   // 0.3-1.0（快捷面板透明度）
-    var appTheme: AppTheme = .defaultWhite  // V3.7：Notion 风格主题
+    var ballSize: CGFloat = 35
+    var ballOpacity: CGFloat = 0.8
+    var panelOpacity: CGFloat = 0.9
+    var appTheme: AppTheme = .defaultWhite
     var launchAtLogin: Bool = false
-    var hotkeyToggle: HotkeyConfig    // 显示/隐藏快捷键（默认 ⌘⇧B）
-    var autoRetractOnHover: Bool = true  // V3.3：hover 离开后是否自动收起面板
-    var panelAnimationSpeed: CGFloat = 0.25  // 面板弹出动画时长（秒），0.1-0.6
-    // 自定义 CodingKeys 保留旧字段（colorTheme/ballColorStyle/ballCustomColorHex/hotkeyKanban）兼容解码
+    var hotkeyToggle: HotkeyConfig
+    var autoRetractOnHover: Bool = true
+    var panelAnimationSpeed: CGFloat = 0.25
+    var multiBindApps: [String] = ["cursor", "vscode"]  // 允许多 session 共享窗口的 App
+    // 自定义 CodingKeys 保留旧字段兼容解码
 }
 
-// V3.7：Notion 风格主题（8 种预设）
+// 主题系统详见 DesignGuide.md §4
 enum AppTheme: String, Codable, CaseIterable {
-    case defaultWhite, warmIvory, mintGreen, lightBlue  // 浅色
-    case classicDark, deepOcean, inkGreen, pureBlack    // 深色
-    var colors: ThemeColors       // 8 色槽（background, accent, textPrimary, ...)
+    case defaultWhite, warmIvory, mintGreen, lightBlue
+    case classicDark, deepOcean, inkGreen, pureBlack
+    var colors: ThemeColors
     var isDark: Bool
-    var ballGradientColors        // 从 accent 自动派生
-    var panelMaterial: Int        // .light=1 / .dark=2
+    var ballGradientColors: (light: NSColor, medium: NSColor, dark: NSColor)
+    var panelMaterial: Int
 }
 
 struct ThemeColors {
-    // NSColor 属性（9 色槽）：nsBackground, nsSidebarBackground, nsAccent, nsTextPrimary, nsTextSecondary, nsTextTertiary, nsRowHighlight, nsSeparator, nsFavoriteStar
-    // SwiftUI 扩展：swBackground, swSidebarBackground, swAccent, swTextPrimary, ...
+    // 9 色槽，ns* (NSColor) + sw* (SwiftUI Color) 双套
+    // nsBackground, nsSidebarBackground, nsAccent, nsTextPrimary,
+    // nsTextSecondary, nsTextTertiary, nsRowHighlight, nsSeparator, nsFavoriteStar
 }
-
-// 旧枚举保留定义不删（兼容），新代码不再引用
-enum ColorTheme: String, Codable, CaseIterable { ... }
-enum BallColorStyle: String, Codable, CaseIterable { ... }
 ```
 
-### 2.2 ConfigStore 契约
+### 2.2 AI 会话模型（CoderSession.swift）
+
+```swift
+enum CoderTool: String { case claude, codex, gemini }
+enum SessionStatus: String { case registered, working, idle, done, error }
+enum SessionLifecycle: String { case active, ended }
+enum MatchConfidence: String { case high, none }
+enum HostKind: String { case ide, terminal }
+
+struct CoderSession: Identifiable {
+    let sessionID: String
+    var tool: CoderTool
+    var cwd: String
+    var cwdNormalized: String
+    var hostApp: String
+    var hostKind: HostKind
+    var status: SessionStatus
+    var lifecycle: SessionLifecycle
+    var lastSeq: Int
+    var lastUpdate: Date
+    var lastInteraction: Date?
+    var isRead: Bool = false
+    var isDismissed: Bool = false
+
+    var autoWindowID: CGWindowID?       // session.start 自动采样（弱绑定）
+    var manualWindowID: CGWindowID?     // 用户手动确认（强绑定）
+
+    // 计算属性
+    var isActionable: Bool              // done: !isRead; idle/error: !isRead && !isDismissed
+    var statusText: String              // "执行中"、"等待输入·已结束" 等
+    func statusTextColor(theme:) -> NSColor
+    func statusDotColor(theme:) -> NSColor
+    var statusDotHasGlow: Bool
+    var rowAlpha: CGFloat               // ended=0.4, done+isRead=0.6, dismissed=0.6
+    var cwdBasename: String
+    var sortDate: Date                  // lastInteraction ?? lastUpdate
+    var preferenceKey: String           // tool::cwdNormalized::hostApp
+}
+
+struct SessionGroup {
+    let cwdNormalized: String
+    var displayName: String
+    var sessions: [CoderSession]
+}
+
+struct CoderSessionPreference: Codable {
+    let key: String                     // tool::cwdNormalized::hostApp
+    var displayName: String
+    var isPinned: Bool
+}
+
+enum HostAppMapping {
+    static let hostToBundleID: [String: String]  // terminal→com.apple.Terminal, cursor→com.todesktop..., etc.
+    static func bundleID(for:) -> String?
+    static func hostApp(for:) -> String?
+    static func displayName(for:) -> String
+}
+```
+
+---
+
+## 3. 接口契约
+
+### 3.1 ConfigStore
 
 ```swift
 class ConfigStore: ObservableObject {
     static let shared = ConfigStore()
 
-    // 关注 App 列表（有序，在列表中即为关注）
-    @Published var appConfigs: [AppConfig]
-
-    // 偏好设置
+    @Published var appConfigs: [AppConfig]        // 关注列表（有序）
     @Published var preferences: Preferences
-
-    // 悬浮球位置
     @Published var ballPosition: BallPosition
-
-    // Onboarding 是否已完成
-    @Published var onboardingCompleted: Bool
-
-    // 窗口重命名映射（key="{bundleID}::{CGWindowID}", value=自定义名称）
-    @Published var windowRenames: [String: String]
-
-    // 面板大小（拖拽 resize 后持久化）
+    @Published var windowRenames: [String: String] // "{bundleID}::{CGWindowID}" → 自定义名称
     @Published var panelSize: PanelSize
+    @Published var lastPanelTab: String
+    @Published var isBallVisible: Bool             // 运行时，不持久化
 
-    // 快捷面板上次选择的 Tab（持久化，面板关闭再打开时恢复）
-    @Published var lastPanelTab: String    // QuickPanelTab.rawValue
-
-    // 悬浮球显隐状态（运行时，不持久化）
-    @Published var isBallVisible: Bool
-
-    // CRUD 操作
     func addApp(_ bundleID: String, displayName: String)
     func removeApp(_ bundleID: String)
     func reorderApps(_ ids: [String])
+    func isFavorite(_ bundleID: String) -> Bool
+    func saveLastPanelTab(_ tab: QuickPanelTab)    // 轻量单字段写入
     func saveBallPosition(_ position: BallPosition)
-    func save()    // 持久化到 UserDefaults
-    func load()    // 从 UserDefaults 加载
+    func save()
+    func load()
 
-    // V3.2 关注查询
-    func isFavorite(_ bundleID: String) -> Bool    // 在 appConfigs 中即为关注
-
-    // V3.2 面板 Tab 记忆
-    func saveLastPanelTab(_ tab: QuickPanelTab)    // 轻量单字段写入，不触发全量 save
-
-    // 配置迁移
-    private func migrateFromPinTop()               // PinTop → FocusCopilot
-    private func migrateToV31()                    // V3.1 迁移：仅保留 isFavorite==true 的 App
+    // 迁移
+    private func migrateFromPinTop()
+    private func migrateToV31()
 }
 ```
 
-**UserDefaults Keys**：`FocusCopilot.appConfigs`、`FocusCopilot.preferences`、`FocusCopilot.ballPosition`、`FocusCopilot.onboardingCompleted`、`FocusCopilot.windowRenames`、`FocusCopilot.panelSize`、`FocusCopilot.lastPanelTab`
-
-### 2.3 AppMonitor 契约
+### 3.2 AppMonitor
 
 ```swift
 class AppMonitor: ObservableObject {
     static let shared = AppMonitor()
 
-    // 运行中的 App 列表（所有 regular App，不依赖 ConfigStore）
     @Published var runningApps: [RunningApp]
-
-    // 已安装 App 列表
     @Published var installedApps: [InstalledApp]
 
-    func startMonitoring()        // 注册 NSWorkspace 通知
-    func stopMonitoring()         // 注销通知
-
-    // V3.2：直接遍历所有 regular App，不依赖 ConfigStore
-    func refreshRunningApps()     // 刷新运行中 App 列表（排除自身，按名称排序）
-    func refreshAllWindows()      // 刷新所有 App 窗口列表
-    func refreshWindows(for bundleID: String)  // 刷新单个 App 窗口
-    func scanInstalledApps()      // 扫描 /Applications + ~/Applications
+    func startMonitoring()
+    func stopMonitoring()
+    func refreshRunningApps()          // 不依赖 ConfigStore
+    func refreshAllWindows()
+    func refreshWindows(for bundleID: String)
+    func scanInstalledApps()           // 后台线程扫描
     func isRunning(_ bundleID: String) -> Bool
-
-    // 面板显示时启动窗口刷新定时器（1s 间隔）
-    func startWindowRefresh()
-    // 面板隐藏时停止窗口刷新定时器
-    func stopWindowRefresh()
-
-    // 通知
-    static let appStatusChanged = Constants.Notifications.appStatusChanged
-    static let windowsChanged = Constants.Notifications.windowsChanged
+    func startWindowRefresh()          // 面板显示时 1s 间隔
+    func stopWindowRefresh()           // 面板隐藏时停止
 }
 ```
 
-### 2.4 WindowService 契约
+### 3.3 WindowService
 
 ```swift
 class WindowService {
     static let shared = WindowService()
 
-    // CGS Private API 函数指针（动态加载）
-    let cgsMainConnectionIDFunc: (@convention(c) () -> Int32)?
-    let cgsSetWindowLevelFunc: (@convention(c) (Int32, CGWindowID, Int32) -> CGError)?
-
-    // AX 可用性检测（带 3 秒缓存）
-    func isAXApiAvailable() -> Bool
-    func invalidateAXCache()
-
     // 窗口枚举
     func listWindows(for bundleID: String) -> [WindowInfo]
-    func listWindows(for pid: pid_t) -> [WindowInfo]
     func listAllWindows() -> [WindowInfo]
 
-    // 窗口操作（需要辅助功能权限）
-    // V3.2：使用 NSWorkspace.openApplication 激活 App（系统级 API）
-    func activateWindow(_ window: WindowInfo)  // 激活并前置窗口
-    func activateApp(_ bundleID: String)       // 激活 App（不需要权限）
-
-    // V3.2 新增：关闭窗口（通过 AX API 获取关闭按钮并点击）
-    func closeWindow(_ window: WindowInfo)
-
-    // V3.2 新增：提升并聚焦窗口（AXRaise + AXMain + AXFocused）
-    private func raiseAndFocusWindowViaAX(_ window: WindowInfo)
-    private func raiseAndFocusAXWindow(_ axWindow: AXUIElement, wid: CGWindowID)
-
-    // 窗口层级（诊断用）
-    func setWindowLevel(_ windowID: CGWindowID, level: Int32)
-    func orderWindowAbove(_ windowID: CGWindowID)
-    func axRaiseWindow(_ windowID: CGWindowID)
+    // 窗口操作
+    func activateWindow(_ window: WindowInfo)      // NSWorkspace.openApplication + AXRaise/AXMain/AXFocused
+    func activateApp(_ bundleID: String)            // 不需要辅助功能权限
+    func closeWindow(_ window: WindowInfo)          // AX kAXCloseButtonAttribute → AXPressAction
 
     // AX 窗口查找
-    func getAXElement(for pid: pid_t) -> AXUIElement
-    func getAXWindows(for pid: pid_t) -> [AXUIElement]
     func findAXWindow(pid: pid_t, windowID: CGWindowID) -> AXUIElement?
-    func findAXWindow(pid: pid_t, title: String) -> AXUIElement?
 
-    // AX 窗口操作
-    func moveWindow(_ axWindow: AXUIElement, to: CGPoint)
-    func resizeWindow(_ axWindow: AXUIElement, to: CGSize)
-    func setWindowFrame(_ axWindow: AXUIElement, frame: CGRect)
+    // AX 可用性
+    func isAXApiAvailable() -> Bool                // 3 秒缓存
 
-    // 诊断日志（写入 /tmp/focuscopilot-debug.log）
-    func debugLog(_ message: String)
-
-    // --- 关键实现细节 ---
-    // getCGWindowID(from: AXUIElement) -> CGWindowID?
-    //   使用 _AXUIElementGetWindow 私有 API
-    //
-    // buildAXTitleMap(for pid: pid_t, cgWindows: [[String: Any]]) -> [CGWindowID: String]
-    //   四级标题兜底：AX 标题 → CG 标题 → 缓存 → "(无标题)"
-    //   权限丢失时回退到位置匹配（tolerance=10px）
-    //
-    // activateWindow 跨 App 激活机制（V3.2）：
-    //   NSWorkspace.openApplication(activates: true) → raiseAndFocusWindowViaAX
-    //   → 150ms 后再次 raiseAndFocusWindowViaAX
-    //   → 300ms 后检查 frontmostApplication → yieldActivation + activate 兜底重试
-    //
-    // raiseAndFocusWindowViaAX 实现：
-    //   AXRaise → kAXMainAttribute=true → kAXFocusedAttribute=true
-    //   优先通过 CGWindowID 精确匹配，回退到位置匹配
-    //
-    // closeWindow 实现：
-    //   findAXWindow → kAXCloseButtonAttribute → AXPressAction
+    // 关键实现细节：
+    // - buildAXTitleMap：四级标题兜底（AX → CG → 缓存 → "(无标题)"）
+    // - activateWindow：NSWorkspace.openApplication → raiseAndFocusWindowViaAX → 150ms 重试 → 300ms 兜底
+    // - 两阶段刷新：Phase 1 CG 标题主线程快速渲染 → Phase 2 AX 标题后台补全
 }
 ```
 
-### 2.5 HotkeyManager 契约
+### 3.4 HotkeyManager
 
 ```swift
 class HotkeyManager {
     static let shared = HotkeyManager()
-
-    /// 悬浮球快捷键触发时的回调
     var onToggle: (() -> Void)?
 
-    /// 注册悬浮球快捷键（首次调用时同时安装 Carbon 事件处理器）
     func register(config: HotkeyConfig? = nil)
-    /// 注销快捷键和事件处理器
     func unregister()
-    /// 仅重新注册悬浮球快捷键（用于偏好设置中修改快捷键后热更新）
     func reregister(config: HotkeyConfig)
 }
 ```
 
-### 2.6 PermissionManager 契约
+### 3.5 PermissionManager
 
 ```swift
 class PermissionManager: ObservableObject {
     static let shared = PermissionManager()
-
     @Published var accessibilityGranted: Bool = false
 
-    func checkAccessibility() -> Bool   // 实时检查（不可缓存）
-    func requestAccessibility()         // 引导用户开启权限
-    func startPolling()                 // 轮询检测权限状态
+    func checkAccessibility() -> Bool   // 实时检查，不可缓存
+    func requestAccessibility()
+    func startPolling()
     func stopPolling()
 }
 ```
 
-### 2.7 FocusTimerService 契约（V3.9）
+### 3.6 FocusTimerService
 
 ```swift
 final class FocusTimerService: ObservableObject {
     static let shared = FocusTimerService()
 
-    // 状态
-    @Published var status: FocusTimerStatus    // .idle / .running / .paused
-    @Published var phase: FocusTimerPhase      // .work / .rest
+    @Published var status: FocusTimerStatus       // .idle / .running / .paused
+    @Published var phase: FocusTimerPhase          // .work / .rest
     @Published var remainingSeconds: Int
-    @Published var workMinutes: Int             // 默认 25，持久化
-    @Published var restMinutes: Int             // 默认 5，持久化
-    @Published var pendingAction: FocusPendingAction  // .none / .startRest / .startWork
+    @Published var workMinutes: Int                // 持久化
+    @Published var restMinutes: Int                // 持久化
+    @Published var pendingAction: FocusPendingAction
 
-    // 引导休息状态（V3.9）
-    @Published var restMode: RestMode          // .free / .guided
-    @Published var currentStepIndex: Int       // 当前步骤索引
-    var guidedSteps: [RestStep]                // 当前引导步骤列表
-    var restIntensity: RestIntensity           // 上次选择的强度（持久化）
+    // 引导休息
+    @Published var restMode: RestMode             // .free / .guided
+    @Published var currentStepIndex: Int
+    var guidedSteps: [RestStep]
+    var restIntensity: RestIntensity              // 持久化
 
     // 计算属性
-    var progress: CGFloat                      // 0.0~1.0（引导模式=整体进度，自由模式=剩余/总共）
-    var displayTime: String                    // "MM:SS"（引导模式=整体剩余，自由模式=当前阶段剩余）
-    var stepDisplayTime: String                // "MM:SS"（当前步骤剩余，仅引导模式有意义）
-    var phaseLabel: String                     // "工作中" / 步骤名 / "休息中"
-    var currentStep: RestStep?                 // 当前引导步骤
-    var guidedTotalSeconds: Int                // 引导休息总秒数
-    var guidedElapsedSeconds: Int              // 引导休息已过秒数
+    var progress: CGFloat
+    var displayTime: String
+    var stepDisplayTime: String
+    var phaseLabel: String
 
     // 控制
-    func start()                               // idle → running(work)，restMode=.free
-    func pause()                               // running → paused
-    func resume()                              // paused → running
-    func reset()                               // → idle，清除引导状态
-    func startRestPhase()                      // → running(rest)，自由模式
-    func startGuidedRest(intensity:)           // → running(rest)，引导模式，分步倒计时
-    func setWorkMinutes(_ m: Int)              // 仅 idle 时可调，≥1
-    func setRestMinutes(_ m: Int)              // 仅 idle 时可调，≥1
+    func start()
+    func pause()
+    func resume()
+    func reset()
+    func startRestPhase()
+    func startGuidedRest(intensity:)
+    func startStandaloneRestFree()
+    func startStandaloneGuidedRest(intensity:)
 
-    // 阶段切换（内部）
-    // tick()：引导模式步骤结束 → 自动前进到下一步骤 + 发 focusGuidedStepChanged
-    // switchPhase()：工作完成 → pendingAction=.startRest + 发 focusWorkCompleted
-    //               休息完成 → pendingAction=.startWork + 发 focusRestCompleted
-
-    // 通知
-    // focusTimerChanged：每秒或状态变化时发送
-    // focusWorkCompleted：工作阶段倒计时归零
-    // focusRestCompleted：休息阶段倒计时归零（含引导模式最后一步）
-    // focusGuidedStepChanged：引导模式步骤切换
-
-    // 持久化：workMinutes/restMinutes → focusTimerSettings
-    //         restIntensity → focusRestIntensity
+    // 通知：focusTimerChanged / focusWorkCompleted / focusRestCompleted / focusGuidedStepChanged
 }
 ```
 
-### 2.8 Constants（集中管理的常量、通知名、Keys）
+### 3.7 CoderBridgeService
+
+```swift
+class CoderBridgeService: NSObject {
+    static let shared = CoderBridgeService()
+
+    private(set) var sessions: [CoderSession]
+
+    // BindingState 统一 helper
+    enum BindingState { case manual, autoValid, autoConflicted, missing }
+    func bindingState(for session: CoderSession) -> BindingState
+    func allowsSharedBinding(for session: CoderSession) -> Bool  // 读取 multiBindApps 白名单
+
+    // 生命周期
+    func start()   // 注册 DistributedNotification + 30s 清理定时器
+
+    // 会话查询
+    var groupedSessions: [SessionGroup]          // 按 cwdNormalized 分组，支持置顶
+    var actionableCount: Int                      // 未读可操作会话数
+    func transcriptPath(for:) -> String?
+    func latestQuerySummary(for:maxLength:) -> String?  // 5s 缓存
+
+    // 窗口解析
+    func resolveWindowForSession(_:) -> (CGWindowID?, MatchConfidence)
+    func windowExists(_:) -> Bool
+    func isAutoWindowConflicted(for:) -> Bool
+
+    // 会话操作
+    var activeSessionID: String?                  // 最近成功切换的 session
+    func markAsRead(sid:)
+    func dismissSession(sid:)                     // isDismissed = true
+    func updateLastInteraction(sid:)
+    func bindSessionToWindow(sid:windowID:)       // 独占类驱逐旧绑定
+    func clearManualWindowID(sid:)
+    func clearAutoWindowID(sid:)
+    func removeSession(_:)
+    func removeEndedSessions()
+
+    // 置顶
+    var pinnedGroups: [String]
+    var pinnedSessions: [String]
+    func pinGroup(_:)
+    func pinSession(_:)
+}
+```
+
+### 3.8 Constants
 
 ```swift
 enum Constants {
-    enum Notifications {
-        // 系统级通知
-        static let appStatusChanged = Notification.Name("FocusCopilot.appStatusChanged")
-        static let windowsChanged = Notification.Name("FocusCopilot.windowsChanged")
-        static let ballVisibilityChanged = Notification.Name("FocusCopilot.ballVisibilityChanged")
-        static let accessibilityGranted = Notification.Name("FocusCopilot.accessibilityGranted")
-
-        // 悬浮球通知
-        static let ballShowQuickPanel = Notification.Name("FloatingBall.showQuickPanel")
-        static let ballToggle = Notification.Name("FloatingBall.toggleBall")
-        static let ballOpenMainKanban = Notification.Name("FloatingBall.openMainKanban")
-        static let ballDragStarted = Notification.Name("FloatingBall.dragStarted")
-        static let ballDragMoved = Notification.Name("FloatingBall.dragMoved")
-        static let ballMouseExited = Notification.Name("FloatingBall.mouseExited")
-        static let ballToggleQuickPanel = Notification.Name("FloatingBall.toggleQuickPanel")
-
-        // 快捷面板通知
-        static let panelPinStateChanged = Notification.Name("QuickPanel.pinStateChanged")
-        static let panelDragMoved = Notification.Name("QuickPanel.dragMoved")
-
-        // V3.7：主题变更通知
-        static let themeChanged = Notification.Name("FocusCopilot.themeChanged")
-
-        // V3.8：FocusByTime 计时器通知
-        static let focusTimerChanged = Notification.Name("FocusCopilot.focusTimerChanged")
-        static let focusWorkCompleted = Notification.Name("FocusCopilot.focusWorkCompleted")
-        static let focusRestCompleted = Notification.Name("FocusCopilot.focusRestCompleted")
-
-        // V3.9：引导休息步骤切换通知
-        static let focusGuidedStepChanged = Notification.Name("FocusCopilot.focusGuidedStepChanged")
+    enum Ball { ... }      // defaultSize=40, hoverDelay=0.15 等
+    enum Panel { ... }     // width=280, cornerRadius=14, timerBarHeight=46 等
+    enum Design {
+        enum Spacing { ... }  // xs=4, sm=8, md=12, lg=16, xl=24
+        enum Corner { ... }   // sm=4, md=6, lg=10, xl=14
+        enum Anim { ... }     // micro=0.1, fast=0.15, normal=0.25
     }
 
-    // V3.2 新增：UserDefaults Keys
     enum Keys {
-        static let appConfigs = "FocusCopilot.appConfigs"
-        static let preferences = "FocusCopilot.preferences"
-        static let ballPosition = "FocusCopilot.ballPosition"
-        static let onboardingCompleted = "FocusCopilot.onboardingCompleted"
-        static let windowRenames = "FocusCopilot.windowRenames"
-        static let panelSize = "FocusCopilot.panelSize"
-        static let lastPanelTab = "FocusCopilot.lastPanelTab"   // V3.2 新增
-        static let focusTimerSettings = "FocusCopilot.focusTimerSettings"  // V3.8 新增
-        static let focusRestIntensity = "FocusCopilot.focusRestIntensity"  // V3.9 新增
+        static let appConfigs, preferences, ballPosition, onboardingCompleted,
+                   windowRenames, panelSize, lastPanelTab,
+                   focusTimerSettings, focusRestIntensity,
+                   sessionPreferences: String
+    }
+
+    enum Notifications {
+        // 系统：appStatusChanged, windowsChanged, ballVisibilityChanged, accessibilityGranted
+        // 悬浮球：ballShowQuickPanel, ballToggle, ballOpenMainKanban, ballDragStarted,
+        //        ballDragMoved, ballMouseExited, ballToggleQuickPanel
+        // 面板：panelPinStateChanged, panelDragMoved
+        // 主题：themeChanged
+        // 番茄钟：focusTimerChanged, focusWorkCompleted, focusRestCompleted, focusGuidedStepChanged
+        // AI：coderBridgeSessionChanged
+        // 偏好：showPreferencesMultiBind
     }
 }
 ```
 
 ---
 
-## 3. 模块间交互
+## 4. 模块间交互
 
-### 3.1 FloatingBall → QuickPanel 交互
+### 4.1 FloatingBall → QuickPanel
 
 ```
 FloatingBallView                   QuickPanelWindow
-     │                                │
-     │── mouseEntered ───────────────▶│ AppMonitor.startWindowRefresh()（数据预热）
-     │                                │
-     │── hover 150ms ────────────────▶│ show(relativeTo: ballFrame)
-     │   (ballShowQuickPanel)         │
-     │                                │
-     │── click ──────────────────────▶│ toggleQuickPanel (ballToggleQuickPanel)
-     │   未显示/未钉住→show+pin        │
-     │   已显示且钉住→unpin+hide       │
-     │                                │
-     │── double-click ──────────────▶ MainKanbanWindow.toggleMainKanban()
-     │   (ballOpenMainKanban)         │
-     │                                │
-     │── drag-start ────────────────▶│ hide() (ballDragStarted)
-     │                                │
-     │◀── mouseExited(500ms) ────────│ hide()（钉住时跳过；autoRetractOnHover=false 时跳过）
-     │   (ballMouseExited)            │    └── AppMonitor.stopWindowRefresh()
+     │── mouseEntered ───────────▶ AppMonitor.startWindowRefresh()（预热）
+     │── hover 150ms ────────────▶ show(relativeTo: ballFrame)
+     │── click ──────────────────▶ toggleQuickPanel
+     │── double-click ──────────▶ MainKanbanWindow.toggleMainKanban()
+     │── drag-start ────────────▶ hide()
+     │◀── mouseExited(500ms) ───── hide()（钉住/autoRetractOnHover=false 时跳过）
 ```
 
-> **性能优化**：QuickPanelWindow 在应用启动时预创建（非懒加载），mouseEntered 时立即预热窗口数据，面板弹出动画 100ms / 收起 120ms，hover 延迟 150ms。
-
-### 3.2 QuickPanel → Services 交互
+### 4.2 QuickPanel → Services
 
 ```
-QuickPanelView（V4.2 交互模式）
-     │
-     │── Tab hover（非固定模式） ──▶ displayTab 临时切换（不写 UserDefaults）
-     │── Tab 点击 ─────────────────▶ selectedTab 更新 + ConfigStore.saveLastPanelTab()
-     │                               displayTab 同步至 selectedTab
-     │── App 行 hover（非固定模式）─▶ hoverExpandedBundleID = bundleID（展开窗口列表）
-     │── App 行 hover 离开 ─────────▶ hoverExpandedBundleID = nil（折叠）
-     │── 进入固定模式 ──────────────▶ displayTab ← selectedTab，hoverExpandedBundleID = nil
-     │── 点击单窗口 App 行 ──▶ WindowService.activateWindow(window)
-     │── 点击多窗口 App 行（固定模式）▶ 切换折叠/展开（collapsedApps）
-     │── 点击窗口行 ──────────▶ highlightedWindowID = window.id
-     │                        + WindowService.activateWindow(window)
-     │── 点击窗口行✕按钮 ──────▶ NSAlert 确认 → WindowService.closeWindow(window)
-     │── 点击未运行 App ──────▶ NSWorkspace.openApplication(at:configuration:)
-     │── 右键窗口行 ──────────▶ 窗口重命名（NSAlert+NSTextField）
-     │                         └── ConfigStore.windowRenames["{bundleID}::{CGWindowID}"]
-     │── 右键 App 行 ──────────▶ createRunningAppContextMenu(bundleID:)
-     │                         └── "关闭应用" → handleTerminateApp(_:)
-     │── 点击顶部主界面按钮 ──▶ ballOpenMainKanban 通知（切换主看板显示/隐藏）
-     │
-     │── 读取数据 ─────────────▶ AppMonitor.runningApps（活跃 Tab：有窗口的 App，关注优先排序）
-     │                       ▶ ConfigStore.appConfigs（关注 Tab）
-     │                       ▶ ConfigStore.windowRenames
-     │                       ▶ ConfigStore.lastPanelTab（Tab 记忆恢复）
-
-QuickPanelWindow
-     │
-     │── 顶部拖拽区域（24px）──▶ handlePanelDrag()（钉住时联动悬浮球）
-     │── 边缘拖拽 resize ──────▶ ConfigStore.panelSize + save()
-     │── hide() ────────────────▶ resetToNormalMode()（highlightedWindowID = nil，保留 Tab 记忆）
+QuickPanelView
+     │── Tab hover（非固定）──────▶ displayTab 临时切换
+     │── Tab 点击 ───────────────▶ selectedTab + ConfigStore.saveLastPanelTab()
+     │── App 行 hover（非固定）──▶ hoverExpandedBundleID（展开）
+     │── 点击窗口行 ──────────────▶ WindowService.activateWindow()
+     │── 点击 Session 行 ─────────▶ CoderBridgeService.resolveWindowForSession() → activateWindow
+     │── 右键窗口行 ──────────────▶ 窗口重命名 → ConfigStore.windowRenames
+     │── 右键 App 行 ──────────────▶ handleTerminateApp()
+     │── 右键 Session 行 ──────────▶ 绑定/解绑/忽略/移除 → CoderBridgeService
+     │── 点击顶部主界面按钮 ──────▶ ballOpenMainKanban 通知
 ```
 
-### 3.3 MainKanban 交互
+### 4.3 MainKanban 交互
 
 ```
 MainKanbanView
-     │
-     │── 侧边栏 Tab ──────────▶ "关注管理" / "偏好设置"
-     │── 左半按钮（显隐球）──▶ ballToggle 通知
-     │── 右半按钮（退出）───▶ 确认对话框 → NSApplication.terminate()
+     │── 侧边栏 Tab ──────▶ 关注管理 / 偏好设置
+     │── 左半按钮 ─────────▶ ballToggle 通知
+     │── 右半按钮 ─────────▶ 确认对话框 → NSApplication.terminate()
 
-AppConfigView（关注管理页面）
-     │
-     │── 三 Tab 过滤 ─────────▶ 全部(N) / 活跃(N) / 关注(N)
-     │── 搜索框 ──────────────▶ 过滤 App 名称
-     │── 点击★按钮 ───────────▶ ConfigStore.addApp() / removeApp()
-     │── 右键菜单 ────────────▶ "添加到关注" / "从关注中移除"
-     │── 读取数据 ────────────▶ AppMonitor.installedApps（全部 Tab）
-     │                       ▶ NSWorkspace.runningApplications（活跃 Tab）
-     │                       ▶ ConfigStore.appConfigs（关注 Tab）
+AppConfigView
+     │── 点击★ ────────────▶ ConfigStore.addApp() / removeApp()
+```
+
+### 4.4 Coder-Bridge 事件流
+
+```
+coder-bridge shell hook（Claude Code / Codex / Gemini CLI）
+  → osascript DistributedNotification("com.focuscopilot.coder-bridge")
+  → CoderBridgeService.handleDistributedNotification(_:)
+    ├─ session.start: 创建 CoderSession + resolveFrontmostWindow → autoWindowID
+    ├─ session.update: 更新 status + 重置 isRead/isDismissed（状态变化时）
+    └─ session.end: lifecycle → .ended
+  → postSessionChanged()
+  → NotificationCenter: coderBridgeSessionChanged
+    ├─ QuickPanelView.reloadData()（AI Tab 刷新）
+    └─ FloatingBallView（AI 角标刷新）
+```
+
+### 4.5 主题刷新链路
+
+```
+PreferencesView → @Published → AppDelegate.applyPreferences()
+  → NSApp.appearance（浅色/深色）
+  → ballView.updateColorStyle()
+  → quickPanelWindow.applyTheme()
+  → panelView.forceReload()
+  → post themeChanged
 ```
 
 ---
 
-## 4. 行为约束
+## 5. 行为约束
 
-### 4.1 状态转换矩阵
+### 5.1 悬浮球状态转换
 
-#### 悬浮球状态
-
-| 当前状态 | 触发条件 | 目标状态 | 副作用 |
+| 当前状态 | 触发 | 目标状态 | 副作用 |
 |---|---|---|---|
-| 正常显示 | mouseEntered | 正常显示 | AppMonitor.startWindowRefresh()（数据预热） |
-| 正常显示 | hover 150ms | 正常显示 + 快捷面板弹出 | QuickPanel.show()（面板已钉住时跳过） |
-| 正常显示 | 单击 | 正常显示 | 切换面板钉住状态 + 悬浮球红色发光边框（V3.3） |
-| 正常显示 | 双击 | 正常显示 | 切换主看板显示/隐藏 |
-| 正常显示 | 拖拽开始 | 拖拽中 | 关闭快捷面板 |
-| 拖拽中 | 拖拽结束 | 正常显示 | 吸附到最近边缘 + 保存位置 |
-| 正常显示 | 贴边检测 | 贴边半隐藏 | 收入一半 |
-| 贴边半隐藏 | 鼠标靠近 | 正常显示 | 滑出动画 |
-| 隐藏 | ⌘⇧B | 正常显示 | 恢复到上次位置 |
-| 正常显示 | ⌘⇧B / 底部按钮 | 隐藏 | 保存状态，发送 ballVisibilityChanged 通知 |
+| 正常 | mouseEntered | 正常 | startWindowRefresh() |
+| 正常 | hover 150ms | 正常+面板弹出 | show()（已钉住时跳过） |
+| 正常 | 单击 | 正常 | 切换面板钉住状态 |
+| 正常 | 双击 | 正常 | 切换主看板 |
+| 正常 | 拖拽开始 | 拖拽中 | 关闭面板 |
+| 拖拽中 | 拖拽结束 | 正常 | 吸附+保存位置 |
+| 正常 | 贴边 | 贴边半隐藏 | 收入一半 |
+| 贴边 | 鼠标靠近 | 正常 | 滑出 |
+| 隐藏 | ⌘⇧B | 正常 | 恢复位置 |
+| 正常 | ⌘⇧B / 按钮 | 隐藏 | ballVisibilityChanged |
 
-#### 快捷面板状态
+### 5.2 快捷面板状态转换
 
-| 当前状态 | 触发条件 | 目标状态 | 副作用 |
+| 当前状态 | 触发 | 目标状态 | 副作用 |
 |---|---|---|---|
-| 隐藏 | 悬浮球 hover 150ms | 显示（未钉住） | startWindowRefresh()（已由 mouseEntered 预热），恢复 lastPanelTab，活跃 Tab 关注优先排序 |
-| 隐藏 | 悬浮球单击 | 显示（钉住） | startWindowRefresh()，恢复 lastPanelTab |
-| 显示（未钉住） | 鼠标离开 500ms（autoRetractOnHover=true） | 隐藏 | stopWindowRefresh()，highlightedWindowID = nil |
-| 显示（未钉住） | 鼠标离开（autoRetractOnHover=false） | 显示（未钉住） | 面板保持显示，不触发 dismissTimer |
-| 显示（未钉住） | 悬浮球拖拽 | 隐藏 | stopWindowRefresh() |
-| 显示（未钉住） | 点击钉住按钮 | 显示（钉住） | 取消 dismissTimer |
-| 显示（钉住） | 悬浮球单击 | 隐藏 | 取消钉住，stopWindowRefresh() |
-| 显示（钉住） | 点击钉住按钮 | 显示（未钉住） | 恢复自动收起 |
-| 显示（钉住） | 鼠标离开 | 显示（钉住） | 不触发收起 |
-| 显示（钉住） | 面板拖拽 | 显示（钉住） | 联动悬浮球同步移动 |
-| 显示 | Tab 切换 | 显示 | ConfigStore.saveLastPanelTab()，刷新内容 |
-| 显示 | 点击窗口行✕ | 显示 | NSAlert 确认后 closeWindow()，刷新内容 |
+| 隐藏 | hover 150ms | 显示（未钉住） | startWindowRefresh，恢复 lastPanelTab |
+| 隐藏 | 单击 | 显示（钉住） | startWindowRefresh |
+| 显示（未钉住） | 离开 500ms | 隐藏 | stopWindowRefresh，reset |
+| 显示（未钉住） | autoRetractOnHover=false | 保持 | 不触发 dismissTimer |
+| 显示（钉住） | 单击 | 隐藏 | 取消钉住 |
+| 显示（钉住） | 离开 | 保持 | — |
 
-#### 窗口行高亮状态
+### 5.3 FocusByTime 状态转换
 
-| 当前状态 | 触发条件 | 目标状态 | 副作用 |
+| 当前状态 | 触发 | 目标状态 | 副作用 |
 |---|---|---|---|
-| 无高亮 | 点击窗口行 A | A 高亮 | WindowService.activateWindow(A) |
-| A 高亮 | 点击窗口行 B | B 高亮 | A 取消高亮，WindowService.activateWindow(B) |
-| A 高亮 | 面板关闭 | 无高亮 | resetToNormalMode() |
-| A 高亮 | 点击已高亮行 A | A 高亮 | 保持不变，不做额外操作 |
+| idle | 开始专注 | running(work) | 保存时长，启动 Timer |
+| running(work) | 暂停 | paused(work) | 停止 Timer |
+| paused(work) | 继续 | running(work) | 恢复 Timer |
+| running/paused | 停止确认 | idle | 清除 Timer + pendingAction |
+| running(work) | 归零 | paused(work) | pendingAction=.startRest, 发 focusWorkCompleted |
+| paused(work) | 开始休息 | running(rest) | 清除 pendingAction |
+| paused(work) | 直接结束 | idle | 清除 pendingAction |
+| idle | 独立休息 | running(rest, standalone) | isStandaloneRest=true |
+| running(rest) | 归零 | idle | 非独立→pendingAction=.startWork, 独立→直接 idle |
 
-### 4.2 通用边界行为
+### 5.4 AI 会话生命周期
 
-| 场景 | 处理 |
-|---|---|
-| 关注 App 已满 8 个 | 禁用添加按钮，底部显示关注计数 |
-| 未关注任何 App | 关注 Tab 显示空状态引导 |
-| 辅助功能未授权 | 窗口标题获取和前置不可用，App 切换正常，面板底部显示权限引导 |
-| 窗口标题为空 | 四级兜底：AX 标题 → CG 标题 → 缓存 → "(无标题)" |
-| App 图标获取失败 | 使用系统默认图标 |
-| 多显示器 | 悬浮球限制在一个屏幕，拖拽不跨屏 |
-| 未运行 App（关注 Tab） | 灰度显示，点击调用 NSWorkspace.openApplication 启动 |
-| codesign 导致权限失效 | PermissionManager 后台轮询检测，自动恢复 |
-| 面板关闭后重新打开 | 恢复上次 Tab 选择（Tab 记忆） |
-| autoRetractOnHover=false 且未钉住 | hover 离开不收起面板，面板保持显示直到主动关闭 |
+| 事件 | 状态迁移 | 副作用 |
+|---|---|---|
+| session.start | → registered + active | autoWindowID 采样 |
+| session.update(working) | → working | — |
+| session.update(idle) | → idle | isRead=false, isDismissed=false |
+| session.update(done) | → done | isRead=false |
+| session.update(error) | → error | isRead=false, isDismissed=false |
+| session.end | → lifecycle=ended | 保留 status |
+| markAsRead | — | isRead=true |
+| dismissSession | — | isDismissed=true |
+| 清理（ended>2min / 僵尸>30s） | 移除 | — |
 
-### 4.3 跨 App 窗口激活（V3.2）
+### 5.5 跨 App 窗口激活（V3.2）
 
 ```
 activateWindow(window)
   → app.isHidden → unhide()
-  → NSWorkspace.openApplication(activates: true)   // 系统级 API，不受 nonactivatingPanel 限制
-    │  回退: yieldActivation + activate
-  → raiseAndFocusWindowViaAX(window)                // AXRaise + AXMain + AXFocused
-  → 150ms 后 raiseAndFocusWindowViaAX(window)       // 等待 openApplication 完成
-  → 300ms 后检查 frontmostApplication
-    → 若目标 App 未成为前台
-      → yieldActivation + activate 重试
-      → raiseAndFocusWindowViaAX(window) 重试
+  → NSWorkspace.openApplication(activates: true)
+  → raiseAndFocusWindowViaAX (AXRaise + AXMain + AXFocused)
+  → 150ms 后再次 raiseAndFocusWindowViaAX
+  → 300ms 后检查 frontmostApplication → 兜底重试
 ```
 
-### 4.4 窗口关闭流程（V3.2）
+### 5.6 通用边界行为
 
-```
-点击窗口行✕按钮
-  → NSAlert 确认对话框（"关闭窗口" / "取消"）
-  → 确认 → WindowService.closeWindow(window)
-    → findAXWindow(pid, windowID)
-    → AXUIElementCopyAttributeValue(kAXCloseButtonAttribute)
-    → AXUIElementPerformAction(kAXPressAction)
-```
-
-### 4.5 FocusByTime 状态机（V3.8）
-
-#### 计时器状态
-
-| 当前状态 | 触发条件 | 目标状态 | 副作用 |
-|---|---|---|---|
-| idle | 编辑弹窗"直接开始" | running(work) | 保存时长，启动 Timer，清除 pendingAction |
-| running(work) | 暂停按钮 | paused(work) | 停止 Timer |
-| paused(work) | 继续按钮 | running(work) | 恢复 Timer |
-| running/paused | 停止按钮确认 | idle | 清除 Timer，清除 pendingAction |
-| running(work) | 倒计时归零 | paused(work) | pendingAction=.startRest，发送 focusWorkCompleted |
-| paused(work) | 弹窗/快捷按钮"开始休息" | running(rest) | 启动休息 Timer，清除 pendingAction |
-| paused(work) | 弹窗"直接结束"/重置 | idle | 清除状态，清除 pendingAction |
-| running(rest) | 倒计时归零 | idle | pendingAction=.startWork，发送 focusRestCompleted |
-| idle(pending=startWork) | 弹窗/快捷按钮"开始工作" | running(work) | 启动 Timer，清除 pendingAction |
-
-#### 编辑弹窗行为
-
-| 事件 | 处理 |
+| 场景 | 处理 |
 |---|---|
-| 点击推荐方案 | 自动填充输入框，radio 选中 |
-| 手动输入/点击±按钮 | 取消所有 radio 选中 |
-| 切换到其他应用 | `abortModal` + `close`（等同取消） |
-| 点击"直接开始" | 保存时长 + 启动计时 |
-| 点击"仅保存" | 保存时长，不启动 |
-
-#### 阶段转换弹窗行为
-
-| 事件 | 处理 |
-|---|---|
-| 切换到其他应用 | `abortModal` + `close`，pendingAction 保留，计时器栏显示快捷操作 |
-| 回到应用 | 计时器栏显示 pending 状态提示（"工作完成 · 开始休息" / "休息结束 · 继续工作"） + 快捷操作按钮 |
-| 点击快捷操作按钮 | 执行对应动作（startRestPhase / start），清除 pendingAction |
-| 点击重置按钮 | reset()，清除 pendingAction |
-
-### 4.6 关闭应用流程
-
-```
-右键 App 行 → createRunningAppContextMenu(bundleID:)
-  → 菜单项："关闭应用"
-  → handleTerminateApp(_:) → NSRunningApplication.terminate()
-
-关注 Tab：createFavoriteContextMenu(bundleID:, isRunning:)
-  → isRunning=true 时显示"关闭应用"菜单项
-  → isRunning=false 时不显示
-```
+| 窗口标题为空 | 四级兜底：AX → CG → 缓存 → "(无标题)" |
+| App 图标获取失败 | 系统默认图标 |
+| codesign 导致权限失效 | PermissionManager 后台轮询，自动恢复 |
+| 未运行 App（关注 Tab） | 灰度显示，点击 NSWorkspace.openApplication 启动 |
 
 ---
 
-## 5. 验收用例
+## 6. 关键设计决策
+
+| 决策 | 理由 |
+|---|---|
+| **通知驱动架构** | FloatingBall → AppDelegate → QuickPanel 解耦，避免循环引用 |
+| **两阶段窗口刷新** | Phase 1 CG 快速渲染不阻塞 UI，Phase 2 AX 后台补全精确标题 |
+| **差分 UI 更新** | buildStructuralKey 对比，标题变化走轻量路径 updateWindowTitles |
+| **forceReload() 封装** | 统一强制全量刷新入口，封装 lastStructuralKey 清除细节 |
+| **prepareForShow() 兜底** | 面板显示前清理临时态，防止 hide 动画竞态导致 displayTab 残留 |
+| **窗口标题四级解析** | AX → 缓存 AX → CG → "(无标题)"，权限丢失时回退到位置匹配 |
+| **自适应刷新** | 面板显示 1s，无变化逐步降至 3s；隐藏时完全停止 |
+| **QuickPanel 模块化** | extension 拆分（RowBuilder + MenuHandler），不引入新类型 |
+| **Tab 双状态模型** | selectedTab（持久）+ displayTab（渲染态），hover 预览不污染持久状态 |
+| **Hover 展开/折叠** | hoverExpandedBundleID 驱动，isHidden 切换不触发 forceReload |
+| **CoderSession 不持久化** | 纯运行时，重启后清空（AI 工具中断后需重新启动注册） |
+| **HostKind 策略分化** | IDE 允许多 session 共享窗口（多终端 tab），Terminal 独占 |
+| **BindingState 统一 helper** | 枚举消除 UI/窗口切换/绑定引导三处重复判断 |
+| **两条绑定入口差异化** | 点击（隐式）对 terminal 冲突拦截；右键（显式）允许确认替换 |
+| **isDismissed 与 isRead 双标记** | done 仅受 isRead 控制，idle/error 受双重控制，粒度更细 |
+| **僵尸 session 清理** | registered 超 30s 无后续→自动移除，防止 coder-bridge 异常退出残留 |
+| **弹窗统一失焦关闭** | didResignActiveNotification → abortModal，PendingAction 保留上下文 |
+| **弹窗层级处理** | NSAlert.runModal() 重置 level，通过 didBecomeKey 延迟设置 alertLevel |
+
+---
+
+## 7. 配置迁移
+
+| 版本 | 迁移内容 |
+|---|---|
+| V2.0 | com.pintop.PinTop → com.focuscopilot.FocusCopilot |
+| V3.1 | appConfigs 含 isFavorite → 仅保留关注 |
+| V3.7 | Preferences 移除 colorTheme/ballColorStyle，新增 appTheme |
+| V3.8 | 新增 FocusTimerService + 计时器栏 + 进度环 |
+| V3.9 | 新增引导休息（RestStep/RestMode/RestIntensity） |
+| V4.0 | 新增 coder-bridge + CoderBridgeService + AI Tab |
+| V4.1 | 新增 hostKind + BindingState + IDE/Terminal 策略分化 |
+| V4.2 | Tab 双状态 + hover 展开/折叠 + AI 角标 + isDismissed |
+
+---
+
+## 8. 验收用例
 
 ### TC-01: Tab 切换与记忆
 
-- **前置条件**：有运行中的 App，已关注至少 1 个 App
-- **操作步骤**：打开快捷面板 → 切换到关注 Tab → 关闭面板 → 重新打开面板
-- **预期结果**：活跃 Tab 显示有可见窗口的运行中 App，关注 Tab 显示 ConfigStore.appConfigs 中的 App。重新打开面板时恢复到关注 Tab
-- **覆盖**：正常路径 + Tab 记忆
+- 打开面板 → 切换到关注 Tab → 关闭 → 重新打开
+- 预期：恢复到关注 Tab
 
 ### TC-02: 窗口行高亮+前置
 
-- **前置条件**：有多窗口 App，面板打开
-- **操作步骤**：点击窗口行 A → 确认高亮 → 点击窗口行 B → 确认 A 取消高亮 B 高亮
-- **预期结果**：同一时间只有一个窗口行高亮，窗口被激活并前置
-- **覆盖**：正常路径
+- 点击窗口行 A → 高亮 → 点击 B → A 取消高亮 B 高亮
+- 预期：同时只有一个高亮，窗口前置
 
 ### TC-03: 启动未运行 App
 
-- **前置条件**：关注了一个未运行的 App
-- **操作步骤**：切换到关注 Tab → 点击灰度显示的 App 行
-- **预期结果**：App 启动，列表更新为运行状态并显示窗口
-- **覆盖**：正常路径
+- 关注 Tab → 点击灰度 App → 预期：启动并刷新窗口
 
 ### TC-04: 窗口关闭
 
-- **前置条件**：有运行中的多窗口 App，面板打开
-- **操作步骤**：点击窗口行右侧✕按钮 → 确认对话框点击"关闭"
-- **预期结果**：目标窗口被关闭，面板列表刷新
-- **覆盖**：正常路径
+- 窗口行 ✕ → 确认 → 预期：窗口关闭，列表刷新
 
-### TC-05: 关注管理
+### TC-05: 关注管理持久化
 
-- **前置条件**：主看板 AppConfigView 打开
-- **操作步骤**：全部 Tab 中点击★添加关注 → 切换到关注 Tab → 确认已显示 → 点击★移除关注 → 重启 App
-- **预期结果**：关注通过 appConfigs 持久化到 UserDefaults，重启后状态恢复
-- **覆盖**：正常路径 + 持久化
+- 主看板添加关注 → 重启 → 预期：关注恢复
 
-### TC-06: 高亮重置
+### TC-06: FocusByTime 弹窗失焦
 
-- **前置条件**：面板打开，某窗口行高亮
-- **操作步骤**：关闭面板 → 重新打开面板
-- **预期结果**：所有窗口行高亮状态重置为无高亮
-- **覆盖**：边界（状态清理）
+- 编辑弹窗打开 → 切换应用 → 预期：弹窗关闭，pending 保留
 
-### TC-07: 旧数据迁移（V3.1）
+### TC-07: AI 会话生命周期
 
-- **前置条件**：存在 V3.0 格式的 AppConfig 数据（含 isFavorite 字段）
-- **操作步骤**：启动 App，加载配置
-- **预期结果**：migrateToV31 将 isFavorite==true 的 App 保留，其余移除。迁移标记 `FocusCopilot.v31Migrated` 写入 UserDefaults
-- **覆盖**：异常恢复（数据兼容）
+- session.start → 列表出现 registered → session.update(working) → 状态更新 → session.end → ended 显示
+- 预期：状态实时刷新，ended 2 分钟后自动清理
 
-### TC-08: 关注管理三 Tab 过滤
+### TC-08: AI 窗口绑定策略
 
-- **前置条件**：主看板 AppConfigView，有已安装/运行中/关注 App
-- **操作步骤**：在全部/活跃/关注 Tab 间切换 → 输入搜索关键词
-- **预期结果**：各 Tab 显示对应数量标签（全部(N)/活跃(N)/关注(N)），搜索即时过滤
-- **覆盖**：正常路径
+- Terminal session 自动采样 → 第二个 session 同窗口 → 预期：冲突标记
+- IDE session 自动采样 → 第二个 session 同窗口 → 预期：无冲突，正常共享
 
-### TC-09: "打开主界面"按钮切换
+### TC-09: isDismissed 忽略提醒
 
-- **前置条件**：快捷面板打开
-- **操作步骤**：点击顶部主界面按钮 → 确认主看板打开 → 再次点击
-- **预期结果**：主看板在显示/隐藏之间切换
-- **覆盖**：正常路径
-
-### TC-10: FocusByTime 编辑+开始
-
-- **前置条件**：快捷面板打开，计时器 idle 状态
-- **操作步骤**：点击 play.circle → 选择"深度专注"推荐方案 → 手动修改工作时长为 30 → 确认 radio 取消选中 → 点击"直接开始"
-- **预期结果**：推荐方案填充 25/5，手动修改后 radio 取消选中，开始后计时器栏显示 30:00 倒计时
-- **覆盖**：正常路径 + 推荐方案交互
-
-### TC-11: FocusByTime 阶段转换（正常路径）
-
-- **前置条件**：计时器工作阶段运行中
-- **操作步骤**：等待倒计时归零 → 弹窗确认"开始休息" → 等待休息结束 → 弹窗确认"开始工作"
-- **预期结果**：工作完成弹窗含科学休息指南，休息结束弹窗提示开始工作，状态正确切换
-- **覆盖**：正常路径
-
-### TC-12: FocusByTime 弹窗失焦自动关闭
-
-- **前置条件**：编辑弹窗 / 工作完成弹窗 / 休息结束弹窗已打开
-- **操作步骤**：切换到其他应用 → 切回 FocusPilot
-- **预期结果**：
-  - 编辑弹窗：自动关闭（等同取消），计时器仍为 idle
-  - 工作完成弹窗：自动关闭，计时器栏显示"工作完成 · 开始休息"+ 休息快捷按钮，点击可启动休息
-  - 休息结束弹窗：自动关闭，计时器栏显示"休息结束 · 继续工作"+ 工作快捷按钮，点击可启动工作
-  - 点击重置按钮可清除 pending 状态回到 idle
-- **覆盖**：边界（失焦处理 + PendingAction）
+- idle session → 右键"忽略提醒" → 预期：降灰，不计角标
+- session.update(working) → session.update(idle) → 预期：isDismissed 重置
 
 ---
 
-## 6. 非目标声明
+## 9. 非目标声明
 
-当前版本**不做**以下功能：
+当前版本**不做**：
 
-- 不添加快捷面板搜索框
-- 不添加窗口缩略图预览
-- 不实现窗口分组
-- 不实现插件系统
-- 不实现网络请求（无遥测、无更新检查）
-- 不在快捷面板内提供关注操作（关注仅通过主看板 AppConfigView 管理）
-
----
-
-## 7. 文件清单与职责
-
-| 文件 | 行数 | 职责 |
-|---|---|---|
-| FocusPilotApp.swift | ~16 | @main 入口，初始化 AppDelegate |
-| AppDelegate.swift | ~479 | 应用生命周期、窗口管理、菜单栏图标、Dock 图标 |
-| PermissionManager.swift | ~92 | 辅助功能权限检测、引导、后台轮询 |
-| FloatingBallWindow.swift | ~98 | NSPanel 子类，窗口层级、贴边 |
-| FloatingBallView.swift | ~1051 | 悬浮球视图、品牌 Logo（十字准星）、hover/click/drag 检测、钉住状态红色发光边框、FocusByTime 进度环 |
-| QuickPanelWindow.swift | ~604 | NSPanel 子类，面板位置、钉住、resize、drag、联动 |
-| QuickPanelView.swift | ~1398 | 面板内容：活跃/关注 Tab、Tab 记忆、窗口行高亮+前置+关闭、FocusByTime 计时器栏+编辑弹窗 |
-| QuickPanelRowBuilder.swift | ~416 | App 行/窗口行构建、工具方法、SF Symbol 缓存（extension QuickPanelView） |
-| QuickPanelMenuHandler.swift | ~230 | 右键菜单、@objc 事件处理、星号关注、App 关闭/启动（extension QuickPanelView） |
-| MainKanbanWindow.swift | ~55 | NSWindow 子类，主看板窗口管理 |
-| MainKanbanView.swift | ~152 | SwiftUI 根视图，侧边栏导航（关注管理/偏好设置）+ 底部双按钮 |
-| AppConfigView.swift | ~310 | SwiftUI 关注管理：三 Tab 过滤（全部/活跃/关注）+ 搜索 + 星标关注切换 |
-| PreferencesView.swift | ~297 | SwiftUI 偏好设置页面（快捷键录制、主题选择、外观滑块、hover 回缩开关） |
-| WindowService.swift | ~741 | 窗口枚举、AX 操作、CGS 层级、标题四级兜底、跨 App 激活、窗口关闭 |
-| AppMonitor.swift | ~319 | App 运行状态监控（不依赖 ConfigStore）、窗口刷新定时器 |
-| HotkeyManager.swift | ~68 | 全局快捷键（Carbon API），1 个动作（⌘⇧B 显示/隐藏） |
-| ConfigStore.swift | ~242 | UserDefaults 持久化（含迁移逻辑、关注管理、Tab 记忆） |
-| Models.swift | ~535 | 数据模型定义（AppConfig、Preferences、AppTheme 8 主题、ThemeColors 9 色槽、HotkeyConfig） |
-| FocusTimerService.swift | ~198 | FocusByTime 番茄钟服务：状态机（idle/running/paused × work/rest）、Timer 计时、阶段切换通知、FocusPendingAction、时长持久化 |
-| Constants.swift | ~120 | 全局常量、Design Token、16 个通知名、8 个 UserDefaults Keys |
-| **合计** | **~7421** | |
+- 快捷面板搜索框
+- 窗口缩略图预览
+- 窗口分组
+- 插件系统
+- 网络请求（无遥测、无更新检查）
+- AI 会话持久化（重启后清空）
