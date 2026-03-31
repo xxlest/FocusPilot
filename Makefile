@@ -102,7 +102,6 @@ else
 	@codesign --force --deep --sign - $(INSTALL_APP)
 	@# ad-hoc 签名需要重置 TCC 条目
 	@-tccutil reset Accessibility $(BUNDLE_ID) 2>/dev/null
-	@-tccutil reset Accessibility com.pintop.PinTop 2>/dev/null
 endif
 	@# 触发 Spotlight 重新索引
 	@touch $(INSTALL_APP)

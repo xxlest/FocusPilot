@@ -32,9 +32,6 @@ class ConfigStore: ObservableObject {
     // MARK: - 加载配置
 
     func load() {
-        // 从旧 bundle ID (PinTop) 自动迁移配置
-        migrateFromPinTop()
-
         // 从旧 key 前缀 (FocusCopilot) 迁移到新前缀 (FocusPilot)
         migrateFromFocusCopilot()
 
@@ -89,45 +86,6 @@ class ConfigStore: ObservableObject {
             defaults.set(data, forKey: Constants.Keys.panelSize)
         }
         defaults.set(lastPanelTab, forKey: Constants.Keys.lastPanelTab)
-    }
-
-    // MARK: - 配置迁移（PinTop → FocusPilot）
-
-    /// 从旧 bundle ID (com.pintop.PinTop) 自动迁移配置到新 bundle ID
-    /// 仅在新配置为空时执行一次迁移
-    private func migrateFromPinTop() {
-        // 如果新配置已有数据，跳过迁移
-        if defaults.data(forKey: Constants.Keys.appConfigs) != nil {
-            return
-        }
-
-        // 尝试读取旧 bundle ID 的 UserDefaults
-        guard let oldDefaults = UserDefaults(suiteName: "com.pintop.PinTop") else { return }
-
-        let oldKeyMap: [(old: String, new: String)] = [
-            ("PinTop.appConfigs", Constants.Keys.appConfigs),
-            ("PinTop.preferences", Constants.Keys.preferences),
-            ("PinTop.ballPosition", Constants.Keys.ballPosition),
-            ("PinTop.windowRenames", Constants.Keys.windowRenames),
-            ("PinTop.panelSize", Constants.Keys.panelSize),
-        ]
-
-        var migrated = false
-        for (oldKey, newKey) in oldKeyMap {
-            if let data = oldDefaults.data(forKey: oldKey) {
-                defaults.set(data, forKey: newKey)
-                migrated = true
-            }
-        }
-
-        if let completed = oldDefaults.object(forKey: "PinTop.onboardingCompleted") as? Bool {
-            defaults.set(completed, forKey: Constants.Keys.onboardingCompleted)
-            migrated = true
-        }
-
-        if migrated {
-            NSLog("[FocusPilot] 已从 PinTop 迁移配置")
-        }
     }
 
     // MARK: - 配置迁移（FocusCopilot → FocusPilot）

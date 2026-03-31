@@ -2,7 +2,7 @@
 
 ## 项目概述
 
-FocusPilot（原 PinTop）是 macOS 悬浮球应用，支持窗口快捷切换。
+FocusPilot是 macOS 悬浮球应用，支持窗口快捷切换。
 纯 Swift 5 + AppKit/SwiftUI，无第三方依赖。Bundle ID: `com.focuspilot.FocusPilot`
 
 三层交互：悬浮球（常驻入口）→ 快捷面板（hover/单击弹出）→ 主看板（双击/Dock 图标）
@@ -111,7 +111,6 @@ coder-bridge/
 
 ### 配置迁移
 
-- V2.0: com.pintop.PinTop → com.focuspilot.FocusPilot
 - V3.1: appConfigs 含 isFavorite → 仅保留关注（migrateToV31）
 - V3.7: Preferences 移除 colorTheme/ballColorStyle/ballCustomColorHex，新增 appTheme（保留旧 CodingKey 兼容解码）
 - V3.8: 新增 FocusTimerService + QuickPanel 计时器栏 + FloatingBall 进度环
@@ -145,6 +144,7 @@ make clean      # 清理
 **根因**：codesign --force 改变 CDHash → TCC 失效 → AXIsProcessTrusted() 返回 false → 所有窗口标题变成"(无标题)"
 
 **必检项**：每次修改 WindowService / PermissionManager / 安装流程后：
+
 1. 测试首次安装（无 TCC 记录）→ 弹授权 → 授权后标题正常
 2. 测试重新安装（有旧 TCC 记录）→ 权限失效 → 重新授权后恢复
 3. 测试正常运行 → 所有窗口标题正确

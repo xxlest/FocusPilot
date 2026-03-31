@@ -240,7 +240,7 @@ class ConfigStore: ObservableObject {
     func load()
 
     // 迁移
-    private func migrateFromPinTop()
+    private func migrateFromFocusCopilot()   // FocusCopilot key → FocusPilot key
     private func migrateToV31()
 }
 ```
@@ -616,7 +616,6 @@ activateWindow(window)
 
 | 版本 | 迁移内容 |
 |---|---|
-| V2.0 | com.pintop.PinTop → com.focuspilot.FocusPilot |
 | V3.1 | appConfigs 含 isFavorite → 仅保留关注 |
 | V3.7 | Preferences 移除 colorTheme/ballColorStyle，新增 appTheme |
 | V3.8 | 新增 FocusTimerService + 计时器栏 + 进度环 |
