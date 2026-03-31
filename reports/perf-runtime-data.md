@@ -11,7 +11,7 @@
 - **编译命令**：`make build`（swiftc -O 优化模式）
 - **编译耗时**：11.3s（wall），10.2s（user），1.1s（sys）
 - **编译结果**：失败
-- **失败原因**：链接器无法写入输出文件（`ld: can't write output file`），因为已安装的应用正在运行占用了 `/tmp/focuscopilot-build/` 目录下的输出路径
+- **失败原因**：链接器无法写入输出文件（`ld: can't write output file`），因为已安装的应用正在运行占用了 `/tmp/focuspilot-build/` 目录下的输出路径
 - **注**：编译过程本身（Swift 前端编译）成功完成，仅链接阶段因文件占用失败，编译时间仍具参考价值
 - **编译警告**：1 个（`AppMonitor.swift:94` — `checkAccessibility()` 返回值未使用）
 
@@ -19,12 +19,12 @@
 
 | 项目 | 大小 |
 |------|------|
-| 二进制文件 (`FocusCopilot`) | 1,118,016 bytes (1.1 MB) |
-| 应用包 (`FocusCopilot.app`) | 1.1 MB |
+| 二进制文件 (`FocusPilot`) | 1,118,016 bytes (1.1 MB) |
+| 应用包 (`FocusPilot.app`) | 1.1 MB |
 | Info.plist | 920 bytes |
 | PkgInfo | 12 bytes |
 
-应用包结构极简，仅包含：`MacOS/FocusCopilot`、`Info.plist`、`PkgInfo`、`_CodeSignature/`
+应用包结构极简，仅包含：`MacOS/FocusPilot`、`Info.plist`、`PkgInfo`、`_CodeSignature/`
 
 ---
 
@@ -83,7 +83,7 @@
 
 ```
 USER    PID   TT   %CPU STAT PRI     STIME     UTIME COMMAND
-bruce 14577   ??    0.0 S    47T   0:00.05   0:00.14 FocusCopilot (主线程)
+bruce 14577   ??    0.0 S    47T   0:00.05   0:00.14 FocusPilot (主线程)
       14577         0.0 S    47T   0:00.00   0:00.00 (工作线程1)
       14577         0.0 S    47T   0:00.00   0:00.00 (工作线程2)
 ```
@@ -126,7 +126,7 @@ PID 37886（长时间运行实例）主线程累积 CPU 时间：
 
 ## 调试日志摘要
 
-`/tmp/focuscopilot-debug.log` 最后 20 行显示面板操作日志：
+`/tmp/focuspilot-debug.log` 最后 20 行显示面板操作日志：
 
 ```
 [2026-03-03T12:27:40Z] QuickPanel: 点击窗口行 wid=218 title=Preview quickpanel-perf-acceptance.md — PinTop
@@ -145,7 +145,7 @@ PID 37886（长时间运行实例）主线程累积 CPU 时间：
 采集时系统负载：
 - Load Average：5.76, 4.78, 4.50
 - 系统物理内存：128GB 使用 120GB（大量被 compressor 和 wired 占用）
-- FocusCopilot 占系统内存比例：0.1%（极低）
+- FocusPilot 占系统内存比例：0.1%（极低）
 
 ---
 

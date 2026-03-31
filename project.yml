@@ -1,6 +1,6 @@
 name: FocusPilot
 options:
-  bundleIdPrefix: com.focuscopilot
+  bundleIdPrefix: com.focuspilot
   deploymentTarget:
     macOS: "14.0"
   xcodeVersion: "16.0"
@@ -25,9 +25,9 @@ targets:
           - "**/*.entitlements"
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.focuscopilot.FocusCopilot
+        PRODUCT_BUNDLE_IDENTIFIER: com.focuspilot.FocusPilot
         INFOPLIST_FILE: FocusPilot/Resources/Info.plist
-        PRODUCT_NAME: FocusCopilot
+        PRODUCT_NAME: FocusPilot
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         GENERATE_INFOPLIST_FILE: false
     info:

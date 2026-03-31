@@ -178,7 +178,7 @@
 			name = FocusPilot;
 			packageProductDependencies = (
 			);
-			productName = FocusCopilot;
+			productName = FocusPilot;
 			productReference = 2C91510AA4C1CAB2D30C4228 /* FocusPilot.app */;
 			productType = "com.apple.product-type.application";
 		};
@@ -260,8 +260,8 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.focuscopilot.FocusCopilot;
-				PRODUCT_NAME = FocusCopilot;
+				PRODUCT_BUNDLE_IDENTIFIER = com.focuspilot.FocusPilot;
+				PRODUCT_NAME = FocusPilot;
 				SDKROOT = macosx;
 			};
 			name = Debug;
@@ -402,8 +402,8 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.focuscopilot.FocusCopilot;
-				PRODUCT_NAME = FocusCopilot;
+				PRODUCT_BUNDLE_IDENTIFIER = com.focuspilot.FocusPilot;
+				PRODUCT_NAME = FocusPilot;
 				SDKROOT = macosx;
 			};
 			name = Release;

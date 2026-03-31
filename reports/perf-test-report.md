@@ -1,4 +1,4 @@
-# Focus Copilot 性能测试报告
+# FocusPilot 性能测试报告
 
 > 日期：2026-03-03 | 方法：运行时采集 + 静态代码分析
 
@@ -61,10 +61,10 @@
 
 ```bash
 # 启动监控（多阶段采样：前 30 分钟每 30s，之后每 2 分钟，共 4 小时）
-cat > /tmp/focuscopilot-monitor.sh << 'SCRIPT'
+cat > /tmp/focuspilot-monitor.sh << 'SCRIPT'
 #!/bin/bash
-PID=$(pgrep -x FocusCopilot)
-LOG=/tmp/focuscopilot-perf-monitor.csv
+PID=$(pgrep -x FocusPilot)
+LOG=/tmp/focuspilot-perf-monitor.csv
 echo "timestamp,cpu,mem_pct,rss_kb,threads,fds" > "$LOG"
 sample() {
     if ! kill -0 $PID 2>/dev/null; then echo "进程已退出" >> "$LOG"; exit 0; fi
@@ -80,8 +80,8 @@ for i in $(seq 1 60); do sample; sleep 30; done
 for i in $(seq 1 105); do sample; sleep 120; done
 echo "监控完成" >> "$LOG"
 SCRIPT
-chmod +x /tmp/focuscopilot-monitor.sh
-nohup /tmp/focuscopilot-monitor.sh &>/dev/null &
+chmod +x /tmp/focuspilot-monitor.sh
+nohup /tmp/focuspilot-monitor.sh &>/dev/null &
 echo "监控已启动，PID: $!"
 ```
 
@@ -95,7 +95,7 @@ echo "监控已启动，PID: $!"
 ### 查看结果
 
 ```bash
-cat /tmp/focuscopilot-perf-monitor.csv
+cat /tmp/focuspilot-perf-monitor.csv
 ```
 
 ## 五、综合评价

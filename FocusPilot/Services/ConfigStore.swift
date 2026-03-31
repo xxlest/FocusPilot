@@ -35,6 +35,9 @@ class ConfigStore: ObservableObject {
         // 从旧 bundle ID (PinTop) 自动迁移配置
         migrateFromPinTop()
 
+        // 从旧 key 前缀 (FocusCopilot) 迁移到新前缀 (FocusPilot)
+        migrateFromFocusCopilot()
+
         // V3.1 迁移：移除非关注的 appConfigs，仅保留 isFavorite==true 的
         migrateToV31()
 
@@ -88,7 +91,7 @@ class ConfigStore: ObservableObject {
         defaults.set(lastPanelTab, forKey: Constants.Keys.lastPanelTab)
     }
 
-    // MARK: - 配置迁移（PinTop → FocusCopilot）
+    // MARK: - 配置迁移（PinTop → FocusPilot）
 
     /// 从旧 bundle ID (com.pintop.PinTop) 自动迁移配置到新 bundle ID
     /// 仅在新配置为空时执行一次迁移
@@ -123,7 +126,47 @@ class ConfigStore: ObservableObject {
         }
 
         if migrated {
-            NSLog("[FocusCopilot] 已从 PinTop 迁移配置")
+            NSLog("[FocusPilot] 已从 PinTop 迁移配置")
+        }
+    }
+
+    // MARK: - 配置迁移（FocusCopilot → FocusPilot）
+
+    /// 从旧 key 前缀 (FocusCopilot.xxx) 迁移到新前缀 (FocusPilot.xxx)
+    /// 仅在新配置为空时执行一次
+    private func migrateFromFocusCopilot() {
+        // 如果新 key 已有数据，跳过迁移
+        if defaults.data(forKey: Constants.Keys.appConfigs) != nil {
+            return
+        }
+
+        let oldKeyMap: [(old: String, new: String)] = [
+            ("FocusCopilot.appConfigs", Constants.Keys.appConfigs),
+            ("FocusCopilot.preferences", Constants.Keys.preferences),
+            ("FocusCopilot.ballPosition", Constants.Keys.ballPosition),
+            ("FocusCopilot.windowRenames", Constants.Keys.windowRenames),
+            ("FocusCopilot.panelSize", Constants.Keys.panelSize),
+            ("FocusCopilot.lastPanelTab", Constants.Keys.lastPanelTab),
+            ("FocusCopilot.focusTimerSettings", Constants.Keys.focusTimerSettings),
+            ("FocusCopilot.focusRestIntensity", Constants.Keys.focusRestIntensity),
+            ("FocusCopilot.sessionPreferences", Constants.Keys.sessionPreferences),
+        ]
+
+        var migrated = false
+        for (oldKey, newKey) in oldKeyMap {
+            if let value = defaults.object(forKey: oldKey) {
+                defaults.set(value, forKey: newKey)
+                migrated = true
+            }
+        }
+
+        if let completed = defaults.object(forKey: "FocusCopilot.onboardingCompleted") as? Bool {
+            defaults.set(completed, forKey: Constants.Keys.onboardingCompleted)
+            migrated = true
+        }
+
+        if migrated {
+            NSLog("[FocusPilot] 已从 FocusCopilot key 前缀迁移配置")
         }
     }
 
@@ -131,8 +174,9 @@ class ConfigStore: ObservableObject {
 
     /// 将旧数据中仅 isFavorite==true 的 App 保留为关注，其余移除
     private func migrateToV31() {
-        let migrationKey = "FocusCopilot.v31Migrated"
-        guard !defaults.bool(forKey: migrationKey) else { return }
+        let oldMigrationKey = "FocusCopilot.v31Migrated"
+        let migrationKey = "FocusPilot.v31Migrated"
+        guard !defaults.bool(forKey: migrationKey) && !defaults.bool(forKey: oldMigrationKey) else { return }
 
         // 用临时结构解码旧数据（含 isFavorite 字段）
         struct OldAppConfig: Decodable {
@@ -163,7 +207,7 @@ class ConfigStore: ObservableObject {
             if let newData = try? encoder.encode(newConfigs) {
                 defaults.set(newData, forKey: Constants.Keys.appConfigs)
             }
-            NSLog("[FocusCopilot] V3.1 迁移完成：保留 \(newConfigs.count) 个关注 App")
+            NSLog("[FocusPilot] V3.1 迁移完成：保留 \(newConfigs.count) 个关注 App")
         }
 
         defaults.set(true, forKey: migrationKey)

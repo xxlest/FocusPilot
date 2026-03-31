@@ -88,7 +88,7 @@ git commit -m "chore(docs): 归档早期 Draft 文件到 docs/archive/
 创建 `docs/DesignGuide.md`，内容结构：
 
 ```markdown
-# Focus Copilot 设计规范
+# FocusPilot 设计规范
 
 > **版本**：V4.2
 > **日期**：2026-03-31

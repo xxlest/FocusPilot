@@ -78,25 +78,25 @@ enum Constants {
 
     // MARK: - UserDefaults Keys
     enum Keys {
-        static let appConfigs = "FocusCopilot.appConfigs"
-        static let preferences = "FocusCopilot.preferences"
-        static let ballPosition = "FocusCopilot.ballPosition"
-        static let onboardingCompleted = "FocusCopilot.onboardingCompleted"
-        static let windowRenames = "FocusCopilot.windowRenames"
-        static let panelSize = "FocusCopilot.panelSize"
-        static let lastPanelTab = "FocusCopilot.lastPanelTab"
-        static let focusTimerSettings = "FocusCopilot.focusTimerSettings"
-        static let focusRestIntensity = "FocusCopilot.focusRestIntensity"
-        static let sessionPreferences = "FocusCopilot.sessionPreferences"
+        static let appConfigs = "FocusPilot.appConfigs"
+        static let preferences = "FocusPilot.preferences"
+        static let ballPosition = "FocusPilot.ballPosition"
+        static let onboardingCompleted = "FocusPilot.onboardingCompleted"
+        static let windowRenames = "FocusPilot.windowRenames"
+        static let panelSize = "FocusPilot.panelSize"
+        static let lastPanelTab = "FocusPilot.lastPanelTab"
+        static let focusTimerSettings = "FocusPilot.focusTimerSettings"
+        static let focusRestIntensity = "FocusPilot.focusRestIntensity"
+        static let sessionPreferences = "FocusPilot.sessionPreferences"
     }
 
     // MARK: - 通知名称
     enum Notifications {
         // 系统级通知
-        static let appStatusChanged = Notification.Name("FocusCopilot.appStatusChanged")
-        static let windowsChanged = Notification.Name("FocusCopilot.windowsChanged")
-        static let ballVisibilityChanged = Notification.Name("FocusCopilot.ballVisibilityChanged")
-        static let accessibilityGranted = Notification.Name("FocusCopilot.accessibilityGranted")
+        static let appStatusChanged = Notification.Name("FocusPilot.appStatusChanged")
+        static let windowsChanged = Notification.Name("FocusPilot.windowsChanged")
+        static let ballVisibilityChanged = Notification.Name("FocusPilot.ballVisibilityChanged")
+        static let accessibilityGranted = Notification.Name("FocusPilot.accessibilityGranted")
 
         // 悬浮球通知
         static let ballShowQuickPanel = Notification.Name("FloatingBall.showQuickPanel")
@@ -112,19 +112,19 @@ enum Constants {
         static let panelDragMoved = Notification.Name("QuickPanel.dragMoved")
 
         // 主题变更通知
-        static let themeChanged = Notification.Name("FocusCopilot.themeChanged")
+        static let themeChanged = Notification.Name("FocusPilot.themeChanged")
 
         // FocusByTime 计时器通知
-        static let focusTimerChanged = Notification.Name("FocusCopilot.focusTimerChanged")
+        static let focusTimerChanged = Notification.Name("FocusPilot.focusTimerChanged")
         /// 工作阶段结束 → 需要弹对话框提示休息
-        static let focusWorkCompleted = Notification.Name("FocusCopilot.focusWorkCompleted")
+        static let focusWorkCompleted = Notification.Name("FocusPilot.focusWorkCompleted")
         /// 休息阶段结束 → 需要弹对话框提示开始工作
-        static let focusRestCompleted = Notification.Name("FocusCopilot.focusRestCompleted")
+        static let focusRestCompleted = Notification.Name("FocusPilot.focusRestCompleted")
         /// 引导休息步骤切换
-        static let focusGuidedStepChanged = Notification.Name("FocusCopilot.focusGuidedStepChanged")
+        static let focusGuidedStepChanged = Notification.Name("FocusPilot.focusGuidedStepChanged")
         /// Coder-Bridge 会话状态变化
-        static let coderBridgeSessionChanged = Notification.Name("FocusCopilot.coderBridgeSessionChanged")
+        static let coderBridgeSessionChanged = Notification.Name("FocusPilot.coderBridgeSessionChanged")
         /// 打开偏好设置 → 多绑定白名单区域
-        static let showPreferencesMultiBind = Notification.Name("FocusCopilot.showPreferencesMultiBind")
+        static let showPreferencesMultiBind = Notification.Name("FocusPilot.showPreferencesMultiBind")
     }
 }

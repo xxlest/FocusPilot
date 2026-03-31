@@ -15,7 +15,7 @@ class MainKanbanWindow: NSWindow, NSWindowDelegate {
             defer: false
         )
 
-        title = "Focus Copilot"
+        title = "FocusPilot"
         // 隐藏标题栏中的导航标题（不显示侧边栏当前激活项名称）
         subtitle = ""
         titlebarAppearsTransparent = true

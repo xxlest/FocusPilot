@@ -10,7 +10,7 @@
 
 **Spec 文档:** `docs/superpowers/specs/2026-03-28-coder-bridge-ai-tab-design.md`
 
-**编译验证:** `make build`（编译到 /tmp/focuscopilot-build/）
+**编译验证:** `make build`（编译到 /tmp/focuspilot-build/）
 **安装验证:** `make install`（编译+签名+安装+启动）
 
 ---
@@ -491,13 +491,13 @@ git commit -m "feat(models): 新增 CoderSession 数据模型
 
 ```swift
         /// Coder-Bridge 会话状态变化
-        static let coderBridgeSessionChanged = Notification.Name("FocusCopilot.coderBridgeSessionChanged")
+        static let coderBridgeSessionChanged = Notification.Name("FocusPilot.coderBridgeSessionChanged")
 ```
 
 在 `Constants.Keys` 枚举末尾添加：
 
 ```swift
-        static let sessionPreferences = "FocusCopilot.sessionPreferences"
+        static let sessionPreferences = "FocusPilot.sessionPreferences"
 ```
 
 - [ ] **Step 2: 创建 CoderBridgeService.swift**

@@ -711,7 +711,7 @@ final class FloatingBallView: NSView {
 
         menu.addItem(NSMenuItem.separator())
 
-        let quitItem = NSMenuItem(title: "退出 Focus Copilot", action: #selector(contextMenuQuit), keyEquivalent: "")
+        let quitItem = NSMenuItem(title: "退出 FocusPilot", action: #selector(contextMenuQuit), keyEquivalent: "")
         quitItem.target = self
         menu.addItem(quitItem)
 
@@ -734,7 +734,7 @@ final class FloatingBallView: NSView {
 
     @objc private func contextMenuQuit() {
         let alert = NSAlert()
-        alert.messageText = "退出 Focus Copilot"
+        alert.messageText = "退出 FocusPilot"
         alert.informativeText = "确定要退出应用吗？"
         alert.alertStyle = .warning
         alert.addButton(withTitle: "退出")

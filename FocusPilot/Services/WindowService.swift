@@ -17,7 +17,7 @@ class WindowService {
     private var titleCache: [CGWindowID: String] = [:]
 
     // AX 后台工作队列（串行，避免并发访问 AX API）
-    private let axWorkQueue = DispatchQueue(label: "com.focuscopilot.ax-worker")
+    private let axWorkQueue = DispatchQueue(label: "com.focuspilot.ax-worker")
 
     // 日志格式化器（避免每次调用 debugLog 都创建新实例）
     private static let dateFormatter: ISO8601DateFormatter = {
@@ -27,7 +27,7 @@ class WindowService {
 
     // 持久日志文件句柄
     private var logFileHandle: FileHandle?
-    private static let logPath = "/tmp/focuscopilot-debug.log"
+    private static let logPath = "/tmp/focuspilot-debug.log"
 
     /// 诊断日志（写入 /tmp，方便排查窗口切换问题）
     func debugLog(_ message: String) {
@@ -487,7 +487,7 @@ class WindowService {
     /// 使用 NSWorkspace.openApplication 确保跨 App 场景真正置顶
     func activateWindow(_ window: WindowInfo) {
         guard let app = NSRunningApplication(processIdentifier: window.ownerPID) else {
-            NSLog("[FocusCopilot] activateWindow: 找不到 PID %d 对应的进程", window.ownerPID)
+            NSLog("[FocusPilot] activateWindow: 找不到 PID %d 对应的进程", window.ownerPID)
             return
         }
 
@@ -644,11 +644,11 @@ class WindowService {
     /// 设置窗口层级
     func setWindowLevel(_ windowID: CGWindowID, level: Int32) {
         guard let cgsMainConnectionID = cgsMainConnectionIDFunc else {
-            NSLog("[FocusCopilot] setWindowLevel: CGSMainConnectionID 函数指针为 nil，无法设置窗口层级")
+            NSLog("[FocusPilot] setWindowLevel: CGSMainConnectionID 函数指针为 nil，无法设置窗口层级")
             return
         }
         guard let cgsSetWindowLevel = cgsSetWindowLevelFunc else {
-            NSLog("[FocusCopilot] setWindowLevel: CGSSetWindowLevel 函数指针为 nil，无法设置窗口层级")
+            NSLog("[FocusPilot] setWindowLevel: CGSSetWindowLevel 函数指针为 nil，无法设置窗口层级")
             return
         }
 
@@ -656,7 +656,7 @@ class WindowService {
         let result = cgsSetWindowLevel(cid, windowID, level)
 
         if result != .success {
-            NSLog("[FocusCopilot] setWindowLevel: CGSSetWindowLevel 返回错误 %d（windowID=%d, level=%d）", result.rawValue, windowID, level)
+            NSLog("[FocusPilot] setWindowLevel: CGSSetWindowLevel 返回错误 %d（windowID=%d, level=%d）", result.rawValue, windowID, level)
         }
 
         // 验证：读回窗口实际 layer，确认是否生效（精确查询单个窗口，避免枚举全部窗口）
@@ -664,7 +664,7 @@ class WindowService {
            let info = windowList.first,
            let actualLayer = info[kCGWindowLayer as String] as? Int32 {
             if actualLayer != level {
-                NSLog("[FocusCopilot] setWindowLevel: 窗口 %d 层级验证不一致（期望 %d，实际 %d），尝试 AXRaise 回退", windowID, level, actualLayer)
+                NSLog("[FocusPilot] setWindowLevel: 窗口 %d 层级验证不一致（期望 %d，实际 %d），尝试 AXRaise 回退", windowID, level, actualLayer)
                 // CGS API 未生效，通过 AX API 回退提升窗口
                 axRaiseWindow(windowID)
             }
@@ -681,7 +681,7 @@ class WindowService {
         let cid = cgsMainConnectionID()
         let result = cgsOrderWindow(cid, windowID, 1, 0) // 1 = kCGSOrderAbove, 0 = above all
         if result != .success {
-            NSLog("[FocusCopilot] orderWindowAbove: CGSOrderWindow 失败 %d", result.rawValue)
+            NSLog("[FocusPilot] orderWindowAbove: CGSOrderWindow 失败 %d", result.rawValue)
         }
     }
 

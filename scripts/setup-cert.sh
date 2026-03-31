@@ -19,7 +19,7 @@
 
 set -e
 
-CERT_NAME="FocusCopilot Dev"
+CERT_NAME="FocusPilot Dev"
 KEYCHAIN="$HOME/Library/Keychains/login.keychain-db"
 TMPDIR_CERT=$(mktemp -d)
 trap "rm -rf $TMPDIR_CERT" EXIT

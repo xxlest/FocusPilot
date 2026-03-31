@@ -1,9 +1,9 @@
-# Focus Copilot 项目指南
+# FocusPilot 项目指南
 
 ## 项目概述
 
-Focus Copilot（原 PinTop）是 macOS 悬浮球应用，支持窗口快捷切换。
-纯 Swift 5 + AppKit/SwiftUI，无第三方依赖。Bundle ID: `com.focuscopilot.FocusCopilot`
+FocusPilot（原 PinTop）是 macOS 悬浮球应用，支持窗口快捷切换。
+纯 Swift 5 + AppKit/SwiftUI，无第三方依赖。Bundle ID: `com.focuspilot.FocusPilot`
 
 三层交互：悬浮球（常驻入口）→ 快捷面板（hover/单击弹出）→ 主看板（双击/Dock 图标）
 
@@ -110,7 +110,7 @@ coder-bridge/
 
 ### 配置迁移
 
-- V2.0: com.pintop.PinTop → com.focuscopilot.FocusCopilot
+- V2.0: com.pintop.PinTop → com.focuspilot.FocusPilot
 - V3.1: appConfigs 含 isFavorite → 仅保留关注（migrateToV31）
 - V3.7: Preferences 移除 colorTheme/ballColorStyle/ballCustomColorHex，新增 appTheme（保留旧 CodingKey 兼容解码）
 - V3.8: 新增 FocusTimerService + QuickPanel 计时器栏 + FloatingBall 进度环
@@ -123,14 +123,14 @@ coder-bridge/
 ## 构建
 
 ```bash
-make build      # 编译到 /tmp/focuscopilot-build/
+make build      # 编译到 /tmp/focuspilot-build/
 make install    # 编译+签名+安装+启动
 make clean      # 清理
 ```
 
 - 仅 Command Line Tools（无 Xcode IDE），swiftc 直接编译
 - VFS overlay 绕过 SwiftBridging module 重复定义 bug
-- 自签名证书 `FocusCopilot Dev`（`make setup-cert`），权限持久化
+- 自签名证书 `FocusPilot Dev`（`make setup-cert`），权限持久化
 
 ## 开发规范
 

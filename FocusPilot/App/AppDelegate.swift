@@ -289,7 +289,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         showMainKanban()
         // 通知 MainKanbanView 切换到偏好设置 tab 并滚动到多绑定区域
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
-            NotificationCenter.default.post(name: Notification.Name("FocusCopilot.switchToPreferencesMultiBind"), object: nil)
+            NotificationCenter.default.post(name: Notification.Name("FocusPilot.switchToPreferencesMultiBind"), object: nil)
         }
     }
 
@@ -399,7 +399,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         menu.addItem(NSMenuItem(title: "显示/隐藏悬浮球", action: #selector(menuToggleBall), keyEquivalent: ""))
         menu.addItem(NSMenuItem(title: "打开主看板", action: #selector(menuShowKanban), keyEquivalent: ""))
         menu.addItem(NSMenuItem.separator())
-        menu.addItem(NSMenuItem(title: "退出 Focus Copilot", action: #selector(menuQuit), keyEquivalent: "q"))
+        menu.addItem(NSMenuItem(title: "退出 FocusPilot", action: #selector(menuQuit), keyEquivalent: "q"))
 
         statusItem?.menu = menu
     }
@@ -410,7 +410,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     private func createStatusBarIcon() -> NSImage {
         let iconSize: CGFloat = 16
         let symbolConfig = NSImage.SymbolConfiguration(pointSize: 13, weight: .medium)
-        guard let pinSymbol = NSImage(systemSymbolName: "pin.fill", accessibilityDescription: "Focus Copilot"),
+        guard let pinSymbol = NSImage(systemSymbolName: "pin.fill", accessibilityDescription: "FocusPilot"),
               let configured = pinSymbol.withSymbolConfiguration(symbolConfig) else {
             return NSImage()
         }

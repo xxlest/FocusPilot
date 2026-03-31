@@ -52,7 +52,7 @@ struct MainKanbanView: View {
                 .help("切换侧边栏")
             }
         }
-        .onReceive(NotificationCenter.default.publisher(for: Notification.Name("FocusCopilot.switchToPreferencesMultiBind"))) { _ in
+        .onReceive(NotificationCenter.default.publisher(for: Notification.Name("FocusPilot.switchToPreferencesMultiBind"))) { _ in
             selectedTab = .preferences
             scrollToMultiBind = true
         }

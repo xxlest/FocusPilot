@@ -151,7 +151,7 @@ class AppMonitor: ObservableObject {
 
     /// 刷新运行中的 App 列表（遍历所有 regular App，不依赖 ConfigStore）
     func refreshRunningApps() {
-        let selfBundleID = Bundle.main.bundleIdentifier ?? "com.focuscopilot.FocusCopilot"
+        let selfBundleID = Bundle.main.bundleIdentifier ?? "com.focuspilot.FocusPilot"
         let workspace = NSWorkspace.shared.runningApplications
             .filter { $0.activationPolicy == .regular && $0.bundleIdentifier != nil && $0.bundleIdentifier != selfBundleID }
             .sorted { ($0.localizedName ?? "").localizedCompare($1.localizedName ?? "") == .orderedAscending }
