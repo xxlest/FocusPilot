@@ -24,9 +24,10 @@ FocusPilot/
 │   └── FloatingBallView.swift        # 毛玻璃圆球、拖拽吸附、hover 弹出、品牌 Logo、进度环、AI 角标（~1098 行）
 ├── QuickPanel/
 │   ├── QuickPanelWindow.swift        # NSPanel, 层级 statusWindow+50, 动画/钉住/resize（~671 行）
-│   ├── QuickPanelView.swift          # UI 骨架、三 Tab 切换、reloadData、计时器栏、AI Tab 渲染（~2600 行）
+│   ├── QuickPanelView.swift          # UI 骨架、三 Tab 切换、reloadData、布局、hover 交互（~1553 行）
 │   ├── QuickPanelRowBuilder.swift    # App 行/窗口行/AI Session 行构建（extension）（~1049 行）
-│   └── QuickPanelMenuHandler.swift   # 右键菜单、@objc 事件处理（extension）（~558 行）
+│   ├── QuickPanelMenuHandler.swift   # 右键菜单、@objc 事件处理（extension）（~558 行）
+│   └── QuickPanelTimerHandler.swift  # FocusByTime 计时器栏 UI + 弹窗 + 辅助类（extension）（~1055 行）
 ├── MainKanban/
 │   ├── MainKanbanWindow.swift        # NSWindow 包裹 SwiftUI（~55 行）
 │   ├── MainKanbanView.swift          # 侧边栏+内容区（~106 行）
@@ -48,7 +49,7 @@ FocusPilot/
     └── Constants.swift               # Ball, Panel, Design Token, Notifications, Keys（~130 行）
 ```
 
-**合计**：~11127 行，24 个 .swift 文件
+**合计**：~11179 行，25 个 .swift 文件
 
 ### 模块职责
 
@@ -56,7 +57,7 @@ FocusPilot/
 |---|---|---|
 | **App/** | 应用入口、生命周期、权限管理 | 应用级初始化逻辑独立于具体 UI |
 | **FloatingBall/** | 悬浮球 UI、拖拽、贴边、hover、品牌 Logo、进度环、AI 角标 | 悬浮球交互逻辑独立变化频率高 |
-| **QuickPanel/** | 快捷面板 UI、三 Tab（活跃/关注/AI）、Tab 记忆、窗口操作、AI 会话交互。extension 拆分为 RowBuilder + MenuHandler | 面板展示和交互独立于悬浮球 |
+| **QuickPanel/** | 快捷面板 UI、三 Tab（活跃/关注/AI）、Tab 记忆、窗口操作、AI 会话交互。extension 拆分为 RowBuilder（行构建）+ MenuHandler（右键菜单）+ TimerHandler（FocusByTime 计时器栏+弹窗） | 面板展示和交互独立于悬浮球 |
 | **MainKanban/** | 主看板 SwiftUI 界面（关注管理 + 偏好设置） | SwiftUI 技术栈独立 |
 | **Services/** | 底层服务（窗口操作、App 监控、快捷键、配置存储、番茄钟、AI 会话管理、Todo） | 业务逻辑层与 UI 层分离 |
 | **Models/** | 数据模型 | 数据结构被多个模块共享 |
@@ -64,7 +65,7 @@ FocusPilot/
 
 ### 防过度设计自查
 
-- [x] 文件数（24）<= 功能点数（38）
+- [x] 文件数（25）<= 功能点数（38）
 - [x] 无多余抽象层：Services 直接暴露方法，无 Protocol 包装
 - [x] 没有为"未来可能"创建接口
 - [x] 没有只有一个实现的抽象层
