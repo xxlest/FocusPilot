@@ -40,7 +40,7 @@ class CoderBridgeService: NSObject {
             name: NSNotification.Name("com.focuscopilot.coder-bridge"),
             object: nil
         )
-        cleanupTimer = Timer.scheduledTimer(withTimeInterval: 60, repeats: true) { [weak self] _ in
+        cleanupTimer = Timer.scheduledTimer(withTimeInterval: 30, repeats: true) { [weak self] _ in
             self?.cleanupEndedSessions()
         }
     }
@@ -113,11 +113,14 @@ class CoderBridgeService: NSObject {
 
         if let newStatus = SessionStatus(rawValue: statusStr) {
             let oldStatus = sessions[index].status
-            // 状态变化且进入 actionable 状态时重置已读标记
+            // 状态变化且进入 actionable 状态时重置已读/忽略标记
             if newStatus != oldStatus {
                 switch newStatus {
-                case .done, .idle, .error:
+                case .done:
                     sessions[index].isRead = false
+                case .idle, .error:
+                    sessions[index].isRead = false
+                    sessions[index].isDismissed = false
                 default:
                     break
                 }
@@ -403,6 +406,13 @@ class CoderBridgeService: NSObject {
         postSessionChanged()
     }
 
+    func dismissSession(sid: String) {
+        guard let index = sessions.firstIndex(where: { $0.sessionID == sid }) else { return }
+        guard sessions[index].lifecycle == .active, !sessions[index].isDismissed else { return }
+        sessions[index].isDismissed = true
+        postSessionChanged()
+    }
+
     func updateLastInteraction(sid: String) {
         guard let index = sessions.firstIndex(where: { $0.sessionID == sid }) else { return }
         sessions[index].lastInteraction = Date()
@@ -460,8 +470,15 @@ class CoderBridgeService: NSObject {
         let now = Date()
         var changed = false
         sessions.removeAll { session in
-            guard session.lifecycle == .ended else { return false }
-            if now.timeIntervalSince(session.lastUpdate) > 120 {
+            // 已结束的 session：2 分钟后清除
+            if session.lifecycle == .ended {
+                if now.timeIntervalSince(session.lastUpdate) > 120 {
+                    changed = true; return true
+                }
+                return false
+            }
+            // 僵尸 session：状态停留在 registered 超过 30 秒未收到后续事件
+            if session.status == .registered && now.timeIntervalSince(session.lastUpdate) > 30 {
                 changed = true; return true
             }
             return false

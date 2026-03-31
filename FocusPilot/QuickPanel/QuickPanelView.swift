@@ -1774,6 +1774,12 @@ final class QuickPanelView: NSView {
 
     // MARK: - 数据加载
 
+    /// 面板即将显示时调用：清理所有临时态（兜住 hide 动画竞态导致 resetToNormalMode 被跳过的情况）
+    func prepareForShow() {
+        resetToNormalMode()
+        updateTabButtonStyles()
+    }
+
     /// 强制全量重建 UI（清除差分缓存）
     func forceReload() {
         lastStructuralKey = ""

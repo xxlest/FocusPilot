@@ -279,6 +279,16 @@ extension QuickPanelView {
             menu.addItem(resetItem)
         }
 
+        // 忽略提醒（idle/error 未忽略时可用，无论是否已读）
+        if session.lifecycle == .active && !session.isDismissed && (session.status == .idle || session.status == .error) {
+            menu.addItem(NSMenuItem.separator())
+
+            let dismissItem = NSMenuItem(title: "忽略提醒", action: #selector(handleDismissSession(_:)), keyEquivalent: "")
+            dismissItem.target = self
+            dismissItem.representedObject = session.sessionID
+            menu.addItem(dismissItem)
+        }
+
         menu.addItem(NSMenuItem.separator())
 
         // 复制 Session ID
@@ -384,6 +394,11 @@ extension QuickPanelView {
         guard let sid = sender.representedObject as? String else { return }
         NSPasteboard.general.clearContents()
         NSPasteboard.general.setString(sid, forType: .string)
+    }
+
+    @objc func handleDismissSession(_ sender: NSMenuItem) {
+        guard let sid = sender.representedObject as? String else { return }
+        CoderBridgeService.shared.dismissSession(sid: sid)
     }
 
     @objc func handleRemoveSession(_ sender: NSMenuItem) {

@@ -220,6 +220,8 @@ final class QuickPanelWindow: NSPanel {
         currentFrame.size.width = savedSize.width
         setFrame(currentFrame, display: false)
 
+        // 确保 displayTab 回到 selectedTab（防止上次 hover 预览残留或 hide 竞态）
+        panelView.prepareForShow()
         // 刷新面板数据
         panelView.reloadData()
 
@@ -266,6 +268,7 @@ final class QuickPanelWindow: NSPanel {
         )
 
         setFrame(panelFrame, display: false)
+        panelView.prepareForShow()
         panelView.reloadData()
 
         // 记录弹出状态（供收起动画使用）
