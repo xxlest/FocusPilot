@@ -62,7 +62,7 @@ FocusPilot/
 │   ├── AppMonitor.swift            # App 运行监控、自适应刷新（1s→3s）、scanInstalledApps 后台线程
 │   ├── HotkeyManager.swift         # Carbon 全局快捷键（⌘⇧B 显示/隐藏）
 │   ├── FocusTimerService.swift     # FocusByTime 番茄钟服务（状态机、计时、阶段切换通知、时长持久化、FocusPendingAction、引导休息分步倒计时）
-│   └── CoderBridgeService.swift    # AI 编码工具会话管理（DistributedNotification 监听、session 列表、BindingState 统一 helper、hostKind 策略分流、前台窗口关联、回退匹配、清理定时器）
+│   └── CoderBridgeService.swift    # AI 编码工具会话管理（DistributedNotification 监听、session 列表、BindingState 统一 helper、hostKind 策略分流、前台窗口关联、回退匹配、清理定时器、窗口级未读查询/已读标记）
 └── Helpers/
     └── Constants.swift             # Ball, Panel, Keys, Notifications 常量
 ```
@@ -110,6 +110,7 @@ coder-bridge/
 - **Tab 双状态模型**：`selectedTab`（持久，写 UserDefaults）+ `displayTab`（渲染态，hover 预览临时切换）；面板关闭/进入固定模式时 displayTab 回退到 selectedTab
 - **Hover 展开/折叠**：非固定模式下 `hoverExpandedBundleID` 驱动，App 行+窗口列表容器包装，`isHidden` 轻量切换不触发 forceReload；displayTab 切换/进入固定模式/面板关闭时清空
 - **浮球 AI 角标**：非固定模式下复用 `badgeLabel` 显示 `CoderBridgeService.actionableCount`，监听 coderBridgeSessionChanged + panelPinStateChanged 自驱动
+- **关注 Tab 未读角标**：窗口行图标区域根据 `CoderBridgeService.actionableCount(for:)` 动态切换为红色 pill 角标；点击窗口行 `markAsRead(windowID:)` 标记已读（内置 count==1 保护，多 session 共享窗口时静默跳过），通过 `coderBridgeSessionChanged` 通知驱动三处同步刷新
 - **Notion 风格主题系统**：AppTheme 枚举 8 种预设 → ThemeColors 9 色槽（ns* + sw* 双套，含 sidebarBackground），覆盖全 UI
 - **主题刷新链路**：PreferencesView → @Published → AppDelegate.applyPreferences → NSApp.appearance + quickPanelWindow.applyTheme + themeChanged 通知
 - **FocusByTime 番茄钟**：FocusTimerService 单例管理状态机（idle/running/paused × work/rest），通过 NotificationCenter 驱动 QuickPanel 底部计时器栏和 FloatingBall 进度环
@@ -130,6 +131,7 @@ coder-bridge/
 - V4.0: 新增 coder-bridge 模块 + CoderBridgeService + AI Tab（三 Tab 快捷面板）+ CoderSession 模型 + DistributedNotification IPC
 - V4.1: coder-bridge 新增 hostKind 上报 + CoderSession 新增 HostKind 字段 + BindingState 统一 helper + IDE/Terminal 绑定策略分化
 - V4.2: QuickPanelView `currentTab` 拆分为 `selectedTab` + `displayTab`；新增 `hoverExpandedBundleID`；FloatingBallView 新增 AI 角标
+- V4.3: 关注 Tab 窗口行新增 AI 未读角标，CoderBridgeService 新增 `actionableCount(for:)` / `markAsRead(windowID:)`
 - AppConfig decoder 向后兼容（忽略旧字段）
 
 ## 构建
