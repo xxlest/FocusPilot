@@ -399,6 +399,40 @@ class CoderBridgeService: NSObject {
     /// 最近一次成功切换的 session ID（用于 UI 高亮）
     var activeSessionID: String?
 
+    /// 查询某窗口绑定的 actionable session 数（纯读，不触发绑定清理）
+    func actionableCount(for windowID: CGWindowID) -> Int {
+        sessions.filter { session in
+            guard session.isActionable else { return false }
+            if session.manualWindowID == windowID { return true }
+            if session.manualWindowID == nil,
+               session.autoWindowID == windowID,
+               !isAutoWindowConflicted(for: session) { return true }
+            return false
+        }.count
+    }
+
+    /// 按窗口标记已读（内置 count==1 保护，多 session 共享窗口时静默跳过）
+    func markAsRead(windowID: CGWindowID) {
+        // 多 session 共享窗口时不自动清除，需用户到 AI Tab 逐个确认
+        guard actionableCount(for: windowID) == 1 else { return }
+        var changed = false
+        for i in sessions.indices {
+            guard sessions[i].isActionable else { continue }
+            if sessions[i].manualWindowID == windowID {
+                sessions[i].isRead = true
+                changed = true
+                continue
+            }
+            if sessions[i].manualWindowID == nil,
+               sessions[i].autoWindowID == windowID,
+               !isAutoWindowConflicted(for: sessions[i]) {
+                sessions[i].isRead = true
+                changed = true
+            }
+        }
+        if changed { postSessionChanged() }
+    }
+
     func markAsRead(sid: String) {
         guard let index = sessions.firstIndex(where: { $0.sessionID == sid }) else { return }
         guard sessions[index].isActionable else { return }
