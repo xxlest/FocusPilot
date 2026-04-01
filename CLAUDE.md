@@ -15,6 +15,18 @@ FocusPilot是 macOS 悬浮球应用，支持窗口快捷切换。
 
 修改 UI 前必读 DesignGuide.md，修改业务逻辑前必读 Architecture.md。
 
+## 产品设计基调
+
+**新增功能时必须对照以下四条准则评估，不符合的不做。**
+
+**干净** — 每个功能只解决一个问题，三层架构各司其职，功能之间不互相污染
+
+**高级** — 宁做一个极致的功能，不做三个粗糙的。追求完成度，不追求数量
+
+**克制** — 新功能必须能回答"没有它用户会怎样"。不做平台化、社交化。设置项能用默认值解决的不暴露选项
+
+**专业** — 不打断（弹窗失焦自动关闭）、不抢焦点（nonactivating）、不制造决策负担（默认覆盖 90% 场景）
+
 ## 架构（V4.2）
 
 技术栈：Swift 5, macOS 14+, arm64, AppKit + SwiftUI, CGS Private API, AX API, Carbon API, DistributedNotificationCenter
