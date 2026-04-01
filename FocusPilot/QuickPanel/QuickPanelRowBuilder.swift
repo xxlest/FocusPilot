@@ -385,16 +385,39 @@ extension QuickPanelView {
             row.heightAnchor.constraint(greaterThanOrEqualToConstant: Constants.Panel.windowRowHeight),
         ])
 
-        // 窗口图标（层叠矩形 SF Symbol，使用缓存）
-        let windowIconView = NSImageView()
-        windowIconView.translatesAutoresizingMaskIntoConstraints = false
-        windowIconView.image = Self.cachedSymbol(name: "rectangle.on.rectangle", size: 11, weight: .regular)
-        windowIconView.contentTintColor = colors.nsTextTertiary
-        NSLayoutConstraint.activate([
-            windowIconView.widthAnchor.constraint(equalToConstant: 14),
-            windowIconView.heightAnchor.constraint(equalToConstant: 14),
-        ])
-        rowStack.addArrangedSubview(windowIconView)
+        // 窗口图标区域：关注 Tab 有未读时显示红色 pill 角标，否则显示原 SF Symbol
+        let unreadCount = (displayTab == .favorites)
+            ? CoderBridgeService.shared.actionableCount(for: windowInfo.id)
+            : 0
+
+        if unreadCount > 0 {
+            // 红底白字 pill 角标（弹性宽度，最小 14px，与浮球角标风格一致）
+            let badge = NSTextField(labelWithString: " \(unreadCount) ")
+            badge.translatesAutoresizingMaskIntoConstraints = false
+            badge.font = .systemFont(ofSize: 9, weight: .semibold)
+            badge.textColor = .white
+            badge.alignment = .center
+            badge.wantsLayer = true
+            badge.layer?.backgroundColor = NSColor.systemRed.cgColor
+            badge.layer?.cornerRadius = 7
+            badge.layer?.masksToBounds = true
+            NSLayoutConstraint.activate([
+                badge.heightAnchor.constraint(equalToConstant: 14),
+                badge.widthAnchor.constraint(greaterThanOrEqualToConstant: 14),
+            ])
+            rowStack.addArrangedSubview(badge)
+        } else {
+            // 原始窗口图标
+            let windowIconView = NSImageView()
+            windowIconView.translatesAutoresizingMaskIntoConstraints = false
+            windowIconView.image = Self.cachedSymbol(name: "rectangle.on.rectangle", size: 11, weight: .regular)
+            windowIconView.contentTintColor = colors.nsTextTertiary
+            NSLayoutConstraint.activate([
+                windowIconView.widthAnchor.constraint(equalToConstant: 14),
+                windowIconView.heightAnchor.constraint(equalToConstant: 14),
+            ])
+            rowStack.addArrangedSubview(windowIconView)
+        }
 
         // 窗口标题：优先使用自定义名称
         let renameKey = Self.renameKey(bundleID: bundleID, windowID: windowInfo.id)
