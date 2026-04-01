@@ -951,9 +951,11 @@ final class QuickPanelView: NSView {
             for config in configs {
                 let running = runningApps.first(where: { $0.bundleID == config.bundleID })
                 let isRunning = running?.isRunning ?? false
-                let windowIDs = running?.windows.map { String($0.id) }.joined(separator: ",") ?? ""
+                let windows = running?.windows ?? []
+                let windowIDs = windows.map { String($0.id) }.joined(separator: ",")
                 let collapsed = isUnpinnedMode ? "H" : (collapsedApps.contains(config.bundleID) ? "C" : "E")
-                parts.append("\(config.bundleID):\(isRunning):\(windowIDs):\(collapsed)")
+                let unreadCounts = windows.map { String(CoderBridgeService.shared.actionableCount(for: $0.id)) }.joined(separator: ",")
+                parts.append("\(config.bundleID):\(isRunning):\(windowIDs):\(collapsed):U\(unreadCounts)")
             }
         case .ai:
             let sessionKeys = CoderBridgeService.shared.sessions
@@ -1352,7 +1354,7 @@ final class QuickPanelView: NSView {
         DispatchQueue.main.async { [weak self] in
             guard let self = self else { return }
             self.updateAIBadge()
-            if self.displayTab == .ai {
+            if self.displayTab == .ai || self.displayTab == .favorites {
                 self.forceReload()
             }
         }

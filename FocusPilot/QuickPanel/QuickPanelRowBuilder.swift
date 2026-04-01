@@ -468,6 +468,11 @@ extension QuickPanelView {
             // 切换窗口
             WindowService.shared.activateWindow(windowInfo)
             (self.window as? QuickPanelWindow)?.yieldLevel()
+
+            // 关注 Tab：标记已读（服务层内置 count==1 保护）
+            if self.displayTab == .favorites {
+                CoderBridgeService.shared.markAsRead(windowID: windowInfo.id)
+            }
         }
 
         return row
