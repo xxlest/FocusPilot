@@ -15,6 +15,8 @@
 
 ## 产品思考
 
+- [FocusPilot产品理念与市场定位.md](/Users/bruce/Workspace/2-Code/01-work/FocusPilot/docs/产品思考/FocusPilot产品理念与市场定位.md)
+  FocusPilot 作为人与 AI 协同的知行一体化个人自迭代系统、通用 Markdown 工作记忆与 AI 执行系统的产品理念、市场洞察和差异化定位。
 - [产品理念草稿.md](/Users/bruce/Workspace/2-Code/01-work/FocusPilot/docs/产品思考/产品理念草稿.md)
   `Code / Project / Execution / System` 方法论与产品哲学输入。
 

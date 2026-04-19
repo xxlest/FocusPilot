@@ -17,6 +17,13 @@ FocusPilot是 macOS 悬浮球应用，支持窗口快捷切换。
 
 修改 UI 前必读 DesignGuide.md，修改业务逻辑前必读 Architecture.md，修改功能边界时必读 Editions.md。PilotOne 新功能开发前必读 PRD.md。
 
+## 参考项目
+
+| 项目 | GitHub | 本地路径 | 参考用途 |
+|------|--------|---------|---------|
+| **Multica** | [multica-ai/multica](https://github.com/multica-ai/multica.git) | `/Users/bruce/Workspace/2-Code/02-oss/ai/agent/coding/multica` | 看板状态模型、Agent Runtime 执行模式、Workspace 数据模型 |
+| **Plane** | [makeplane/plane](https://github.com/makeplane/plane.git)（[商业版官网](https://plane.so)） | `/Users/bruce/Workspace/2-Code/02-oss/ai/agent/coding/plane` | Home 页设计、Stickies 便签、项目管理结构（Cycles/Modules/Views） |
+
 ## 产品设计基调
 
 **新增功能时必须对照以下四条准则评估，不符合的不做。**

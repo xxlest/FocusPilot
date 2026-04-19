@@ -1,0 +1,3350 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FocusPilot Workspace — UI Prototype</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=JetBrains+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&display=swap');
+
+  :root {
+    --bg-base: #0f1117;
+    --bg-surface: #161822;
+    --bg-elevated: #1c1f2e;
+    --bg-hover: #232738;
+    --bg-active: #2a2f45;
+    --bg-input: #1a1d2b;
+
+    --border-subtle: #262a3a;
+    --border-default: #2e3348;
+    --border-strong: #3d4260;
+
+    --text-primary: #e8eaf0;
+    --text-secondary: #9399b0;
+    --text-tertiary: #636985;
+    --text-inverse: #0f1117;
+
+    --accent-blue: #5b8af5;
+    --accent-blue-dim: #3a5aa0;
+    --accent-purple: #a07cf5;
+    --accent-green: #4ade80;
+    --accent-green-dim: rgba(74, 222, 128, 0.15);
+    --accent-yellow: #fbbf24;
+    --accent-yellow-dim: rgba(251, 191, 36, 0.15);
+    --accent-orange: #f97316;
+    --accent-orange-dim: rgba(249, 115, 22, 0.15);
+    --accent-red: #f87171;
+    --accent-red-dim: rgba(248, 113, 113, 0.15);
+    --accent-cyan: #22d3ee;
+
+    --status-backlog: #636985;
+    --status-todo: #9399b0;
+    --status-progress: #5b8af5;
+    --status-review: #a07cf5;
+    --status-done: #4ade80;
+    --status-blocked: #f97316;
+    --status-cancelled: #f87171;
+
+    --activity-bar-w: 52px;
+    --sidebar-w: 260px;
+    --detail-w: 420px;
+
+    --radius-sm: 4px;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+    --radius-xl: 16px;
+
+    --shadow-sm: 0 1px 3px rgba(0,0,0,0.3);
+    --shadow-md: 0 4px 16px rgba(0,0,0,0.4);
+    --shadow-lg: 0 8px 32px rgba(0,0,0,0.5);
+    --shadow-glow: 0 0 20px rgba(91, 138, 245, 0.15);
+
+    --font-sans: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+    --font-display: 'Instrument Serif', Georgia, serif;
+
+    --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-smooth: 300ms cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-spring: 400ms cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: var(--font-sans);
+    background: var(--bg-base);
+    color: var(--text-primary);
+    font-size: 13px;
+    line-height: 1.5;
+    overflow: hidden;
+    height: 100vh;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ─── LAYOUT ─── */
+  .app {
+    display: flex;
+    height: 100vh;
+    position: relative;
+  }
+
+  /* Activity Bar */
+  .activity-bar {
+    width: var(--activity-bar-w);
+    background: var(--bg-base);
+    border-right: 1px solid var(--border-subtle);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 12px 0;
+    gap: 4px;
+    flex-shrink: 0;
+    z-index: 10;
+  }
+
+  .activity-bar .logo {
+    width: 32px;
+    height: 32px;
+    border-radius: var(--radius-md);
+    background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 14px;
+    color: white;
+    margin-bottom: 16px;
+    box-shadow: var(--shadow-glow);
+  }
+
+  .activity-item {
+    width: 36px;
+    height: 36px;
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: var(--text-tertiary);
+    transition: all var(--transition-fast);
+    position: relative;
+    font-size: 16px;
+  }
+  .activity-item:hover { background: var(--bg-hover); color: var(--text-secondary); }
+  .activity-item.active {
+    background: var(--bg-active);
+    color: var(--accent-blue);
+  }
+  .activity-item.active::before {
+    content: '';
+    position: absolute;
+    left: -8px;
+    width: 3px;
+    height: 20px;
+    border-radius: 0 2px 2px 0;
+    background: var(--accent-blue);
+  }
+  .activity-item .tooltip {
+    position: absolute;
+    left: 48px;
+    background: var(--bg-elevated);
+    color: var(--text-primary);
+    padding: 4px 10px;
+    border-radius: var(--radius-sm);
+    font-size: 12px;
+    white-space: nowrap;
+    pointer-events: none;
+    opacity: 0;
+    transform: translateX(-4px);
+    transition: all var(--transition-fast);
+    border: 1px solid var(--border-default);
+    z-index: 100;
+  }
+  .activity-item:hover .tooltip { opacity: 1; transform: translateX(0); }
+
+  .activity-spacer { flex: 1; }
+
+  /* Sidebar */
+  .sidebar {
+    width: var(--sidebar-w);
+    background: var(--bg-surface);
+    border-right: 1px solid var(--border-subtle);
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+    overflow: hidden;
+  }
+
+  .sidebar-header {
+    padding: 16px 16px 12px;
+    border-bottom: 1px solid var(--border-subtle);
+  }
+  .sidebar-header h2 {
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .sidebar-header h2 span { color: var(--accent-blue); }
+
+  .sidebar-search {
+    margin: 12px 16px 8px;
+    position: relative;
+  }
+  .sidebar-search input {
+    width: 100%;
+    background: var(--bg-input);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    padding: 7px 10px 7px 30px;
+    color: var(--text-primary);
+    font-size: 12px;
+    font-family: var(--font-sans);
+    outline: none;
+    transition: border-color var(--transition-fast);
+  }
+  .sidebar-search input::placeholder { color: var(--text-tertiary); }
+  .sidebar-search input:focus { border-color: var(--accent-blue); }
+  .sidebar-search .icon {
+    position: absolute;
+    left: 9px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-tertiary);
+    font-size: 12px;
+  }
+
+  .sidebar-section {
+    padding: 8px 8px;
+    flex: 1;
+    overflow-y: auto;
+  }
+  .sidebar-section::-webkit-scrollbar { width: 4px; }
+  .sidebar-section::-webkit-scrollbar-thumb { background: var(--border-default); border-radius: 2px; }
+
+  .sidebar-label {
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-tertiary);
+    padding: 8px 8px 4px;
+  }
+
+  .sidebar-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 8px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    color: var(--text-secondary);
+    font-size: 13px;
+    transition: all var(--transition-fast);
+  }
+  .sidebar-item:hover { background: var(--bg-hover); color: var(--text-primary); }
+  .sidebar-item.active { background: var(--bg-active); color: var(--text-primary); }
+  .sidebar-item .icon { font-size: 14px; width: 18px; text-align: center; flex-shrink: 0; }
+  .sidebar-item .badge {
+    margin-left: auto;
+    background: var(--bg-active);
+    color: var(--text-tertiary);
+    font-size: 10px;
+    padding: 1px 6px;
+    border-radius: 10px;
+    font-weight: 500;
+  }
+
+  .goal-tree-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 8px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    color: var(--text-secondary);
+    font-size: 12px;
+    transition: all var(--transition-fast);
+  }
+  .goal-tree-item:hover { background: var(--bg-hover); color: var(--text-primary); }
+  .goal-tree-item.active { background: rgba(91,138,245,0.1); color: var(--accent-blue); }
+  .goal-tree-item .expand { color: var(--text-tertiary); font-size: 10px; width: 14px; text-align: center; }
+  .goal-tree-item .dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+  .goal-tree-item .progress-mini {
+    margin-left: auto;
+    font-size: 10px;
+    color: var(--text-tertiary);
+    font-family: var(--font-mono);
+  }
+  .goal-children { padding-left: 20px; }
+
+  /* Main Content */
+  .main-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    min-width: 0;
+  }
+
+  /* Top Bar */
+  .topbar {
+    height: 48px;
+    border-bottom: 1px solid var(--border-subtle);
+    display: flex;
+    align-items: center;
+    padding: 0 20px;
+    gap: 16px;
+    flex-shrink: 0;
+    background: var(--bg-surface);
+  }
+
+  .topbar-title {
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+
+  .view-tabs {
+    display: flex;
+    gap: 2px;
+    background: var(--bg-base);
+    padding: 3px;
+    border-radius: var(--radius-md);
+  }
+  .view-tab {
+    padding: 5px 14px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    color: var(--text-tertiary);
+    transition: all var(--transition-fast);
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+  .view-tab:hover { color: var(--text-secondary); }
+  .view-tab.active {
+    background: var(--bg-elevated);
+    color: var(--text-primary);
+    box-shadow: var(--shadow-sm);
+  }
+
+  .topbar-spacer { flex: 1; }
+
+  .topbar-filters {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .filter-btn {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px;
+    border-radius: var(--radius-sm);
+    font-size: 11px;
+    color: var(--text-tertiary);
+    cursor: pointer;
+    border: 1px solid var(--border-subtle);
+    background: transparent;
+    font-family: var(--font-sans);
+    transition: all var(--transition-fast);
+  }
+  .filter-btn:hover { border-color: var(--border-default); color: var(--text-secondary); }
+
+  .btn-primary {
+    background: var(--accent-blue);
+    color: white;
+    border: none;
+    padding: 6px 14px;
+    border-radius: var(--radius-md);
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    font-family: var(--font-sans);
+    transition: all var(--transition-fast);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .btn-primary:hover { background: #4a7ae0; box-shadow: var(--shadow-glow); }
+
+  /* ─── VIEW: PLANNING ─── */
+  .view-content {
+    flex: 1;
+    overflow: hidden;
+    display: none;
+  }
+  .view-content.active { display: flex; }
+
+  .planning-view {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+  }
+
+  .planning-tree {
+    width: 380px;
+    border-right: 1px solid var(--border-subtle);
+    overflow-y: auto;
+    padding: 16px;
+    flex-shrink: 0;
+  }
+  .planning-tree::-webkit-scrollbar { width: 4px; }
+  .planning-tree::-webkit-scrollbar-thumb { background: var(--border-default); border-radius: 2px; }
+
+  .plan-node {
+    margin-bottom: 2px;
+  }
+  .plan-node-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 8px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    font-size: 13px;
+  }
+  .plan-node-header:hover { background: var(--bg-hover); }
+  .plan-node-header.goal { font-weight: 500; }
+  .plan-node-header .chevron {
+    font-size: 10px;
+    color: var(--text-tertiary);
+    width: 14px;
+    text-align: center;
+    transition: transform var(--transition-fast);
+    flex-shrink: 0;
+  }
+  .plan-node-header .chevron.expanded { transform: rotate(90deg); }
+  .plan-node-header .node-icon { font-size: 12px; flex-shrink: 0; }
+  .plan-node-header .node-title { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .plan-node-header .node-meta {
+    display: flex; align-items: center; gap: 8px; flex-shrink: 0;
+  }
+  .plan-node-header .lifecycle {
+    font-size: 10px;
+    padding: 1px 6px;
+    border-radius: 10px;
+    font-weight: 500;
+  }
+  .lifecycle.active { background: var(--accent-green-dim); color: var(--accent-green); }
+  .lifecycle.paused { background: var(--accent-yellow-dim); color: var(--accent-yellow); }
+
+  .progress-bar {
+    width: 48px; height: 4px;
+    background: var(--bg-active);
+    border-radius: 2px;
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+  .progress-bar .fill {
+    height: 100%;
+    border-radius: 2px;
+    transition: width var(--transition-smooth);
+  }
+
+  .progress-text {
+    font-size: 10px;
+    font-family: var(--font-mono);
+    color: var(--text-tertiary);
+    width: 28px;
+    text-align: right;
+    flex-shrink: 0;
+  }
+
+  .plan-node-children {
+    padding-left: 22px;
+  }
+
+  .task-status-dot {
+    width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0;
+    border: 1.5px solid;
+  }
+  .task-status-dot.backlog { border-color: var(--status-backlog); background: transparent; }
+  .task-status-dot.todo { border-color: var(--status-todo); background: transparent; }
+  .task-status-dot.in_progress { border-color: var(--status-progress); background: var(--status-progress); }
+  .task-status-dot.in_review { border-color: var(--status-review); background: var(--status-review); }
+  .task-status-dot.done { border-color: var(--status-done); background: var(--status-done); }
+
+  .health-tag {
+    font-size: 9px;
+    padding: 1px 5px;
+    border-radius: 3px;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+  }
+  .health-tag.on_track { background: var(--accent-green-dim); color: var(--accent-green); }
+  .health-tag.at_risk { background: var(--accent-yellow-dim); color: var(--accent-yellow); }
+  .health-tag.off_track { background: var(--accent-red-dim); color: var(--accent-red); }
+
+  /* Gantt */
+  .gantt-area {
+    flex: 1;
+    overflow-x: auto;
+    overflow-y: auto;
+    position: relative;
+    background: var(--bg-base);
+  }
+  .gantt-area::-webkit-scrollbar { width: 4px; height: 4px; }
+  .gantt-area::-webkit-scrollbar-thumb { background: var(--border-default); border-radius: 2px; }
+
+  .gantt-header {
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    display: flex;
+    background: var(--bg-surface);
+    border-bottom: 1px solid var(--border-subtle);
+    height: 36px;
+  }
+  .gantt-month {
+    min-width: 180px;
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--text-tertiary);
+    border-right: 1px solid var(--border-subtle);
+    position: relative;
+  }
+  .gantt-month.current { color: var(--accent-blue); }
+  .gantt-month.current::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: var(--accent-blue);
+  }
+
+  .gantt-body {
+    padding: 8px 0;
+    min-height: 100%;
+  }
+
+  .gantt-row {
+    height: 34px;
+    display: flex;
+    align-items: center;
+    position: relative;
+  }
+  .gantt-row.spacer { height: 6px; }
+
+  .gantt-bar {
+    position: absolute;
+    height: 20px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    padding: 0 8px;
+    font-size: 10px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    overflow: hidden;
+    white-space: nowrap;
+  }
+  .gantt-bar:hover { filter: brightness(1.15); transform: scaleY(1.1); }
+  .gantt-bar.goal-bar {
+    background: rgba(91, 138, 245, 0.2);
+    border: 1px solid rgba(91, 138, 245, 0.3);
+    color: var(--accent-blue);
+  }
+  .gantt-bar.goal-bar .bar-fill {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    background: rgba(91, 138, 245, 0.15);
+    border-radius: 4px;
+  }
+  .gantt-bar.task-bar {
+    height: 14px;
+    border-radius: 3px;
+  }
+  .gantt-bar.task-bar.backlog { background: var(--bg-active); color: var(--text-tertiary); }
+  .gantt-bar.task-bar.todo { background: rgba(147, 153, 176, 0.3); border: 1px solid rgba(147, 153, 176, 0.3); }
+  .gantt-bar.task-bar.in_progress { background: rgba(91, 138, 245, 0.4); border: 1px solid rgba(91, 138, 245, 0.5); }
+  .gantt-bar.task-bar.done { background: rgba(74, 222, 128, 0.3); border: 1px solid rgba(74, 222, 128, 0.4); }
+
+  .gantt-today-line {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 1px;
+    background: var(--accent-red);
+    z-index: 3;
+    opacity: 0.6;
+  }
+  .gantt-today-line::before {
+    content: '今天';
+    position: absolute;
+    top: 40px;
+    left: -14px;
+    font-size: 9px;
+    color: var(--accent-red);
+    font-weight: 500;
+  }
+
+  /* ─── VIEW: BOARD (KANBAN) ─── */
+  .board-view {
+    display: flex;
+    flex: 1;
+    overflow-x: auto;
+    padding: 16px;
+    gap: 12px;
+  }
+  .board-view::-webkit-scrollbar { height: 4px; }
+  .board-view::-webkit-scrollbar-thumb { background: var(--border-default); border-radius: 2px; }
+
+  .kanban-column {
+    min-width: 260px;
+    width: 260px;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    max-height: 100%;
+  }
+
+  .kanban-col-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    margin-bottom: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .kanban-col-header .col-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+  }
+  .kanban-col-header .col-count {
+    margin-left: auto;
+    font-size: 11px;
+    font-weight: 400;
+    color: var(--text-tertiary);
+    font-family: var(--font-mono);
+  }
+
+  .kanban-cards {
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 2px;
+  }
+  .kanban-cards::-webkit-scrollbar { width: 3px; }
+  .kanban-cards::-webkit-scrollbar-thumb { background: var(--border-default); border-radius: 2px; }
+
+  .kanban-card {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    padding: 12px;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    position: relative;
+  }
+  .kanban-card:hover {
+    border-color: var(--border-default);
+    background: var(--bg-elevated);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
+  }
+  .kanban-card .card-id {
+    font-size: 10px;
+    font-family: var(--font-mono);
+    color: var(--text-tertiary);
+    margin-bottom: 4px;
+  }
+  .kanban-card .card-title {
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 1.4;
+    margin-bottom: 8px;
+    color: var(--text-primary);
+  }
+  .kanban-card .card-meta {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+  .card-tag {
+    font-size: 10px;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-weight: 500;
+  }
+  .card-tag.auto { background: rgba(91,138,245,0.15); color: var(--accent-blue); }
+  .card-tag.manual { background: rgba(160,124,245,0.15); color: var(--accent-purple); }
+  .card-tag.priority-p0 { background: var(--accent-red-dim); color: var(--accent-red); }
+  .card-tag.priority-p1 { background: var(--accent-orange-dim); color: var(--accent-orange); }
+  .card-tag.priority-p2 { background: rgba(99,105,133,0.2); color: var(--text-tertiary); }
+  .card-tag.goal-ref {
+    background: transparent;
+    color: var(--text-tertiary);
+    padding: 0;
+    font-size: 10px;
+  }
+  .card-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid var(--border-subtle);
+  }
+  .card-agent {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 10px;
+    color: var(--text-tertiary);
+  }
+  .card-agent .agent-avatar {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--bg-active);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 9px;
+  }
+  .card-date {
+    font-size: 10px;
+    font-family: var(--font-mono);
+    color: var(--text-tertiary);
+  }
+
+  .kanban-add {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    padding: 8px;
+    border-radius: var(--radius-md);
+    border: 1px dashed var(--border-subtle);
+    color: var(--text-tertiary);
+    font-size: 12px;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    margin-top: 4px;
+  }
+  .kanban-add:hover { border-color: var(--accent-blue); color: var(--accent-blue); background: rgba(91,138,245,0.05); }
+
+  /* ─── VIEW: LIST ─── */
+  .list-view {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0 20px 20px;
+  }
+  .list-view::-webkit-scrollbar { width: 4px; }
+  .list-view::-webkit-scrollbar-thumb { background: var(--border-default); border-radius: 2px; }
+
+  .list-group-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 0 6px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    border-bottom: 1px solid var(--border-subtle);
+    position: sticky;
+    top: 0;
+    background: var(--bg-base);
+    z-index: 2;
+  }
+  .list-group-header .group-count {
+    font-weight: 400;
+    color: var(--text-tertiary);
+    font-family: var(--font-mono);
+    font-size: 11px;
+  }
+
+  .list-table {
+    width: 100%;
+  }
+  .list-table th {
+    text-align: left;
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-tertiary);
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--border-subtle);
+    position: sticky;
+    top: 36px;
+    background: var(--bg-base);
+    z-index: 1;
+  }
+  .list-table td {
+    padding: 8px 10px;
+    font-size: 12px;
+    color: var(--text-secondary);
+    border-bottom: 1px solid rgba(38, 42, 58, 0.5);
+    vertical-align: middle;
+  }
+  .list-table tr {
+    cursor: pointer;
+    transition: background var(--transition-fast);
+  }
+  .list-table tbody tr:hover { background: var(--bg-hover); }
+  .list-table .title-cell {
+    color: var(--text-primary);
+    font-weight: 500;
+    max-width: 280px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-weight: 500;
+  }
+  .status-pill.backlog { background: rgba(99,105,133,0.15); color: var(--status-backlog); }
+  .status-pill.todo { background: rgba(147,153,176,0.15); color: var(--status-todo); }
+  .status-pill.in_progress { background: rgba(91,138,245,0.15); color: var(--status-progress); }
+  .status-pill.in_review { background: rgba(160,124,245,0.15); color: var(--status-review); }
+  .status-pill.done { background: var(--accent-green-dim); color: var(--status-done); }
+
+  .mode-icon { font-size: 12px; }
+
+  /* ─── TASK DETAIL PANEL ─── */
+  .task-detail-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.4);
+    z-index: 50;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity var(--transition-smooth);
+    backdrop-filter: blur(2px);
+  }
+  .task-detail-overlay.open { opacity: 1; pointer-events: all; }
+
+  .task-detail-panel {
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: 780px;
+    max-width: 90vw;
+    height: 100vh;
+    background: var(--bg-surface);
+    border-left: 1px solid var(--border-subtle);
+    z-index: 51;
+    transform: translateX(100%);
+    transition: transform var(--transition-smooth);
+    display: flex;
+    flex-direction: column;
+    box-shadow: -8px 0 40px rgba(0,0,0,0.3);
+  }
+  .task-detail-panel.open { transform: translateX(0); }
+
+  .detail-header {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border-subtle);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-shrink: 0;
+  }
+  .detail-close {
+    width: 28px; height: 28px;
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: var(--text-tertiary);
+    transition: all var(--transition-fast);
+    font-size: 16px;
+    flex-shrink: 0;
+  }
+  .detail-close:hover { background: var(--bg-hover); color: var(--text-primary); }
+
+  .detail-title-area { flex: 1; min-width: 0; }
+  .detail-id {
+    font-size: 11px;
+    font-family: var(--font-mono);
+    color: var(--text-tertiary);
+    margin-bottom: 2px;
+  }
+  .detail-title {
+    font-size: 16px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .detail-body {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+  }
+
+  .detail-main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    min-width: 0;
+  }
+
+  .detail-tabs {
+    display: flex;
+    gap: 0;
+    padding: 0 20px;
+    border-bottom: 1px solid var(--border-subtle);
+    flex-shrink: 0;
+  }
+  .detail-tab {
+    padding: 10px 16px;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-tertiary);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: all var(--transition-fast);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .detail-tab:hover { color: var(--text-secondary); }
+  .detail-tab.active {
+    color: var(--accent-blue);
+    border-bottom-color: var(--accent-blue);
+  }
+
+  .detail-tab-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px 20px;
+    display: none;
+  }
+  .detail-tab-content.active { display: block; }
+  .detail-tab-content::-webkit-scrollbar { width: 4px; }
+  .detail-tab-content::-webkit-scrollbar-thumb { background: var(--border-default); border-radius: 2px; }
+
+  .detail-sidebar {
+    width: 220px;
+    border-left: 1px solid var(--border-subtle);
+    padding: 16px;
+    overflow-y: auto;
+    flex-shrink: 0;
+  }
+  .detail-sidebar::-webkit-scrollbar { width: 3px; }
+  .detail-sidebar::-webkit-scrollbar-thumb { background: var(--border-default); border-radius: 2px; }
+
+  .detail-field {
+    margin-bottom: 14px;
+  }
+  .detail-field-label {
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-tertiary);
+    margin-bottom: 4px;
+  }
+  .detail-field-value {
+    font-size: 12px;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .detail-field-value select {
+    background: var(--bg-input);
+    border: 1px solid var(--border-subtle);
+    color: var(--text-primary);
+    padding: 3px 6px;
+    border-radius: var(--radius-sm);
+    font-size: 11px;
+    font-family: var(--font-sans);
+    cursor: pointer;
+    outline: none;
+    width: 100%;
+  }
+
+  .detail-divider {
+    height: 1px;
+    background: var(--border-subtle);
+    margin: 12px 0;
+  }
+
+  /* Plan Tab Content */
+  .plan-section {
+    margin-bottom: 20px;
+  }
+  .plan-section-title {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-tertiary);
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .plan-description {
+    background: var(--bg-base);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    padding: 12px;
+    font-size: 13px;
+    line-height: 1.6;
+    color: var(--text-secondary);
+  }
+
+  .plan-doc {
+    background: var(--bg-base);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+  }
+  .plan-doc-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px;
+    background: var(--bg-elevated);
+    border-bottom: 1px solid var(--border-subtle);
+    font-size: 11px;
+    color: var(--text-tertiary);
+  }
+  .plan-doc-header .doc-status {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    color: var(--accent-green);
+    font-weight: 500;
+  }
+  .plan-doc-actions {
+    display: flex;
+    gap: 8px;
+  }
+  .plan-doc-actions button {
+    background: transparent;
+    border: 1px solid var(--border-subtle);
+    color: var(--text-tertiary);
+    padding: 2px 8px;
+    border-radius: var(--radius-sm);
+    font-size: 10px;
+    cursor: pointer;
+    font-family: var(--font-sans);
+    transition: all var(--transition-fast);
+  }
+  .plan-doc-actions button:hover { border-color: var(--border-default); color: var(--text-secondary); }
+
+  .plan-doc-body {
+    padding: 16px;
+    font-size: 13px;
+    line-height: 1.7;
+    color: var(--text-secondary);
+  }
+  .plan-doc-body h3 {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 16px 0 8px;
+  }
+  .plan-doc-body h3:first-child { margin-top: 0; }
+  .plan-doc-body ol, .plan-doc-body ul {
+    padding-left: 20px;
+    margin: 6px 0;
+  }
+  .plan-doc-body li { margin-bottom: 4px; }
+  .plan-doc-body .check {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 4px;
+    font-size: 12px;
+  }
+  .plan-doc-body .check-box {
+    width: 14px; height: 14px;
+    border: 1.5px solid var(--border-strong);
+    border-radius: 3px;
+    flex-shrink: 0;
+  }
+
+  /* Auto Tab */
+  .execution-stream {
+    background: var(--bg-base);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+  }
+  .stream-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    background: var(--bg-elevated);
+    border-bottom: 1px solid var(--border-subtle);
+    font-size: 12px;
+  }
+  .stream-header .agent-name { font-weight: 600; color: var(--text-primary); }
+  .stream-header .stream-status { color: var(--accent-blue); font-weight: 500; }
+  .stream-header .stream-time { margin-left: auto; font-family: var(--font-mono); color: var(--text-tertiary); font-size: 11px; }
+
+  .stream-body {
+    padding: 12px 14px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    line-height: 1.8;
+    color: var(--text-secondary);
+    max-height: 380px;
+    overflow-y: auto;
+  }
+  .stream-body::-webkit-scrollbar { width: 3px; }
+  .stream-body::-webkit-scrollbar-thumb { background: var(--border-default); border-radius: 2px; }
+
+  .stream-line { display: flex; gap: 8px; }
+  .stream-line .prefix { color: var(--text-tertiary); flex-shrink: 0; }
+  .stream-line .text { flex: 1; }
+  .stream-line .text.success { color: var(--accent-green); }
+  .stream-line .text.info { color: var(--accent-blue); }
+  .stream-line .text.warn { color: var(--accent-yellow); }
+  .stream-line .text.dim { color: var(--text-tertiary); }
+
+  .stream-cursor {
+    display: inline-block;
+    width: 7px; height: 14px;
+    background: var(--accent-blue);
+    animation: blink 1s step-end infinite;
+    vertical-align: middle;
+    margin-left: 2px;
+  }
+  @keyframes blink { 50% { opacity: 0; } }
+
+  .stream-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+    border-top: 1px solid var(--border-subtle);
+  }
+  .stream-footer .progress-info {
+    font-size: 11px;
+    color: var(--text-tertiary);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .stream-footer .progress-info .spinner {
+    width: 12px; height: 12px;
+    border: 2px solid var(--border-default);
+    border-top-color: var(--accent-blue);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .btn-danger {
+    background: transparent;
+    border: 1px solid rgba(248,113,113,0.3);
+    color: var(--accent-red);
+    padding: 4px 12px;
+    border-radius: var(--radius-sm);
+    font-size: 11px;
+    cursor: pointer;
+    font-family: var(--font-sans);
+    transition: all var(--transition-fast);
+  }
+  .btn-danger:hover { background: var(--accent-red-dim); }
+
+  /* Manual Tab — Chat */
+  .chat-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+  }
+  .chat-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding-bottom: 8px;
+  }
+  .chat-messages::-webkit-scrollbar { width: 3px; }
+  .chat-messages::-webkit-scrollbar-thumb { background: var(--border-default); border-radius: 2px; }
+
+  .chat-msg {
+    display: flex;
+    gap: 10px;
+    padding: 10px 0;
+  }
+  .chat-msg + .chat-msg { border-top: 1px solid rgba(38,42,58,0.5); }
+  .chat-avatar {
+    width: 24px; height: 24px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    flex-shrink: 0;
+  }
+  .chat-avatar.system { background: var(--bg-active); color: var(--text-tertiary); }
+  .chat-avatar.user { background: var(--accent-blue); color: white; }
+  .chat-avatar.agent { background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple)); color: white; }
+
+  .chat-body { flex: 1; min-width: 0; }
+  .chat-sender {
+    font-size: 11px;
+    font-weight: 600;
+    margin-bottom: 4px;
+    color: var(--text-primary);
+  }
+  .chat-text {
+    font-size: 13px;
+    line-height: 1.6;
+    color: var(--text-secondary);
+  }
+  .chat-text code {
+    background: var(--bg-base);
+    padding: 1px 5px;
+    border-radius: 3px;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--accent-cyan);
+  }
+  .chat-text .plan-ref {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: rgba(91,138,245,0.1);
+    border: 1px solid rgba(91,138,245,0.2);
+    padding: 2px 8px;
+    border-radius: var(--radius-sm);
+    font-size: 11px;
+    color: var(--accent-blue);
+    cursor: pointer;
+    margin-top: 6px;
+  }
+  .chat-text .plan-ref:hover { background: rgba(91,138,245,0.2); }
+  .chat-text .file-change {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin: 4px 0;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--text-tertiary);
+  }
+  .chat-text .file-change .added { color: var(--accent-green); }
+  .chat-text .file-change .modified { color: var(--accent-yellow); }
+
+  .chat-input-area {
+    border-top: 1px solid var(--border-subtle);
+    padding-top: 12px;
+    margin-top: 8px;
+    flex-shrink: 0;
+  }
+  .chat-input-wrapper {
+    display: flex;
+    gap: 8px;
+    align-items: flex-end;
+  }
+  .chat-input {
+    flex: 1;
+    background: var(--bg-input);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    padding: 10px 12px;
+    color: var(--text-primary);
+    font-size: 13px;
+    font-family: var(--font-sans);
+    outline: none;
+    resize: none;
+    min-height: 40px;
+    max-height: 120px;
+    line-height: 1.4;
+    transition: border-color var(--transition-fast);
+  }
+  .chat-input::placeholder { color: var(--text-tertiary); }
+  .chat-input:focus { border-color: var(--accent-blue); }
+
+  .chat-send {
+    width: 36px; height: 36px;
+    border-radius: var(--radius-md);
+    background: var(--accent-blue);
+    border: none;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all var(--transition-fast);
+    flex-shrink: 0;
+  }
+  .chat-send:hover { background: #4a7ae0; }
+
+  .chat-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 10px;
+  }
+  .chat-action-btn {
+    background: transparent;
+    border: 1px solid var(--border-default);
+    color: var(--text-secondary);
+    padding: 5px 12px;
+    border-radius: var(--radius-md);
+    font-size: 11px;
+    cursor: pointer;
+    font-family: var(--font-sans);
+    transition: all var(--transition-fast);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .chat-action-btn:hover { border-color: var(--accent-blue); color: var(--accent-blue); }
+  .chat-action-btn.done-btn { border-color: rgba(74,222,128,0.3); color: var(--accent-green); }
+  .chat-action-btn.done-btn:hover { background: var(--accent-green-dim); }
+  .chat-action-btn.review-btn { border-color: rgba(160,124,245,0.3); color: var(--accent-purple); }
+  .chat-action-btn.review-btn:hover { background: rgba(160,124,245,0.1); }
+
+  /* Review actions */
+  .review-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border-subtle);
+  }
+  .review-btn {
+    padding: 6px 14px;
+    border-radius: var(--radius-md);
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    font-family: var(--font-sans);
+    border: 1px solid;
+    transition: all var(--transition-fast);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .review-btn.approve { background: var(--accent-green-dim); border-color: rgba(74,222,128,0.3); color: var(--accent-green); }
+  .review-btn.approve:hover { background: rgba(74,222,128,0.25); }
+  .review-btn.reject { background: var(--accent-orange-dim); border-color: rgba(249,115,22,0.3); color: var(--accent-orange); }
+  .review-btn.reject:hover { background: rgba(249,115,22,0.25); }
+  .review-btn.cancel { background: var(--accent-red-dim); border-color: rgba(248,113,113,0.3); color: var(--accent-red); }
+  .review-btn.cancel:hover { background: rgba(248,113,113,0.25); }
+  .review-btn.block { background: var(--accent-yellow-dim); border-color: rgba(251,191,36,0.3); color: var(--accent-yellow); }
+  .review-btn.block:hover { background: rgba(251,191,36,0.25); }
+
+  /* Artifacts */
+  .artifact-list {
+    margin-top: 12px;
+  }
+  .artifact-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px;
+    border-radius: var(--radius-sm);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--text-secondary);
+    transition: background var(--transition-fast);
+  }
+  .artifact-item:hover { background: var(--bg-hover); }
+  .artifact-item .artifact-action {
+    font-size: 10px;
+    padding: 1px 5px;
+    border-radius: 3px;
+    font-weight: 600;
+    flex-shrink: 0;
+  }
+  .artifact-item .artifact-action.added { background: var(--accent-green-dim); color: var(--accent-green); }
+  .artifact-item .artifact-action.modified { background: var(--accent-yellow-dim); color: var(--accent-yellow); }
+  .artifact-item .artifact-path { flex: 1; }
+  .artifact-item .artifact-diff { color: var(--text-tertiary); font-size: 10px; }
+
+  /* New Task Modal */
+  .modal-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 60;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(4px);
+  }
+  .modal-overlay.open { display: flex; }
+
+  .modal {
+    width: 520px;
+    max-width: 90vw;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg);
+    animation: modalIn 0.3s var(--transition-spring);
+  }
+  @keyframes modalIn {
+    from { opacity: 0; transform: scale(0.95) translateY(10px); }
+    to { opacity: 1; transform: scale(1) translateY(0); }
+  }
+
+  .modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border-subtle);
+  }
+  .modal-header h3 {
+    font-size: 15px;
+    font-weight: 600;
+  }
+  .modal-close {
+    width: 24px; height: 24px;
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: var(--text-tertiary);
+    font-size: 14px;
+    transition: all var(--transition-fast);
+  }
+  .modal-close:hover { background: var(--bg-hover); color: var(--text-primary); }
+
+  .modal-body { padding: 20px; }
+
+  .form-field {
+    margin-bottom: 14px;
+  }
+  .form-label {
+    display: block;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-tertiary);
+    margin-bottom: 5px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .form-input {
+    width: 100%;
+    background: var(--bg-input);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    padding: 8px 12px;
+    color: var(--text-primary);
+    font-size: 13px;
+    font-family: var(--font-sans);
+    outline: none;
+    transition: border-color var(--transition-fast);
+  }
+  .form-input:focus { border-color: var(--accent-blue); }
+
+  .form-textarea {
+    width: 100%;
+    background: var(--bg-input);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    padding: 8px 12px;
+    color: var(--text-primary);
+    font-size: 13px;
+    font-family: var(--font-sans);
+    outline: none;
+    resize: vertical;
+    min-height: 60px;
+    line-height: 1.5;
+    transition: border-color var(--transition-fast);
+  }
+  .form-textarea:focus { border-color: var(--accent-blue); }
+
+  .form-row {
+    display: flex;
+    gap: 12px;
+  }
+  .form-row .form-field { flex: 1; }
+
+  .form-select {
+    width: 100%;
+    background: var(--bg-input);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    padding: 7px 10px;
+    color: var(--text-primary);
+    font-size: 12px;
+    font-family: var(--font-sans);
+    outline: none;
+    cursor: pointer;
+  }
+
+  .form-config {
+    background: var(--bg-base);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    padding: 12px;
+    margin-top: 12px;
+  }
+  .form-config-title {
+    font-size: 11px;
+    color: var(--text-tertiary);
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+  }
+
+  .modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    padding: 12px 20px;
+    border-top: 1px solid var(--border-subtle);
+  }
+  .btn-ghost {
+    background: transparent;
+    border: 1px solid var(--border-default);
+    color: var(--text-secondary);
+    padding: 7px 16px;
+    border-radius: var(--radius-md);
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    font-family: var(--font-sans);
+    transition: all var(--transition-fast);
+  }
+  .btn-ghost:hover { border-color: var(--border-strong); color: var(--text-primary); }
+
+  /* ─── VIEW: PLANNING MODE B — WEEK ─── */
+  .planning-week {
+    display: none;
+    flex: 1;
+    overflow: hidden;
+    padding: 16px;
+    gap: 12px;
+  }
+  .planning-week.active { display: flex; }
+
+  .week-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 4px;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text-primary);
+    letter-spacing: -0.01em;
+    padding: 0 0 12px;
+    border-bottom: 1px solid var(--border-subtle);
+    flex-shrink: 0;
+    width: 100%;
+  }
+  .week-header .week-range {
+    font-size: 12px;
+    font-weight: 400;
+    color: var(--text-tertiary);
+    font-family: var(--font-mono);
+  }
+
+  .week-columns {
+    display: flex;
+    flex: 1;
+    gap: 10px;
+    overflow-x: auto;
+    padding-top: 12px;
+  }
+  .week-columns::-webkit-scrollbar { height: 4px; }
+  .week-columns::-webkit-scrollbar-thumb { background: var(--border-default); border-radius: 2px; }
+
+  .week-day-col {
+    flex: 1;
+    min-width: 200px;
+    display: flex;
+    flex-direction: column;
+    max-height: 100%;
+  }
+
+  .week-day-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 10px;
+    margin-bottom: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    letter-spacing: 0.02em;
+  }
+  .week-day-header.today {
+    color: var(--accent-blue);
+    background: rgba(91, 138, 245, 0.06);
+    border-radius: var(--radius-sm);
+  }
+  .week-day-header .day-count {
+    margin-left: auto;
+    font-size: 10px;
+    font-weight: 400;
+    color: var(--text-tertiary);
+    font-family: var(--font-mono);
+  }
+
+  .week-day-cards {
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 2px;
+  }
+  .week-day-cards::-webkit-scrollbar { width: 3px; }
+  .week-day-cards::-webkit-scrollbar-thumb { background: var(--border-default); border-radius: 2px; }
+
+  .week-card {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    padding: 10px 12px;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+  }
+  .week-card:hover {
+    border-color: var(--border-default);
+    background: var(--bg-elevated);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
+  }
+  .week-card .wc-title {
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 1.4;
+    margin-bottom: 6px;
+    color: var(--text-primary);
+  }
+  .week-card .wc-meta {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    flex-wrap: wrap;
+  }
+
+  .week-empty {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 1;
+    min-height: 80px;
+    border: 1px dashed var(--border-subtle);
+    border-radius: var(--radius-md);
+    color: var(--text-tertiary);
+    font-size: 12px;
+  }
+
+  /* ─── VIEW: PLANNING MODE C — DAY ─── */
+  .planning-day {
+    display: none;
+    flex: 1;
+    flex-direction: column;
+    overflow-y: auto;
+    padding: 20px 24px;
+  }
+  .planning-day.active { display: flex; }
+  .planning-day::-webkit-scrollbar { width: 4px; }
+  .planning-day::-webkit-scrollbar-thumb { background: var(--border-default); border-radius: 2px; }
+
+  .day-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-primary);
+    letter-spacing: -0.02em;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .day-title .day-count-tag {
+    font-size: 11px;
+    font-weight: 500;
+    padding: 2px 8px;
+    border-radius: 10px;
+    background: rgba(91, 138, 245, 0.15);
+    color: var(--accent-blue);
+    font-family: var(--font-sans);
+  }
+
+  .day-group {
+    margin-bottom: 20px;
+  }
+  .day-group-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 0;
+    margin-bottom: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    border-bottom: 1px solid var(--border-subtle);
+  }
+  .day-group-header .dg-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+  }
+  .day-group-header .dg-count {
+    margin-left: auto;
+    font-weight: 400;
+    color: var(--text-tertiary);
+    font-family: var(--font-mono);
+    font-size: 11px;
+  }
+
+  .day-task {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 10px 12px;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    margin-bottom: 4px;
+  }
+  .day-task:hover { background: var(--bg-hover); }
+
+  .day-task .dt-status-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    margin-top: 5px;
+    flex-shrink: 0;
+    border: 1.5px solid;
+  }
+  .day-task .dt-status-dot.in_progress { border-color: var(--status-progress); background: var(--status-progress); }
+  .day-task .dt-status-dot.todo { border-color: var(--status-todo); background: transparent; }
+  .day-task .dt-status-dot.done { border-color: var(--status-done); background: var(--status-done); }
+
+  .day-task .dt-body {
+    flex: 1;
+    min-width: 0;
+  }
+  .day-task .dt-title {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-primary);
+    margin-bottom: 4px;
+  }
+  .day-task .dt-detail {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+    font-size: 11px;
+    color: var(--text-tertiary);
+  }
+  .day-task .dt-detail .dt-sep {
+    color: var(--border-strong);
+  }
+  .day-task .dt-goal-ref {
+    font-size: 10px;
+    color: var(--text-tertiary);
+    margin-top: 3px;
+  }
+  .day-task .dt-plan-badge {
+    font-size: 10px;
+    padding: 1px 6px;
+    border-radius: 3px;
+    font-weight: 500;
+  }
+  .day-task .dt-plan-badge.ready { background: var(--accent-green-dim); color: var(--accent-green); }
+  .day-task .dt-plan-badge.pending { background: var(--accent-yellow-dim); color: var(--accent-yellow); }
+
+  /* Animations */
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .animate-in { animation: fadeIn 0.4s ease-out both; }
+  .delay-1 { animation-delay: 50ms; }
+  .delay-2 { animation-delay: 100ms; }
+  .delay-3 { animation-delay: 150ms; }
+  .delay-4 { animation-delay: 200ms; }
+  .delay-5 { animation-delay: 250ms; }
+
+  /* Responsive hints */
+  .prototype-badge {
+    position: fixed;
+    bottom: 12px;
+    right: 12px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-default);
+    padding: 6px 12px;
+    border-radius: var(--radius-md);
+    font-size: 10px;
+    color: var(--text-tertiary);
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .prototype-badge .dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--accent-green);
+    animation: pulse 2s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 0.5; }
+    50% { opacity: 1; }
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <!-- ═══ Activity Bar ═══ -->
+  <nav class="activity-bar">
+    <div class="logo">FP</div>
+    <div class="activity-item" data-page="home">
+      <span>🏠</span>
+      <span class="tooltip">Home</span>
+    </div>
+    <div class="activity-item" data-page="inbox">
+      <span>📥</span>
+      <span class="tooltip">Inbox 收集箱</span>
+    </div>
+    <div class="activity-item active" data-page="workspace">
+      <span>⚡</span>
+      <span class="tooltip">Workspace</span>
+    </div>
+    <div class="activity-item" data-page="projects">
+      <span>📁</span>
+      <span class="tooltip">Area Projects</span>
+    </div>
+    <div class="activity-item" data-page="crew">
+      <span>🤖</span>
+      <span class="tooltip">AI Crew</span>
+    </div>
+    <div class="activity-spacer"></div>
+    <div class="activity-item" data-page="settings">
+      <span>⚙️</span>
+      <span class="tooltip">Settings</span>
+    </div>
+  </nav>
+
+  <!-- ═══ Sidebar ═══ -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <h2>⚡ <span>Workspace</span></h2>
+    </div>
+    <div class="sidebar-search">
+      <span class="icon">🔍</span>
+      <input type="text" placeholder="搜索任务和目标...">
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-label">快捷视图</div>
+      <div class="sidebar-item active" data-filter="all">
+        <span class="icon">📋</span> 全部任务
+        <span class="badge">12</span>
+      </div>
+      <div class="sidebar-item" data-filter="today">
+        <span class="icon">🔥</span> 今日聚焦
+        <span class="badge">3</span>
+      </div>
+      <div class="sidebar-item" data-filter="week">
+        <span class="icon">📅</span> 本周计划
+        <span class="badge">7</span>
+      </div>
+      <div class="sidebar-item" data-filter="agent">
+        <span class="icon">🤖</span> Agent 执行中
+        <span class="badge" style="background:rgba(91,138,245,0.2);color:var(--accent-blue);">2</span>
+      </div>
+
+      <div class="sidebar-label" style="margin-top:12px;">目标树</div>
+      <div class="goal-tree-item active">
+        <span class="expand">▾</span>
+        <span class="dot" style="background:var(--accent-blue);"></span>
+        Q2 FocusPilot 0.0.1
+        <span class="progress-mini">38%</span>
+      </div>
+      <div class="goal-children">
+        <div class="goal-tree-item">
+          <span class="expand">▾</span>
+          <span class="dot" style="background:var(--accent-green);"></span>
+          4月 Workspace 原型
+          <span class="progress-mini">40%</span>
+        </div>
+        <div class="goal-children">
+          <div class="goal-tree-item">
+            <span class="expand">&nbsp;</span>
+            <span class="dot" style="background:var(--accent-blue);"></span>
+            5月 AI Crew
+            <span class="progress-mini">0%</span>
+          </div>
+          <div class="goal-tree-item">
+            <span class="expand">&nbsp;</span>
+            <span class="dot" style="background:var(--text-tertiary);"></span>
+            6月 测试发布
+            <span class="progress-mini">0%</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="goal-tree-item" style="margin-top:4px;">
+        <span class="expand">▸</span>
+        <span class="dot" style="background:var(--accent-purple);"></span>
+        知识沉淀
+        <span class="progress-mini">25%</span>
+      </div>
+
+      <div class="sidebar-label" style="margin-top:12px;">来源</div>
+      <div class="sidebar-item">
+        <span class="icon">📁</span> AreaProject
+        <span class="badge">8</span>
+      </div>
+      <div class="sidebar-item">
+        <span class="icon">📥</span> Inbox 导入
+        <span class="badge">2</span>
+      </div>
+      <div class="sidebar-item">
+        <span class="icon">✏️</span> 临时创建
+        <span class="badge">2</span>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ═══ Main Content ═══ -->
+  <main class="main-content">
+    <!-- Top Bar -->
+    <div class="topbar">
+      <span class="topbar-title">Workspace</span>
+      <div class="view-tabs">
+        <div class="view-tab active" data-view="planning">📐 规划</div>
+        <div class="view-tab" data-view="board">📋 看板</div>
+        <div class="view-tab" data-view="list">📄 列表</div>
+      </div>
+      <div class="topbar-spacer"></div>
+      <div class="topbar-filters">
+        <button class="filter-btn" id="filter-time">时间: 本月 ▾</button>
+        <button class="filter-btn" id="filter-goal">目标: 全部 ▾</button>
+        <button class="filter-btn" id="filter-source">来源: 全部 ▾</button>
+      </div>
+      <button class="btn-primary" onclick="openNewTaskModal()">+ 新建任务</button>
+    </div>
+
+    <!-- ═══ Planning View ═══ -->
+    <div class="view-content active" id="view-planning">
+      <!-- Mode A: Goal Tree + Gantt (default) -->
+      <div class="planning-view" id="planning-mode-a">
+        <!-- Left: Goal Tree -->
+        <div class="planning-tree">
+          <!-- Year -->
+          <div class="plan-node animate-in">
+            <div class="plan-node-header goal" style="font-size:14px;">
+              <span class="chevron expanded">▶</span>
+              <span class="node-icon">🎯</span>
+              <span class="node-title" style="font-family:var(--font-display);font-size:16px;">2026 年度目标</span>
+            </div>
+            <div class="plan-node-children">
+              <!-- Q2 -->
+              <div class="plan-node animate-in delay-1">
+                <div class="plan-node-header goal">
+                  <span class="chevron expanded">▶</span>
+                  <span class="node-icon">📌</span>
+                  <span class="node-title">Q2 — FocusPilot 0.0.1 发布</span>
+                  <div class="node-meta">
+                    <span class="lifecycle active">active</span>
+                    <span class="health-tag on_track">ON TRACK</span>
+                    <div class="progress-bar"><div class="fill" style="width:38%;background:var(--accent-blue);"></div></div>
+                    <span class="progress-text">38%</span>
+                  </div>
+                </div>
+                <div class="plan-node-children">
+                  <!-- April -->
+                  <div class="plan-node animate-in delay-2">
+                    <div class="plan-node-header goal">
+                      <span class="chevron expanded">▶</span>
+                      <span class="node-icon">📆</span>
+                      <span class="node-title">4月 — Workspace + Engine 原型</span>
+                      <div class="node-meta">
+                        <span class="lifecycle active">active</span>
+                        <span class="health-tag on_track">ON TRACK</span>
+                        <div class="progress-bar"><div class="fill" style="width:40%;background:var(--accent-green);"></div></div>
+                        <span class="progress-text">40%</span>
+                      </div>
+                    </div>
+                    <div class="plan-node-children">
+                      <!-- Tasks -->
+                      <div class="plan-node animate-in delay-3">
+                        <div class="plan-node-header" onclick="openTaskDetail('kanban')" style="cursor:pointer;">
+                          <span class="chevron" style="visibility:hidden;">▶</span>
+                          <span class="task-status-dot in_progress"></span>
+                          <span class="node-title">看板状态模型实现</span>
+                          <div class="node-meta">
+                            <span class="card-tag priority-p0">P0</span>
+                            <span class="card-tag auto">🤖 auto</span>
+                            <span style="font-size:10px;color:var(--text-tertiary);font-family:var(--font-mono);">04-20</span>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="plan-node animate-in delay-4">
+                        <div class="plan-node-header" onclick="openTaskDetail('agent')" style="cursor:pointer;">
+                          <span class="chevron" style="visibility:hidden;">▶</span>
+                          <span class="task-status-dot todo"></span>
+                          <span class="node-title">Agent Pull 执行管道</span>
+                          <div class="node-meta">
+                            <span class="card-tag priority-p1">P1</span>
+                            <span class="card-tag auto">🤖 auto</span>
+                            <span style="font-size:10px;color:var(--text-tertiary);font-family:var(--font-mono);">04-25</span>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="plan-node animate-in delay-5">
+                        <div class="plan-node-header" onclick="openTaskDetail('terminal')" style="cursor:pointer;">
+                          <span class="chevron" style="visibility:hidden;">▶</span>
+                          <span class="task-status-dot todo"></span>
+                          <span class="node-title">Terminal 手动执行模式</span>
+                          <div class="node-meta">
+                            <span class="card-tag priority-p1">P1</span>
+                            <span class="card-tag manual">🖐 manual</span>
+                            <span style="font-size:10px;color:var(--text-tertiary);font-family:var(--font-mono);">04-28</span>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="plan-node">
+                        <div class="plan-node-header">
+                          <span class="chevron" style="visibility:hidden;">▶</span>
+                          <span class="task-status-dot done"></span>
+                          <span class="node-title" style="text-decoration:line-through;color:var(--text-tertiary);">数据模型设计</span>
+                          <div class="node-meta">
+                            <span class="card-tag priority-p0">P0</span>
+                            <span style="font-size:10px;color:var(--accent-green);">✓</span>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="plan-node">
+                        <div class="plan-node-header">
+                          <span class="chevron" style="visibility:hidden;">▶</span>
+                          <span class="task-status-dot backlog"></span>
+                          <span class="node-title">主题系统适配</span>
+                          <div class="node-meta">
+                            <span class="card-tag priority-p2">P2</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <!-- May -->
+                  <div class="plan-node">
+                    <div class="plan-node-header goal">
+                      <span class="chevron">▶</span>
+                      <span class="node-icon">📆</span>
+                      <span class="node-title">5月 — AI Crew 配置 + 知识管道</span>
+                      <div class="node-meta">
+                        <span class="lifecycle active">active</span>
+                        <div class="progress-bar"><div class="fill" style="width:0%;"></div></div>
+                        <span class="progress-text">0%</span>
+                      </div>
+                    </div>
+                  </div>
+                  <!-- June -->
+                  <div class="plan-node">
+                    <div class="plan-node-header goal">
+                      <span class="chevron">▶</span>
+                      <span class="node-icon">📆</span>
+                      <span class="node-title">6月 — 集成测试 + 首版发布</span>
+                      <div class="node-meta">
+                        <span class="lifecycle paused">paused</span>
+                        <div class="progress-bar"><div class="fill" style="width:0%;"></div></div>
+                        <span class="progress-text">0%</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <!-- Q3 placeholder -->
+              <div class="plan-node">
+                <div class="plan-node-header goal" style="opacity:0.5;">
+                  <span class="chevron">▶</span>
+                  <span class="node-icon">📌</span>
+                  <span class="node-title">Q3 — PilotOne 企业版启动</span>
+                  <div class="node-meta">
+                    <div class="progress-bar"><div class="fill" style="width:0%;"></div></div>
+                    <span class="progress-text">0%</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: Gantt Chart -->
+        <div class="gantt-area">
+          <div class="gantt-header">
+            <div class="gantt-month">3月</div>
+            <div class="gantt-month current">4月</div>
+            <div class="gantt-month">5月</div>
+            <div class="gantt-month">6月</div>
+          </div>
+          <div class="gantt-body" style="position:relative;min-width:720px;">
+            <!-- Today line -->
+            <div class="gantt-today-line" style="left:310px;"></div>
+
+            <!-- Q2 Goal bar -->
+            <div class="gantt-row">
+              <div class="gantt-bar goal-bar" style="left:120px;width:480px;">
+                <div class="bar-fill" style="width:38%;"></div>
+                Q2 FocusPilot 0.0.1
+              </div>
+            </div>
+
+            <!-- April Goal -->
+            <div class="gantt-row" style="margin-top:4px;">
+              <div class="gantt-bar goal-bar" style="left:180px;width:170px;font-size:9px;">
+                <div class="bar-fill" style="width:40%;"></div>
+                4月 Workspace
+              </div>
+            </div>
+
+            <!-- April Tasks -->
+            <div class="gantt-row">
+              <div class="gantt-bar task-bar done" style="left:190px;width:50px;" title="数据模型设计 ✓"></div>
+            </div>
+            <div class="gantt-row">
+              <div class="gantt-bar task-bar in_progress" style="left:240px;width:70px;" title="看板状态模型"></div>
+            </div>
+            <div class="gantt-row">
+              <div class="gantt-bar task-bar todo" style="left:280px;width:60px;" title="Agent Pull"></div>
+            </div>
+            <div class="gantt-row">
+              <div class="gantt-bar task-bar todo" style="left:300px;width:50px;" title="Terminal"></div>
+            </div>
+            <div class="gantt-row">
+              <div class="gantt-bar task-bar backlog" style="left:320px;width:30px;" title="主题适配"></div>
+            </div>
+
+            <div class="gantt-row spacer"></div>
+
+            <!-- May Goal -->
+            <div class="gantt-row">
+              <div class="gantt-bar goal-bar" style="left:360px;width:150px;font-size:9px;">
+                <div class="bar-fill" style="width:0%;"></div>
+                5月 AI Crew
+              </div>
+            </div>
+            <div class="gantt-row">
+              <div class="gantt-bar task-bar backlog" style="left:370px;width:50px;" title="Crew 配置"></div>
+            </div>
+            <div class="gantt-row">
+              <div class="gantt-bar task-bar backlog" style="left:420px;width:60px;" title="知识管道"></div>
+            </div>
+            <div class="gantt-row">
+              <div class="gantt-bar task-bar backlog" style="left:460px;width:40px;" title="Anki 同步"></div>
+            </div>
+
+            <div class="gantt-row spacer"></div>
+
+            <!-- June Goal -->
+            <div class="gantt-row">
+              <div class="gantt-bar goal-bar" style="left:520px;width:120px;font-size:9px;opacity:0.5;">
+                <div class="bar-fill" style="width:0%;"></div>
+                6月 测试发布
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Mode B: Week Planning -->
+      <div class="planning-week" id="planning-mode-b">
+        <div style="display:flex;flex-direction:column;flex:1;overflow:hidden;">
+          <div class="week-header">
+            📅 本周计划 · 2026-04-13 ~ 04-17
+            <span class="week-range">W16 · 4 项任务</span>
+          </div>
+          <div class="week-columns">
+            <!-- 周一 -->
+            <div class="week-day-col animate-in">
+              <div class="week-day-header">
+                <span>周一</span>
+                <span style="font-size:11px;font-family:var(--font-mono);color:var(--text-tertiary);">04-13</span>
+                <span class="day-count">2</span>
+              </div>
+              <div class="week-day-cards">
+                <div class="week-card" onclick="openTaskDetail('kanban')">
+                  <div class="wc-title">看板状态模型实现</div>
+                  <div class="wc-meta">
+                    <span class="card-tag priority-p0">P0</span>
+                    <span style="font-size:11px;">🤖</span>
+                    <span class="card-tag goal-ref">→ 4月/WS</span>
+                  </div>
+                </div>
+                <div class="week-card">
+                  <div class="wc-title">读《Designing Data》</div>
+                  <div class="wc-meta">
+                    <span class="card-tag priority-p2">P2</span>
+                    <span style="font-size:11px;">🖐</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <!-- 周二 -->
+            <div class="week-day-col animate-in delay-1">
+              <div class="week-day-header">
+                <span>周二</span>
+                <span style="font-size:11px;font-family:var(--font-mono);color:var(--text-tertiary);">04-14</span>
+                <span class="day-count">1</span>
+              </div>
+              <div class="week-day-cards">
+                <div class="week-card" onclick="openTaskDetail('agent')">
+                  <div class="wc-title">Agent Pull 执行管道</div>
+                  <div class="wc-meta">
+                    <span class="card-tag priority-p1">P1</span>
+                    <span style="font-size:11px;">🤖</span>
+                    <span class="card-tag goal-ref">→ 4月/WS</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <!-- 周三 -->
+            <div class="week-day-col animate-in delay-2">
+              <div class="week-day-header">
+                <span>周三</span>
+                <span style="font-size:11px;font-family:var(--font-mono);color:var(--text-tertiary);">04-15</span>
+                <span class="day-count">1</span>
+              </div>
+              <div class="week-day-cards">
+                <div class="week-card">
+                  <div class="wc-title">整理会议记录</div>
+                  <div class="wc-meta">
+                    <span class="card-tag priority-p2">P2</span>
+                    <span style="font-size:11px;">🖐</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <!-- 周四 -->
+            <div class="week-day-col animate-in delay-3">
+              <div class="week-day-header">
+                <span>周四</span>
+                <span style="font-size:11px;font-family:var(--font-mono);color:var(--text-tertiary);">04-16</span>
+                <span class="day-count">1</span>
+              </div>
+              <div class="week-day-cards">
+                <div class="week-card" onclick="openTaskDetail('terminal')">
+                  <div class="wc-title">Terminal 手动执行</div>
+                  <div class="wc-meta">
+                    <span class="card-tag priority-p1">P1</span>
+                    <span style="font-size:11px;">🖐</span>
+                    <span class="card-tag goal-ref">→ 4月/WS</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <!-- 周五 -->
+            <div class="week-day-col animate-in delay-4">
+              <div class="week-day-header today">
+                <span>周五</span>
+                <span style="font-size:11px;font-family:var(--font-mono);">04-17</span>
+                <span class="day-count">0</span>
+              </div>
+              <div class="week-day-cards">
+                <div class="week-empty">暂无任务</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Mode C: Day Planning -->
+      <div class="planning-day" id="planning-mode-c">
+        <div class="day-title">
+          📅 2026-04-18 · 周五
+          <span class="day-count-tag">3 项任务</span>
+        </div>
+
+        <!-- 进行中 -->
+        <div class="day-group animate-in">
+          <div class="day-group-header">
+            <span class="dg-dot" style="background:var(--status-progress);"></span>
+            进行中
+            <span class="dg-count">1</span>
+          </div>
+          <div class="day-task" onclick="openTaskDetail('kanban')">
+            <span class="dt-status-dot in_progress"></span>
+            <div class="dt-body">
+              <div class="dt-title">看板状态模型实现</div>
+              <div class="dt-detail">
+                <span class="card-tag priority-p0">P0</span>
+                <span>🤖</span>
+                <span class="dt-sep">|</span>
+                <span>代码工程师</span>
+                <span class="dt-sep">|</span>
+                <span style="color:var(--accent-blue);">执行中</span>
+              </div>
+              <div class="dt-goal-ref">→ Q2 / 4月 / Workspace 原型</div>
+              <div style="margin-top:4px;">
+                <span class="dt-plan-badge ready">plan.md ✓ ready</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 待执行 -->
+        <div class="day-group animate-in delay-1">
+          <div class="day-group-header">
+            <span class="dg-dot" style="background:var(--status-todo);"></span>
+            待执行
+            <span class="dg-count">2</span>
+          </div>
+          <div class="day-task">
+            <span class="dt-status-dot todo"></span>
+            <div class="dt-body">
+              <div class="dt-title">读《Designing Data Apps》第3章</div>
+              <div class="dt-detail">
+                <span class="card-tag priority-p2">P2</span>
+                <span>🖐</span>
+              </div>
+              <div class="dt-goal-ref">→ 知识沉淀 / 阅读计划</div>
+            </div>
+          </div>
+          <div class="day-task">
+            <span class="dt-status-dot todo"></span>
+            <div class="dt-body">
+              <div class="dt-title">整理本周会议记录</div>
+              <div class="dt-detail">
+                <span class="card-tag priority-p2">P2</span>
+                <span>🖐</span>
+                <span class="dt-sep">|</span>
+                <span>临时任务</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 已完成 (empty placeholder) -->
+        <div class="day-group animate-in delay-2">
+          <div class="day-group-header">
+            <span class="dg-dot" style="background:var(--status-done);"></span>
+            已完成
+            <span class="dg-count">0</span>
+          </div>
+          <div style="padding:12px;color:var(--text-tertiary);font-size:12px;">今日暂无已完成任务</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ Board View (Kanban) ═══ -->
+    <div class="view-content" id="view-board">
+      <div class="board-view">
+        <!-- Backlog -->
+        <div class="kanban-column">
+          <div class="kanban-col-header">
+            <span class="col-dot" style="background:var(--status-backlog);"></span>
+            Backlog
+            <span class="col-count">2</span>
+          </div>
+          <div class="kanban-cards">
+            <div class="kanban-card animate-in" onclick="openTaskDetail('theme')">
+              <div class="card-id">FP-006</div>
+              <div class="card-title">主题系统适配</div>
+              <div class="card-meta">
+                <span class="card-tag priority-p2">P2</span>
+                <span class="card-tag auto">🤖 auto</span>
+                <span class="card-tag goal-ref">→ 4月/WS原型</span>
+              </div>
+              <div class="card-footer">
+                <div class="card-agent">
+                  <span class="agent-avatar">🧑‍💻</span> 代码工程师
+                </div>
+                <span class="card-date">—</span>
+              </div>
+            </div>
+            <div class="kanban-card animate-in delay-1">
+              <div class="card-id">FP-009</div>
+              <div class="card-title">Anki 同步接口设计</div>
+              <div class="card-meta">
+                <span class="card-tag priority-p2">P2</span>
+                <span class="card-tag auto">🤖 auto</span>
+                <span class="card-tag goal-ref">→ 5月/AI Crew</span>
+              </div>
+              <div class="card-footer">
+                <div class="card-agent">
+                  <span class="agent-avatar">🧑‍💻</span> 代码工程师
+                </div>
+                <span class="card-date">—</span>
+              </div>
+            </div>
+            <div class="kanban-add">+ 新建任务</div>
+          </div>
+        </div>
+
+        <!-- Todo -->
+        <div class="kanban-column">
+          <div class="kanban-col-header">
+            <span class="col-dot" style="background:var(--status-todo);"></span>
+            Todo
+            <span class="col-count">3</span>
+          </div>
+          <div class="kanban-cards">
+            <div class="kanban-card animate-in delay-1" onclick="openTaskDetail('agent')">
+              <div class="card-id">FP-003</div>
+              <div class="card-title">Agent Pull 执行管道</div>
+              <div class="card-meta">
+                <span class="card-tag priority-p1">P1</span>
+                <span class="card-tag auto">🤖 auto</span>
+                <span class="card-tag goal-ref">→ 4月/WS原型</span>
+              </div>
+              <div class="card-footer">
+                <div class="card-agent">
+                  <span class="agent-avatar">🧑‍💻</span> 代码工程师
+                </div>
+                <span class="card-date">04-25</span>
+              </div>
+            </div>
+            <div class="kanban-card animate-in delay-2" onclick="openTaskDetail('terminal')">
+              <div class="card-id">FP-004</div>
+              <div class="card-title">Terminal 手动执行模式</div>
+              <div class="card-meta">
+                <span class="card-tag priority-p1">P1</span>
+                <span class="card-tag manual">🖐 manual</span>
+                <span class="card-tag goal-ref">→ 4月/WS原型</span>
+              </div>
+              <div class="card-footer">
+                <div class="card-agent">
+                  <span class="agent-avatar">👤</span> 手动执行
+                </div>
+                <span class="card-date">04-28</span>
+              </div>
+            </div>
+            <div class="kanban-card animate-in delay-3">
+              <div class="card-id">FP-010</div>
+              <div class="card-title">整理本周会议记录</div>
+              <div class="card-meta">
+                <span class="card-tag priority-p2">P2</span>
+                <span class="card-tag manual">🖐 manual</span>
+              </div>
+              <div class="card-footer">
+                <div class="card-agent">
+                  <span class="agent-avatar">👤</span> 手动执行
+                </div>
+                <span class="card-date">04-18</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- In Progress -->
+        <div class="kanban-column">
+          <div class="kanban-col-header">
+            <span class="col-dot" style="background:var(--status-progress);"></span>
+            In Progress
+            <span class="col-count">2</span>
+          </div>
+          <div class="kanban-cards">
+            <div class="kanban-card animate-in delay-2" onclick="openTaskDetail('kanban')" style="border-color:rgba(91,138,245,0.3);">
+              <div class="card-id">FP-002</div>
+              <div class="card-title">看板状态模型实现</div>
+              <div class="card-meta">
+                <span class="card-tag priority-p0">P0</span>
+                <span class="card-tag auto">🤖 auto</span>
+                <span class="card-tag goal-ref">→ 4月/WS原型</span>
+              </div>
+              <div class="card-footer">
+                <div class="card-agent">
+                  <span class="agent-avatar" style="background:linear-gradient(135deg,var(--accent-blue),var(--accent-purple));">🧑‍💻</span>
+                  <span style="color:var(--accent-blue);">代码工程师 · 执行中</span>
+                </div>
+                <span class="card-date">04-20</span>
+              </div>
+            </div>
+            <div class="kanban-card animate-in delay-3">
+              <div class="card-id">FP-011</div>
+              <div class="card-title">研究 Multica 执行模型</div>
+              <div class="card-meta">
+                <span class="card-tag priority-p1">P1</span>
+                <span class="card-tag manual">🖐 manual</span>
+              </div>
+              <div class="card-footer">
+                <div class="card-agent">
+                  <span class="agent-avatar">👤</span> 手动执行
+                </div>
+                <span class="card-date">04-18</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- In Review -->
+        <div class="kanban-column">
+          <div class="kanban-col-header">
+            <span class="col-dot" style="background:var(--status-review);"></span>
+            In Review
+            <span class="col-count">1</span>
+          </div>
+          <div class="kanban-cards">
+            <div class="kanban-card animate-in delay-3" onclick="openTaskDetail('review')" style="border-color:rgba(160,124,245,0.3);">
+              <div class="card-id">FP-005</div>
+              <div class="card-title">规划引擎接口设计</div>
+              <div class="card-meta">
+                <span class="card-tag priority-p0">P0</span>
+                <span class="card-tag auto">🤖 auto</span>
+                <span class="card-tag goal-ref">→ 4月/WS原型</span>
+              </div>
+              <div class="card-footer">
+                <div class="card-agent">
+                  <span class="agent-avatar" style="background:var(--accent-purple);">🧑‍💻</span>
+                  <span style="color:var(--accent-purple);">待验收</span>
+                </div>
+                <span class="card-date">04-17</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Done -->
+        <div class="kanban-column">
+          <div class="kanban-col-header">
+            <span class="col-dot" style="background:var(--status-done);"></span>
+            Done
+            <span class="col-count">2</span>
+          </div>
+          <div class="kanban-cards">
+            <div class="kanban-card animate-in delay-4" style="opacity:0.7;">
+              <div class="card-id">FP-001</div>
+              <div class="card-title" style="text-decoration:line-through;">数据模型设计</div>
+              <div class="card-meta">
+                <span class="card-tag priority-p0">P0</span>
+                <span class="card-tag auto">🤖 auto</span>
+              </div>
+              <div class="card-footer">
+                <div class="card-agent">
+                  <span class="agent-avatar">🧑‍💻</span> 代码工程师
+                </div>
+                <span class="card-date" style="color:var(--accent-green);">✓ 04-15</span>
+              </div>
+            </div>
+            <div class="kanban-card animate-in delay-5" style="opacity:0.7;">
+              <div class="card-id">FP-007</div>
+              <div class="card-title" style="text-decoration:line-through;">PRD 文档整合</div>
+              <div class="card-meta">
+                <span class="card-tag priority-p1">P1</span>
+                <span class="card-tag manual">🖐 manual</span>
+              </div>
+              <div class="card-footer">
+                <div class="card-agent">
+                  <span class="agent-avatar">👤</span> 手动完成
+                </div>
+                <span class="card-date" style="color:var(--accent-green);">✓ 04-16</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ List View ═══ -->
+    <div class="view-content" id="view-list">
+      <div class="list-view">
+        <div class="list-group-header">
+          📌 Q2 / 4月 — Workspace + Engine 原型
+          <span class="group-count">5 项</span>
+        </div>
+        <table class="list-table">
+          <thead>
+            <tr>
+              <th style="width:40px;">状态</th>
+              <th>标题</th>
+              <th style="width:70px;">安排</th>
+              <th style="width:50px;">优先级</th>
+              <th style="width:50px;">模式</th>
+              <th style="width:90px;">Agent</th>
+              <th style="width:60px;">来源</th>
+              <th style="width:60px;">截止</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr onclick="openTaskDetail('kanban')">
+              <td><span class="status-pill in_progress">● 进行</span></td>
+              <td class="title-cell">看板状态模型实现</td>
+              <td>本周</td>
+              <td><span class="card-tag priority-p0">P0</span></td>
+              <td><span class="mode-icon">🤖</span></td>
+              <td style="font-size:11px;">代码工程师</td>
+              <td style="font-size:11px;color:var(--text-tertiary);">area</td>
+              <td style="font-family:var(--font-mono);font-size:11px;">04-20</td>
+            </tr>
+            <tr onclick="openTaskDetail('agent')">
+              <td><span class="status-pill todo">○ 待做</span></td>
+              <td class="title-cell">Agent Pull 执行管道</td>
+              <td>本周</td>
+              <td><span class="card-tag priority-p1">P1</span></td>
+              <td><span class="mode-icon">🤖</span></td>
+              <td style="font-size:11px;">代码工程师</td>
+              <td style="font-size:11px;color:var(--text-tertiary);">area</td>
+              <td style="font-family:var(--font-mono);font-size:11px;">04-25</td>
+            </tr>
+            <tr onclick="openTaskDetail('terminal')">
+              <td><span class="status-pill todo">○ 待做</span></td>
+              <td class="title-cell">Terminal 手动执行模式</td>
+              <td>本周</td>
+              <td><span class="card-tag priority-p1">P1</span></td>
+              <td><span class="mode-icon">🖐</span></td>
+              <td style="font-size:11px;">手动执行</td>
+              <td style="font-size:11px;color:var(--text-tertiary);">area</td>
+              <td style="font-family:var(--font-mono);font-size:11px;">04-28</td>
+            </tr>
+            <tr>
+              <td><span class="status-pill done">✓ 完成</span></td>
+              <td class="title-cell" style="text-decoration:line-through;color:var(--text-tertiary);">数据模型设计</td>
+              <td style="color:var(--text-tertiary);">本周</td>
+              <td><span class="card-tag priority-p0">P0</span></td>
+              <td><span class="mode-icon">🤖</span></td>
+              <td style="font-size:11px;">代码工程师</td>
+              <td style="font-size:11px;color:var(--text-tertiary);">area</td>
+              <td style="font-family:var(--font-mono);font-size:11px;color:var(--accent-green);">✓ 04-15</td>
+            </tr>
+            <tr>
+              <td><span class="status-pill backlog">◦ 待排</span></td>
+              <td class="title-cell">主题系统适配</td>
+              <td style="color:var(--text-tertiary);">—</td>
+              <td><span class="card-tag priority-p2">P2</span></td>
+              <td><span class="mode-icon">🤖</span></td>
+              <td style="font-size:11px;">代码工程师</td>
+              <td style="font-size:11px;color:var(--text-tertiary);">area</td>
+              <td style="font-family:var(--font-mono);font-size:11px;">—</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="list-group-header" style="margin-top:8px;">
+          ✏️ 未关联目标
+          <span class="group-count">2 项</span>
+        </div>
+        <table class="list-table">
+          <thead>
+            <tr>
+              <th style="width:40px;">状态</th>
+              <th>标题</th>
+              <th style="width:70px;">安排</th>
+              <th style="width:50px;">优先级</th>
+              <th style="width:50px;">模式</th>
+              <th style="width:90px;">Agent</th>
+              <th style="width:60px;">来源</th>
+              <th style="width:60px;">截止</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="status-pill in_progress">● 进行</span></td>
+              <td class="title-cell">研究 Multica 执行模型</td>
+              <td>今天</td>
+              <td><span class="card-tag priority-p1">P1</span></td>
+              <td><span class="mode-icon">🖐</span></td>
+              <td style="font-size:11px;">手动执行</td>
+              <td style="font-size:11px;color:var(--text-tertiary);">adhoc</td>
+              <td style="font-family:var(--font-mono);font-size:11px;">04-18</td>
+            </tr>
+            <tr>
+              <td><span class="status-pill todo">○ 待做</span></td>
+              <td class="title-cell">整理本周会议记录</td>
+              <td>今天</td>
+              <td><span class="card-tag priority-p2">P2</span></td>
+              <td><span class="mode-icon">🖐</span></td>
+              <td style="font-size:11px;">手动执行</td>
+              <td style="font-size:11px;color:var(--text-tertiary);">adhoc</td>
+              <td style="font-family:var(--font-mono);font-size:11px;">04-18</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- ═══ Task Detail Panel ═══ -->
+<div class="task-detail-overlay" id="detailOverlay" onclick="closeTaskDetail()"></div>
+<div class="task-detail-panel" id="detailPanel">
+  <div class="detail-header">
+    <div class="detail-close" onclick="closeTaskDetail()">✕</div>
+    <div class="detail-title-area">
+      <div class="detail-id">FP-002</div>
+      <div class="detail-title">看板状态模型实现</div>
+    </div>
+    <span class="status-pill in_progress" style="font-size:12px;">● In Progress</span>
+  </div>
+
+  <div class="detail-body">
+    <div class="detail-main">
+      <!-- Tabs -->
+      <div class="detail-tabs">
+        <div class="detail-tab active" data-dtab="plan">📄 规划</div>
+        <div class="detail-tab" data-dtab="auto">🤖 自动</div>
+        <div class="detail-tab" data-dtab="manual">🖐 手动</div>
+      </div>
+
+      <!-- Plan Tab -->
+      <div class="detail-tab-content active" id="dtab-plan">
+        <div class="plan-section">
+          <div class="plan-section-title">📝 任务描述</div>
+          <div class="plan-description">
+            实现 Workspace 看板视图的状态模型，采用 Multica 7 态流转：backlog → todo → in_progress → in_review → done，旁路状态 blocked / cancelled。需要实现拖拽跨列变更状态，状态变更持久化，以及与规划视图的数据同步。
+          </div>
+        </div>
+
+        <div class="plan-section">
+          <div class="plan-section-title">📋 规划文档 <span style="font-size:9px;color:var(--accent-green);margin-left:4px;">● READY</span></div>
+          <div class="plan-doc">
+            <div class="plan-doc-header">
+              <div class="doc-status">✓ plan.md · brainstorming 生成</div>
+              <div class="plan-doc-actions">
+                <button>重新规划</button>
+                <button>新窗口打开</button>
+              </div>
+            </div>
+            <div class="plan-doc-body">
+              <h3>实现步骤</h3>
+              <ol>
+                <li>定义 <code>TaskStatus</code> 枚举，包含 7 种状态及合法转换规则</li>
+                <li>创建 <code>KanbanDataSource</code>，负责按 status 分组并驱动 UI</li>
+                <li>实现 NSTableView drag & drop 协议，支持跨列拖拽</li>
+                <li>状态变更时通过 <code>ConfigStore</code> 持久化</li>
+                <li>添加拖拽动画（0.25s ease-out），放置时卡片弹性缩放</li>
+                <li>同步更新规划视图中对应节点的 status 标记</li>
+              </ol>
+
+              <h3>验收标准</h3>
+              <div class="check"><span class="check-box"></span> 拖拽跨列后 status 正确更新且持久化</div>
+              <div class="check"><span class="check-box"></span> 动画流畅无闪烁，响应时间 &lt; 100ms</div>
+              <div class="check"><span class="check-box"></span> 重启后看板状态保持不丢失</div>
+              <div class="check"><span class="check-box"></span> blocked/cancelled 卡片在独立折叠区显示</div>
+              <div class="check"><span class="check-box"></span> 规划视图中任务状态标记同步变更</div>
+
+              <h3>技术约束</h3>
+              <ul>
+                <li>纯 AppKit 实现，不引入 SwiftUI 视图</li>
+                <li>复用现有 QuickPanelView 的 NSTableView 架构</li>
+                <li>状态转换规则在 Model 层校验，UI 层不做业务逻辑</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Auto Tab -->
+      <div class="detail-tab-content" id="dtab-auto">
+        <div class="execution-stream">
+          <div class="stream-header">
+            <span style="font-size:14px;">🤖</span>
+            <span class="agent-name">代码工程师</span>
+            <span class="stream-status">· 执行中</span>
+            <span class="stream-time">00:03:42</span>
+          </div>
+          <div class="stream-body">
+            <div class="stream-line"><span class="prefix">▸</span><span class="text dim">加载规划文档 plan.md ...</span></div>
+            <div class="stream-line"><span class="prefix">▸</span><span class="text dim">分析任务验收标准 (5 项) ...</span></div>
+            <div class="stream-line"><span class="prefix">▸</span><span class="text info">读取 QuickPanelView.swift 结构</span></div>
+            <div class="stream-line"><span class="prefix">▸</span><span class="text info">读取 Models.swift 现有数据模型</span></div>
+            <div class="stream-line"><span class="prefix">▸</span><span class="text">创建 TaskStatus 枚举 — 7 种状态 + 转换矩阵</span></div>
+            <div class="stream-line"><span class="prefix">▸</span><span class="text">写入 Models.swift (+42 行)</span></div>
+            <div class="stream-line"><span class="prefix">▸</span><span class="text">创建 KanbanDataSource.swift — 分组、排序、拖拽协议</span></div>
+            <div class="stream-line"><span class="prefix">▸</span><span class="text">实现 tableView(_:pasteboardWriterForRow:)</span></div>
+            <div class="stream-line"><span class="prefix">▸</span><span class="text">实现 tableView(_:validateDrop:proposedRow:) — 状态合法性校验</span></div>
+            <div class="stream-line"><span class="prefix">▸</span><span class="text">实现 tableView(_:acceptDrop:row:) — 持久化到 ConfigStore</span></div>
+            <div class="stream-line"><span class="prefix">▸</span><span class="text info">编译中 ...</span></div>
+            <div class="stream-line"><span class="prefix">▸</span><span class="text success">✓ Build succeeded (0 warnings)</span></div>
+            <div class="stream-line"><span class="prefix">▸</span><span class="text">添加拖拽动画 — NSAnimationContext 0.25s ease-out</span></div>
+            <div class="stream-line"><span class="prefix">▸</span><span class="text info">编译中 ...</span></div>
+            <div class="stream-line"><span class="prefix">▸</span><span class="text success">✓ Build succeeded</span></div>
+            <div class="stream-line"><span class="prefix">▸</span><span class="text">同步规划视图状态标记 — NotificationCenter 广播</span></div>
+            <div class="stream-line"><span class="prefix">▸</span><span class="text info">生成执行报告 ...</span><span class="stream-cursor"></span></div>
+          </div>
+          <div class="stream-footer">
+            <div class="progress-info">
+              <div class="spinner"></div>
+              Step 6/6 · 预计剩余 &lt; 1 min
+            </div>
+            <button class="btn-danger">⏹ 终止执行</button>
+          </div>
+        </div>
+
+        <div class="plan-section" style="margin-top:16px;">
+          <div class="plan-section-title">📦 产出物</div>
+          <div class="artifact-list">
+            <div class="artifact-item">
+              <span class="artifact-action added">NEW</span>
+              <span class="artifact-path">KanbanDataSource.swift</span>
+              <span class="artifact-diff">+186</span>
+            </div>
+            <div class="artifact-item">
+              <span class="artifact-action modified">MOD</span>
+              <span class="artifact-path">Models.swift</span>
+              <span class="artifact-diff">+42 -0</span>
+            </div>
+            <div class="artifact-item">
+              <span class="artifact-action modified">MOD</span>
+              <span class="artifact-path">QuickPanelView.swift</span>
+              <span class="artifact-diff">+67 -12</span>
+            </div>
+            <div class="artifact-item">
+              <span class="artifact-action modified">MOD</span>
+              <span class="artifact-path">ConfigStore.swift</span>
+              <span class="artifact-diff">+15 -0</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Review actions (shown when in_review) -->
+        <div class="review-actions">
+          <button class="review-btn approve">✅ 通过</button>
+          <button class="review-btn reject">↩️ 退回</button>
+          <button class="review-btn cancel">⛔ 取消</button>
+          <button class="review-btn block">🚧 阻塞</button>
+        </div>
+      </div>
+
+      <!-- Manual Tab -->
+      <div class="detail-tab-content" id="dtab-manual" style="display:none;height:100%;">
+        <div class="chat-container">
+          <div class="chat-messages">
+            <div class="chat-msg">
+              <div class="chat-avatar system">📋</div>
+              <div class="chat-body">
+                <div class="chat-sender" style="color:var(--text-tertiary);">系统</div>
+                <div class="chat-text">
+                  已加载规划文档作为上下文。你可以基于规划执行，也可以进一步调整方案。
+                  <div class="plan-ref">📄 看板状态模型实现 — plan.md &nbsp;→</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="chat-msg">
+              <div class="chat-avatar user">👤</div>
+              <div class="chat-body">
+                <div class="chat-sender">你</div>
+                <div class="chat-text">
+                  先实现 TaskStatus 枚举，但我想用 struct + static let 的模式而不是 enum，方便后续扩展自定义状态
+                </div>
+              </div>
+            </div>
+
+            <div class="chat-msg">
+              <div class="chat-avatar agent">🤖</div>
+              <div class="chat-body">
+                <div class="chat-sender" style="color:var(--accent-blue);">代码工程师</div>
+                <div class="chat-text">
+                  好的，使用 <code>struct TaskStatus: Hashable</code> + <code>static let</code> 的模式。这样支持运行时扩展自定义状态，同时保持类型安全。
+                  <br><br>
+                  已完成修改：
+                  <div class="file-change">
+                    <span class="modified">~</span> Models.swift <span style="color:var(--accent-green);">+38</span> <span style="color:var(--accent-red);">-0</span>
+                  </div>
+                  <br>
+                  包含 7 个预设状态 + <code>isValid(transition:)</code> 转换校验方法。需要我继续下一步吗？
+                </div>
+              </div>
+            </div>
+
+            <div class="chat-msg">
+              <div class="chat-avatar user">👤</div>
+              <div class="chat-body">
+                <div class="chat-sender">你</div>
+                <div class="chat-text">
+                  好的，继续实现 KanbanDataSource，编译测试一下
+                </div>
+              </div>
+            </div>
+
+            <div class="chat-msg">
+              <div class="chat-avatar agent">🤖</div>
+              <div class="chat-body">
+                <div class="chat-sender" style="color:var(--accent-blue);">代码工程师</div>
+                <div class="chat-text">
+                  已创建 <code>KanbanDataSource.swift</code> 并实现拖拽协议：
+                  <div class="file-change">
+                    <span class="added">+</span> KanbanDataSource.swift <span style="color:var(--accent-green);">+156</span>
+                  </div>
+                  <div class="file-change">
+                    <span class="modified">~</span> QuickPanelView.swift <span style="color:var(--accent-green);">+23</span> <span style="color:var(--accent-red);">-5</span>
+                  </div>
+                  <br>
+                  <span style="font-family:var(--font-mono);font-size:11px;color:var(--text-tertiary);">$ make build</span><br>
+                  <span style="color:var(--accent-green);">✓ Build succeeded (0 warnings)</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="chat-input-area">
+            <div class="chat-input-wrapper">
+              <textarea class="chat-input" placeholder="输入消息..." rows="1"></textarea>
+              <button class="chat-send">▶</button>
+            </div>
+            <div class="chat-actions">
+              <button class="chat-action-btn done-btn">✅ 标记完成 → done</button>
+              <button class="chat-action-btn review-btn">📤 提交验收 → in_review</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Sidebar -->
+    <div class="detail-sidebar">
+      <div class="detail-field">
+        <div class="detail-field-label">状态</div>
+        <div class="detail-field-value">
+          <select>
+            <option>backlog</option>
+            <option>todo</option>
+            <option selected>in_progress</option>
+            <option>in_review</option>
+            <option>done</option>
+            <option>blocked</option>
+            <option>cancelled</option>
+          </select>
+        </div>
+      </div>
+      <div class="detail-field">
+        <div class="detail-field-label">优先级</div>
+        <div class="detail-field-value">
+          <select>
+            <option selected>P0 — 紧急</option>
+            <option>P1 — 重要</option>
+            <option>P2 — 普通</option>
+          </select>
+        </div>
+      </div>
+      <div class="detail-field">
+        <div class="detail-field-label">安排</div>
+        <div class="detail-field-value">
+          <select>
+            <option>今天</option>
+            <option selected>本周</option>
+            <option>本月</option>
+            <option>Backlog</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="detail-divider"></div>
+
+      <div class="detail-field">
+        <div class="detail-field-label">归属目标</div>
+        <div class="detail-field-value" style="font-size:11px;flex-direction:column;align-items:flex-start;gap:2px;">
+          <span style="color:var(--text-tertiary);">Q2 / 4月</span>
+          <span>Workspace + Engine 原型</span>
+        </div>
+      </div>
+      <div class="detail-field">
+        <div class="detail-field-label">来源</div>
+        <div class="detail-field-value" style="font-size:11px;">
+          <span>📁</span> AreaProject
+        </div>
+      </div>
+
+      <div class="detail-divider"></div>
+      <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:var(--text-tertiary);margin-bottom:8px;">执行配置</div>
+
+      <div class="detail-field">
+        <div class="detail-field-label">执行模式</div>
+        <div class="detail-field-value">
+          <select>
+            <option selected>🤖 自动</option>
+            <option>🖐 手动</option>
+          </select>
+        </div>
+      </div>
+      <div class="detail-field">
+        <div class="detail-field-label">Agent</div>
+        <div class="detail-field-value">
+          <select>
+            <option selected>🧑‍💻 代码工程师</option>
+            <option>📊 数据分析师</option>
+            <option>📝 内容编辑</option>
+          </select>
+        </div>
+      </div>
+      <div class="detail-field">
+        <div class="detail-field-label">执行引擎</div>
+        <div class="detail-field-value" style="font-size:11px;color:var(--text-tertiary);">
+          claude-code
+        </div>
+      </div>
+
+      <div class="detail-divider"></div>
+      <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:var(--text-tertiary);margin-bottom:8px;">规划配置</div>
+
+      <div class="detail-field">
+        <div class="detail-field-label">规划引擎</div>
+        <div class="detail-field-value">
+          <select>
+            <option selected>brainstorming</option>
+            <option>writing-plans</option>
+            <option>自定义 Skill</option>
+          </select>
+        </div>
+      </div>
+      <div class="detail-field">
+        <div class="detail-field-label">规划状态</div>
+        <div class="detail-field-value" style="font-size:11px;">
+          <span style="color:var(--accent-green);">✓</span> ready
+        </div>
+      </div>
+
+      <div class="detail-divider"></div>
+
+      <div class="detail-field">
+        <div class="detail-field-label">创建时间</div>
+        <div class="detail-field-value" style="font-size:11px;font-family:var(--font-mono);color:var(--text-tertiary);">2026-04-16 14:30</div>
+      </div>
+      <div class="detail-field">
+        <div class="detail-field-label">截止时间</div>
+        <div class="detail-field-value" style="font-size:11px;font-family:var(--font-mono);">2026-04-20</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ New Task Modal ═══ -->
+<div class="modal-overlay" id="newTaskModal">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <h3>新建任务</h3>
+      <div class="modal-close" onclick="closeNewTaskModal()">✕</div>
+    </div>
+    <div class="modal-body">
+      <div class="form-field">
+        <label class="form-label">标题</label>
+        <input class="form-input" type="text" placeholder="任务标题...">
+      </div>
+      <div class="form-field">
+        <label class="form-label">描述</label>
+        <textarea class="form-textarea" placeholder="描述任务内容和目标..."></textarea>
+      </div>
+      <div class="form-row">
+        <div class="form-field">
+          <label class="form-label">来源</label>
+          <select class="form-select">
+            <option>AreaProject</option>
+            <option>Inbox 导入</option>
+            <option selected>临时创建</option>
+          </select>
+        </div>
+        <div class="form-field">
+          <label class="form-label">归属目标</label>
+          <select class="form-select">
+            <option>无（临时任务）</option>
+            <option>Q2 / 4月 / Workspace 原型</option>
+            <option>Q2 / 5月 / AI Crew</option>
+            <option>Q2 / 6月 / 测试发布</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-field">
+          <label class="form-label">安排</label>
+          <select class="form-select">
+            <option>今天</option>
+            <option selected>本周</option>
+            <option>本月</option>
+            <option>Backlog</option>
+          </select>
+        </div>
+        <div class="form-field">
+          <label class="form-label">优先级</label>
+          <select class="form-select">
+            <option>P0 — 紧急</option>
+            <option selected>P1 — 重要</option>
+            <option>P2 — 普通</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-config">
+        <div class="form-config-title">⚙️ 执行 & 规划配置（可折叠，有全局默认值）</div>
+        <div class="form-row">
+          <div class="form-field">
+            <label class="form-label">执行模式</label>
+            <select class="form-select">
+              <option selected>🤖 自动（Agent Pull）</option>
+              <option>🖐 手动（对话式）</option>
+            </select>
+          </div>
+          <div class="form-field">
+            <label class="form-label">Agent</label>
+            <select class="form-select">
+              <option selected>🧑‍💻 代码工程师</option>
+              <option>📊 数据分析师</option>
+              <option>📝 内容编辑</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-field">
+          <label class="form-label">规划引擎</label>
+          <select class="form-select">
+            <option selected>brainstorming</option>
+            <option>writing-plans</option>
+            <option>自定义 Skill</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-ghost" onclick="closeNewTaskModal()">取消</button>
+      <button class="btn-ghost">创建</button>
+      <button class="btn-primary">创建并规划</button>
+    </div>
+  </div>
+</div>
+
+<!-- Prototype Badge -->
+<div class="prototype-badge">
+  <span class="dot"></span>
+  FocusPilot Workspace · UI Prototype · 点击卡片查看详情
+</div>
+
+<script>
+  // ─── State ───
+  let currentFilter = 'all'; // all | today | week | agent
+
+  // ─── View switching (top tabs) ───
+  document.querySelectorAll('.view-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.view-tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.view-content').forEach(v => v.classList.remove('active'));
+      tab.classList.add('active');
+      document.getElementById('view-' + tab.dataset.view).classList.add('active');
+      // Re-apply planning mode for current filter
+      if (tab.dataset.view === 'planning') {
+        applyPlanningMode(currentFilter);
+      }
+    });
+  });
+
+  // ─── Planning mode switching ───
+  function applyPlanningMode(filter) {
+    const modeA = document.getElementById('planning-mode-a');
+    const modeB = document.getElementById('planning-mode-b');
+    const modeC = document.getElementById('planning-mode-c');
+
+    // Hide all modes
+    modeA.style.display = 'none';
+    modeB.classList.remove('active');
+    modeC.classList.remove('active');
+
+    if (filter === 'week') {
+      modeB.classList.add('active');
+    } else if (filter === 'today') {
+      modeC.classList.add('active');
+    } else {
+      // 'all' and 'agent' both show mode A (goal tree + gantt)
+      modeA.style.display = '';
+    }
+  }
+
+  // ─── Sidebar filter interaction ───
+  function applyFilter(filter) {
+    currentFilter = filter;
+
+    // 1. Update sidebar highlight
+    document.querySelectorAll('.sidebar-item[data-filter]').forEach(item => {
+      item.classList.toggle('active', item.dataset.filter === filter);
+    });
+
+    // 2. Update filter buttons text
+    const filterTimeBtn = document.getElementById('filter-time');
+    const filterMap = {
+      'all':   '时间: 本月 ▾',
+      'today': '时间: 今天 ▾',
+      'week':  '时间: 本周 ▾',
+      'agent': '时间: 全部 ▾'
+    };
+    filterTimeBtn.textContent = filterMap[filter] || filterMap['all'];
+
+    // 3. Apply planning mode
+    const planningView = document.getElementById('view-planning');
+    if (planningView.classList.contains('active')) {
+      applyPlanningMode(filter);
+    }
+
+    // 4. Apply kanban filtering
+    applyBoardFilter(filter);
+
+    // 5. Apply list filtering
+    applyListFilter(filter);
+  }
+
+  // ─── Board (Kanban) filtering ───
+  function applyBoardFilter(filter) {
+    const columns = document.querySelectorAll('#view-board .kanban-column');
+    const cards = document.querySelectorAll('#view-board .kanban-card');
+
+    if (filter === 'all') {
+      // Show everything
+      columns.forEach(col => col.style.display = '');
+      cards.forEach(card => card.style.display = '');
+    } else if (filter === 'today') {
+      // Show only cards with date 04-18 or in_progress
+      columns.forEach(col => col.style.display = '');
+      cards.forEach(card => {
+        const dateEl = card.querySelector('.card-date');
+        const date = dateEl ? dateEl.textContent.trim() : '';
+        const isToday = date.includes('04-18');
+        card.style.display = isToday ? '' : 'none';
+      });
+    } else if (filter === 'week') {
+      // Show cards in this week (04-13 ~ 04-18) — show most active cards
+      columns.forEach(col => col.style.display = '');
+      cards.forEach(card => {
+        const dateEl = card.querySelector('.card-date');
+        const date = dateEl ? dateEl.textContent.trim() : '';
+        const weekDates = ['04-15', '04-16', '04-17', '04-18', '04-20', '04-25', '04-28'];
+        const inWeek = weekDates.some(d => date.includes(d));
+        card.style.display = (inWeek || date === '—') ? '' : 'none';
+      });
+    } else if (filter === 'agent') {
+      // Show only in_progress columns/cards with auto tag
+      columns.forEach(col => col.style.display = '');
+      cards.forEach(card => {
+        const hasAuto = card.querySelector('.card-tag.auto');
+        const statusDot = card.closest('.kanban-column')?.querySelector('.col-dot');
+        const isProgress = card.style.borderColor && card.style.borderColor.includes('91');
+        const inProgressCol = statusDot && getComputedStyle(statusDot).backgroundColor.includes('91');
+        // Show cards that are 🤖 auto and in progress-like state
+        const agentCard = hasAuto && (card.querySelector('.card-agent span[style*="accent-blue"]') || inProgressCol);
+        card.style.display = agentCard ? '' : 'none';
+      });
+    }
+
+    // Update column counts
+    columns.forEach(col => {
+      const visibleCards = col.querySelectorAll('.kanban-card:not([style*="display: none"])').length;
+      const countEl = col.querySelector('.col-count');
+      if (countEl) countEl.textContent = visibleCards;
+    });
+  }
+
+  // ─── List filtering ───
+  function applyListFilter(filter) {
+    const rows = document.querySelectorAll('#view-list .list-table tbody tr');
+    const groups = document.querySelectorAll('#view-list .list-group-header');
+
+    if (filter === 'all') {
+      rows.forEach(row => row.style.display = '');
+      groups.forEach(g => g.style.display = '');
+    } else if (filter === 'today') {
+      rows.forEach(row => {
+        const cells = row.querySelectorAll('td');
+        const scheduleCell = cells[2];
+        const schedule = scheduleCell ? scheduleCell.textContent.trim() : '';
+        row.style.display = schedule === '今天' ? '' : 'none';
+      });
+      groups.forEach(g => g.style.display = '');
+    } else if (filter === 'week') {
+      rows.forEach(row => {
+        const cells = row.querySelectorAll('td');
+        const scheduleCell = cells[2];
+        const schedule = scheduleCell ? scheduleCell.textContent.trim() : '';
+        row.style.display = (schedule === '本周' || schedule === '今天') ? '' : 'none';
+      });
+      groups.forEach(g => g.style.display = '');
+    } else if (filter === 'agent') {
+      rows.forEach(row => {
+        const statusCell = row.querySelector('.status-pill');
+        const modeCell = row.querySelector('.mode-icon');
+        const isProgress = statusCell && statusCell.classList.contains('in_progress');
+        const isAuto = modeCell && modeCell.textContent.includes('🤖');
+        row.style.display = (isProgress && isAuto) ? '' : 'none';
+      });
+      groups.forEach(g => g.style.display = '');
+    }
+
+    // Update group counts
+    document.querySelectorAll('#view-list .list-table').forEach(table => {
+      const visibleRows = table.querySelectorAll('tbody tr:not([style*="display: none"])').length;
+      const header = table.previousElementSibling;
+      if (header && header.classList.contains('list-group-header')) {
+        const countEl = header.querySelector('.group-count');
+        if (countEl) countEl.textContent = visibleRows + ' 项';
+      }
+    });
+  }
+
+  // ─── Sidebar click handlers ───
+  document.querySelectorAll('.sidebar-item[data-filter]').forEach(item => {
+    item.addEventListener('click', () => {
+      applyFilter(item.dataset.filter);
+    });
+  });
+
+  // ─── Detail tab switching ───
+  document.querySelectorAll('.detail-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.detail-tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.detail-tab-content').forEach(c => { c.classList.remove('active'); c.style.display = 'none'; });
+      tab.classList.add('active');
+      const content = document.getElementById('dtab-' + tab.dataset.dtab);
+      content.classList.add('active');
+      content.style.display = tab.dataset.dtab === 'manual' ? 'flex' : 'block';
+    });
+  });
+
+  // ─── Task Detail Panel ───
+  function openTaskDetail(type) {
+    document.getElementById('detailOverlay').classList.add('open');
+    document.getElementById('detailPanel').classList.add('open');
+  }
+  function closeTaskDetail() {
+    document.getElementById('detailOverlay').classList.remove('open');
+    document.getElementById('detailPanel').classList.remove('open');
+  }
+
+  // ─── New Task Modal ───
+  function openNewTaskModal() {
+    document.getElementById('newTaskModal').classList.add('open');
+  }
+  function closeNewTaskModal() {
+    document.getElementById('newTaskModal').classList.remove('open');
+  }
+
+  // ─── Close on Escape ───
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') {
+      closeTaskDetail();
+      closeNewTaskModal();
+    }
+  });
+
+  // ─── Activity bar ───
+  document.querySelectorAll('.activity-item').forEach(item => {
+    item.addEventListener('click', () => {
+      document.querySelectorAll('.activity-item').forEach(i => i.classList.remove('active'));
+      item.classList.add('active');
+    });
+  });
+</script>
+
+</body>
+</html>
