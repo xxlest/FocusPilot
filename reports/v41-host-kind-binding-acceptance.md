@@ -42,4 +42,4 @@
 | `FocusPilot/Services/CoderBridgeService.swift` | BindingState helper + 策略分流（变更 F/G/H/I/I2/J/K） |
 | `FocusPilot/QuickPanel/QuickPanelRowBuilder.swift` | UI 标记 + 窗口切换 + 绑定引导（变更 L/M/N） |
 | `FocusPilot/QuickPanel/QuickPanelMenuHandler.swift` | 右键菜单绑定（变更 O） |
-| `docs/superpowers/specs/2026-03-30-host-kind-binding-strategy.md` | 架构设计文档 |
+| `docs/Architecture.md`（V4.1 章节） | 架构设计文档（原 `docs/superpowers/specs/2026-03-30-host-kind-binding-strategy.md`，已归入主架构文档） |

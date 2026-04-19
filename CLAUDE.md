@@ -9,11 +9,13 @@ FocusPilot是 macOS 悬浮球应用，支持窗口快捷切换。
 
 ## 文档体系
 
-- **产品需求**：`docs/PRD.md` — 功能清单、交互规则、验收标准
+- **产品需求（主）**：`docs/PRD.md` — FocusPilot 0.0.1 主 PRD（两阶段模型、四模式、Crew、知识管道、Dashboard）
+- **产品需求（归档）**：`docs/archive/PRD-v4-legacy.md` — FocusPilot V4.x 既有功能清单、交互规则、验收标准
 - **技术架构**：`docs/Architecture.md` — 模块划分、接口契约、状态机
 - **设计规范**：`docs/DesignGuide.md` — 视觉准则、主题色值、动画参数、修改规则
+- **版本规划**：`docs/Editions.md` — 个人版/企业版功能边界、付费方案
 
-修改 UI 前必读 DesignGuide.md，修改业务逻辑前必读 Architecture.md。
+修改 UI 前必读 DesignGuide.md，修改业务逻辑前必读 Architecture.md，修改功能边界时必读 Editions.md。PilotOne 新功能开发前必读 PRD.md。
 
 ## 产品设计基调
 
