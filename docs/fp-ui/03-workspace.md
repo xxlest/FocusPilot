@@ -9,10 +9,10 @@
 
 ## 1. 定位
 
-Focus 是 FocusPilot 的**结构化行动工作台**，承载"规划 → 执行 → 审查 → 验收"全链路。
+Focus 是 FocusPilot 的**结构化行动工作台**，承载"规划 → 执行 → 评估 → 验收"全链路。
 
 - 规划层：从年度到每日的目标拆解，AI 辅助多轮对话
-- 执行层：4 种执行模式 + 可选审查开关
+- 执行层：4 种执行模式 + 可选评估开关
 - 验收层：用户最终验收，AI 不做 pass/fail 判定
 
 Focus 只负责任务的结构化管理（目标/看板/列表/Task 执行闭环）。AI 交互式开发工作在 [Studio](04-studio.md) 中进行。Task 手动模式（dialog step）可在 Focus 内嵌简化对话，也可跳转 Studio 打开完整工作区。
@@ -47,7 +47,7 @@ WorkItem:
   children_ids: []
 
   # ── 看板维度 ──
-  status: in_progress # backlog|todo|in_progress|in_review|done|blocked|cancelled
+  status: in_progress # backlog|todo|in_progress|in_evaluation|done|blocked|cancelled
   blocked_from_status: null # blocked 解除后回到的来源状态
   priority: p0 # p0|p1|p2
   source: area_project # inbox|area_project|adhoc
@@ -61,12 +61,12 @@ WorkItem:
 
   # ── 执行配置 ──
   execution_mode: semi_auto # none|manual|semi_auto|auto
-  review_enabled: true # 审查开关
+  evaluation_enabled: true # 评估开关
   agents:
     planner: "agent_architect" # semi_auto/auto 时使用
     executor: "agent_coder" # semi_auto/auto + 修复执行
     dialog: "agent_coder" # manual 时使用
-    reviewer: "agent_reviewer" # review_enabled=true 时使用
+    evaluator: "agent_evaluator" # evaluation_enabled=true 时使用
   current_run_id: "run_abc123" # 当前 ExecutionRun
 
   # ── 容器聚合（item_role=container|hybrid 时自动计算）──
@@ -108,9 +108,9 @@ Free:   Group → ... → Task (→ Sub-task)
 ### 2.4 Task 状态机
 
 ```
-创建 ──▶ backlog ──▶ todo ──▶ in_progress ──▶ in_review ──▶ done
+创建 ──▶ backlog ──▶ todo ──▶ in_progress ──▶ in_evaluation ──▶ done
               │         │         │               │
-              │         │         │               ├─ 采纳审查意见 ──▶ in_progress（修复）
+              │         │         │               ├─ 采纳评估意见 ──▶ in_progress（修复）
               │         │         │               ├─ 忽略并完成 ──▶ done
               │         │         │               └─ 手动接管 ──▶ in_progress（dialog）
               │         │         │
@@ -119,31 +119,31 @@ Free:   Group → ... → Task (→ Sub-task)
               └─────────┴──── cancelled
 ```
 
-**7 种状态**（Multica 标准 7 态）：backlog / todo / in_progress / in_review / done / blocked / cancelled。
+**7 种状态**（Multica 标准 7 态）：backlog / todo / in_progress / in_evaluation / done / blocked / cancelled。
 
 **V1 不设 `failed` 状态**：步骤失败在 ExecutionRun/Step 层记录，看板层映射为 `blocked` + 错误徽标（🔴），用户可手动接管或重试。步骤失败进入 blocked 时，`blocked_from_status` 写入失败前的状态（通常为 `in_progress`）。
 
-**`blocked` 规则**：任意状态进入 blocked 时必须写入 `blocked_from_status`；解除后回到来源状态。例如 in_review → blocked → 解除 → in_review。
+**`blocked` 规则**：任意状态进入 blocked 时必须写入 `blocked_from_status`；解除后回到来源状态。例如 in_evaluation → blocked → 解除 → in_evaluation。
 
-**进入 in_review 的两种情况**：
+**进入 in_evaluation 的两种情况**：
 
-1. Review 完成，等用户决策（审查意见已产出）
+1. Evaluation 完成，等用户决策（评估意见已产出）
 2. 最终验收，等用户确认
 
-**其余所有"进行中"状态**（规划中/等待批准/执行中/审查中/修复中）统一为 in_progress。
+**其余所有"进行中"状态**（规划中/等待批准/执行中/评估中/修复中）统一为 in_progress。
 
 ---
 
 ## 3. 执行模式
 
-### 3.1 四种模式 + 审查开关
+### 3.1 四种模式 + 评估开关
 
 ```
 4 模式:  无执行器 | 手动 | 半自动 | 全自动
-审查:    可选开关（手动/半自动/全自动均可启用）
+评估:    可选开关（手动/半自动/全自动均可启用）
 ```
 
-| 模式        | 定位                                         | 需要 Agent | 审查可用 |
+| 模式        | 定位                                         | 需要 Agent | 评估可用 |
 | ----------- | -------------------------------------------- | :--------: | :------: |
 | `none`      | 普通待办，手动打勾完成                       |     ✗      |    ✗     |
 | `manual`    | 用户全程指挥 Agent 对话协作                  |   ✓(1个)   |    ✓     |
@@ -158,40 +158,40 @@ Free:   Group → ... → Task (→ Sub-task)
 (无步骤) → 用户手动打勾 → done
 ```
 
-**手动，审查关**：
+**手动，评估关**：
 
 ```
 dialog → 最终验收
 ```
 
-**手动，审查开**：
+**手动，评估开**：
 
 ```
-dialog → 打包结果(ManualExecutionPackage) → review → 用户决策 → 最终验收
+dialog → 打包结果(ManualExecutionPackage) → evaluation → 用户决策 → 最终验收
 ```
 
-**半自动，审查关**：
+**半自动，评估关**：
 
 ```
 plan(交互式，必须多轮对话) → 批准规划 → execute → 最终验收
 ```
 
-**半自动，审查开**：
+**半自动，评估开**：
 
 ```
-plan(交互式) → 批准规划 → execute → review → 用户决策 → 最终验收
+plan(交互式) → 批准规划 → execute → evaluation → 用户决策 → 最终验收
 ```
 
-**全自动，审查关**：
+**全自动，评估关**：
 
 ```
 plan(自主，遇不确定按假设推进) → execute → 最终验收
 ```
 
-**全自动，审查开**：
+**全自动，评估开**：
 
 ```
-plan(自主) → execute → review → 用户决策 → 最终验收
+plan(自主) → execute → evaluation → 用户决策 → 最终验收
 ```
 
 ### 3.3 规划步骤的交互策略
@@ -207,7 +207,7 @@ plan(自主) → execute → review → 用户决策 → 最终验收
 
 - 当前 Run 暂停
 - 打开 dialog Tab
-- 注入当前全部上下文（plan.md、execution_log、review_report、changed_files）
+- 注入当前全部上下文（plan.md、execution_log、evaluation_report、changed_files）
 - 用户和 Agent 对话微调
 - 完成后提交验收或标记 done
 
@@ -216,9 +216,9 @@ plan(自主) → execute → review → 用户决策 → 最终验收
 ```
 Settings → Workspace
 ├── 默认执行模式: none
-├── 默认启用审查: 否
+├── 默认启用评估: 否
 ├── 默认 Agent: 代码工程师
-├── 默认审查 Agent: Review Agent
+├── 默认评估 Agent: Evaluation Agent
 └── Agent 并发数: 3
 ```
 
@@ -226,22 +226,22 @@ Task 级配置可覆盖全局默认值。
 
 ---
 
-## 4. 审查（Review）
+## 4. 评估（Evaluation）
 
 ### 4.1 核心定义
 
-> Review Agent 只产出审查意见（修改建议），不产出 pass/fail。
-> 用户在 Review 阶段查看建议，可以编辑建议后交给执行 Agent 处理，也可以忽略建议并直接标记完成。
-> Review cycle 可循环，但每一轮修复都必须由用户显式触发。
+> Evaluation Agent 只产出评估意见（修改建议），不产出 pass/fail。
+> 用户在 Evaluation 阶段查看建议，可以编辑建议后交给执行 Agent 处理，也可以忽略建议并直接标记完成。
+> Evaluation cycle 可循环，但每一轮修复都必须由用户显式触发。
 > severity（critical/important/nit）只帮助用户排序，不自动阻断流程。
 
-### 4.2 Review 步骤流程
+### 4.2 Evaluation 步骤流程
 
 ```
 execute/dialog 完成
      │
      ▼
-review 开始（Review Agent 接收输入）
+evaluation 开始（Evaluation Agent 接收输入）
      │
      │  输入（半自动/全自动）:
      │    plan.md + execution_log + changed_files
@@ -252,10 +252,10 @@ review 开始（Review Agent 接收输入）
      │    transcript_ref + user_notes
      │
      ▼
-Review Agent 产出 ReviewReport（只读）
+Evaluation Agent 产出 EvaluationReport（只读）
      │
      ▼
-WorkItem.status → in_review
+WorkItem.status → in_evaluation
 用户三选一：
 
   [按建议处理]  [忽略建议并完成]  [手动接管]
@@ -265,11 +265,11 @@ WorkItem.status → in_review
 
 **按建议处理**：
 
-1. 打开 ReviewInstruction 编辑界面
+1. 打开 EvaluationInstruction 编辑界面
 2. 用户可编辑/筛选/补充建议内容
 3. 确认后发送给 executor Agent
 4. WorkItem.status → in_progress
-5. 修复完成后再次进入 review（新一轮 ReviewCycle）
+5. 修复完成后再次进入 evaluation（新一轮 EvaluationCycle）
 6. 每轮都由用户显式触发，不自动循环
 
 **忽略建议并完成**：
@@ -281,23 +281,23 @@ WorkItem.status → in_review
 **手动接管**：
 
 - WorkItem.status → in_progress
-- 打开 dialog Tab，注入 review_report 作为上下文
+- 打开 dialog Tab，注入 evaluation_report 作为上下文
 - 用户手动处理
 
-### 4.4 手动模式的审查衔接
+### 4.4 手动模式的评估衔接
 
 手动模式 dialog 完成后，底部按钮：
 
 ```
-[✅ 标记完成]  [📤 提交审查]  [📤 提交最终验收]
+[✅ 标记完成]  [📤 提交评估]  [📤 提交最终验收]
 ```
 
-点击"提交审查"：
+点击"提交评估"：
 
 1. 系统从对话记录中自动提取 ManualExecutionPackage
 2. 弹出确认，用户可编辑摘要和附加备注
-3. 发送给 Review Agent
-4. 进入标准 review 流程
+3. 发送给 Evaluation Agent
+4. 进入标准 evaluation 流程
 
 ManualExecutionPackage 结构：
 
@@ -311,16 +311,16 @@ ManualExecutionPackage:
   user_notes: (用户可选填写)
 ```
 
-Review Agent 主要审 package，transcript 作为补充参考。
+Evaluation Agent 主要审 package，transcript 作为补充参考。
 
-### 4.5 审查数据模型
+### 4.5 评估数据模型
 
 ```yaml
-ReviewReport:
+EvaluationReport:
   id: "rr_001"
   run_id: "run_abc123"
   cycle_no: 1
-  generated_by: "agent_reviewer"
+  generated_by: "agent_evaluator"
   source_artifacts: ["plan.md", "execution.log", "changed_files"]
   findings:
     - id: "f1"
@@ -343,16 +343,16 @@ ReviewReport:
   summary: "2 处需修改，1 处建议优化"
   readonly: true # 原始报告不可修改
 
-ReviewInstruction:
+EvaluationInstruction:
   id: "ri_001"
   report_id: "rr_001"
   cycle_no: 1
   edited_by: user
-  selected_findings: ["f1", "f2"] # 引用 ReviewReport.findings[].id
+  selected_findings: ["f1", "f2"] # 引用 EvaluationReport.findings[].id
   instruction_text: "按建议修改，另外把动画时长改为 0.2s" # 用户补充指令
   created_at: "2026-04-19T10:30:00"
 
-ReviewCycle:
+EvaluationCycle:
   cycle_no: 1
   report_id: "rr_001"
   instruction_id: "ri_001" # 用户编辑后的指令（可为 null）
@@ -369,7 +369,7 @@ ReviewCycle:
 | 半自动   | executor Agent | 自动修复     |
 | 全自动   | executor Agent | 自动修复     |
 
-Review Agent 不负责修复，只负责审查。用户可在 ReviewInstruction 中临时改派 Agent。
+Evaluation Agent 不负责修复，只负责评估。用户可在 EvaluationInstruction 中临时改派 Agent。
 
 ---
 
@@ -380,15 +380,15 @@ ExecutionRun:
   id: "run_abc123"
   work_item_id: "FP-002"
   mode: semi_auto # manual|semi_auto|auto
-  review_enabled: true
+  evaluation_enabled: true
   status: running # pending|running|paused|completed|aborted
   current_step_index: 3
-  active_review_cycle: 1 # 当前审查轮次
+  active_evaluation_cycle: 1 # 当前评估轮次
 
   agents:
     planner: "agent_architect"
     executor: "agent_coder"
-    reviewer: "agent_reviewer"
+    evaluator: "agent_evaluator"
 
   steps:
     - step_run_id: "step_plan"
@@ -415,39 +415,39 @@ ExecutionRun:
         - { type: execution_log, path: "runs/run_abc123/execution.log" }
         - { type: changed_files, data: ["Models.swift", "KanbanDataSource.swift"] }
 
-    - step_run_id: "step_review_c1"
-      type: review
+    - step_run_id: "step_eval_c1"
+      type: evaluation
       status: completed
-      agent_id: "agent_reviewer"
-      review_cycle: 1
+      agent_id: "agent_evaluator"
+      evaluation_cycle: 1
       artifacts:
-        - { type: review_report, ref: "rr_001" }
+        - { type: evaluation_report, ref: "rr_001" }
 
-    # ── 用户采纳审查意见后，动态追加 revision step ──
+    # ── 用户采纳评估意见后，动态追加 revision step ──
     - step_run_id: "step_rev_c1"
       type: revision_execute
       status: completed
       agent_id: "agent_coder"
-      review_cycle: 1 # 对应哪轮审查
-      instruction_id: "ri_001" # 对应哪份 ReviewInstruction
+      evaluation_cycle: 1 # 对应哪轮评估
+      instruction_id: "ri_001" # 对应哪份 EvaluationInstruction
       artifacts:
         - { type: execution_log, path: "runs/run_abc123/revision_c1.log" }
         - { type: changed_files, data: ["Models.swift"] }
 
-    # ── 修复后再次审查 ──
-    - step_run_id: "step_review_c2"
-      type: review
+    # ── 修复后再次评估 ──
+    - step_run_id: "step_eval_c2"
+      type: evaluation
       status: completed
-      agent_id: "agent_reviewer"
-      review_cycle: 2
+      agent_id: "agent_evaluator"
+      evaluation_cycle: 2
       artifacts:
-        - { type: review_report, ref: "rr_002" }
+        - { type: evaluation_report, ref: "rr_002" }
 
     - step_run_id: "step_acceptance"
       type: acceptance
       status: pending
 
-  review_cycles:
+  evaluation_cycles:
     - cycle_no: 1
       report_id: "rr_001"
       instruction_id: "ri_001"
@@ -465,13 +465,13 @@ ExecutionRun:
     - { timestamp: "2026-04-19T09:16", event: "approval_approved" }
     - { timestamp: "2026-04-19T09:16", event: "execute_started" }
     - { timestamp: "2026-04-19T10:00", event: "execute_completed" }
-    - { timestamp: "2026-04-19T10:00", event: "review_started", cycle: 1 }
-    - { timestamp: "2026-04-19T10:05", event: "review_completed", cycle: 1 }
+    - { timestamp: "2026-04-19T10:00", event: "evaluation_started", cycle: 1 }
+    - { timestamp: "2026-04-19T10:05", event: "evaluation_completed", cycle: 1 }
     - { timestamp: "2026-04-19T10:10", event: "user_apply_instruction", cycle: 1 }
     - { timestamp: "2026-04-19T10:10", event: "revision_execute_started", cycle: 1 }
     - { timestamp: "2026-04-19T10:25", event: "revision_execute_completed", cycle: 1 }
-    - { timestamp: "2026-04-19T10:25", event: "review_started", cycle: 2 }
-    - { timestamp: "2026-04-19T10:30", event: "review_completed", cycle: 2 }
+    - { timestamp: "2026-04-19T10:25", event: "evaluation_started", cycle: 2 }
+    - { timestamp: "2026-04-19T10:30", event: "evaluation_completed", cycle: 2 }
 ```
 
 ### 状态映射
@@ -482,10 +482,10 @@ ExecutionRun:
 | approval 等待用户 | in_progress | In Progress（详情页显示"等待批准"） |
 | execute 进行中 | in_progress | In Progress |
 | dialog 进行中 | in_progress | In Progress |
-| review 进行中（Agent 审查中） | in_progress | In Progress |
-| review 完成，等用户决策 | **in_review** | **In Review** |
+| evaluation 进行中（Agent 评估中） | in_progress | In Progress |
+| evaluation 完成，等用户决策 | **in_evaluation** | **In Evaluation** |
 | 用户采纳意见，revision_execute 中 | in_progress | In Progress |
-| 最终验收等待用户 | **in_review** | **In Review** |
+| 最终验收等待用户 | **in_evaluation** | **In Evaluation** |
 | 用户验收通过 | done | Done |
 | 步骤失败（Run/Step 层） | blocked | Blocked（+ 🔴 错误徽标） |
 
@@ -605,7 +605,7 @@ ExecutionRun:
 仅展示 `executable` 和 `hybrid` 角色的 WorkItem，按 Multica 状态分列。
 
 ```
-backlog    │ todo       │ in_progress │ in_review  │ done
+backlog    │ todo       │ in_progress │ in_evaluation  │ done
 ───────────┼────────────┼─────────────┼────────────┼──────
 卡片...    │ 卡片...    │ 卡片...     │ 卡片...    │ 卡片...
 ```
@@ -618,7 +618,7 @@ backlog    │ todo       │ in_progress │ in_review  │ done
 - `manual`：🖐 手动
 - `semi_auto`：🤖 半自动
 - `auto`：🤖 全自动
-- 启用审查时追加 📝 标记
+- 启用评估时追加 📝 标记
 
 blocked/cancelled 独立折叠区。
 
@@ -633,7 +633,7 @@ blocked/cancelled 独立折叠区。
 ### 8.1 创建入口
 
 1. **顶部全局按钮**："+ 新建任务"
-2. **看板 backlog/todo 列底部**："+ 新建"，创建后进入对应列状态（仅 backlog 和 todo 列提供新建入口，in_progress/in_review/done 列不允许直接创建）
+2. **看板 backlog/todo 列底部**："+ 新建"，创建后进入对应列状态（仅 backlog 和 todo 列提供新建入口，in_progress/in_evaluation/done 列不允许直接创建）
 3. **规划视图日/周模式空白区**："+ 添加任务"，`scheduled_date` 自动设为对应日期（日视图=当天，周视图=对应日），`schedule` 自动派生
 
 ### 8.2 创建弹窗
@@ -653,8 +653,8 @@ blocked/cancelled 独立折叠区。
 │  ┌──────────────────────────────────────────────┐  │
 │  │ 规划 Agent: [代码工程师 ▾]                    │  │
 │  │ 执行 Agent: [代码工程师 ▾]                    │  │
-│  │ ☐ 启用审查                                    │  │
-│  │   └ 审查 Agent: [Review Agent ▾]              │  │
+│  │ ☐ 启用评估                                    │  │
+│  │   └ 评估 Agent: [Evaluation Agent ▾]              │  │
 │  └──────────────────────────────────────────────┘  │
 │                                                     │
 │  来源: [临时创建 ▾]  归属: [Q2/4月 ▾]               │
@@ -694,28 +694,28 @@ blocked/cancelled 独立折叠区。
 │                                                         │
 │  ┌─ 执行步骤进度条 ───────────────────────────────────┐ │
 │  │  ✅ ──── ✅ ──── ● ──── ○ ──── ○                   │ │
-│  │  规划    确认    执行    审查    验收                 │ │
-│  │  架构师   👤    工程师  Review   👤                   │ │
+│  │  规划    确认    执行    评估    验收                 │ │
+│  │  架构师   👤    工程师  Evaluation   👤                   │ │
 │  └────────────────────────────────────────────────────┘ │
 │                                                         │
 ├─ 左侧主区域 ─────────────────────┬─ 右侧属性栏 ────────┤
 │                                  │                      │
 │  [📄 规划 ✓]  [⚡ 执行 ●]  ...   │  状态/优先级/安排    │
 │                                  │  归属目标/来源        │
-│  （Tab 内容区）                   │  执行配置/审查开关    │
+│  （Tab 内容区）                   │  执行配置/评估开关    │
 │                                  │  时间                 │
 └──────────────────────────────────┴──────────────────────┘
 ```
 
 ### 9.2 进度条
 
-根据执行模式和审查开关动态生成步骤：
+根据执行模式和评估开关动态生成步骤：
 
 ```
-半自动 + 审查开:   规划 → 确认 → 执行 → 审查 → 验收
-全自动 + 审查关:   规划 → 执行 → 验收
-手动 + 审查开:     对话 → 审查 → 验收
-手动 + 审查关:     对话 → 验收
+半自动 + 评估开:   规划 → 确认 → 执行 → 评估 → 验收
+全自动 + 评估关:   规划 → 执行 → 验收
+手动 + 评估开:     对话 → 评估 → 验收
+手动 + 评估关:     对话 → 验收
 ```
 
 已完成步骤 ✅，当前步骤 ●，未来步骤 ○。
@@ -730,7 +730,7 @@ Tab 根据执行模式显示，已完成的步骤产物始终可回看：
 | approval   | 📋 确认  | 上一步产物展示 + 批准/退回/修改按钮 |
 | execute    | ⚡ 执行  | 只读执行输出流 + 产出物列表         |
 | dialog     | 🖐 对话  | 交互式对话窗口                      |
-| review     | 📝 审查  | ReviewReport 展示 + 三个操作按钮    |
+| evaluation | 📝 评估  | EvaluationReport 展示 + 三个操作按钮    |
 | acceptance | ✅ 验收  | 全部产物汇总 + 最终确认按钮         |
 
 当前步骤的 Tab 高亮显示 ●，已完成的 Tab 显示 ✓（可点击回看，只读）。
@@ -756,12 +756,12 @@ Tab 根据执行模式显示，已完成的步骤产物始终可回看：
   [重新规划]  [新窗口打开]
 ```
 
-### 9.5 审查 Tab（review）
+### 9.5 评估 Tab（evaluation）
 
 ```
-┌──── 📝 审查 Tab ────────────────────────────────────┐
+┌──── 📝 评估 Tab ────────────────────────────────────┐
 │                                                      │
-│  审查意见（Review Agent · 第 1 轮）                   │
+│  评估意见（Evaluation Agent · 第 1 轮）                   │
 │                                                      │
 │  ■ Critical: 状态转换缺少 blocked→todo               │
 │    → 补充转换规则 (Models.swift)                     │
@@ -775,7 +775,7 @@ Tab 根据执行模式显示，已完成的步骤产物始终可回看：
 │  [按建议处理]  [忽略建议并完成]  [手动接管]            │
 │                                                      │
 │  点击"按建议处理":                                    │
-│  → 打开 ReviewInstruction 编辑界面                   │
+│  → 打开 EvaluationInstruction 编辑界面                   │
 │  → 用户可勾选要处理的建议、编辑内容、补充指令          │
 │  → 确认后发送给 executor Agent                       │
 │                                                      │
@@ -798,4 +798,4 @@ Tab 根据执行模式显示，已完成的步骤产物始终可回看：
 
 ## 11. V2 预留
 
-> 未来可扩展为自定义执行管道（Pipeline），允许用户配置规划、执行、审查、人工卡点等步骤的任意组合，指定每步的 Agent 和交互策略。V1 先固定为系统预设的 4 种执行模式 + 审查开关，降低使用和实现复杂度。
+> 未来可扩展为自定义执行管道（Pipeline），允许用户配置规划、执行、评估、人工卡点等步骤的任意组合，指定每步的 Agent 和交互策略。V1 先固定为系统预设的 4 种执行模式 + 评估开关，降低使用和实现复杂度。
