@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FocusPilot Workspace Session Prototype</title>
+<style>
+  :root {
+    color-scheme: dark;
+    --bg: #101217;
+    --panel: #171a21;
+    --panel-2: #1e222b;
+    --panel-3: #252b36;
+    --line: #303746;
+    --line-soft: #262c38;
+    --text: #eef1f6;
+    --muted: #9aa4b5;
+    --faint: #697386;
+    --blue: #6aa4ff;
+    --cyan: #4ed7c5;
+    --green: #7bd88f;
+    --yellow: #f4c95d;
+    --red: #ff7a7a;
+    --ink: #090b0f;
+    --radius: 8px;
+    --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    --sans: Avenir Next, "Segoe UI", -apple-system, BlinkMacSystemFont, sans-serif;
+    --serif: Georgia, "Times New Roman", serif;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+    background:
+      linear-gradient(135deg, rgba(106,164,255,.08), transparent 34%),
+      radial-gradient(circle at 80% 0%, rgba(78,215,197,.10), transparent 28%),
+      var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 13px;
+  }
+
+  .app { display: grid; grid-template-columns: 52px 280px 1fr; height: 100vh; }
+  .rail {
+    border-right: 1px solid var(--line-soft);
+    background: rgba(10,12,16,.74);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 12px 0;
+    gap: 8px;
+  }
+  .mark {
+    width: 32px;
+    height: 32px;
+    display: grid;
+    place-items: center;
+    border-radius: 8px;
+    background: linear-gradient(135deg, var(--blue), var(--cyan));
+    color: var(--ink);
+    font-weight: 800;
+    margin-bottom: 14px;
+  }
+  .rail-btn {
+    width: 36px;
+    height: 36px;
+    display: grid;
+    place-items: center;
+    color: var(--faint);
+    border-radius: 8px;
+  }
+  .rail-btn.active { background: var(--panel-3); color: var(--blue); box-shadow: inset 3px 0 0 var(--blue); }
+  .rail-spacer { flex: 1; }
+
+  .scope {
+    background: rgba(23,26,33,.92);
+    border-right: 1px solid var(--line);
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+  .scope-head {
+    padding: 18px 16px 12px;
+    border-bottom: 1px solid var(--line-soft);
+  }
+  .scope-title {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+  }
+  .scope-title h1 {
+    margin: 0;
+    font-family: var(--serif);
+    font-size: 25px;
+    font-weight: 500;
+    letter-spacing: 0;
+  }
+  .new-btn, .primary-btn, .ghost-btn {
+    border: 1px solid var(--line);
+    border-radius: 7px;
+    background: var(--panel-2);
+    color: var(--text);
+    height: 30px;
+    padding: 0 10px;
+    font: inherit;
+    cursor: pointer;
+  }
+  .new-btn { width: 30px; padding: 0; font-size: 18px; }
+  .primary-btn { background: var(--blue); color: var(--ink); border-color: transparent; font-weight: 700; }
+  .ghost-btn:hover, .new-btn:hover { border-color: var(--blue); }
+  .search {
+    height: 34px;
+    border: 1px solid var(--line);
+    border-radius: 7px;
+    background: #11141b;
+    color: var(--text);
+    padding: 0 10px;
+    width: 100%;
+    outline: none;
+  }
+
+  .scope-scroll { overflow: auto; padding: 12px; }
+  .scope-label {
+    color: var(--faint);
+    text-transform: uppercase;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: .08em;
+    margin: 14px 4px 7px;
+  }
+  .scope-item {
+    min-height: 32px;
+    padding: 7px 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border-radius: 7px;
+    color: var(--muted);
+    cursor: pointer;
+  }
+  .scope-item:hover { background: var(--panel-2); color: var(--text); }
+  .scope-item.active { background: var(--panel-3); color: var(--text); }
+  .scope-item .count {
+    margin-left: auto;
+    color: var(--faint);
+    font-family: var(--mono);
+    font-size: 11px;
+  }
+  .tree-child { padding-left: 22px; }
+  .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 999px;
+    background: var(--faint);
+    flex: 0 0 auto;
+  }
+  .dot.live { background: var(--green); box-shadow: 0 0 0 4px rgba(123,216,143,.10); }
+  .dot.idle { background: var(--yellow); }
+  .dot.done { background: var(--faint); }
+
+  .main {
+    min-width: 0;
+    display: grid;
+    grid-template-rows: 56px 1fr;
+  }
+  .topbar {
+    border-bottom: 1px solid var(--line);
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 0 18px;
+    background: rgba(16,18,23,.72);
+  }
+  .tabs {
+    display: flex;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .tab {
+    padding: 7px 12px;
+    color: var(--muted);
+    border-right: 1px solid var(--line);
+    background: var(--panel);
+  }
+  .tab:last-child { border-right: 0; }
+  .tab.active { color: var(--ink); background: var(--cyan); font-weight: 800; }
+  .context-pill {
+    margin-left: auto;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    padding: 5px 10px;
+    color: var(--muted);
+    background: var(--panel);
+    font-family: var(--mono);
+    font-size: 11px;
+  }
+
+  .work {
+    display: grid;
+    grid-template-columns: 360px 1fr 340px;
+    min-height: 0;
+  }
+  .session-list, .session-detail, .inspector {
+    min-width: 0;
+    min-height: 0;
+    overflow: auto;
+  }
+  .session-list {
+    border-right: 1px solid var(--line);
+    background: rgba(23,26,33,.82);
+    padding: 14px;
+  }
+  .session-list-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+  }
+  .session-list-head h2 {
+    margin: 0;
+    font-size: 13px;
+    letter-spacing: .02em;
+  }
+  .group {
+    border: 1px solid var(--line-soft);
+    border-radius: 8px;
+    overflow: hidden;
+    margin-bottom: 10px;
+    background: rgba(30,34,43,.55);
+  }
+  .group-title {
+    padding: 8px 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--muted);
+    border-bottom: 1px solid var(--line-soft);
+    cursor: pointer;
+  }
+  .group-title .chev { color: var(--faint); }
+  .session-card {
+    padding: 10px;
+    border-bottom: 1px solid var(--line-soft);
+    cursor: pointer;
+  }
+  .session-card:last-child { border-bottom: 0; }
+  .session-card.active { background: rgba(106,164,255,.13); box-shadow: inset 3px 0 0 var(--blue); }
+  .session-card:hover { background: rgba(255,255,255,.035); }
+  .session-name { display: flex; gap: 8px; align-items: center; color: var(--text); font-weight: 700; }
+  .session-meta {
+    color: var(--faint);
+    margin-top: 5px;
+    font-family: var(--mono);
+    font-size: 11px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .tag-row { margin-top: 8px; display: flex; gap: 6px; flex-wrap: wrap; }
+  .tag {
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    color: var(--muted);
+    padding: 2px 7px;
+    font-size: 11px;
+  }
+  .tag.blue { border-color: rgba(106,164,255,.45); color: var(--blue); }
+  .tag.green { border-color: rgba(123,216,143,.45); color: var(--green); }
+
+  .session-detail { padding: 22px; }
+  .hero {
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 18px;
+    background:
+      linear-gradient(130deg, rgba(106,164,255,.13), rgba(78,215,197,.06)),
+      var(--panel);
+  }
+  .hero h2 {
+    margin: 0 0 8px;
+    font-family: var(--serif);
+    font-size: 31px;
+    font-weight: 500;
+  }
+  .kv {
+    display: grid;
+    grid-template-columns: 110px 1fr;
+    gap: 8px 12px;
+    color: var(--muted);
+    margin-top: 16px;
+    font-size: 12px;
+  }
+  .kv b { color: var(--text); font-weight: 600; }
+  .chat {
+    margin-top: 14px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: rgba(23,26,33,.76);
+    overflow: hidden;
+  }
+  .chat-line {
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--line-soft);
+    display: grid;
+    grid-template-columns: 76px 1fr;
+    gap: 12px;
+  }
+  .chat-line:last-child { border-bottom: 0; }
+  .speaker { color: var(--faint); font-family: var(--mono); font-size: 11px; }
+  .message { color: var(--text); }
+  .message code { color: var(--cyan); font-family: var(--mono); }
+  .input-row {
+    margin-top: 14px;
+    display: flex;
+    gap: 8px;
+  }
+  .input-row input {
+    flex: 1;
+    border: 1px solid var(--line);
+    border-radius: 7px;
+    background: #11141b;
+    color: var(--text);
+    height: 38px;
+    padding: 0 12px;
+  }
+
+  .inspector {
+    border-left: 1px solid var(--line);
+    background: rgba(23,26,33,.82);
+    padding: 16px;
+  }
+  .panel {
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: rgba(30,34,43,.72);
+    margin-bottom: 12px;
+    overflow: hidden;
+  }
+  .panel h3 {
+    margin: 0;
+    padding: 10px 12px;
+    font-size: 12px;
+    border-bottom: 1px solid var(--line-soft);
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: .06em;
+  }
+  .panel-body { padding: 12px; }
+  .path {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--cyan);
+    word-break: break-all;
+    line-height: 1.65;
+  }
+  .mini-list { display: grid; gap: 8px; }
+  .mini-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--muted);
+  }
+  .mini-item b { color: var(--text); font-weight: 600; }
+
+  .modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.58);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 20;
+  }
+  .modal-backdrop.open { display: flex; }
+  .modal {
+    width: min(920px, calc(100vw - 48px));
+    height: min(680px, calc(100vh - 48px));
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: #151922;
+    box-shadow: 0 24px 80px rgba(0,0,0,.55);
+    display: grid;
+    grid-template-rows: 56px 1fr 58px;
+    overflow: hidden;
+  }
+  .modal-head, .modal-foot {
+    display: flex;
+    align-items: center;
+    padding: 0 18px;
+    border-bottom: 1px solid var(--line);
+  }
+  .modal-foot { border-bottom: 0; border-top: 1px solid var(--line); justify-content: flex-end; gap: 8px; }
+  .modal-head h2 { margin: 0; font-size: 15px; }
+  .modal-body { display: grid; grid-template-columns: 220px 1fr 260px; min-height: 0; }
+  .picker-nav, .picker-tree, .picker-summary { overflow: auto; padding: 14px; }
+  .picker-nav { border-right: 1px solid var(--line); background: var(--panel); }
+  .picker-summary { border-left: 1px solid var(--line); background: rgba(23,26,33,.74); }
+  .choice {
+    padding: 10px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    margin-bottom: 8px;
+    cursor: pointer;
+    color: var(--muted);
+  }
+  .choice.active { border-color: var(--blue); color: var(--text); background: rgba(106,164,255,.10); }
+  .tree-row {
+    height: 30px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0 8px;
+    border-radius: 6px;
+    color: var(--muted);
+    cursor: pointer;
+  }
+  .tree-row:hover, .tree-row.selected { background: var(--panel-3); color: var(--text); }
+  .tree-row .indent-1 { margin-left: 18px; }
+  .tree-row .indent-2 { margin-left: 36px; }
+  .form-label {
+    color: var(--faint);
+    text-transform: uppercase;
+    font-size: 10px;
+    font-weight: 800;
+    margin: 12px 0 6px;
+    letter-spacing: .08em;
+  }
+  .select, .modal input {
+    width: 100%;
+    height: 34px;
+    border: 1px solid var(--line);
+    border-radius: 7px;
+    background: #11141b;
+    color: var(--text);
+    padding: 0 10px;
+  }
+  .callout {
+    margin-top: 12px;
+    border: 1px solid rgba(244,201,93,.35);
+    background: rgba(244,201,93,.08);
+    color: #f7d987;
+    border-radius: 8px;
+    padding: 10px;
+    line-height: 1.55;
+    font-size: 12px;
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="rail">
+    <div class="mark">FP</div>
+    <div class="rail-btn">⌂</div>
+    <div class="rail-btn">⇣</div>
+    <div class="rail-btn active">⚡</div>
+    <div class="rail-btn">▣</div>
+    <div class="rail-btn">◎</div>
+    <div class="rail-spacer"></div>
+    <div class="rail-btn">⚙</div>
+  </aside>
+
+  <aside class="scope">
+    <div class="scope-head">
+      <div class="scope-title">
+        <h1>Workspace</h1>
+        <button class="new-btn" onclick="openModal()">+</button>
+      </div>
+      <input class="search" placeholder="搜索 Task / Session / WorkDIR">
+    </div>
+    <div class="scope-scroll">
+      <div class="scope-label">快捷视图</div>
+      <div class="scope-item active"><span>全部工作</span><span class="count">24</span></div>
+      <div class="scope-item"><span>今日聚焦</span><span class="count">5</span></div>
+      <div class="scope-item"><span>本周计划</span><span class="count">12</span></div>
+      <div class="scope-item"><span>Agent 执行中</span><span class="count">3</span></div>
+
+      <div class="scope-label">目标树</div>
+      <div class="scope-item"><span>▾ Q2 FocusPilot</span><span class="count">8</span></div>
+      <div class="scope-item tree-child active"><span>4月 Workspace 原型</span><span class="count">3</span></div>
+      <div class="scope-item tree-child"><span>5月 AI Crew</span><span class="count">0</span></div>
+
+      <div class="scope-label">来源</div>
+      <div class="scope-item"><span>AreaProject</span><span class="count">18</span></div>
+      <div class="scope-item"><span>本地路径</span><span class="count">2</span></div>
+      <div class="scope-item"><span>未归档 Session</span><span class="count">1</span></div>
+    </div>
+  </aside>
+
+  <main class="main">
+    <header class="topbar">
+      <div class="tabs">
+        <div class="tab">规划</div>
+        <div class="tab">看板</div>
+        <div class="tab">列表</div>
+        <div class="tab active">Session</div>
+      </div>
+      <button class="ghost-btn" onclick="openModal()">新建 Session</button>
+      <span class="context-pill">Scope: Q2 / 4月 Workspace 原型</span>
+    </header>
+
+    <section class="work">
+      <aside class="session-list">
+        <div class="session-list-head">
+          <h2>Sessions</h2>
+          <button class="new-btn" onclick="openModal()">+</button>
+        </div>
+
+        <div class="group">
+          <div class="group-title"><span class="chev">▾</span> AreaProject · FocusPilot <span class="count">3</span></div>
+          <div class="session-card active">
+            <div class="session-name"><span class="dot live"></span>看板状态模型手动修复</div>
+            <div class="session-meta">/FocusPilot · linked FP-002</div>
+            <div class="tag-row"><span class="tag blue">目标树继承</span><span class="tag green">active</span></div>
+          </div>
+          <div class="session-card">
+            <div class="session-name"><span class="dot idle"></span>Workspace Session 探索</div>
+            <div class="session-meta">/FocusPilot/docs/fp-ui</div>
+            <div class="tag-row"><span class="tag">AreaProject</span><span class="tag">idle</span></div>
+          </div>
+          <div class="session-card">
+            <div class="session-name"><span class="dot done"></span>Review 意见归档</div>
+            <div class="session-meta">/FocusPilot/docs</div>
+          </div>
+        </div>
+
+        <div class="group">
+          <div class="group-title"><span class="chev">▸</span> 本地路径 <span class="count">2</span></div>
+        </div>
+
+        <div class="group">
+          <div class="group-title"><span class="chev">▸</span> 未归档 / 临时 <span class="count">1</span></div>
+        </div>
+      </aside>
+
+      <section class="session-detail">
+        <div class="hero">
+          <h2>看板状态模型手动修复</h2>
+          <div class="tag-row">
+            <span class="tag green">active</span>
+            <span class="tag blue">代码工程师</span>
+            <span class="tag">Task FP-002</span>
+          </div>
+          <div class="kv">
+            <span>AreaProject</span><b>FocusPilot</b>
+            <span>WorkDIR</span><b>/Users/bruce/Workspace/2-Code/01-work/FocusPilot</b>
+            <span>Linked Task</span><b>看板状态模型实现</b>
+            <span>Goal</span><b>Q2 / 4月 / Workspace 原型</b>
+          </div>
+        </div>
+
+        <div class="chat">
+          <div class="chat-line">
+            <div class="speaker">TASK</div>
+            <div class="message">根据 ReviewInstruction 修复 <code>blocked_from_status</code> 与 review cycle 记录。</div>
+          </div>
+          <div class="chat-line">
+            <div class="speaker">AGENT</div>
+            <div class="message">已读取当前 WorkDIR，并定位到 Workspace 文档和原型。将先更新数据模型，再同步 Session View 说明。</div>
+          </div>
+          <div class="chat-line">
+            <div class="speaker">USER</div>
+            <div class="message">注意 Session 不进入看板，只显示在 Session View；Task 卡片只显示绑定状态。</div>
+          </div>
+        </div>
+
+        <div class="input-row">
+          <input placeholder="继续指挥当前 Session">
+          <button class="primary-btn">发送</button>
+        </div>
+      </section>
+
+      <aside class="inspector">
+        <div class="panel">
+          <h3>WorkDIR</h3>
+          <div class="panel-body">
+            <div class="path">/Users/bruce/Workspace/2-Code/01-work/FocusPilot</div>
+          </div>
+        </div>
+        <div class="panel">
+          <h3>联动规则</h3>
+          <div class="panel-body mini-list">
+            <div class="mini-item"><span class="dot live"></span><b>左侧目标树</b>过滤 goal_id / linked_task</div>
+            <div class="mini-item"><span class="dot idle"></span><b>AreaProject</b>提供 WorkDIR 权威来源</div>
+            <div class="mini-item"><span class="dot done"></span><b>Session</b>运行态统一归 Workspace 管理</div>
+          </div>
+        </div>
+        <div class="panel">
+          <h3>AreaProjects 入口</h3>
+          <div class="panel-body">
+            <div class="path">右键 /docs/fp-ui → 在 Workspace 中打开 Session</div>
+            <div class="callout">启动后自动切换到 Workspace Session View，并选中新 Session。</div>
+          </div>
+        </div>
+      </aside>
+    </section>
+  </main>
+</div>
+
+<div class="modal-backdrop" id="modal">
+  <div class="modal">
+    <div class="modal-head"><h2>新建 Session · 必须选择 WorkDIR</h2></div>
+    <div class="modal-body">
+      <aside class="picker-nav">
+        <div class="choice active" onclick="selectSource('project')">
+          <b>AreaProject</b><br>
+          <span>从项目文件树选择 WorkDIR</span>
+        </div>
+        <div class="choice" onclick="selectSource('local')">
+          <b>本地路径</b><br>
+          <span>从操作系统选择文件夹</span>
+        </div>
+        <div class="callout">Workspace 新建不提供默认路径，避免误开错误目录。</div>
+      </aside>
+
+      <section class="picker-tree" id="projectTree">
+        <div class="form-label">AreaProject</div>
+        <select class="select"><option>FocusPilot</option><option>PilotOne</option></select>
+        <div class="form-label">选择 WorkDIR</div>
+        <div class="tree-row">▾ FocusPilot</div>
+        <div class="tree-row selected"><span class="indent-1">▾ docs</span></div>
+        <div class="tree-row"><span class="indent-2">▾ fp-ui</span></div>
+        <div class="tree-row"><span class="indent-2">03-workspace.md</span></div>
+        <div class="tree-row"><span class="indent-1">▸ Sources</span></div>
+        <div class="tree-row"><span class="indent-1">▸ engine</span></div>
+      </section>
+
+      <section class="picker-tree" id="localTree" style="display:none;">
+        <div class="form-label">本地 WorkDIR</div>
+        <input value="/Users/bruce/Downloads/tmp">
+        <div class="callout">本地路径 Session 不绑定 AreaProject。后续可归档、关联项目或转成 Task。</div>
+      </section>
+
+      <aside class="picker-summary">
+        <div class="form-label">Session 名称</div>
+        <input value="Workspace Session 探索">
+        <div class="form-label">Agent</div>
+        <select class="select"><option>代码工程师</option><option>Review Agent</option><option>研究员</option></select>
+        <div class="form-label">当前选择</div>
+        <div class="path" id="selectedPath">AreaProject: FocusPilot<br>WorkDIR: /FocusPilot/docs</div>
+        <div class="callout">创建后直接切换到 Workspace → Session View，并打开该 Session。</div>
+      </aside>
+    </div>
+    <div class="modal-foot">
+      <button class="ghost-btn" onclick="closeModal()">取消</button>
+      <button class="primary-btn" onclick="closeModal()">新建 Session</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const modal = document.getElementById('modal');
+  const projectTree = document.getElementById('projectTree');
+  const localTree = document.getElementById('localTree');
+  const selectedPath = document.getElementById('selectedPath');
+
+  function openModal() { modal.classList.add('open'); }
+  function closeModal() { modal.classList.remove('open'); }
+
+  function selectSource(source) {
+    document.querySelectorAll('.choice').forEach((choice, index) => {
+      choice.classList.toggle('active', (source === 'project' && index === 0) || (source === 'local' && index === 1));
+    });
+    projectTree.style.display = source === 'project' ? 'block' : 'none';
+    localTree.style.display = source === 'local' ? 'block' : 'none';
+    selectedPath.innerHTML = source === 'project'
+      ? 'AreaProject: FocusPilot<br>WorkDIR: /FocusPilot/docs'
+      : 'Source: 本地路径<br>WorkDIR: /Users/bruce/Downloads/tmp';
+  }
+</script>
+</body>
+</html>

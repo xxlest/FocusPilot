@@ -1,7 +1,7 @@
 # 整体布局
 
 > **状态**：设计中
-> **更新**：2026-04-18
+> **更新**：2026-04-21
 
 ---
 
@@ -15,10 +15,10 @@
 │          │               │  顶部栏（标题 + 视图切换 + 筛选）    │
 │  🏠 Home │  随活动栏      │  ─────────────────────────────     │
 │  📥 Inbox│  切换内容      │                                    │
-│  ⚡ Work │               │  内容区（随页面和视图变化）           │
-│  📁 Area │               │                                    │
+│  🎯 Focus│               │  内容区（随页面和视图变化）           │
+│  💻Studio│               │                                    │
+│  📁 Areas│               │                                    │
 │  🤖 Crew │               │                                    │
-│          │               │                                    │
 │  ─ ─ ─   │               │                                    │
 │  ⚙️ Set  │               │                                    │
 └──────────┴───────────────┴────────────────────────────────────┘
@@ -32,15 +32,24 @@
 |------|------|------|---------|
 | 🏠 | Home | AI 对话入口 + 最近操作 | [01-home.md](01-home.md) |
 | 📥 | Inbox | 收集箱：待阅读/灵感/临时任务/便签 | [02-inbox.md](02-inbox.md) |
-| ⚡ | Workspace | 规划+看板+列表，核心执行区 | [03-workspace.md](03-workspace.md) |
-| 📁 | AreaProjects | 项目沉淀（执行类+知识类） | [04-area-projects.md](04-area-projects.md) |
+| 🎯 | Focus | 结构化行动工作台：规划+看板+列表+Task 执行闭环 | [03-workspace.md](03-workspace.md) |
+| 💻 | Studio | 会话式 Agent 工作区：对话/编码/调试/Diff/终端 | [04-studio.md](04-studio.md) |
+| 📁 | AreaProjects | 项目资产沉淀（执行类+知识类） | [04-area-projects.md](04-area-projects.md) |
 | 🤖 | AICrew | Agent 团队管理 | [05-ai-crew.md](05-ai-crew.md) |
 | ⚙️ | Settings | 全局配置（底部） | [06-settings.md](06-settings.md) |
+
+### Focus vs Studio vs AreaProjects
+
+| | Focus 🎯 | Studio 💻 | AreaProjects 📁 |
+|---|---|---|---|
+| 关注点 | 计划和任务怎么推进 | 和 Agent 怎么工作 | 资料和产物沉淀在哪里 |
+| 核心对象 | WorkItem（目标/Task） | CodeSession（会话） | 文件/文件夹 |
+| 交互模式 | 看板拖拽/列表/甘特 | 对话流/内联 Diff/审批 | 文件树/Markdown 编辑 |
 
 ## 侧边栏
 
 宽度 260px，随活动栏选择切换内容。通常包含：
-- 顶部标题
+- 顶部标题或 Tab 条（Studio 使用顶部 Tab 条：🤖 会话 / 📁 文件 / 🌿 Git）
 - 搜索框
 - 分类/导航列表
 

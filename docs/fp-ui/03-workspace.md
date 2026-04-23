@@ -1,19 +1,30 @@
-# Workspace 页面设计
+# Focus 页面设计（原 Workspace）
 
 > **状态**：设计中
-> **更新**：2026-04-19
+> **更新**：2026-04-21
 > **原型**：[03-workspace-prototype.html](03-workspace-prototype.html)
-> **关联**：[PRD §3.1 两阶段模型](../PRD.md)、[PRD §3.3 Task 双轴管理](../PRD.md)
+> **关联**：[PRD §3.1 两阶段模型](../PRD.md)、[PRD §3.3 Task 双轴管理](../PRD.md)、[04-studio.md](04-studio.md)
 
 ---
 
 ## 1. 定位
 
-Workspace 是 FocusPilot 的**个人行动中枢**，承载"规划 → 执行 → 审查 → 验收"全链路。
+Focus 是 FocusPilot 的**结构化行动工作台**，承载"规划 → 执行 → 审查 → 验收"全链路。
 
 - 规划层：从年度到每日的目标拆解，AI 辅助多轮对话
 - 执行层：4 种执行模式 + 可选审查开关
 - 验收层：用户最终验收，AI 不做 pass/fail 判定
+
+Focus 只负责任务的结构化管理（目标/看板/列表/Task 执行闭环）。AI 交互式开发工作在 [Studio](04-studio.md) 中进行。Task 手动模式（dialog step）可在 Focus 内嵌简化对话，也可跳转 Studio 打开完整工作区。
+
+**三个视图**：`[📐 规划]  [📋 看板]  [📄 列表]`
+
+### Focus 与 Studio 的 Task 关联
+
+- 一个 WorkItem 默认只有一个 primary CodeSession
+- Task 手动模式优先打开 primary CodeSession；没有则创建
+- Studio 可 fork 额外 Session，但不替换 primary，除非用户手动设为 primary
+- Task 详情页提供两个入口：`[🖐 内嵌对话]`（快速处理）和 `[💻 在 Studio 打开]`（完整工作区）
 
 ---
 

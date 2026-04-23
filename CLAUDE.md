@@ -23,6 +23,7 @@ FocusPilot是 macOS 悬浮球应用，支持窗口快捷切换。
 |------|--------|---------|---------|
 | **Multica** | [multica-ai/multica](https://github.com/multica-ai/multica.git) | `/Users/bruce/Workspace/2-Code/02-oss/ai/agent/coding/multica` | 看板状态模型、Agent Runtime 执行模式、Workspace 数据模型 |
 | **Plane** | [makeplane/plane](https://github.com/makeplane/plane.git)（[商业版官网](https://plane.so)） | `/Users/bruce/Workspace/2-Code/02-oss/ai/agent/coding/plane` | Home 页设计、Stickies 便签、项目管理结构（Cycles/Modules/Views） |
+| **Z Code** | 闭源（[官网](https://zcode-ai.com/cn/docs)） | 本机已安装 App（`~/Library/Application Support/ai.z.zcode/`） | Workspace Session 模式、多 Agent 框架热切换、对话式开发 ADE、Checkpoint 版本管理。竞品分析见 `docs/竞品分析/Z Code UI 功能层次梳理.md` |
 
 ## 产品设计基调
 
