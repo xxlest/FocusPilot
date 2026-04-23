@@ -33,10 +33,10 @@
 | 🏠 | Home | AI 对话入口 + 最近操作 | [01-home.md](01-home.md) |
 | 📥 | Inbox | 收集箱：待阅读/灵感/临时任务/便签 | [02-inbox.md](02-inbox.md) |
 | 🎯 | Focus | 结构化行动工作台：规划+看板+列表+Task 执行闭环 | [03-workspace.md](03-workspace.md) |
-| 💻 | Studio | 会话式 Agent 工作区：对话/编码/调试/Diff/终端 | [04-studio.md](04-studio.md) |
-| 📁 | AreaProjects | 项目资产沉淀（执行类+知识类） | [04-area-projects.md](04-area-projects.md) |
-| 🤖 | AICrew | Agent 团队管理 | [05-ai-crew.md](05-ai-crew.md) |
-| ⚙️ | Settings | 全局配置（底部） | [06-settings.md](06-settings.md) |
+| 💻 | Studio | 项目级 AI 工作区：对话/文件浏览/Git 历史 | [04-studio.md](04-studio.md) |
+| 📁 | AreaProjects | 项目资产沉淀（执行类+知识类） | [05-area-projects.md](05-area-projects.md) |
+| 🤖 | AICrew | Agent 团队管理 | [06-ai-crew.md](06-ai-crew.md) |
+| ⚙️ | Settings | 全局配置（底部） | [07-settings.md](07-settings.md) |
 
 ### Focus vs Studio vs AreaProjects
 

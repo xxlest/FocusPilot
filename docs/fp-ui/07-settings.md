@@ -25,7 +25,7 @@ Settings 页面提供全局配置能力。
 
 ### AICrew 配置
 
-- Agent 角色管理（详见 [05-ai-crew.md](05-ai-crew.md)）
+- Agent 角色管理（详见 [06-ai-crew.md](06-ai-crew.md)）
 
 ### Projects 配置
 
