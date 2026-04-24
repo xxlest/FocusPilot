@@ -32,7 +32,7 @@
 |------|------|------|---------|
 | 🏠 | Home | AI 对话入口 + 最近操作 | [01-home.md](01-home.md) |
 | 📥 | Inbox | 收集箱：待阅读/灵感/临时任务/便签 | [02-inbox.md](02-inbox.md) |
-| 🎯 | Focus | 结构化行动工作台：规划+看板+列表+Task 执行闭环 | [03-workspace.md](03-workspace.md) |
+| 🎯 | Focus | 结构化行动工作台：规划+看板+列表+Task 执行闭环 | [03-focus.md](03-focus.md) |
 | 💻 | Studio | 项目级 AI 工作区：对话/文件浏览/Git 历史 | [04-studio.md](04-studio.md) |
 | 📁 | AreaProjects | 项目资产沉淀（执行类+知识类） | [05-area-projects.md](05-area-projects.md) |
 | 🤖 | AICrew | Agent 团队管理 | [06-ai-crew.md](06-ai-crew.md) |

@@ -29,7 +29,7 @@
 |--------|------|------|------|---------|
 | 🏠 | Home | AI 对话入口 + 最近操作（参考 Plane Home 页 Widget 化） | 草稿 | [01-home.md](fp-ui/01-home.md) |
 | 📥 | Inbox | 收集箱：待阅读/灵感/临时任务/便签（参考 Plane Stickies） | 草稿 | [02-inbox.md](fp-ui/02-inbox.md) |
-| 🎯 | **Focus** | 结构化行动工作台：规划+看板+列表+Task 执行闭环（原 Workspace） | **设计中** | [03-workspace.md](fp-ui/03-workspace.md) |
+| 🎯 | **Focus** | 结构化行动工作台：规划+看板+列表+Task 执行闭环（原 Workspace） | **设计中** | [03-focus.md](fp-ui/03-focus.md) |
 | 💻 | **Studio** | 项目级 AI 工作区：对话/文件浏览/Git 历史（参考 Z Code + Codex） | **设计中** | [04-studio.md](fp-ui/04-studio.md) |
 | 📁 | AreaProjects | 项目资产沉淀（执行类+知识类），文件树+编辑器 | 草稿 | [05-area-projects.md](fp-ui/05-area-projects.md) |
 | 🤖 | AICrew | Agent 团队管理（角色/头像/擅长/MCP/并发数） | 草稿 | [06-ai-crew.md](fp-ui/06-ai-crew.md) |

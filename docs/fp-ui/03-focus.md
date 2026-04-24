@@ -1,4 +1,4 @@
-# Focus 页面设计（原 Workspace）
+# Focus 页面设计
 
 > **状态**：设计中
 > **更新**：2026-04-21
@@ -71,11 +71,11 @@ WorkItem:
 
 ### 2.2 item_role 规则
 
-| 角色         | 含义                                  |  看板  | 执行步骤 |
-| ------------ | ------------------------------------- | :----: | :------: |
-| `container`  | 有 children，自身不可执行             | 不显示 |    无    |
-| `executable` | 无 children，可执行                   |  显示  |    有    |
-| `hybrid`     | 有 children 且自身也有 ExecutionRun   |  显示  |    有    |
+| 角色         | 含义                                |  看板  | 执行步骤 |
+| ------------ | ----------------------------------- | :----: | :------: |
+| `container`  | 有 children，自身不可执行           | 不显示 |    无    |
+| `executable` | 无 children，可执行                 |  显示  |    有    |
+| `hybrid`     | 有 children 且自身也有 ExecutionRun |  显示  |    有    |
 
 典型场景：Task 执行中拆出 Sub-task → 变为 hybrid，自身 ExecutionRun 继续，同时聚合子任务进度。
 
@@ -404,7 +404,10 @@ ExecutionRun:
       interaction: autonomous
       artifacts:
         - { type: execution_log, path: "runs/run_abc123/execution.log" }
-        - { type: changed_files, data: ["Models.swift", "KanbanDataSource.swift"] }
+        - {
+            type: changed_files,
+            data: ["Models.swift", "KanbanDataSource.swift"],
+          }
 
     - step_run_id: "step_eval_c1"
       type: evaluation
@@ -458,27 +461,39 @@ ExecutionRun:
     - { timestamp: "2026-04-19T10:00", event: "execute_completed" }
     - { timestamp: "2026-04-19T10:00", event: "evaluation_started", cycle: 1 }
     - { timestamp: "2026-04-19T10:05", event: "evaluation_completed", cycle: 1 }
-    - { timestamp: "2026-04-19T10:10", event: "user_apply_instruction", cycle: 1 }
-    - { timestamp: "2026-04-19T10:10", event: "revision_execute_started", cycle: 1 }
-    - { timestamp: "2026-04-19T10:25", event: "revision_execute_completed", cycle: 1 }
+    - {
+        timestamp: "2026-04-19T10:10",
+        event: "user_apply_instruction",
+        cycle: 1,
+      }
+    - {
+        timestamp: "2026-04-19T10:10",
+        event: "revision_execute_started",
+        cycle: 1,
+      }
+    - {
+        timestamp: "2026-04-19T10:25",
+        event: "revision_execute_completed",
+        cycle: 1,
+      }
     - { timestamp: "2026-04-19T10:25", event: "evaluation_started", cycle: 2 }
     - { timestamp: "2026-04-19T10:30", event: "evaluation_completed", cycle: 2 }
 ```
 
 ### 状态映射
 
-| 步骤状态 | WorkItem.status | 看板列 |
-| --- | --- | --- |
-| plan 进行中 | in_progress | In Progress |
-| approval 等待用户 | in_progress | In Progress（详情页显示"等待批准"） |
-| execute 进行中 | in_progress | In Progress |
-| dialog 进行中 | in_progress | In Progress |
-| evaluation 进行中（Agent 评估中） | in_progress | In Progress |
-| evaluation 完成，等用户决策 | **in_evaluation** | **In Evaluation** |
-| 用户采纳意见，revision_execute 中 | in_progress | In Progress |
-| 最终验收等待用户 | **in_evaluation** | **In Evaluation** |
-| 用户验收通过 | done | Done |
-| 步骤失败（Run/Step 层） | blocked | Blocked（+ 🔴 错误徽标） |
+| 步骤状态                          | WorkItem.status   | 看板列                              |
+| --------------------------------- | ----------------- | ----------------------------------- |
+| plan 进行中                       | in_progress       | In Progress                         |
+| approval 等待用户                 | in_progress       | In Progress（详情页显示"等待批准"） |
+| execute 进行中                    | in_progress       | In Progress                         |
+| dialog 进行中                     | in_progress       | In Progress                         |
+| evaluation 进行中（Agent 评估中） | in_progress       | In Progress                         |
+| evaluation 完成，等用户决策       | **in_evaluation** | **In Evaluation**                   |
+| 用户采纳意见，revision_execute 中 | in_progress       | In Progress                         |
+| 最终验收等待用户                  | **in_evaluation** | **In Evaluation**                   |
+| 用户验收通过                      | done              | Done                                |
+| 步骤失败（Run/Step 层）           | blocked           | Blocked（+ 🔴 错误徽标）            |
 
 ---
 
@@ -715,14 +730,14 @@ blocked/cancelled 独立折叠区。
 
 Tab 根据执行模式显示，已完成的步骤产物始终可回看：
 
-| 步骤       | Tab 标签 | 内容                                |
-| ---------- | -------- | ----------------------------------- |
-| plan       | 📄 规划  | 规划对话区（多轮）+ plan.md 产物区  |
-| approval   | 📋 确认  | 上一步产物展示 + 批准/退回/修改按钮 |
-| execute    | ⚡ 执行  | 只读执行输出流 + 产出物列表         |
-| dialog     | 🖐 对话  | 交互式对话窗口                      |
-| evaluation | 📝 评估  | EvaluationReport 展示 + 三个操作按钮    |
-| acceptance | ✅ 验收  | 全部产物汇总 + 最终确认按钮         |
+| 步骤       | Tab 标签 | 内容                                 |
+| ---------- | -------- | ------------------------------------ |
+| plan       | 📄 规划  | 规划对话区（多轮）+ plan.md 产物区   |
+| approval   | 📋 确认  | 上一步产物展示 + 批准/退回/修改按钮  |
+| execute    | ⚡ 执行  | 只读执行输出流 + 产出物列表          |
+| dialog     | 🖐 对话  | 交互式对话窗口                       |
+| evaluation | 📝 评估  | EvaluationReport 展示 + 三个操作按钮 |
+| acceptance | ✅ 验收  | 全部产物汇总 + 最终确认按钮          |
 
 当前步骤的 Tab 高亮显示 ●，已完成的 Tab 显示 ✓（可点击回看，只读）。
 
