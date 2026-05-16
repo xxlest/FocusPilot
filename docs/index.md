@@ -4,29 +4,49 @@
 
 ## 核心产品
 
-- [PRD.md](/Users/bruce/Workspace/2-Code/01-work/FocusPilot/docs/PRD.md)
+- [PRD.md](PRD.md)
   FocusPilot 当前正式产品需求文档，覆盖定位、功能、Engine、部署和 V1 范围。
-- [Architecture.md](/Users/bruce/Workspace/2-Code/01-work/FocusPilot/docs/Architecture.md)
+- [Architecture.md](Architecture.md)
   当前实现对应的技术架构、模块边界、状态流转和验收用例。
-- [DesignGuide.md](/Users/bruce/Workspace/2-Code/01-work/FocusPilot/docs/DesignGuide.md)
+- [DesignGuide.md](DesignGuide.md)
   品牌、视觉、主题、动画和交互规范。
-- [Editions.md](/Users/bruce/Workspace/2-Code/01-work/FocusPilot/docs/Editions.md)
+- [Editions.md](Editions.md)
   FocusPilot / PilotOne 产品家族与版本规划。
 
-## 产品思考
+## 产品战略
 
-- [FocusPilot产品理念与市场定位.md](/Users/bruce/Workspace/2-Code/01-work/FocusPilot/docs/产品思考/FocusPilot产品理念与市场定位.md)
-  FocusPilot 作为人与 AI 协同的知行一体化个人自迭代系统、通用 Markdown 工作记忆与 AI 执行系统的产品理念、市场洞察和差异化定位。
-- [产品理念草稿.md](/Users/bruce/Workspace/2-Code/01-work/FocusPilot/docs/产品思考/产品理念草稿.md)
-  `Code / Project / Execution / System` 方法论与产品哲学输入。
+- [FocusPilot产品理念与市场定位.md](产品战略/FocusPilot产品理念与市场定位.md)
+  产品定位权威论述：AIOS 定位、知行一体化系统、人机协同模型。
+- [FocusPilot-V1-MVP-Scope与市场策略.md](产品战略/FocusPilot-V1-MVP-Scope与市场策略.md)
+  V1 执行方案：MVP scope、目标用户、首发渠道、定价模型。
+- [FocusPilot市场分析与阶段验证方案.md](产品战略/FocusPilot市场分析与阶段验证方案.md)
+  市场机会分析、用户画像、竞品对标、五阶段验证计划。
+## UI 设计（V1 新界面）
+
+- [FP-UI.md](FP-UI.md)
+  设计总览：8 个页面进度表、技术架构、参考来源索引。
+- [fp-ui/](fp-ui/) — 页面设计文档
+  - `00-layout.md` 整体布局（活动栏+侧边栏+工作区）
+  - `01-home.md` 首页（AI 对话+Widget）[草稿]
+  - `02-inbox.md` 收集箱（待阅读/灵感/便签）[草稿]
+  - `03-focus.md` 行动工作台（规划+执行+评估）[设计中]
+  - `04-studio.md` AI 工作区（对话+文件+Git）[设计中]
+  - `05-area-projects.md` 项目资产沉淀区 [草稿]
+  - `06-review.md` 复习与内化中心 [设计中]
+  - `07-ai-crew.md` Agent 团队管理 [草稿]
+  - `08-settings.md` 全局配置 [草稿]
+- [focuspilot-ui-features.md](focuspilot-ui-features.md)
+  从产品定位到 UI 细节的递进式功能说明书（基于 PRD 0.0.1 + V4.3 实现）。
 
 ## 竞品分析
 
-- [Z Code UI 功能层次梳理.md](/Users/bruce/Workspace/2-Code/01-work/FocusPilot/docs/竞品分析/Z%20Code%20UI%20功能层次梳理.md)
+- [Z Code UI 功能层次梳理.md](竞品分析/Z%20Code%20UI%20功能层次梳理.md)
   Agentic IDE / ADE 方向竞品拆解，重点看工作区结构、多 Agent、权限与扩展体系。
-- [Plane UI 功能层次梳理.md](/Users/bruce/Workspace/2-Code/01-work/FocusPilot/docs/竞品分析/Plane%20UI%20功能层次梳理.md)
+- [Codex UI 功能层次梳理.md](竞品分析/Codex%20UI%20功能层次梳理.md)
+  OpenAI Codex 产品拆解，重点看任务流、代码审查和 Agent 执行模式。
+- [Plane UI 功能层次梳理.md](竞品分析/Plane%20UI%20功能层次梳理.md)
   项目管理产品的完整 UI/IA 拆解，重点看 Work Item、容器模型和导航体系。
-- [Multica UI 功能层次梳理.md](/Users/bruce/Workspace/2-Code/01-work/FocusPilot/docs/竞品分析/Multica%20UI%20功能层次梳理.md)
+- [Multica UI 功能层次梳理.md](竞品分析/Multica%20UI%20功能层次梳理.md)
   AI-native Issues / Agents / Runtimes / Skills 产品拆解，重点看双端统一布局和 Agent 一等公民设计。
 
 ## 专题研究

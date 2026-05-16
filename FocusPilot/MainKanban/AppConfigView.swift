@@ -151,7 +151,8 @@ struct AppConfigView: View {
         let runningIDs = Set(workspaceRunningApps.compactMap(\.bundleIdentifier))
         // 预构建已安装 App 字典（O(1) 查找替代 O(N) 线性扫描）
         let installedByID = Dictionary(
-            uniqueKeysWithValues: appMonitor.installedApps.map { ($0.bundleID, $0) }
+            appMonitor.installedApps.map { ($0.bundleID, $0) },
+            uniquingKeysWith: { _, latest in latest }
         )
 
         var items: [AppListItem]
