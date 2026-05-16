@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FocusPilot Review Challenge Prototype</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap');
+
+  :root {
+    --bg: #0f1117;
+    --surface: #171b25;
+    --elevated: #1e2433;
+    --border: #2b3246;
+    --text: #e7ebf4;
+    --muted: #97a2b8;
+    --dim: #67728b;
+    --blue: #6b8cff;
+    --purple: #9b7dff;
+    --green: #58d49a;
+    --amber: #f5bf57;
+    --red: #f26d78;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "DM Sans", -apple-system, BlinkMacSystemFont, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  .app { display: grid; grid-template-columns: 52px 260px 1fr; height: 100vh; }
+  .activity {
+    background: #0c0e14;
+    border-right: 1px solid #202536;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 12px 0;
+  }
+  .logo, .icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    display: grid;
+    place-items: center;
+  }
+  .logo {
+    width: 32px;
+    height: 32px;
+    background: linear-gradient(135deg, var(--blue), var(--purple));
+    margin-bottom: 14px;
+    font-weight: 700;
+    font-size: 14px;
+  }
+  .icon { color: var(--dim); font-size: 16px; }
+  .icon.active {
+    background: rgba(107,140,255,0.12);
+    color: var(--blue);
+    position: relative;
+  }
+  .icon.active::before {
+    content: "";
+    position: absolute;
+    left: -8px;
+    width: 3px;
+    height: 20px;
+    border-radius: 3px;
+    background: var(--blue);
+  }
+  .spacer { flex: 1; }
+
+  .sidebar {
+    background: var(--surface);
+    border-right: 1px solid #202536;
+    display: flex;
+    flex-direction: column;
+  }
+  .sidebar-header {
+    padding: 18px;
+    border-bottom: 1px solid #202536;
+  }
+  .sidebar-header h2 { font-size: 15px; font-weight: 700; }
+  .sidebar-header p { margin-top: 6px; color: var(--muted); font-size: 12px; }
+  .nav { padding: 12px 10px; display: grid; gap: 6px; }
+  .nav-item {
+    padding: 10px 12px;
+    border-radius: 10px;
+    color: var(--muted);
+    display: flex;
+    justify-content: space-between;
+  }
+  .nav-item.active {
+    background: rgba(155,125,255,0.12);
+    color: var(--text);
+  }
+  .footer {
+    margin-top: auto;
+    padding: 14px;
+    border-top: 1px solid #202536;
+    display: grid;
+    gap: 10px;
+  }
+  .hint {
+    background: var(--elevated);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 12px;
+  }
+  .hint .label { color: var(--muted); font-size: 11px; }
+  .hint .value { margin-top: 4px; font-size: 14px; font-weight: 700; }
+
+  .content {
+    padding: 24px 28px;
+    overflow: auto;
+    background:
+      radial-gradient(circle at top left, rgba(155,125,255,0.10), transparent 26%),
+      radial-gradient(circle at top right, rgba(107,140,255,0.08), transparent 22%),
+      var(--bg);
+  }
+  .toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+  }
+  .toolbar h1 { font-size: 26px; }
+  .toolbar p { margin-top: 6px; font-size: 13px; color: var(--muted); }
+
+  .switch {
+    display: inline-flex;
+    gap: 4px;
+    padding: 4px;
+    border-radius: 12px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+  }
+  .switch button {
+    border: 0;
+    background: transparent;
+    color: var(--muted);
+    border-radius: 8px;
+    padding: 8px 12px;
+    cursor: pointer;
+    font-size: 12px;
+  }
+  .switch button.active {
+    background: rgba(155,125,255,0.14);
+    color: var(--text);
+  }
+
+  .panel { display: none; }
+  .panel.active { display: block; }
+
+  .layout {
+    display: grid;
+    grid-template-columns: 1fr 320px;
+    gap: 18px;
+  }
+  .card {
+    background: rgba(23,27,37,0.94);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    box-shadow: 0 14px 34px rgba(0,0,0,0.25);
+  }
+  .main {
+    min-height: 620px;
+    display: flex;
+    flex-direction: column;
+  }
+  .header {
+    padding: 18px 22px 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .pill {
+    padding: 5px 10px;
+    border-radius: 999px;
+    border: 1px solid rgba(155,125,255,0.28);
+    background: rgba(155,125,255,0.16);
+    font-size: 11px;
+  }
+  .body {
+    padding: 22px;
+  }
+  .overline {
+    color: var(--amber);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-size: 11px;
+    margin-bottom: 10px;
+  }
+  .prompt {
+    font-size: 28px;
+    line-height: 1.25;
+    margin-bottom: 16px;
+  }
+  .desc {
+    color: var(--muted);
+    line-height: 1.7;
+    margin-bottom: 18px;
+  }
+  .answer-box {
+    min-height: 220px;
+    border-radius: 16px;
+    border: 1px solid var(--border);
+    background: #131722;
+    padding: 16px;
+    color: var(--muted);
+    line-height: 1.7;
+  }
+  .actions {
+    display: flex;
+    gap: 10px;
+    padding: 0 22px 22px;
+  }
+  .btn {
+    border: 0;
+    border-radius: 12px;
+    padding: 12px 16px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .btn.primary {
+    background: linear-gradient(135deg, var(--purple), var(--blue));
+    color: white;
+  }
+  .btn.secondary {
+    background: transparent;
+    color: var(--muted);
+    border: 1px solid var(--border);
+  }
+
+  .side {
+    padding: 18px;
+    display: grid;
+    gap: 12px;
+  }
+  .info {
+    background: var(--elevated);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px;
+  }
+  .info h4 {
+    font-size: 13px;
+    margin-bottom: 8px;
+  }
+  .info p, .info li {
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 1.6;
+  }
+  .info ul { padding-left: 16px; }
+  .level-grid {
+    display: grid;
+    gap: 8px;
+  }
+  .level {
+    padding: 10px 12px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: #161a26;
+    color: var(--muted);
+  }
+  .level.active {
+    border-color: rgba(88,212,154,0.35);
+    background: rgba(88,212,154,0.10);
+    color: var(--text);
+  }
+
+  .result-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+  }
+  .result-tile {
+    background: var(--elevated);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 18px;
+  }
+  .result-tile .label { color: var(--muted); font-size: 12px; }
+  .result-tile .value { margin-top: 10px; font-size: 22px; font-weight: 700; }
+</style>
+</head>
+<body>
+  <div class="app">
+    <aside class="activity">
+      <div class="logo">FP</div>
+      <div class="icon">🏠</div>
+      <div class="icon">📥</div>
+      <div class="icon">🎯</div>
+      <div class="icon">💻</div>
+      <div class="icon">📁</div>
+      <div class="icon active">🧠</div>
+      <div class="icon">🤖</div>
+      <div class="spacer"></div>
+      <div class="icon">⚙️</div>
+    </aside>
+
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <h2>Review</h2>
+        <p>内化挑战由今日复习强提示进入，但不强制自动开始。</p>
+      </div>
+      <div class="nav">
+        <div class="nav-item"><span>今日复习</span><small>已完成</small></div>
+        <div class="nav-item active"><span>内化挑战</span><small>5</small></div>
+        <div class="nav-item"><span>卡片库</span><small>248</small></div>
+        <div class="nav-item"><span>统计</span><small>→</small></div>
+      </div>
+      <div class="footer">
+        <div class="hint">
+          <div class="label">今日待挑战</div>
+          <div class="value">5 张</div>
+        </div>
+        <div class="hint">
+          <div class="label">模式分布</div>
+          <div class="value">费曼 3 · 应用 2</div>
+        </div>
+      </div>
+    </aside>
+
+    <main class="content">
+      <div class="toolbar">
+        <div>
+          <h1>内化挑战</h1>
+          <p>不是继续翻卡，而是确认你能不能解释清楚、迁移出来、真的用得上。</p>
+        </div>
+        <div class="switch">
+          <button class="active" data-target="panel-feynman">费曼复述</button>
+          <button data-target="panel-scenario">场景应用</button>
+          <button data-target="panel-result">结果反馈</button>
+        </div>
+      </div>
+
+      <section id="panel-feynman" class="panel active">
+        <div class="layout">
+          <div class="card main">
+            <div class="header">
+              <div>
+                <strong>第 1 / 5 张挑战卡</strong>
+                <div style="color:var(--muted); font-size:12px; margin-top:4px;">类型：概念类卡片 · AI 推荐题型：费曼复述</div>
+              </div>
+              <span class="pill">内化目标：能解释</span>
+            </div>
+            <div class="body">
+              <div class="overline">Feynman Prompt</div>
+              <div class="prompt">请不用术语，假设你在向完全不懂状态机的人解释：为什么 `blocked` 恢复后要回到阻塞前状态？</div>
+              <div class="desc">AI 会看你是否抓住了“blocked 是中断而不是新阶段”这个核心规律，并会继续追问遗漏点。</div>
+              <div class="answer-box">
+                我会这样解释：<br><br>
+                `blocked` 就像你做一件事做到一半，被外部条件卡住了。问题解决之后，你应该回到原来做到哪一步，而不是重新被当成“还没开始”。<br><br>
+                如果把它直接丢回 `todo`，就会失去真实上下文，团队也看不出来这件事其实已经做到评估或执行阶段了。
+              </div>
+            </div>
+            <div class="actions">
+              <button class="btn primary">提交回答</button>
+              <button class="btn secondary">语音作答</button>
+              <button class="btn secondary">跳过这题</button>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="side">
+              <div class="info">
+                <h4>原卡片摘要</h4>
+                <p>blocked 不是流程新阶段，而是对当前工作流的临时打断。恢复后要回到阻塞前状态，避免上下文丢失。</p>
+              </div>
+              <div class="info">
+                <h4>来源上下文</h4>
+                <p>Area：AI 编码<br>Project：Focus 状态机设计<br>Source：规则报告 / blocked 章节</p>
+              </div>
+              <div class="info">
+                <h4>内化程度</h4>
+                <div class="level-grid">
+                  <div class="level">未内化</div>
+                  <div class="level active">能解释</div>
+                  <div class="level">能应用</div>
+                  <div class="level">已融会</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="panel-scenario" class="panel">
+        <div class="layout">
+          <div class="card main">
+            <div class="header">
+              <div>
+                <strong>第 3 / 5 张挑战卡</strong>
+                <div style="color:var(--muted); font-size:12px; margin-top:4px;">类型：方法类卡片 · AI 推荐题型：场景应用</div>
+              </div>
+              <span class="pill">内化目标：能应用</span>
+            </div>
+            <div class="body">
+              <div class="overline">Scenario Prompt</div>
+              <div class="prompt">假设一个任务正在 `in_evaluation`，这时发现执行结果依赖的接口挂了。你会把它改成 `todo`、`blocked` 还是继续留在 `in_evaluation`？请说明理由。</div>
+              <div class="desc">这类题不看你会不会背定义，而看你能不能在真实情境里选对动作，并给出判断依据。</div>
+              <div class="answer-box">
+                我会改成 `blocked`，并记录 `blocked_from_status = in_evaluation`。<br><br>
+                因为这不是回到“待做”，而是评估阶段被外部条件卡住。之后恢复时应该继续从评估阶段往下走，而不是丢失上下文。
+              </div>
+            </div>
+            <div class="actions">
+              <button class="btn primary">提交判断</button>
+              <button class="btn secondary">AI 追问我</button>
+              <button class="btn secondary">查看参考答案</button>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="side">
+              <div class="info">
+                <h4>当前卡片类型</h4>
+                <p>方法类 / 决策类，优先用场景应用题验证“会不会用出来”。</p>
+              </div>
+              <div class="info">
+                <h4>AI 判分标准</h4>
+                <ul>
+                  <li>是否选对状态</li>
+                  <li>是否解释“为什么不是 todo”</li>
+                  <li>是否保留阻塞前上下文</li>
+                </ul>
+              </div>
+              <div class="info">
+                <h4>升级路径</h4>
+                <div class="level-grid">
+                  <div class="level">未内化</div>
+                  <div class="level">能解释</div>
+                  <div class="level active">能应用</div>
+                  <div class="level">已融会</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="panel-result" class="panel">
+        <div class="card" style="padding:22px;">
+          <div class="toolbar" style="margin-bottom:18px;">
+            <div>
+              <h1 style="font-size:22px;">结果反馈</h1>
+              <p>内化挑战结束后，不给简单对错分，而是更新内化程度和下一步建议。</p>
+            </div>
+            <span class="pill">今日完成 5 / 5</span>
+          </div>
+
+          <div class="result-grid">
+            <div class="result-tile">
+              <div class="label">本轮提升到“能解释”</div>
+              <div class="value">2 张</div>
+            </div>
+            <div class="result-tile">
+              <div class="label">本轮提升到“能应用”</div>
+              <div class="value">1 张</div>
+            </div>
+            <div class="result-tile">
+              <div class="label">仍需继续强化</div>
+              <div class="value">2 张</div>
+            </div>
+            <div class="result-tile">
+              <div class="label">建议带入 Focus 实践</div>
+              <div class="value">1 张</div>
+            </div>
+          </div>
+
+          <div style="display:grid; grid-template-columns:1.1fr 0.9fr; gap:18px; margin-top:18px;">
+            <div class="info" style="padding:18px;">
+              <h4>系统判断</h4>
+              <p>你已经能清楚解释 `blocked` 的含义，也能在情境中选对状态，但还需要在真实任务里用一次，才能升级到 `已融会`。</p>
+            </div>
+            <div class="info" style="padding:18px;">
+              <h4>下一步建议</h4>
+              <ul>
+                <li>去 Focus 查看相关任务</li>
+                <li>把这张卡挂到对应 Task 作为支撑卡片</li>
+                <li>完成一次真实应用后回写证据</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="actions" style="padding:18px 0 0;">
+            <button class="btn primary">去 Focus 应用</button>
+            <button class="btn secondary">返回卡片库</button>
+            <button class="btn secondary">结束今日复习</button>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+<script>
+  const show = (id) => {
+    document.querySelectorAll('.panel').forEach(el => el.classList.toggle('active', el.id === id));
+    document.querySelectorAll('.switch button').forEach(btn => btn.classList.toggle('active', btn.dataset.target === id));
+  };
+
+  document.querySelectorAll('.switch button').forEach(btn => {
+    btn.addEventListener('click', () => show(btn.dataset.target));
+  });
+</script>
+</body>
+</html>

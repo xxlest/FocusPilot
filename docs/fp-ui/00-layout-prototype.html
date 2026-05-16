@@ -1,0 +1,1826 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>FocusPilot V1 Shell Prototype</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg: #121316;
+        --surface: #191b20;
+        --surface-2: #20232a;
+        --surface-3: #262a33;
+        --line: #30343d;
+        --line-soft: #252932;
+        --text: #eceef2;
+        --muted: #a3a9b5;
+        --dim: #707887;
+        --accent: #529cca;
+        --green: #4ade80;
+        --amber: #f2c40f;
+        --red: #f87171;
+        --purple: #a78bfa;
+        --sidebar-w: 260px;
+        --activity-w: 52px;
+        --radiusha: 8px;
+        --font:
+          Avenir Next, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        width: 100vw;
+        height: 100vh;
+        overflow: hidden;
+        background: var(--bg);
+        color: var(--text);
+        font-family: var(--font);
+        font-size: 13px;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      button,
+      input,
+      textarea,
+      select {
+        font: inherit;
+        color: inherit;
+      }
+
+      .app {
+        display: grid;
+        grid-template-columns: var(--activity-w) var(--sidebar-w) minmax(0, 1fr);
+        height: 100vh;
+        min-width: 960px;
+      }
+
+      .activity {
+        background: #0f1013;
+        border-right: 1px solid var(--line-soft);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 12px 0;
+        gap: 4px;
+      }
+
+      .mark {
+        width: 32px;
+        height: 32px;
+        border-radius: var(--radius);
+        display: grid;
+        place-items: center;
+        background: radial-gradient(
+          circle at 30% 18%,
+          #d7efff,
+          var(--accent) 42%,
+          #23617e 100%
+        );
+        color: #061018;
+        font-weight: 800;
+        margin-bottom: 14px;
+        box-shadow:
+          0 0 0 1px rgba(255, 255, 255, 0.08),
+          0 10px 28px rgba(82, 156, 202, 0.22);
+      }
+
+      .nav-btn {
+        width: 36px;
+        height: 36px;
+        border: 0;
+        border-radius: var(--radius);
+        display: grid;
+        place-items: center;
+        background: transparent;
+        color: var(--dim);
+        cursor: pointer;
+        position: relative;
+      }
+      .nav-btn:hover {
+        background: var(--surface-2);
+        color: var(--muted);
+      }
+      .nav-btn.active {
+        background: rgba(82, 156, 202, 0.14);
+        color: var(--accent);
+      }
+      .nav-btn.active::before {
+        content: "";
+        position: absolute;
+        left: -8px;
+        width: 3px;
+        height: 20px;
+        border-radius: 0 3px 3px 0;
+        background: var(--accent);
+      }
+      .nav-spacer {
+        flex: 1;
+      }
+
+      .sidebar {
+        background: var(--surface);
+        border-right: 1px solid var(--line-soft);
+        min-width: 0;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .side-view {
+        display: none;
+        height: 100%;
+        min-height: 0;
+        flex-direction: column;
+      }
+      .side-view.active {
+        display: flex;
+      }
+
+      .side-head {
+        padding: 16px 16px 12px;
+        border-bottom: 1px solid var(--line-soft);
+      }
+      .side-title {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        margin-bottom: 10px;
+      }
+      .side-title h2 {
+        margin: 0;
+        font-size: 15px;
+        font-weight: 700;
+        letter-spacing: 0;
+      }
+      .search {
+        width: 100%;
+        height: 32px;
+        border: 1px solid var(--line-soft);
+        border-radius: var(--radius);
+        background: #14161b;
+        color: var(--text);
+        outline: 0;
+        padding: 0 10px;
+      }
+      .search::placeholder {
+        color: var(--dim);
+      }
+
+      .seg {
+        display: inline-flex;
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        padding: 3px;
+        background: #14161b;
+        gap: 3px;
+      }
+      .seg button {
+        border: 0;
+        background: transparent;
+        color: var(--muted);
+        border-radius: 6px;
+        padding: 6px 9px;
+        cursor: pointer;
+        font-size: 12px;
+      }
+      .seg button.active {
+        background: var(--surface-3);
+        color: var(--text);
+      }
+
+      .side-scroll {
+        min-height: 0;
+        overflow: auto;
+        padding: 12px 10px;
+      }
+      .label {
+        margin: 12px 8px 7px;
+        color: var(--dim);
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        font-size: 10px;
+        font-weight: 800;
+      }
+      .side-item {
+        min-height: 34px;
+        padding: 8px 9px;
+        border-radius: var(--radius);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: var(--muted);
+        cursor: pointer;
+      }
+      .side-item:hover {
+        background: var(--surface-2);
+        color: var(--text);
+      }
+      .side-item.active {
+        background: rgba(82, 156, 202, 0.13);
+        color: var(--text);
+      }
+      .count {
+        margin-left: auto;
+        color: var(--dim);
+        font-family: var(--mono);
+        font-size: 11px;
+      }
+      .subline {
+        display: block;
+        color: var(--dim);
+        font-size: 11px;
+        margin-top: 2px;
+      }
+      .indent {
+        padding-left: 22px;
+      }
+      .side-footer {
+        margin-top: auto;
+        padding: 12px;
+        border-top: 1px solid var(--line-soft);
+        display: grid;
+        gap: 8px;
+      }
+
+      .main {
+        min-width: 0;
+        min-height: 0;
+        display: flex;
+        background:
+          radial-gradient(
+            circle at 100% 0%,
+            rgba(82, 156, 202, 0.08),
+            transparent 25%
+          ),
+          var(--bg);
+      }
+      .page {
+        display: none;
+        min-width: 0;
+        min-height: 0;
+        flex: 1;
+        flex-direction: column;
+      }
+      .page.active {
+        display: flex;
+      }
+
+      .topbar {
+        height: 52px;
+        flex: 0 0 auto;
+        border-bottom: 1px solid var(--line-soft);
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 0 18px;
+        background: rgba(18, 19, 22, 0.86);
+      }
+      .topbar h1 {
+        margin: 0;
+        font-size: 16px;
+        font-weight: 700;
+      }
+      .topbar .meta {
+        color: var(--dim);
+        font-family: var(--mono);
+        font-size: 11px;
+      }
+      .top-actions {
+        margin-left: auto;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .work {
+        min-height: 0;
+        overflow: auto;
+        padding: 18px;
+      }
+      .grid {
+        display: grid;
+        gap: 14px;
+      }
+      .cols-2 {
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      }
+      .cols-3 {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+      .cols-4 {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+      }
+      .card {
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        background: rgba(25, 27, 32, 0.92);
+        min-width: 0;
+      }
+      .card-head {
+        min-height: 42px;
+        border-bottom: 1px solid var(--line-soft);
+        padding: 11px 13px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+      }
+      .card-head h3 {
+        margin: 0;
+        font-size: 13px;
+        font-weight: 700;
+      }
+      .card-body {
+        padding: 13px;
+      }
+
+      .metric {
+        padding: 14px;
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        background: var(--surface);
+        cursor: pointer;
+      }
+      .metric:hover {
+        border-color: rgba(82, 156, 202, 0.52);
+      }
+      .metric .value {
+        font-size: 26px;
+        font-weight: 800;
+        line-height: 1.1;
+      }
+      .metric .name {
+        color: var(--muted);
+        margin-top: 6px;
+      }
+      .metric .hint {
+        color: var(--dim);
+        font-size: 11px;
+        margin-top: 4px;
+      }
+
+      .row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 9px 10px;
+        border-radius: var(--radius);
+        color: var(--muted);
+      }
+      .row:hover {
+        background: var(--surface-2);
+        color: var(--text);
+      }
+      .row strong {
+        color: var(--text);
+        font-weight: 650;
+      }
+      .row .grow {
+        flex: 1;
+        min-width: 0;
+      }
+      .row .right {
+        margin-left: auto;
+        color: var(--dim);
+        font-size: 12px;
+      }
+
+      .btn {
+        border: 1px solid var(--line);
+        background: var(--surface-2);
+        border-radius: var(--radius);
+        min-height: 32px;
+        padding: 0 11px;
+        color: var(--text);
+        cursor: pointer;
+      }
+      .btn:hover {
+        border-color: var(--accent);
+      }
+      .btn.primary {
+        background: var(--accent);
+        color: #061018;
+        border-color: transparent;
+        font-weight: 800;
+      }
+      .btn.icon {
+        width: 32px;
+        padding: 0;
+        display: grid;
+        place-items: center;
+      }
+
+      .pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        padding: 4px 8px;
+        color: var(--muted);
+        background: rgba(255, 255, 255, 0.03);
+        font-size: 11px;
+        white-space: nowrap;
+      }
+      .pill.blue {
+        border-color: rgba(82, 156, 202, 0.35);
+        color: #a9d8f4;
+        background: rgba(82, 156, 202, 0.12);
+      }
+      .pill.green {
+        border-color: rgba(74, 222, 128, 0.28);
+        color: #a6f5c2;
+        background: rgba(74, 222, 128, 0.1);
+      }
+      .pill.amber {
+        border-color: rgba(242, 196, 15, 0.28);
+        color: #f7df76;
+        background: rgba(242, 196, 15, 0.1);
+      }
+      .pill.red {
+        border-color: rgba(248, 113, 113, 0.3);
+        color: #fca5a5;
+        background: rgba(248, 113, 113, 0.1);
+      }
+
+      .progress {
+        width: 80px;
+        height: 6px;
+        border-radius: 999px;
+        background: #111318;
+        overflow: hidden;
+      }
+      .progress span {
+        display: block;
+        height: 100%;
+        border-radius: inherit;
+        background: var(--accent);
+      }
+
+      .panel {
+        display: none;
+      }
+      .panel.active {
+        display: block;
+      }
+
+      .kanban {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(180px, 1fr));
+        gap: 12px;
+        min-width: 820px;
+      }
+      .lane {
+        min-height: 460px;
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        background: rgba(18, 19, 22, 0.55);
+        padding: 10px;
+      }
+      .lane h3 {
+        margin: 2px 2px 10px;
+        font-size: 12px;
+        color: var(--muted);
+        display: flex;
+        justify-content: space-between;
+      }
+      .task {
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        background: var(--surface);
+        padding: 11px;
+        margin-bottom: 10px;
+        cursor: pointer;
+      }
+      .task:hover {
+        border-color: rgba(82, 156, 202, 0.5);
+      }
+      .task-title {
+        font-weight: 700;
+        margin-bottom: 8px;
+      }
+      .task-meta {
+        color: var(--dim);
+        display: flex;
+        justify-content: space-between;
+        gap: 8px;
+        font-size: 11px;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+      th,
+      td {
+        text-align: left;
+        border-bottom: 1px solid var(--line-soft);
+        padding: 10px;
+        color: var(--muted);
+      }
+      th {
+        color: var(--dim);
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+      }
+      td strong {
+        color: var(--text);
+      }
+
+      .chat {
+        display: grid;
+        grid-template-rows: 1fr auto;
+        min-height: 560px;
+      }
+      .message {
+        max-width: 760px;
+        padding: 12px 14px;
+        border-radius: var(--radius);
+        margin-bottom: 10px;
+        line-height: 1.65;
+      }
+      .message.user {
+        background: var(--surface-3);
+        margin-left: auto;
+      }
+      .message.agent {
+        background: var(--surface);
+        border: 1px solid var(--line);
+      }
+      .composer {
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        background: #14161b;
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 8px;
+        padding: 8px;
+      }
+      .composer textarea {
+        min-height: 44px;
+        resize: none;
+        border: 0;
+        outline: 0;
+        background: transparent;
+        color: var(--text);
+      }
+
+      .studio-layout {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 320px;
+        gap: 14px;
+        min-height: 620px;
+      }
+      .code {
+        font-family: var(--mono);
+        font-size: 12px;
+        line-height: 1.7;
+        color: #cbd5e1;
+        background: #111318;
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        padding: 12px;
+        white-space: pre-wrap;
+      }
+      .terminal {
+        margin-top: 12px;
+        font-family: var(--mono);
+        font-size: 12px;
+        background: #0d0f12;
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        padding: 12px;
+        color: #9ee6b8;
+      }
+
+      .review-card {
+        min-height: 360px;
+        display: grid;
+        grid-template-rows: auto 1fr auto;
+      }
+      .prompt {
+        font-size: 24px;
+        line-height: 1.28;
+        font-weight: 750;
+        margin: 0 0 12px;
+      }
+      .answer {
+        min-height: 150px;
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        background: #14161b;
+        color: var(--muted);
+        padding: 12px;
+        line-height: 1.7;
+      }
+
+      .form {
+        display: grid;
+        gap: 12px;
+        max-width: 760px;
+      }
+      .field {
+        display: grid;
+        grid-template-columns: 160px minmax(0, 1fr);
+        gap: 12px;
+        align-items: center;
+      }
+      .field label {
+        color: var(--muted);
+      }
+      .field input,
+      .field select {
+        height: 34px;
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        background: #14161b;
+        padding: 0 10px;
+        outline: 0;
+      }
+
+      .modal-backdrop {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.45);
+        place-items: center;
+        z-index: 50;
+      }
+      .modal-backdrop.open {
+        display: grid;
+      }
+      .modal {
+        width: min(620px, calc(100vw - 48px));
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        background: var(--surface);
+        box-shadow: 0 24px 80px rgba(0, 0, 0, 0.45);
+      }
+
+      @media (max-width: 1100px) {
+        .app {
+          grid-template-columns: var(--activity-w) 220px minmax(0, 1fr);
+        }
+        .cols-4,
+        .cols-3 {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+        .studio-layout {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app">
+      <nav class="activity" aria-label="主导航">
+        <div class="mark">FP</div>
+        <button class="nav-btn active" data-page="home" title="Home">🏠</button>
+        <button class="nav-btn" data-page="inbox" title="Inbox">📥</button>
+        <button class="nav-btn" data-page="focus" title="Focus">🎯</button>
+        <button class="nav-btn" data-page="studio" title="Studio">💻</button>
+        <button class="nav-btn" data-page="areas" title="AreaProjects">
+          📁
+        </button>
+        <button class="nav-btn" data-page="review" title="Review">🧠</button>
+        <button class="nav-btn" data-page="crew" title="AICrew">🤖</button>
+        <div class="nav-spacer"></div>
+        <button class="nav-btn" data-page="settings" title="Settings">
+          ⚙️
+        </button>
+      </nav>
+
+      <aside class="sidebar">
+        <section class="side-view active" data-page="home">
+          <div class="side-head">
+            <div class="side-title">
+              <h2>Home</h2>
+              <div class="seg" data-scope="homeMode">
+                <button class="active" data-target="home-overview">概览</button>
+                <button data-target="home-chat">对话</button>
+              </div>
+            </div>
+          </div>
+          <div class="side-scroll panel active" id="home-overview-side">
+            <div class="label">数据导航</div>
+            <div class="side-item active" data-jump="today">
+              <span>🔥 今日待办</span><span class="count">4</span>
+            </div>
+            <div class="side-item">
+              <span>📅 本周待办</span><span class="count">12</span>
+            </div>
+            <div class="side-item">
+              <span>📆 本月目标</span><span class="count">28</span>
+            </div>
+            <div class="side-item">
+              <span>📋 全部 TODO</span><span class="count">45</span>
+            </div>
+            <div class="label">项目</div>
+            <div class="side-item">
+              <span>📁 活跃项目</span><span class="count">5</span>
+            </div>
+            <div class="side-item">
+              <span>🔄 执行中</span><span class="count">3</span>
+            </div>
+            <div class="side-item">
+              <span>📥 待整合素材</span><span class="count">3</span>
+            </div>
+          </div>
+          <div class="side-scroll panel" id="home-chat-side">
+            <button
+              class="btn primary"
+              data-open-chat
+              style="width: 100%; margin-bottom: 12px"
+            >
+              + 新建对话
+            </button>
+            <div class="label">最近对话</div>
+            <div class="side-item active" data-open-chat>
+              <span
+                >✳ FocusPilot 调试<span class="subline">3 分钟前</span></span
+              >
+            </div>
+            <div class="side-item" data-open-chat>
+              <span>✳ 市场分析报告<span class="subline">2 小时前</span></span>
+            </div>
+            <div class="side-item" data-open-chat>
+              <span>✳ 周报整理<span class="subline">昨天</span></span>
+            </div>
+          </div>
+        </section>
+
+        <section class="side-view" data-page="inbox">
+          <div class="side-head">
+            <div class="side-title">
+              <h2>Inbox</h2>
+              <button class="btn icon" data-modal="capture">+</button>
+            </div>
+            <input class="search" placeholder="搜索收集内容..." />
+          </div>
+          <div class="side-scroll">
+            <div class="label">分类</div>
+            <div class="side-item active">
+              <span>📖 待阅读</span><span class="count">3</span>
+            </div>
+            <div class="side-item">
+              <span>💡 灵感</span><span class="count">5</span>
+            </div>
+            <div class="side-item">
+              <span>☑️ 临时任务</span><span class="count">2</span>
+            </div>
+            <div class="side-item">
+              <span>📝 便签</span><span class="count">8</span>
+            </div>
+            <div class="label">Agent</div>
+            <div class="side-item">
+              <span>🤖 自动采集</span><span class="count">1</span>
+            </div>
+          </div>
+        </section>
+
+        <section class="side-view" data-page="focus">
+          <div class="side-head">
+            <div class="side-title">
+              <h2>Focus</h2>
+              <button class="btn icon" data-modal="task">+</button>
+            </div>
+            <input class="search" placeholder="搜索目标和任务..." />
+          </div>
+          <div class="side-scroll">
+            <div class="label">快捷视图</div>
+            <div class="side-item active">
+              <span>📌 全部工作项</span><span class="count">45</span>
+            </div>
+            <div class="side-item">
+              <span>🔥 今日</span><span class="count">4</span>
+            </div>
+            <div class="side-item">
+              <span>📅 本周</span><span class="count">12</span>
+            </div>
+            <div class="side-item">
+              <span>🤖 Agent 执行中</span><span class="count">3</span>
+            </div>
+            <div class="label">目标树</div>
+            <div class="side-item">
+              <span>▾ 📁 FocusPilot V1</span><span class="count">63%</span>
+            </div>
+            <div class="side-item indent">
+              <span>▾ 🎯 Engine 基础架构</span>
+            </div>
+            <div class="side-item indent active">
+              <span>📄 frontmatter 解析</span>
+            </div>
+            <div class="side-item">
+              <span>▸ 📁 大客户跟踪</span><span class="count">67%</span>
+            </div>
+          </div>
+        </section>
+
+        <section class="side-view" data-page="studio">
+          <div class="side-head">
+            <div class="side-title">
+              <h2>Studio</h2>
+              <button class="btn icon">+</button>
+            </div>
+            <input class="search" placeholder="搜索项目和会话..." />
+          </div>
+          <div class="side-scroll">
+            <div class="label">自动化</div>
+            <div class="side-item">
+              <span>🔄 每日代码审查<span class="subline">2h 前完成</span></span>
+            </div>
+            <div class="side-item">
+              <span>🔄 PR 自动检查<span class="subline">运行中</span></span>
+            </div>
+            <div class="label">项目区</div>
+            <div class="seg" style="margin: 0 8px 10px">
+              <button class="active">🤖</button><button>📁</button
+              ><button>🌿</button>
+            </div>
+            <div class="side-item active">
+              <span>📌 ✳ 调试看板拖拽</span><span class="count">3m</span>
+            </div>
+            <div class="side-item">
+              <span>▾ 📂 FocusPilot</span><span class="count">+</span>
+            </div>
+            <div class="side-item indent">
+              <span>✳ 研究 CAAnimation</span><span class="count">15m</span>
+            </div>
+            <div class="side-item indent">
+              <span>⚡ 测试 Agent Pull</span><span class="count">1h</span>
+            </div>
+          </div>
+          <div class="side-footer">
+            <button class="btn">⚙ Studio 设置</button>
+          </div>
+        </section>
+
+        <section class="side-view" data-page="areas">
+          <div class="side-head">
+            <div class="side-title">
+              <h2>AreaProjects</h2>
+              <button class="btn icon">📄</button>
+            </div>
+            <input class="search" placeholder="搜索文件和项目..." />
+          </div>
+          <div class="side-scroll">
+            <div class="seg" style="margin: 0 8px 10px">
+              <button>📁</button><button>📄</button><button>⭐</button
+              ><button>⤡</button>
+            </div>
+            <div class="side-item active"><span>▾ 📂 FocusPilot</span></div>
+            <div class="side-item indent"><span>📄 架构设计.md</span></div>
+            <div class="side-item indent"><span>📄 技术选型.md</span></div>
+            <div class="side-item indent"><span>▸ 📂 参考资料</span></div>
+            <div class="side-item"><span>▾ 📂 大客户项目</span></div>
+            <div class="side-item indent"><span>📄 客户画像.md</span></div>
+            <div class="side-item indent"><span>📄 竞品分析.md</span></div>
+          </div>
+        </section>
+
+        <section class="side-view" data-page="review">
+          <div class="side-head">
+            <div class="side-title">
+              <h2>Review</h2>
+              <span class="pill green">7 天</span>
+            </div>
+          </div>
+          <div class="side-scroll">
+            <div class="side-item active" data-review="today">
+              <span>今日复习</span><span class="count">24</span>
+            </div>
+            <div class="side-item" data-review="challenge">
+              <span>内化挑战</span><span class="count">5</span>
+            </div>
+            <div class="side-item" data-review="library">
+              <span>卡片库</span><span class="count">248</span>
+            </div>
+            <div class="side-item" data-review="stats">
+              <span>统计</span><span class="count">→</span>
+            </div>
+          </div>
+          <div class="side-footer">
+            <div
+              class="card-body"
+              style="
+                padding: 10px;
+                border: 1px solid var(--line);
+                border-radius: var(--radius);
+                background: var(--surface-2);
+              "
+            >
+              <div class="subline">弱项卡</div>
+              <strong>12 张待强化</strong>
+            </div>
+          </div>
+        </section>
+
+        <section class="side-view" data-page="crew">
+          <div class="side-head">
+            <div class="side-title">
+              <h2>AICrew</h2>
+              <button class="btn icon">+</button>
+            </div>
+            <input class="search" placeholder="搜索成员..." />
+          </div>
+          <div class="side-scroll">
+            <div class="label">团队成员</div>
+            <div class="side-item active">
+              <span
+                >🧑‍💻 代码工程师<span class="subline"
+                  >claude-code · 本地</span
+                ></span
+              >
+            </div>
+            <div class="side-item">
+              <span
+                >📊 数据分析师<span class="subline">claude · 云端</span></span
+              >
+            </div>
+            <div class="side-item">
+              <span>📝 文档撰写<span class="subline">claude · 云端</span></span>
+            </div>
+          </div>
+        </section>
+
+        <section class="side-view" data-page="settings">
+          <div class="side-head">
+            <div class="side-title"><h2>Settings</h2></div>
+          </div>
+          <div class="side-scroll">
+            <div class="label">模块</div>
+            <div class="side-item active"><span>🎯 Focus</span></div>
+            <div class="side-item"><span>💻 Studio</span></div>
+            <div class="side-item"><span>🤖 AICrew</span></div>
+            <div class="side-item"><span>📁 Projects</span></div>
+            <div class="label">通用</div>
+            <div class="side-item"><span>🎨 外观</span></div>
+            <div class="side-item"><span>⌨️ 快捷键</span></div>
+            <div class="side-item"><span>🔧 通用</span></div>
+          </div>
+        </section>
+      </aside>
+
+      <main class="main">
+        <section class="page active" data-page="home">
+          <header class="topbar">
+            <h1>Home</h1>
+            <span class="meta">全局概览入口</span>
+          </header>
+          <div class="work panel active" id="home-overview">
+            <div class="grid cols-4">
+              <div class="metric" data-go="focus">
+                <div class="value">4</div>
+                <div class="name">今日待办</div>
+                <div class="hint">点击进入 Focus 今日筛选</div>
+              </div>
+              <div class="metric" data-go="focus">
+                <div class="value">12</div>
+                <div class="name">本周待办</div>
+                <div class="hint">跨项目聚合</div>
+              </div>
+              <div class="metric" data-go="focus">
+                <div class="value">28</div>
+                <div class="name">本月目标</div>
+                <div class="hint">项目级目标</div>
+              </div>
+              <div class="metric" data-go="areas">
+                <div class="value">5</div>
+                <div class="name">活跃项目</div>
+                <div class="hint">进入资产区</div>
+              </div>
+            </div>
+            <div class="grid cols-2" style="margin-top: 14px">
+              <div class="card">
+                <div class="card-head">
+                  <h3>执行中</h3>
+                  <span class="pill blue">3 项</span>
+                </div>
+                <div class="card-body">
+                  <div class="row" data-go="focus">
+                    <strong>客户画像生成</strong>
+                    <div class="progress"><span style="width: 60%"></span></div>
+                    <span class="right">大客户</span>
+                  </div>
+                  <div class="row" data-go="focus">
+                    <strong>API 文档更新</strong>
+                    <div class="progress"><span style="width: 30%"></span></div>
+                    <span class="right">FocusPilot</span>
+                  </div>
+                  <div class="row" data-go="focus">
+                    <strong>周报自动汇总</strong>
+                    <div class="progress"><span style="width: 10%"></span></div>
+                    <span class="right">内部</span>
+                  </div>
+                </div>
+              </div>
+              <div class="card">
+                <div class="card-head">
+                  <h3>今日待办</h3>
+                  <button class="btn" data-go="focus">查看全部</button>
+                </div>
+                <div class="card-body">
+                  <div class="row" data-go="focus">
+                    <span>☐</span><strong>frontmatter 解析</strong
+                    ><span class="right">FocusPilot</span>
+                  </div>
+                  <div class="row" data-go="focus">
+                    <span>☐</span><strong>审阅 PR #18</strong
+                    ><span class="right">FocusPilot</span>
+                  </div>
+                  <div class="row" data-go="focus">
+                    <span>☐</span><strong>客户跟进电话</strong
+                    ><span class="right">大客户</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="work panel" id="home-chat">
+            <div class="card chat">
+              <div class="card-body">
+                <div class="message user">帮我分析一下 Q2 的客户数据。</div>
+                <div class="message agent">
+                  我会先整理客户新增、留存和收入贡献，再给出本周可以推进的 3
+                  个行动建议。
+                </div>
+              </div>
+              <div class="card-body">
+                <div class="composer">
+                  <textarea placeholder="描述你想做的事..."></textarea
+                  ><button class="btn primary">发送</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="page" data-page="inbox">
+          <header class="topbar">
+            <h1>Inbox</h1>
+            <span class="meta">收集、暂存、整理</span>
+            <div class="top-actions">
+              <button class="btn primary" data-modal="capture">新建</button>
+            </div>
+          </header>
+          <div class="work">
+            <div class="card">
+              <div class="card-head">
+                <h3>待阅读</h3>
+                <div>
+                  <span class="pill">排序: 最近</span>
+                  <span class="pill blue">批量选择</span>
+                </div>
+              </div>
+              <div class="card-body">
+                <div class="row">
+                  <span>📖</span>
+                  <div class="grow">
+                    <strong>SwiftUI 状态管理最佳实践</strong
+                    ><span class="subline">mp.weixin.qq.com · 2 小时前</span>
+                  </div>
+                  <button class="btn">移入 AreaProjects</button>
+                </div>
+                <div class="row">
+                  <span>📖</span>
+                  <div class="grow">
+                    <strong>WWDC 2026 新 API 汇总</strong
+                    ><span class="subline">developer.apple.com · 昨天</span>
+                  </div>
+                  <button class="btn">转为 Task</button>
+                </div>
+                <div class="row">
+                  <span>📖</span>
+                  <div class="grow">
+                    <strong>RAG 工程化实践</strong
+                    ><span class="subline">zhuanlan.zhihu.com · 3 天前</span>
+                  </div>
+                  <button class="btn">解析摘要</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="page" data-page="focus">
+          <header class="topbar">
+            <h1>Focus</h1>
+            <span class="meta">规划 -> 执行 -> 评估 -> 验收</span>
+            <div class="top-actions">
+              <div class="seg" data-scope="focusView">
+                <button class="active" data-target="focus-plan">规划</button
+                ><button data-target="focus-board">看板</button
+                ><button data-target="focus-list">列表</button>
+              </div>
+              <button class="btn primary" data-modal="task">新建 Task</button>
+            </div>
+          </header>
+          <div class="work panel active" id="focus-plan">
+            <div class="grid cols-3">
+              <div class="card">
+                <div class="card-head">
+                  <h3>目标树</h3>
+                  <span class="pill green">63%</span>
+                </div>
+                <div class="card-body">
+                  <div class="row"><strong>FocusPilot V1</strong></div>
+                  <div class="row indent"><strong>Engine 基础架构</strong></div>
+                  <div class="row indent">frontmatter 解析</div>
+                  <div class="row indent">目录扫描</div>
+                </div>
+              </div>
+              <div class="card">
+                <div class="card-head">
+                  <h3>周规划</h3>
+                  <span class="pill blue">W20</span>
+                </div>
+                <div class="card-body">
+                  <div class="row">
+                    <strong>Mon</strong><span class="right">PRD 治理</span>
+                  </div>
+                  <div class="row">
+                    <strong>Tue</strong><span class="right">原型壳层</span>
+                  </div>
+                  <div class="row">
+                    <strong>Wed</strong><span class="right">Focus 状态机</span>
+                  </div>
+                </div>
+              </div>
+              <div class="card">
+                <div class="card-head">
+                  <h3>今日计划</h3>
+                  <span class="pill amber">4 剩余</span>
+                </div>
+                <div class="card-body">
+                  <div class="row">☐ 完成壳层母版</div>
+                  <div class="row">☐ 合入 Review 状态</div>
+                  <div class="row">☐ 校验链接</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="work panel" id="focus-board">
+            <div class="kanban">
+              <div class="lane">
+                <h3>Todo <span>4</span></h3>
+                <div class="task">
+                  <div class="task-title">frontmatter 解析</div>
+                  <div class="task-meta">
+                    <span>p0</span><span>FocusPilot</span>
+                  </div>
+                </div>
+                <div class="task">
+                  <div class="task-title">录入弹窗原型</div>
+                  <div class="task-meta"><span>p1</span><span>Inbox</span></div>
+                </div>
+              </div>
+              <div class="lane">
+                <h3>In Progress <span>3</span></h3>
+                <div class="task">
+                  <div class="task-title">壳层母版</div>
+                  <div class="task-meta">
+                    <span>semi-auto</span><span>60%</span>
+                  </div>
+                </div>
+              </div>
+              <div class="lane">
+                <h3>Evaluation <span>1</span></h3>
+                <div class="task">
+                  <div class="task-title">Review 今日队列</div>
+                  <div class="task-meta">
+                    <span>eval</span><span>等待决策</span>
+                  </div>
+                </div>
+              </div>
+              <div class="lane">
+                <h3>Done <span>12</span></h3>
+                <div class="task">
+                  <div class="task-title">页面模板治理</div>
+                  <div class="task-meta">
+                    <span>done</span><span>docs</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="work panel" id="focus-list">
+            <div class="card">
+              <div class="card-head">
+                <h3>全部工作项</h3>
+                <span class="pill">45 项</span>
+              </div>
+              <div class="card-body">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>标题</th>
+                      <th>状态</th>
+                      <th>模式</th>
+                      <th>归属</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td><strong>壳层母版</strong></td>
+                      <td>in_progress</td>
+                      <td>semi_auto</td>
+                      <td>FocusPilot</td>
+                    </tr>
+                    <tr>
+                      <td><strong>URL 解析</strong></td>
+                      <td>todo</td>
+                      <td>manual</td>
+                      <td>Inbox</td>
+                    </tr>
+                    <tr>
+                      <td><strong>卡片库统计</strong></td>
+                      <td>todo</td>
+                      <td>none</td>
+                      <td>Review</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="page" data-page="studio">
+          <header class="topbar">
+            <h1>Studio</h1>
+            <span class="meta">FocusPilot · ✳ Claude Code</span>
+            <div class="top-actions">
+              <button class="btn">🔧 打开工具</button
+              ><button class="btn">🖥 终端</button
+              ><button class="btn">◨ 右侧栏</button>
+            </div>
+          </header>
+          <div class="work">
+            <div class="studio-layout">
+              <div class="card chat">
+                <div class="card-body">
+                  <div class="message user">
+                    检查 QuickPanel 的未读角标刷新链路。
+                  </div>
+                  <div class="message agent">
+                    我会从 CoderBridgeService 的通知入口开始追踪，再确认
+                    QuickPanelView 的 reload 路径。
+                  </div>
+                  <div class="message agent">
+                    发现关注 Tab 的角标依赖
+                    `coderBridgeSessionChanged`，窗口行点击后会调用
+                    `markAsRead(windowID:)`。
+                  </div>
+                </div>
+                <div class="card-body">
+                  <div class="composer">
+                    <textarea
+                      placeholder="继续描述要让 Agent 做什么..."
+                    ></textarea
+                    ><button class="btn primary">发送</button>
+                  </div>
+                  <div class="terminal">
+                    $ make build&#10;Build complete:
+                    /tmp/focuspilot-build/FocusPilot.app
+                  </div>
+                </div>
+              </div>
+              <div class="card">
+                <div class="card-head">
+                  <h3>右侧栏</h3>
+                  <span class="pill">AppConfigView.swift</span>
+                </div>
+                <div class="card-body">
+                  <div class="code">
+                    1 import SwiftUI 2 3 struct AppConfigView: View { 4
+                    @ObservedObject var store: ConfigStore 5 var body: some View
+                    { ... } 6 }
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="page" data-page="areas">
+          <header class="topbar">
+            <h1>AreaProjects</h1>
+            <span class="meta">项目资产沉淀区</span>
+            <div class="top-actions">
+              <button class="btn">预览</button><button class="btn">编辑</button>
+            </div>
+          </header>
+          <div class="work">
+            <div class="studio-layout">
+              <div class="card">
+                <div class="card-head">
+                  <h3>架构设计.md</h3>
+                  <span class="pill">FocusPilot / docs</span>
+                </div>
+                <div class="card-body">
+                  <h2 style="margin-top: 0">项目产出结构</h2>
+                  <p style="color: var(--muted); line-height: 1.7">
+                    所有项目都交付产物，同时积累知识沉淀。每个层级包含
+                    task、materials、kb 和 reports。
+                  </p>
+                  <div class="code">
+                    FocusPilot/ task-*.md _materials/ _kb/ _reports/
+                  </div>
+                </div>
+              </div>
+              <div class="card">
+                <div class="card-head">
+                  <h3>辅助栏</h3>
+                  <button class="btn icon">+</button>
+                </div>
+                <div class="card-body">
+                  <div class="row active">🖥 终端</div>
+                  <div class="row">🤖 Agent 对话</div>
+                  <div class="terminal">$ rg Knowledge Pipeline docs</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="page" data-page="review">
+          <header class="topbar">
+            <h1>Review</h1>
+            <span class="meta">记忆 -> 内化 -> 应用</span>
+            <div class="top-actions">
+              <div class="seg" data-scope="reviewView">
+                <button class="active" data-target="review-today">
+                  今日复习</button
+                ><button data-target="review-challenge">内化挑战</button
+                ><button data-target="review-library">卡片库</button
+                ><button data-target="review-stats">统计</button>
+              </div>
+            </div>
+          </header>
+          <div class="work panel active" id="review-today">
+            <div class="grid cols-4">
+              <div class="metric">
+                <div class="value">24</div>
+                <div class="name">今日应复习</div>
+              </div>
+              <div class="metric">
+                <div class="value">18</div>
+                <div class="name">新卡</div>
+              </div>
+              <div class="metric">
+                <div class="value">6</div>
+                <div class="name">复习卡</div>
+              </div>
+              <div class="metric">
+                <div class="value">7</div>
+                <div class="name">连续天数</div>
+              </div>
+            </div>
+            <div class="grid cols-2" style="margin-top: 14px">
+              <div class="card review-card">
+                <div class="card-head">
+                  <h3>当前卡片</h3>
+                  <span class="pill blue">know -> understand</span>
+                </div>
+                <div class="card-body">
+                  <p class="prompt">CAP 定理为什么不是“三选二”的静态选择？</p>
+                  <p style="color: var(--muted); line-height: 1.7">
+                    用自己的话解释，并给出一个工程场景。
+                  </p>
+                  <div class="answer">
+                    点击“显示答案”后展开标准解释，用户选择 Easy / Good / Hard
+                    反馈记忆阶段。
+                  </div>
+                </div>
+                <div class="card-body">
+                  <button class="btn">显示答案</button>
+                  <button class="btn primary">Good</button>
+                  <button class="btn">Hard</button>
+                </div>
+              </div>
+              <div class="card">
+                <div class="card-head">
+                  <h3>队列</h3>
+                  <span class="pill green">预计 12min</span>
+                </div>
+                <div class="card-body">
+                  <div class="row active">
+                    CAP 定理 <span class="right">关键卡</span>
+                  </div>
+                  <div class="row">
+                    状态机回退规则 <span class="right">复习</span>
+                  </div>
+                  <div class="row">
+                    MCP Host 职责 <span class="right">新卡</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="work panel" id="review-challenge">
+            <div class="grid cols-2">
+              <div class="card review-card">
+                <div class="card-head">
+                  <h3>费曼复述</h3>
+                  <span class="pill amber">关键卡</span>
+                </div>
+                <div class="card-body">
+                  <p class="prompt">
+                    向一个非技术产品经理解释“状态机为什么要记录
+                    blocked_from_status”。
+                  </p>
+                  <textarea
+                    class="answer"
+                    placeholder="在这里复述，不追求标准答案，追求能讲明白..."
+                  ></textarea>
+                </div>
+                <div class="card-body">
+                  <button class="btn">保存草稿</button>
+                  <button class="btn primary">提交挑战</button>
+                </div>
+              </div>
+              <div class="card">
+                <div class="card-head">
+                  <h3>挑战结果</h3>
+                  <span class="pill">待提交</span>
+                </div>
+                <div class="card-body">
+                  <div class="row">
+                    理解完整度 <span class="right">--</span>
+                  </div>
+                  <div class="row">场景迁移 <span class="right">--</span></div>
+                  <div class="row">可行动性 <span class="right">--</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="work panel" id="review-library">
+            <div class="card">
+              <div class="card-head">
+                <h3>卡片库</h3>
+                <span class="pill">248 张</span>
+              </div>
+              <div class="card-body">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>卡片</th>
+                      <th>来源</th>
+                      <th>掌握</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td><strong>CAP 定理</strong></td>
+                      <td>_reports/chapter-1.md</td>
+                      <td>understand</td>
+                    </tr>
+                    <tr>
+                      <td><strong>状态机回退</strong></td>
+                      <td>Architecture.md</td>
+                      <td>know</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+          <div class="work panel" id="review-stats">
+            <div class="grid cols-3">
+              <div class="metric">
+                <div class="value">86%</div>
+                <div class="name">本周完成率</div>
+              </div>
+              <div class="metric">
+                <div class="value">41</div>
+                <div class="name">已内化</div>
+              </div>
+              <div class="metric">
+                <div class="value">12</div>
+                <div class="name">弱项卡</div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="page" data-page="crew">
+          <header class="topbar">
+            <h1>AICrew</h1>
+            <span class="meta">数字团队管理</span>
+            <div class="top-actions">
+              <button class="btn primary">新建成员</button>
+            </div>
+          </header>
+          <div class="work">
+            <div class="card">
+              <div class="card-head">
+                <h3>代码工程师</h3>
+                <button class="btn">删除</button>
+              </div>
+              <div class="card-body">
+                <div class="form">
+                  <div class="field">
+                    <label>角色名</label><input value="代码工程师" />
+                  </div>
+                  <div class="field">
+                    <label>Runtime</label
+                    ><select>
+                      <option>claude-code</option>
+                    </select>
+                  </div>
+                  <div class="field">
+                    <label>部署位置</label
+                    ><select>
+                      <option>本地</option>
+                      <option>云端</option>
+                    </select>
+                  </div>
+                  <div class="field">
+                    <label>并发数</label><input value="2" />
+                  </div>
+                  <div class="field">
+                    <label>MCP Server</label
+                    ><input value="filesystem, github" />
+                  </div>
+                  <div class="field">
+                    <label>常驻职责</label
+                    ><input value="新 PR 创建时自动 review" />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="page" data-page="settings">
+          <header class="topbar">
+            <h1>Settings</h1>
+            <span class="meta">全局配置</span>
+          </header>
+          <div class="work">
+            <div class="card">
+              <div class="card-head">
+                <h3>Focus 配置</h3>
+                <span class="pill green">即时生效</span>
+              </div>
+              <div class="card-body">
+                <div class="form">
+                  <div class="field">
+                    <label>默认 Skill</label
+                    ><select>
+                      <option>brainstorming</option>
+                    </select>
+                  </div>
+                  <div class="field">
+                    <label>自动规划</label
+                    ><select>
+                      <option>开启</option>
+                      <option>关闭</option>
+                    </select>
+                  </div>
+                  <div class="field">
+                    <label>默认模式</label
+                    ><select>
+                      <option>auto</option>
+                      <option>manual</option>
+                    </select>
+                  </div>
+                  <div class="field">
+                    <label>默认 Agent</label
+                    ><select>
+                      <option>代码工程师</option>
+                    </select>
+                  </div>
+                  <div class="field">
+                    <label>主题</label
+                    ><select>
+                      <option>跟随系统</option>
+                      <option>经典深色</option>
+                    </select>
+                  </div>
+                  <div class="field">
+                    <label>快捷键</label><input value="Cmd+Shift+B" />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <div class="modal-backdrop" id="task-modal">
+      <div class="modal">
+        <div class="card-head">
+          <h3>新建 Task</h3>
+          <button class="btn icon" data-close>✕</button>
+        </div>
+        <div class="card-body">
+          <div class="form">
+            <div class="field">
+              <label>标题</label><input placeholder="输入任务标题" />
+            </div>
+            <div class="field">
+              <label>执行模式</label
+              ><select>
+                <option>none</option>
+                <option>manual</option>
+                <option>semi_auto</option>
+                <option>auto</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>评估</label
+              ><select>
+                <option>关闭</option>
+                <option>开启</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <div
+          class="card-body"
+          style="border-top: 1px solid var(--line-soft); text-align: right"
+        >
+          <button class="btn" data-close>取消</button>
+          <button class="btn primary" data-close>创建</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-backdrop" id="capture-modal">
+      <div class="modal">
+        <div class="card-head">
+          <h3>收集到 Inbox</h3>
+          <button class="btn icon" data-close>✕</button>
+        </div>
+        <div class="card-body">
+          <div class="form">
+            <div class="field">
+              <label>类型</label
+              ><select>
+                <option>待阅读</option>
+                <option>灵感</option>
+                <option>临时任务</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>URL</label><input placeholder="粘贴链接后自动解析" />
+            </div>
+            <div class="field">
+              <label>标题</label><input placeholder="自动填充，可修改" />
+            </div>
+          </div>
+        </div>
+        <div
+          class="card-body"
+          style="border-top: 1px solid var(--line-soft); text-align: right"
+        >
+          <button class="btn" data-close>取消</button>
+          <button class="btn primary" data-close>保存</button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const pageOrder = [
+        "home",
+        "inbox",
+        "focus",
+        "studio",
+        "areas",
+        "review",
+        "crew",
+        "settings",
+      ]
+
+      function showPage(page) {
+        document
+          .querySelectorAll(".nav-btn")
+          .forEach((btn) =>
+            btn.classList.toggle("active", btn.dataset.page === page),
+          )
+        document
+          .querySelectorAll(".side-view")
+          .forEach((view) =>
+            view.classList.toggle("active", view.dataset.page === page),
+          )
+        document
+          .querySelectorAll(".page")
+          .forEach((view) =>
+            view.classList.toggle("active", view.dataset.page === page),
+          )
+      }
+
+      function showPanel(target) {
+        const panel = document.getElementById(target)
+        if (!panel) return
+        const parent = panel.parentElement
+        parent
+          .querySelectorAll(":scope > .panel")
+          .forEach((item) =>
+            item.classList.toggle("active", item.id === target),
+          )
+      }
+
+      document.querySelectorAll(".nav-btn[data-page]").forEach((btn) => {
+        btn.addEventListener("click", () => showPage(btn.dataset.page))
+      })
+
+      document.querySelectorAll("[data-go]").forEach((el) => {
+        el.addEventListener("click", () => showPage(el.dataset.go))
+      })
+
+      document.querySelectorAll(".seg[data-scope] button").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const seg = btn.closest(".seg")
+          seg
+            .querySelectorAll("button")
+            .forEach((item) => item.classList.toggle("active", item === btn))
+          showPanel(btn.dataset.target)
+          if (seg.dataset.scope === "homeMode") {
+            document
+              .getElementById("home-overview-side")
+              .classList.toggle(
+                "active",
+                btn.dataset.target === "home-overview",
+              )
+            document
+              .getElementById("home-chat-side")
+              .classList.toggle("active", btn.dataset.target === "home-chat")
+          }
+        })
+      })
+
+      document.querySelectorAll("[data-open-chat]").forEach((el) => {
+        el.addEventListener("click", () => {
+          document
+            .querySelector('[data-scope="homeMode"] [data-target="home-chat"]')
+            .click()
+        })
+      })
+
+      document.querySelectorAll("[data-review]").forEach((el) => {
+        el.addEventListener("click", () => {
+          document
+            .querySelectorAll("[data-review]")
+            .forEach((item) => item.classList.toggle("active", item === el))
+          const target = "review-" + el.dataset.review
+          const btn = document.querySelector(
+            `[data-scope="reviewView"] [data-target="${target}"]`,
+          )
+          if (btn) btn.click()
+        })
+      })
+
+      document.querySelectorAll("[data-modal]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          document
+            .getElementById(btn.dataset.modal + "-modal")
+            .classList.add("open")
+        })
+      })
+      document
+        .querySelectorAll("[data-close], .modal-backdrop")
+        .forEach((el) => {
+          el.addEventListener("click", (event) => {
+            if (event.target === el || el.hasAttribute("data-close")) {
+              el.closest(".modal-backdrop").classList.remove("open")
+            }
+          })
+        })
+      document
+        .querySelectorAll(".modal")
+        .forEach((modal) =>
+          modal.addEventListener("click", (event) => event.stopPropagation()),
+        )
+
+      document.addEventListener("keydown", (event) => {
+        if (!event.metaKey) return
+        const index = Number(event.key) - 1
+        if (index >= 0 && index < pageOrder.length) {
+          event.preventDefault()
+          showPage(pageOrder[index])
+        }
+        if (event.key.toLowerCase() === "b") {
+          event.preventDefault()
+          document.documentElement.style.setProperty(
+            "--sidebar-w",
+            getComputedStyle(document.documentElement)
+              .getPropertyValue("--sidebar-w")
+              .trim() === "0px"
+              ? "260px"
+              : "0px",
+          )
+        }
+      })
+    </script>
+  </body>
+</html>

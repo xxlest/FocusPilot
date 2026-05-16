@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>FocusPilot Workspace Session Prototype</title>
+<title>FocusPilot Focus Session Prototype</title>
 <style>
   :root {
     color-scheme: dark;
@@ -467,7 +467,7 @@
   <aside class="scope">
     <div class="scope-head">
       <div class="scope-title">
-        <h1>Workspace</h1>
+        <h1>Focus</h1>
         <button class="new-btn" onclick="openModal()">+</button>
       </div>
       <input class="search" placeholder="搜索 Task / Session / WorkDIR">
@@ -481,7 +481,7 @@
 
       <div class="scope-label">目标树</div>
       <div class="scope-item"><span>▾ Q2 FocusPilot</span><span class="count">8</span></div>
-      <div class="scope-item tree-child active"><span>4月 Workspace 原型</span><span class="count">3</span></div>
+      <div class="scope-item tree-child active"><span>4月 Focus 原型</span><span class="count">3</span></div>
       <div class="scope-item tree-child"><span>5月 AI Crew</span><span class="count">0</span></div>
 
       <div class="scope-label">来源</div>
@@ -500,7 +500,7 @@
         <div class="tab active">Session</div>
       </div>
       <button class="ghost-btn" onclick="openModal()">新建 Session</button>
-      <span class="context-pill">Scope: Q2 / 4月 Workspace 原型</span>
+      <span class="context-pill">Scope: Q2 / 4月 Focus 原型</span>
     </header>
 
     <section class="work">
@@ -518,7 +518,7 @@
             <div class="tag-row"><span class="tag blue">目标树继承</span><span class="tag green">active</span></div>
           </div>
           <div class="session-card">
-            <div class="session-name"><span class="dot idle"></span>Workspace Session 探索</div>
+            <div class="session-name"><span class="dot idle"></span>Focus Session 探索</div>
             <div class="session-meta">/FocusPilot/docs/fp-ui</div>
             <div class="tag-row"><span class="tag">AreaProject</span><span class="tag">idle</span></div>
           </div>
@@ -549,7 +549,7 @@
             <span>AreaProject</span><b>FocusPilot</b>
             <span>WorkDIR</span><b>/Users/bruce/Workspace/2-Code/01-work/FocusPilot</b>
             <span>Linked Task</span><b>看板状态模型实现</b>
-            <span>Goal</span><b>Q2 / 4月 / Workspace 原型</b>
+            <span>Goal</span><b>Q2 / 4月 / Focus 原型</b>
           </div>
         </div>
 
@@ -560,7 +560,7 @@
           </div>
           <div class="chat-line">
             <div class="speaker">AGENT</div>
-            <div class="message">已读取当前 WorkDIR，并定位到 Workspace 文档和原型。将先更新数据模型，再同步 Session View 说明。</div>
+            <div class="message">已读取当前 WorkDIR，并定位到 Focus 文档和原型。将先更新数据模型，再同步 Session View 说明。</div>
           </div>
           <div class="chat-line">
             <div class="speaker">USER</div>
@@ -586,14 +586,14 @@
           <div class="panel-body mini-list">
             <div class="mini-item"><span class="dot live"></span><b>左侧目标树</b>过滤 goal_id / linked_task</div>
             <div class="mini-item"><span class="dot idle"></span><b>AreaProject</b>提供 WorkDIR 权威来源</div>
-            <div class="mini-item"><span class="dot done"></span><b>Session</b>运行态统一归 Workspace 管理</div>
+            <div class="mini-item"><span class="dot done"></span><b>Session</b>运行态统一归 Focus 管理</div>
           </div>
         </div>
         <div class="panel">
           <h3>AreaProjects 入口</h3>
           <div class="panel-body">
-            <div class="path">右键 /docs/fp-ui → 在 Workspace 中打开 Session</div>
-            <div class="callout">启动后自动切换到 Workspace Session View，并选中新 Session。</div>
+            <div class="path">右键 /docs/fp-ui → 在 Focus 中打开 Session</div>
+            <div class="callout">启动后自动切换到 Focus Session View，并选中新 Session。</div>
           </div>
         </div>
       </aside>
@@ -614,7 +614,7 @@
           <b>本地路径</b><br>
           <span>从操作系统选择文件夹</span>
         </div>
-        <div class="callout">Workspace 新建不提供默认路径，避免误开错误目录。</div>
+        <div class="callout">Focus 新建不提供默认路径，避免误开错误目录。</div>
       </aside>
 
       <section class="picker-tree" id="projectTree">
@@ -624,7 +624,7 @@
         <div class="tree-row">▾ FocusPilot</div>
         <div class="tree-row selected"><span class="indent-1">▾ docs</span></div>
         <div class="tree-row"><span class="indent-2">▾ fp-ui</span></div>
-        <div class="tree-row"><span class="indent-2">03-workspace.md</span></div>
+        <div class="tree-row"><span class="indent-2">03-focus.md</span></div>
         <div class="tree-row"><span class="indent-1">▸ Sources</span></div>
         <div class="tree-row"><span class="indent-1">▸ engine</span></div>
       </section>
@@ -637,12 +637,12 @@
 
       <aside class="picker-summary">
         <div class="form-label">Session 名称</div>
-        <input value="Workspace Session 探索">
+        <input value="Focus Session 探索">
         <div class="form-label">Agent</div>
         <select class="select"><option>代码工程师</option><option>Review Agent</option><option>研究员</option></select>
         <div class="form-label">当前选择</div>
         <div class="path" id="selectedPath">AreaProject: FocusPilot<br>WorkDIR: /FocusPilot/docs</div>
-        <div class="callout">创建后直接切换到 Workspace → Session View，并打开该 Session。</div>
+        <div class="callout">创建后直接切换到 Focus → Session View，并打开该 Session。</div>
       </aside>
     </div>
     <div class="modal-foot">

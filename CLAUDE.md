@@ -1,21 +1,40 @@
 # FocusPilot 项目指南
 
+> 本文件是 AI Agent 项目指令的唯一权威来源。`AGENTS.md` 作为 Codex 入口文件应指向本文件，避免与 Claude Code 入口重复维护。
+
 ## 项目概述
 
-FocusPilot是 macOS 悬浮球应用，支持窗口快捷切换。
+FocusPilot 定位为 macOS 上的个人自迭代系统（Personal AIOS）—— 人与 AI 协同的知行一体化执行系统。
+
+核心理念：信息采集→知识加工→认知规律→智慧实践→个人判断，以 Project 为组织单元，Agent+Runtime 为执行引擎，形成个人自迭代闭环。AI 驱动采集与加工，人掌控判断与方向。
+
+当前实现（V4.3）：macOS 悬浮球应用，支持窗口快捷切换 + AI 编码会话管理。
 纯 Swift 5 + AppKit/SwiftUI，无第三方依赖。Bundle ID: `com.focuspilot.FocusPilot`
 
 三层交互：悬浮球（常驻入口）→ 快捷面板（hover/单击弹出）→ 主看板（双击/Dock 图标）
 
 ## 文档体系
 
+### 核心产品
 - **产品需求（主）**：`docs/PRD.md` — FocusPilot 0.0.1 主 PRD（两阶段模型、四模式、Crew、知识管道、Dashboard）
 - **产品需求（归档）**：`docs/archive/PRD-v4-legacy.md` — FocusPilot V4.x 既有功能清单、交互规则、验收标准
 - **技术架构**：`docs/Architecture.md` — 模块划分、接口契约、状态机
 - **设计规范**：`docs/DesignGuide.md` — 视觉准则、主题色值、动画参数、修改规则
 - **版本规划**：`docs/Editions.md` — 个人版/企业版功能边界、付费方案
 
-修改 UI 前必读 DesignGuide.md，修改业务逻辑前必读 Architecture.md，修改功能边界时必读 Editions.md。PilotOne 新功能开发前必读 PRD.md。
+### 产品战略
+- **产品理念**：`docs/产品战略/FocusPilot产品理念与市场定位.md` — AIOS 定位、知行一体化系统论述（权威版本）
+- **V1 执行方案**：`docs/产品战略/FocusPilot-V1-MVP-Scope与市场策略.md` — MVP scope、目标用户、定价
+- **市场分析**：`docs/产品战略/FocusPilot市场分析与阶段验证方案.md` — 市场机会、用户画像、五阶段验证
+### UI 设计（V1 新界面）
+- **设计总览**：`docs/FP-UI.md` — 8 个页面进度、技术架构、参考来源
+- **页面设计**：`docs/fp-ui/00~07` — Layout / Home / Inbox / Focus / Studio / AreaProjects / AICrew / Settings
+- **功能说明书**：`docs/focuspilot-ui-features.md` — 从产品定位到 UI 细节的递进式讲解
+
+### 竞品分析
+- `docs/竞品分析/` — Z Code / Codex / Plane / Multica 四份 UI 功能层次梳理
+
+修改 UI 前必读 DesignGuide.md，修改业务逻辑前必读 Architecture.md，修改功能边界时必读 Editions.md。PilotOne 新功能开发前必读 PRD.md。V1 新界面开发前必读 FP-UI.md 和对应页面设计文档。
 
 ## 参考项目
 
@@ -24,6 +43,7 @@ FocusPilot是 macOS 悬浮球应用，支持窗口快捷切换。
 | **Multica** | [multica-ai/multica](https://github.com/multica-ai/multica.git) | `/Users/bruce/Workspace/2-Code/02-oss/ai/agent/coding/multica` | 看板状态模型、Agent Runtime 执行模式、Workspace 数据模型 |
 | **Plane** | [makeplane/plane](https://github.com/makeplane/plane.git)（[商业版官网](https://plane.so)） | `/Users/bruce/Workspace/2-Code/02-oss/ai/agent/coding/plane` | Home 页设计、Stickies 便签、项目管理结构（Cycles/Modules/Views） |
 | **Z Code** | 闭源（[官网](https://zcode-ai.com/cn/docs)） | 本机已安装 App（`~/Library/Application Support/ai.z.zcode/`） | Workspace Session 模式、多 Agent 框架热切换、对话式开发 ADE、Checkpoint 版本管理。竞品分析见 `docs/竞品分析/Z Code UI 功能层次梳理.md` |
+| **Codex** | [openai/codex](https://github.com/openai/codex) | 本机已安装 App | 任务流、代码审查、Agent 执行模式。竞品分析见 `docs/竞品分析/Codex UI 功能层次梳理.md` |
 
 ## 产品设计基调
 
@@ -36,6 +56,26 @@ FocusPilot是 macOS 悬浮球应用，支持窗口快捷切换。
 **克制** — 新功能必须能回答"没有它用户会怎样"。不做平台化、社交化。设置项能用默认值解决的不暴露选项
 
 **专业** — 不打断（弹窗失焦自动关闭）、不抢焦点（nonactivating）、不制造决策负担（默认覆盖 90% 场景）
+
+## 当前工作状态
+
+- V4.3 悬浮球版本已稳定运行
+- 产品战略文档已定稿，V1 MVP scope 明确
+- V1（FP-UI）新界面设计中，页面进度如下：
+
+### UI 设计进度（fp-ui/）
+
+| 页面 | 完整度 | 状态 | 下一步 |
+|------|:------:|------|--------|
+| 00-layout | 5/5 | 可开发 | — |
+| 01-home | 4/5 | 设计中（样板页） | 对话视图细节、快捷建议内容 |
+| 02-inbox | 3/5 | 草稿（已补齐模板） | P1 录入弹窗原型、URL 解析、批量操作 |
+| 03-focus | 5/5 | 可开发 | — |
+| 04-studio | 5/5 | 可开发 | — |
+| 05-area-projects | 3/5 | 草稿（已补齐模板） | P2 文件树交互细节、知识卡片、Anki 导出 |
+| 06-review | 4/5 | 设计中 | 卡片库与统计原型 |
+| 07-ai-crew | 3/5 | 草稿（已补齐模板） | P1 MCP 配置 UI、常驻职责编辑器 |
+| 08-settings | 3/5 | 草稿（已补齐模板） | 各分区完整配置项、快捷键冲突检测 |
 
 ## 架构（V4.2）
 
@@ -162,6 +202,7 @@ make clean      # 清理
 - **每次修改功能，都要更新 PRD（docs/PRD.md）和架构设计（docs/Architecture.md）；修改 UI 时同步更新设计规范（docs/DesignGuide.md）**
 - **每完成一个功能或大修改，自动使用 `/commit` skill 提交并推送到远程仓库**
 - **每次修复或新开发完成后，必须执行 `make install` 安装到本地**
+- **每次更新 `docs/fp-ui/` 目录下的文件后，必须输出当前 UI 设计进度表（各页面完整度和状态）**
 
 ## ⚠️ 高频 Bug 防范：窗口标题"无标题"
 

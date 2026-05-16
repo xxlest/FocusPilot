@@ -2,7 +2,7 @@
 
 > **状态**：设计中
 > **更新**：2026-04-21
-> **原型**：[03-workspace-prototype.html](03-workspace-prototype.html)
+> **原型**：[03-focus-prototype.html](03-focus-prototype.html)、[03-focus-session-prototype.html](03-focus-session-prototype.html)
 > **关联**：[PRD §3.1 两阶段模型](../PRD.md)、[PRD §3.3 Task 双轴管理](../PRD.md)
 
 ---
