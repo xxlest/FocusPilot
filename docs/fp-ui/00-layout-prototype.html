@@ -23,7 +23,7 @@
         --purple: #a78bfa;
         --sidebar-w: 260px;
         --activity-w: 52px;
-        --radiusha: 8px;
+        --radius: 8px;
         --font:
           Avenir Next, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
         --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
@@ -316,6 +316,9 @@
       .cols-4 {
         grid-template-columns: repeat(4, minmax(0, 1fr));
       }
+      .cols-6 {
+        grid-template-columns: repeat(6, minmax(0, 1fr));
+      }
       .card {
         border: 1px solid var(--line);
         border-radius: var(--radius);
@@ -363,6 +366,24 @@
         color: var(--dim);
         font-size: 11px;
         margin-top: 4px;
+      }
+
+      .summary-strip {
+        gap: 0;
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        overflow: hidden;
+        background: var(--surface);
+      }
+      .summary-strip .metric {
+        border: 0;
+        border-right: 1px solid var(--line-soft);
+        border-radius: 0;
+        background: transparent;
+        min-height: 98px;
+      }
+      .summary-strip .metric:last-child {
+        border-right: 0;
       }
 
       .row {
@@ -539,6 +560,70 @@
         grid-template-rows: 1fr auto;
         min-height: 560px;
       }
+      .chat-state {
+        display: none;
+      }
+      .chat-state.active {
+        display: block;
+      }
+      .chat-shell {
+        min-height: 620px;
+        display: grid;
+        grid-template-rows: auto 1fr auto;
+      }
+      .chat-title {
+        min-height: 46px;
+        border-bottom: 1px solid var(--line-soft);
+        padding: 12px 14px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+      }
+      .chat-title h3 {
+        margin: 0;
+        font-size: 13px;
+      }
+      .chat-empty {
+        min-height: 520px;
+        display: grid;
+        place-items: center;
+        padding: 34px;
+      }
+      .chat-empty-inner {
+        width: min(760px, 100%);
+        display: grid;
+        gap: 18px;
+        justify-items: center;
+      }
+      .chat-mark {
+        width: 58px;
+        height: 58px;
+        display: grid;
+        place-items: center;
+        border-radius: var(--radius);
+        border: 1px solid rgba(82, 156, 202, 0.35);
+        background: rgba(82, 156, 202, 0.12);
+        font-size: 26px;
+      }
+      .chat-empty h2 {
+        margin: 0;
+        font-size: 22px;
+        letter-spacing: 0;
+      }
+      .agent-select {
+        min-height: 36px;
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        background: var(--surface-2);
+        padding: 0 10px;
+        color: var(--text);
+      }
+      .chat-thread {
+        padding: 18px;
+        min-height: 0;
+        overflow: auto;
+      }
       .message {
         max-width: 760px;
         padding: 12px 14px;
@@ -562,6 +647,9 @@
         grid-template-columns: 1fr auto;
         gap: 8px;
         padding: 8px;
+      }
+      .composer.with-agent {
+        grid-template-columns: auto 1fr auto;
       }
       .composer textarea {
         min-height: 44px;
@@ -669,6 +757,7 @@
           grid-template-columns: var(--activity-w) 220px minmax(0, 1fr);
         }
         .cols-4,
+        .cols-6,
         .cols-3 {
           grid-template-columns: repeat(2, minmax(0, 1fr));
         }
@@ -703,8 +792,8 @@
             <div class="side-title">
               <h2>Home</h2>
               <div class="seg" data-scope="homeMode">
-                <button class="active" data-target="home-overview">概览</button>
                 <button data-target="home-chat">对话</button>
+                <button class="active" data-target="home-overview">概览</button>
               </div>
             </div>
           </div>
@@ -722,7 +811,7 @@
             <div class="side-item">
               <span>📋 全部 TODO</span><span class="count">45</span>
             </div>
-            <div class="label">项目</div>
+            <div class="label">项目与状态</div>
             <div class="side-item">
               <span>📁 活跃项目</span><span class="count">5</span>
             </div>
@@ -736,22 +825,30 @@
           <div class="side-scroll panel" id="home-chat-side">
             <button
               class="btn primary"
-              data-open-chat
+              data-new-chat
               style="width: 100%; margin-bottom: 12px"
             >
               + 新建对话
             </button>
-            <div class="label">最近对话</div>
+            <div class="label">置顶</div>
             <div class="side-item active" data-open-chat>
               <span
                 >✳ FocusPilot 调试<span class="subline">3 分钟前</span></span
               >
             </div>
+            <div class="label">最近</div>
             <div class="side-item" data-open-chat>
-              <span>✳ 市场分析报告<span class="subline">2 小时前</span></span>
+              <span
+                >✳ 市场分析报告<span class="subline"
+                  >2 小时前 · 研究员</span
+                ></span
+              >
             </div>
             <div class="side-item" data-open-chat>
               <span>✳ 周报整理<span class="subline">昨天</span></span>
+            </div>
+            <div class="side-item" data-open-chat>
+              <span>✳ API 设计讨论<span class="subline">昨天</span></span>
             </div>
           </div>
         </section>
@@ -975,26 +1072,36 @@
             <span class="meta">全局概览入口</span>
           </header>
           <div class="work panel active" id="home-overview">
-            <div class="grid cols-4">
+            <div class="grid cols-6 summary-strip">
               <div class="metric" data-go="focus">
                 <div class="value">4</div>
                 <div class="name">今日待办</div>
-                <div class="hint">点击进入 Focus 今日筛选</div>
+                <div class="hint">Focus 今日</div>
               </div>
               <div class="metric" data-go="focus">
                 <div class="value">12</div>
                 <div class="name">本周待办</div>
-                <div class="hint">跨项目聚合</div>
+                <div class="hint">跨项目</div>
               </div>
               <div class="metric" data-go="focus">
                 <div class="value">28</div>
                 <div class="name">本月目标</div>
-                <div class="hint">项目级目标</div>
+                <div class="hint">月度目标</div>
+              </div>
+              <div class="metric" data-go="focus">
+                <div class="value">45</div>
+                <div class="name">全部 TODO</div>
+                <div class="hint">未完成</div>
               </div>
               <div class="metric" data-go="areas">
                 <div class="value">5</div>
                 <div class="name">活跃项目</div>
-                <div class="hint">进入资产区</div>
+                <div class="hint">AreaProjects</div>
+              </div>
+              <div class="metric" data-go="focus">
+                <div class="value">3</div>
+                <div class="name">执行中</div>
+                <div class="hint">含评估中</div>
               </div>
             </div>
             <div class="grid cols-2" style="margin-top: 14px">
@@ -1023,7 +1130,7 @@
               </div>
               <div class="card">
                 <div class="card-head">
-                  <h3>今日待办</h3>
+                  <h3>今日待办 (4/7)</h3>
                   <button class="btn" data-go="focus">查看全部</button>
                 </div>
                 <div class="card-body">
@@ -1044,18 +1151,47 @@
             </div>
           </div>
           <div class="work panel" id="home-chat">
-            <div class="card chat">
-              <div class="card-body">
-                <div class="message user">帮我分析一下 Q2 的客户数据。</div>
-                <div class="message agent">
-                  我会先整理客户新增、留存和收入贡献，再给出本周可以推进的 3
-                  个行动建议。
+            <div class="chat-state" id="home-chat-empty">
+              <div class="card chat-empty">
+                <div class="chat-empty-inner">
+                  <div class="chat-mark">✳</div>
+                  <h2>FocusPilot</h2>
+                  <div class="composer with-agent" style="width: 100%">
+                    <select class="agent-select">
+                      <option>🤖 通用</option>
+                      <option>🔎 研究员</option>
+                      <option>🧭 规划师</option>
+                    </select>
+                    <textarea placeholder="描述你想做的事..."></textarea>
+                    <button class="btn primary">发送</button>
+                  </div>
                 </div>
               </div>
-              <div class="card-body">
-                <div class="composer">
-                  <textarea placeholder="描述你想做的事..."></textarea
-                  ><button class="btn primary">发送</button>
+            </div>
+            <div class="chat-state active" id="home-chat-thread">
+              <div class="card chat-shell">
+                <div class="chat-title">
+                  <h3>市场分析报告</h3>
+                  <span class="pill blue">🤖 研究员 🔒</span>
+                </div>
+                <div class="chat-thread">
+                  <div class="message user">帮我分析一下 Q2 的客户数据。</div>
+                  <div class="message agent">
+                    我会先整理客户新增、留存和收入贡献，再给出本周可以推进的 3
+                    个行动建议。
+                  </div>
+                  <div class="message user">优先看新增和流失原因。</div>
+                  <div class="message agent">
+                    Q2 新增客户 23 个，同比增长 15%。流失主要集中在试用后 14
+                    天内，建议把 onboarding 检查点前移到第 3 天和第 7 天。
+                  </div>
+                </div>
+                <div class="card-body">
+                  <div class="composer with-agent">
+                    <span class="pill">🤖 研究员 🔒</span>
+                    <textarea placeholder="继续提问..."></textarea>
+                    <button class="btn primary">发送</button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -1730,6 +1866,14 @@
           )
       }
 
+      function setHomeChatState(state) {
+        document
+          .querySelectorAll("#home-chat .chat-state")
+          .forEach((item) =>
+            item.classList.toggle("active", item.id === `home-chat-${state}`),
+          )
+      }
+
       document.querySelectorAll(".nav-btn[data-page]").forEach((btn) => {
         btn.addEventListener("click", () => showPage(btn.dataset.page))
       })
@@ -1764,6 +1908,22 @@
           document
             .querySelector('[data-scope="homeMode"] [data-target="home-chat"]')
             .click()
+          setHomeChatState("thread")
+          document
+            .querySelectorAll("#home-chat-side .side-item")
+            .forEach((item) => item.classList.toggle("active", item === el))
+        })
+      })
+
+      document.querySelectorAll("[data-new-chat]").forEach((el) => {
+        el.addEventListener("click", () => {
+          document
+            .querySelector('[data-scope="homeMode"] [data-target="home-chat"]')
+            .click()
+          setHomeChatState("empty")
+          document
+            .querySelectorAll("#home-chat-side .side-item")
+            .forEach((item) => item.classList.remove("active"))
         })
       })
 

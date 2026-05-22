@@ -2,6 +2,7 @@
 
 > **状态**：可开发
 > **更新**：2026-05-22
+> **原型**：[00-layout-prototype.html](00-layout-prototype.html)
 > **参考**：Plane Home 页（Widget 化布局）、Claude.ai / ChatGPT（对话首页）、Codex Desktop（任务工作台）
 > **关联**：[PRD §3.6 Dashboard 驾驶舱](../PRD.md)、[03-focus.md](03-focus.md)
 
