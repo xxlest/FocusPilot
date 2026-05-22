@@ -125,7 +125,7 @@
 
 | 活动栏 | 页面 | 说明 | 规格状态 | 规格文档 | 原型 |
 |--------|------|------|---------|---------|------|
-| 🏠 | **Home** | 全局概览入口：摘要数字条 + 重点列表 + 对话视图 | **设计中** | [01-home.md](fp-ui/01-home.md) | [00-layout-prototype.html](fp-ui/00-layout-prototype.html) |
+| 🏠 | **Home** | 全局概览入口：摘要数字条 + 重点列表 + 对话视图 | **可开发** | [01-home.md](fp-ui/01-home.md) | [00-layout-prototype.html](fp-ui/00-layout-prototype.html) |
 | 📥 | Inbox | 收集箱：待阅读/灵感/临时任务/便签 | 草稿 | [02-inbox.md](fp-ui/02-inbox.md) | [00-layout-prototype.html](fp-ui/00-layout-prototype.html) |
 | 🎯 | **Focus** | 结构化行动工作台：规划+看板+列表+Task 执行闭环 | **可开发** | [03-focus.md](fp-ui/03-focus.md) | [00-layout-prototype.html](fp-ui/00-layout-prototype.html)、[03-focus-prototype.html](fp-ui/03-focus-prototype.html) |
 | 💻 | **Studio** | 项目级 AI 工作区：对话/文件浏览/Git 历史 | **可开发** | [04-studio.md](fp-ui/04-studio.md) | [00-layout-prototype.html](fp-ui/00-layout-prototype.html) |
