@@ -1,6 +1,6 @@
 # Inbox 收集箱页面设计
 
-> **状态**：设计中
+> **状态**：可开发
 > **更新**：2026-05-22
 > **原型**：[00-layout-prototype.html](00-layout-prototype.html)
 > **参考**：Plane Stickies（灵感卡片交互）
