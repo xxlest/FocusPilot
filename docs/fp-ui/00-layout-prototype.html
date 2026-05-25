@@ -490,6 +490,10 @@
       .panel.active {
         display: block;
       }
+      #focus-plan.active {
+        display: flex;
+        flex-direction: column;
+      }
 
       .kanban {
         display: grid;
@@ -940,36 +944,52 @@
           <div class="side-head">
             <div class="side-title">
               <h2>Focus</h2>
-              <button class="btn icon" data-modal="task">+</button>
+              <button class="btn icon" onclick="openNewTaskModal()">+</button>
             </div>
             <input class="search" placeholder="搜索目标和任务..." />
           </div>
           <div class="side-scroll">
             <div class="label">快捷视图</div>
-            <div class="side-item active">
-              <span>📌 全部工作项</span><span class="count">45</span>
+            <div class="side-item active" data-focus-filter="all" onclick="applyFocusFilter(this)">
+              <span>📋 全局规划</span><span class="count">12</span>
             </div>
-            <div class="side-item">
-              <span>🔥 今日</span><span class="count">4</span>
+            <div class="side-item" data-focus-filter="today" onclick="applyFocusFilter(this)">
+              <span>🔥 今日聚焦</span><span class="count">4</span>
             </div>
-            <div class="side-item">
-              <span>📅 本周</span><span class="count">12</span>
+            <div class="side-item" data-focus-filter="week" onclick="applyFocusFilter(this)">
+              <span>📅 本周计划</span><span class="count">7</span>
             </div>
-            <div class="side-item">
-              <span>🤖 Agent 执行中</span><span class="count">3</span>
+            <div class="side-item" data-focus-filter="agent" onclick="applyFocusFilter(this)">
+              <span>🤖 Agent 执行中</span><span class="count" style="background:rgba(82,156,202,.2);color:var(--accent)">2</span>
+            </div>
+            <div class="side-item" data-focus-filter="decision" onclick="applyFocusFilter(this)">
+              <span>🔔 等我决策</span><span class="count" style="background:rgba(242,196,15,.2);color:var(--amber)">1</span>
             </div>
             <div class="label">目标树</div>
-            <div class="side-item">
-              <span>▾ 📁 FocusPilot V1</span><span class="count">63%</span>
+            <div class="side-item" style="font-weight:600">
+              <span>▾ 📌 Q2 FocusPilot 0.0.1</span><span class="count">38%</span>
             </div>
             <div class="side-item indent">
-              <span>▾ 🎯 Engine 基础架构</span>
+              <span>▾ 📆 4月 Workspace 原型</span><span class="count">40%</span>
             </div>
-            <div class="side-item indent active">
-              <span>📄 frontmatter 解析</span>
+            <div class="side-item indent" style="padding-left:36px">
+              <span>▾ 📆 5月 AI Crew</span><span class="count">0%</span>
+            </div>
+            <div class="side-item indent" style="padding-left:36px">
+              <span>▸ 📆 6月 测试发布</span><span class="count">0%</span>
             </div>
             <div class="side-item">
-              <span>▸ 📁 大客户跟踪</span><span class="count">67%</span>
+              <span>▸ 📌 知识沉淀</span><span class="count">25%</span>
+            </div>
+            <div class="label">来源</div>
+            <div class="side-item">
+              <span>📁 AreaProject</span><span class="count">8</span>
+            </div>
+            <div class="side-item">
+              <span>📥 Inbox 导入</span><span class="count">2</span>
+            </div>
+            <div class="side-item">
+              <span>✏️ 临时创建</span><span class="count">2</span>
             </div>
           </div>
         </section>
@@ -978,38 +998,59 @@
           <div class="side-head">
             <div class="side-title">
               <h2>Studio</h2>
-              <button class="btn icon">+</button>
             </div>
-            <input class="search" placeholder="搜索项目和会话..." />
           </div>
           <div class="side-scroll">
-            <div class="label">自动化</div>
-            <div class="side-item">
-              <span>🔄 每日代码审查<span class="subline">2h 前完成</span></span>
+            <!-- 📥 Triage 收件箱 -->
+            <div class="side-item" style="font-weight:500;display:flex;align-items:center;justify-content:space-between">
+              <span>📥 Triage</span><span style="background:var(--red);color:#fff;border-radius:8px;padding:1px 6px;font-size:10px;min-width:16px;text-align:center">3</span>
             </div>
-            <div class="side-item">
-              <span>🔄 PR 自动检查<span class="subline">运行中</span></span>
+            <div class="side-item indent" style="font-size:11px">
+              <span>🔄 每日代码审查</span><span class="count" style="color:var(--amber);font-size:10px">发现 2 个问题</span>
             </div>
-            <div class="label">项目区</div>
-            <div class="seg" style="margin: 0 8px 10px">
-              <button class="active">🤖</button><button>📁</button
-              ><button>🌿</button>
+            <div class="side-item indent" style="font-size:11px">
+              <span>🔄 PR #45 检查</span><span class="count" style="color:var(--red);font-size:10px">合并冲突</span>
             </div>
-            <div class="side-item active">
-              <span>📌 ✳ 调试看板拖拽</span><span class="count">3m</span>
+            <div class="side-item indent" style="font-size:11px">
+              <span>🔄 依赖更新</span><span class="count" style="color:var(--amber);font-size:10px">3 个可更新</span>
             </div>
-            <div class="side-item">
-              <span>▾ 📂 FocusPilot</span><span class="count">+</span>
+            <div style="border-bottom:1px solid var(--line-soft);margin:8px 8px"></div>
+            <!-- 🔍 搜索 -->
+            <div style="padding:0 8px 8px"><input class="search" placeholder="🔍 搜索 Threads..." style="width:100%" /></div>
+            <!-- 📂 Thread 列表（按项目分组） -->
+            <div class="side-item" style="font-weight:500">
+              <span>▾ 📂 FocusPilot</span><span class="count" style="cursor:pointer">+</span>
+            </div>
+            <div class="side-item indent active">
+              <span>🧑‍💻 重构 auth</span><span class="count"><span style="color:var(--dim);font-size:10px">✳</span> <span style="color:var(--accent)">● 3m</span></span>
             </div>
             <div class="side-item indent">
-              <span>✳ 研究 CAAnimation</span><span class="count">15m</span>
+              <span>🔍 代码审查</span><span class="count"><span style="color:var(--dim);font-size:10px">✳</span> <span style="color:var(--green)">✅ 1h</span></span>
             </div>
             <div class="side-item indent">
-              <span>⚡ 测试 Agent Pull</span><span class="count">1h</span>
+              <span>⚡ Bug fix #12</span><span class="count"><span style="color:var(--dim);font-size:10px">⚡</span> <span style="color:var(--accent)">● 15m</span></span>
+            </div>
+            <div class="side-item" style="font-weight:500">
+              <span>▸ 📂 PilotOne</span><span class="count" style="cursor:pointer">+</span>
+            </div>
+            <div style="display:flex;align-items:center;justify-content:center;gap:4px;padding:8px;margin:8px 8px 0;border-radius:var(--radius);border:1px dashed var(--line);color:var(--dim);font-size:11px;cursor:pointer">+ 添加项目</div>
+            <div style="border-bottom:1px solid var(--line-soft);margin:10px 8px"></div>
+            <!-- 🤖 Automations（默认折叠） -->
+            <div class="side-item" style="font-weight:500;cursor:pointer" onclick="var c=this.nextElementSibling;c.style.display=c.style.display==='none'?'':'none';this.querySelector('.ta').textContent=c.style.display==='none'?'▸':'▾'">
+              <span><span class="ta">▸</span> 自动化</span><span class="count">2</span>
+            </div>
+            <div style="display:none">
+              <div class="side-item indent" style="font-size:11px">
+                <span>🔄 每日代码审查</span><span class="count" style="color:var(--green);font-size:10px">✅ 2h前</span>
+              </div>
+              <div class="side-item indent" style="font-size:11px">
+                <span>🔄 PR 自动检查</span><span class="count" style="color:var(--accent);font-size:10px">🔄 运行中</span>
+              </div>
             </div>
           </div>
           <div class="side-footer">
-            <button class="btn">⚙ Studio 设置</button>
+            <button class="btn" style="display:flex;align-items:center;gap:4px">+ New <span style="font-size:9px;color:var(--dim)">⌘N</span></button>
+            <button class="btn">⚙ 设置</button>
           </div>
         </section>
 
@@ -1549,189 +1590,945 @@
                 ><button data-target="focus-board">看板</button
                 ><button data-target="focus-list">列表</button>
               </div>
-              <button class="btn primary" data-modal="task">新建 Task</button>
+              <button class="btn" id="fp-filter-time" style="font-size:11px;min-height:28px;padding:0 9px">时间: 本月 ▾</button>
+              <button class="btn" id="fp-filter-goal" style="font-size:11px;min-height:28px;padding:0 9px">目标: 全部 ▾</button>
+              <button class="btn" id="fp-filter-source" style="font-size:11px;min-height:28px;padding:0 9px">来源: 全部 ▾</button>
+              <button class="btn primary" onclick="openNewTaskModal()">新建 Task</button>
             </div>
           </header>
           <div class="work panel active" id="focus-plan">
-            <div class="grid cols-3">
-              <div class="card">
-                <div class="card-head">
-                  <h3>目标树</h3>
-                  <span class="pill green">63%</span>
+            <!-- 规划子模式由侧边栏 Scope 自动驱动，无手动子 Tab -->
+            <!-- 年度：目标树+甘特 -->
+            <div class="fp-sub active" id="fp-year" style="display:grid;grid-template-columns:380px 1fr;gap:0;border-radius:var(--radius);overflow:hidden;flex:1;">
+              <!-- Left: Goal Tree -->
+              <div style="border-right:1px solid var(--line-soft);overflow-y:auto;padding:0;background:var(--surface);">
+                <!-- Title -->
+                <div style="height:36px;display:flex;align-items:center;padding:0 12px;gap:6px;font-size:12px;font-weight:600;border-bottom:1px solid var(--line-soft);background:var(--surface);position:sticky;top:0;z-index:2;">
+                  📋 全局规划 · 月视图
+                  <span style="font-size:10px;font-weight:400;color:var(--dim);font-family:var(--mono);">12 项</span>
                 </div>
-                <div class="card-body">
-                  <div class="row"><strong>FocusPilot V1</strong></div>
-                  <div class="row indent"><strong>Engine 基础架构</strong></div>
-                  <div class="row indent">frontmatter 解析</div>
-                  <div class="row indent">目录扫描</div>
+                <!-- Year -->
+                <div style="margin-bottom:2px;padding:16px;">
+                  <div style="display:flex;align-items:center;gap:6px;padding:6px 8px;border-radius:var(--radius);cursor:pointer;font-size:14px;font-weight:500;">
+                    <span style="font-size:10px;color:var(--dim);width:14px;text-align:center;transform:rotate(90deg);flex-shrink:0;">▶</span>
+                    <span style="font-size:12px;flex-shrink:0;">🎯</span>
+                    <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:var(--font);font-size:16px;">2026 年度目标</span>
+                  </div>
+                  <div style="padding-left:22px;">
+                    <!-- Q2 -->
+                    <div style="margin-bottom:2px;">
+                      <div style="display:flex;align-items:center;gap:6px;padding:6px 8px;border-radius:var(--radius);cursor:pointer;font-size:13px;font-weight:500;">
+                        <span style="font-size:10px;color:var(--dim);width:14px;text-align:center;transform:rotate(90deg);flex-shrink:0;">▶</span>
+                        <span style="font-size:12px;flex-shrink:0;">📌</span>
+                        <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">Q2 — FocusPilot 0.0.1 发布</span>
+                        <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
+                          <span style="font-size:10px;padding:1px 6px;border-radius:10px;font-weight:500;background:rgba(74,222,128,0.15);color:var(--green);">active</span>
+                          <span style="font-size:9px;padding:1px 5px;border-radius:3px;font-weight:500;letter-spacing:0.02em;background:rgba(74,222,128,0.15);color:var(--green);">ON TRACK</span>
+                          <div style="width:48px;height:4px;background:rgba(255,255,255,0.06);border-radius:2px;overflow:hidden;flex-shrink:0;"><div style="height:100%;width:38%;background:var(--accent);border-radius:2px;"></div></div>
+                          <span style="font-size:10px;font-family:var(--mono);color:var(--dim);width:28px;text-align:right;flex-shrink:0;">38%</span>
+                        </div>
+                      </div>
+                      <div style="padding-left:22px;">
+                        <!-- April -->
+                        <div style="margin-bottom:2px;">
+                          <div style="display:flex;align-items:center;gap:6px;padding:6px 8px;border-radius:var(--radius);cursor:pointer;font-size:13px;font-weight:500;">
+                            <span style="font-size:10px;color:var(--dim);width:14px;text-align:center;transform:rotate(90deg);flex-shrink:0;">▶</span>
+                            <span style="font-size:12px;flex-shrink:0;">📆</span>
+                            <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">4月 — Workspace + Engine 原型</span>
+                            <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
+                              <span style="font-size:10px;padding:1px 6px;border-radius:10px;font-weight:500;background:rgba(74,222,128,0.15);color:var(--green);">active</span>
+                              <span style="font-size:9px;padding:1px 5px;border-radius:3px;font-weight:500;letter-spacing:0.02em;background:rgba(74,222,128,0.15);color:var(--green);">ON TRACK</span>
+                              <div style="width:48px;height:4px;background:rgba(255,255,255,0.06);border-radius:2px;overflow:hidden;flex-shrink:0;"><div style="height:100%;width:40%;background:var(--green);border-radius:2px;"></div></div>
+                              <span style="font-size:10px;font-family:var(--mono);color:var(--dim);width:28px;text-align:right;flex-shrink:0;">40%</span>
+                            </div>
+                          </div>
+                          <div style="padding-left:22px;">
+                            <!-- Task: 看板状态模型实现 (in_progress) -->
+                            <div style="margin-bottom:2px;">
+                              <div onclick="openTaskDetail()" style="display:flex;align-items:center;gap:6px;padding:6px 8px;border-radius:var(--radius);cursor:pointer;font-size:13px;">
+                                <span style="font-size:10px;width:14px;visibility:hidden;flex-shrink:0;">▶</span>
+                                <span style="width:7px;height:7px;border-radius:50%;flex-shrink:0;border:1.5px solid #5b8af5;background:#5b8af5;"></span>
+                                <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">看板状态模型实现</span>
+                                <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
+                                  <span style="font-size:10px;padding:2px 6px;border-radius:3px;font-weight:500;background:rgba(248,113,113,0.15);color:var(--red);">P0</span>
+                                  <span style="font-size:10px;padding:2px 6px;border-radius:3px;font-weight:500;background:rgba(82,156,202,0.15);color:var(--accent);">auto</span>
+                                  <span style="font-size:10px;color:var(--dim);font-family:var(--mono);">04-20</span>
+                                </div>
+                              </div>
+                            </div>
+                            <!-- Task: Agent Pull 执行管道 (todo) -->
+                            <div style="margin-bottom:2px;">
+                              <div onclick="openTaskDetail()" style="display:flex;align-items:center;gap:6px;padding:6px 8px;border-radius:var(--radius);cursor:pointer;font-size:13px;">
+                                <span style="font-size:10px;width:14px;visibility:hidden;flex-shrink:0;">▶</span>
+                                <span style="width:7px;height:7px;border-radius:50%;flex-shrink:0;border:1.5px solid #9399b0;background:transparent;"></span>
+                                <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">Agent Pull 执行管道</span>
+                                <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
+                                  <span style="font-size:10px;padding:2px 6px;border-radius:3px;font-weight:500;background:rgba(249,115,22,0.15);color:#f97316;">P1</span>
+                                  <span style="font-size:10px;padding:2px 6px;border-radius:3px;font-weight:500;background:rgba(82,156,202,0.15);color:var(--accent);">auto</span>
+                                  <span style="font-size:10px;color:var(--dim);font-family:var(--mono);">04-25</span>
+                                </div>
+                              </div>
+                            </div>
+                            <!-- Task: Terminal 手动执行模式 (todo) -->
+                            <div style="margin-bottom:2px;">
+                              <div onclick="openTaskDetail()" style="display:flex;align-items:center;gap:6px;padding:6px 8px;border-radius:var(--radius);cursor:pointer;font-size:13px;">
+                                <span style="font-size:10px;width:14px;visibility:hidden;flex-shrink:0;">▶</span>
+                                <span style="width:7px;height:7px;border-radius:50%;flex-shrink:0;border:1.5px solid #9399b0;background:transparent;"></span>
+                                <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">Terminal 手动执行模式</span>
+                                <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
+                                  <span style="font-size:10px;padding:2px 6px;border-radius:3px;font-weight:500;background:rgba(249,115,22,0.15);color:#f97316;">P1</span>
+                                  <span style="font-size:10px;padding:2px 6px;border-radius:3px;font-weight:500;background:rgba(160,124,245,0.15);color:var(--purple);">manual</span>
+                                  <span style="font-size:10px;color:var(--dim);font-family:var(--mono);">04-28</span>
+                                </div>
+                              </div>
+                            </div>
+                            <!-- Task: 数据模型设计 (done) -->
+                            <div style="margin-bottom:2px;">
+                              <div style="display:flex;align-items:center;gap:6px;padding:6px 8px;border-radius:var(--radius);cursor:pointer;font-size:13px;">
+                                <span style="font-size:10px;width:14px;visibility:hidden;flex-shrink:0;">▶</span>
+                                <span style="width:7px;height:7px;border-radius:50%;flex-shrink:0;border:1.5px solid var(--green);background:var(--green);"></span>
+                                <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-decoration:line-through;color:var(--dim);">数据模型设计</span>
+                                <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
+                                  <span style="font-size:10px;padding:2px 6px;border-radius:3px;font-weight:500;background:rgba(248,113,113,0.15);color:var(--red);">P0</span>
+                                  <span style="font-size:10px;color:var(--green);">✓</span>
+                                </div>
+                              </div>
+                            </div>
+                            <!-- Task: 主题系统适配 (backlog) -->
+                            <div style="margin-bottom:2px;">
+                              <div style="display:flex;align-items:center;gap:6px;padding:6px 8px;border-radius:var(--radius);cursor:pointer;font-size:13px;">
+                                <span style="font-size:10px;width:14px;visibility:hidden;flex-shrink:0;">▶</span>
+                                <span style="width:7px;height:7px;border-radius:50%;flex-shrink:0;border:1.5px solid #636985;background:transparent;"></span>
+                                <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">主题系统适配</span>
+                                <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
+                                  <span style="font-size:10px;padding:2px 6px;border-radius:3px;font-weight:500;background:rgba(99,105,133,0.2);color:var(--dim);">P2</span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                        <!-- May -->
+                        <div style="margin-bottom:2px;">
+                          <div style="display:flex;align-items:center;gap:6px;padding:6px 8px;border-radius:var(--radius);cursor:pointer;font-size:13px;font-weight:500;">
+                            <span style="font-size:10px;color:var(--dim);width:14px;text-align:center;flex-shrink:0;">▶</span>
+                            <span style="font-size:12px;flex-shrink:0;">📆</span>
+                            <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">5月 — AI Crew 配置 + 知识管道</span>
+                            <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
+                              <span style="font-size:10px;padding:1px 6px;border-radius:10px;font-weight:500;background:rgba(74,222,128,0.15);color:var(--green);">active</span>
+                              <div style="width:48px;height:4px;background:rgba(255,255,255,0.06);border-radius:2px;overflow:hidden;flex-shrink:0;"><div style="height:100%;width:0%;border-radius:2px;"></div></div>
+                              <span style="font-size:10px;font-family:var(--mono);color:var(--dim);width:28px;text-align:right;flex-shrink:0;">0%</span>
+                            </div>
+                          </div>
+                        </div>
+                        <!-- June -->
+                        <div style="margin-bottom:2px;">
+                          <div style="display:flex;align-items:center;gap:6px;padding:6px 8px;border-radius:var(--radius);cursor:pointer;font-size:13px;font-weight:500;">
+                            <span style="font-size:10px;color:var(--dim);width:14px;text-align:center;flex-shrink:0;">▶</span>
+                            <span style="font-size:12px;flex-shrink:0;">📆</span>
+                            <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">6月 — 集成测试 + 首版发布</span>
+                            <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
+                              <span style="font-size:10px;padding:1px 6px;border-radius:10px;font-weight:500;background:rgba(251,191,36,0.15);color:var(--amber);">paused</span>
+                              <div style="width:48px;height:4px;background:rgba(255,255,255,0.06);border-radius:2px;overflow:hidden;flex-shrink:0;"><div style="height:100%;width:0%;border-radius:2px;"></div></div>
+                              <span style="font-size:10px;font-family:var(--mono);color:var(--dim);width:28px;text-align:right;flex-shrink:0;">0%</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <!-- Q3 placeholder -->
+                    <div style="margin-bottom:2px;">
+                      <div style="display:flex;align-items:center;gap:6px;padding:6px 8px;border-radius:var(--radius);cursor:pointer;font-size:13px;font-weight:500;opacity:0.5;">
+                        <span style="font-size:10px;color:var(--dim);width:14px;text-align:center;flex-shrink:0;">▶</span>
+                        <span style="font-size:12px;flex-shrink:0;">📌</span>
+                        <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">Q3 — PilotOne 企业版启动</span>
+                        <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
+                          <div style="width:48px;height:4px;background:rgba(255,255,255,0.06);border-radius:2px;overflow:hidden;flex-shrink:0;"><div style="height:100%;width:0%;border-radius:2px;"></div></div>
+                          <span style="font-size:10px;font-family:var(--mono);color:var(--dim);width:28px;text-align:right;flex-shrink:0;">0%</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
-              <div class="card">
-                <div class="card-head">
-                  <h3>周规划</h3>
-                  <span class="pill blue">W20</span>
+              <!-- Right: Gantt Chart -->
+              <div style="flex:1;overflow-x:auto;overflow-y:auto;position:relative;background:var(--bg);">
+                <!-- Gantt Header -->
+                <div style="position:sticky;top:0;z-index:5;display:flex;background:var(--surface);border-bottom:1px solid var(--line-soft);height:36px;">
+                  <div style="min-width:180px;flex:1;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;color:var(--dim);border-right:1px solid var(--line-soft);position:relative;">3月</div>
+                  <div style="min-width:180px;flex:1;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;color:var(--accent);border-right:1px solid var(--line-soft);position:relative;">4月<span style="position:absolute;bottom:0;left:0;right:0;height:2px;background:var(--accent);"></span></div>
+                  <div style="min-width:180px;flex:1;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;color:var(--dim);border-right:1px solid var(--line-soft);position:relative;">5月</div>
+                  <div style="min-width:180px;flex:1;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;color:var(--dim);position:relative;">6月</div>
                 </div>
-                <div class="card-body">
-                  <div class="row">
-                    <strong>Mon</strong><span class="right">PRD 治理</span>
+                <!-- Gantt Body -->
+                <div style="padding:8px 0;min-height:100%;position:relative;min-width:720px;">
+                  <!-- Today line -->
+                  <div style="position:absolute;top:0;bottom:0;width:1px;background:var(--red);z-index:3;opacity:0.6;left:310px;"><span style="position:absolute;top:40px;left:-14px;font-size:9px;color:var(--red);font-weight:500;">今天</span></div>
+                  <!-- Q2 Goal bar -->
+                  <div style="height:34px;display:flex;align-items:center;position:relative;">
+                    <div style="position:absolute;height:20px;border-radius:4px;display:flex;align-items:center;padding:0 8px;font-size:10px;font-weight:500;cursor:pointer;overflow:hidden;white-space:nowrap;background:rgba(82,156,202,0.2);border:1px solid rgba(82,156,202,0.3);color:var(--accent);left:120px;width:480px;">
+                      <div style="position:absolute;left:0;top:0;bottom:0;width:38%;background:rgba(82,156,202,0.15);border-radius:4px;"></div>
+                      Q2 FocusPilot 0.0.1
+                    </div>
                   </div>
-                  <div class="row">
-                    <strong>Tue</strong><span class="right">原型壳层</span>
+                  <!-- April Goal bar -->
+                  <div style="height:34px;display:flex;align-items:center;position:relative;margin-top:4px;">
+                    <div style="position:absolute;height:20px;border-radius:4px;display:flex;align-items:center;padding:0 8px;font-size:9px;font-weight:500;cursor:pointer;overflow:hidden;white-space:nowrap;background:rgba(82,156,202,0.2);border:1px solid rgba(82,156,202,0.3);color:var(--accent);left:180px;width:170px;">
+                      <div style="position:absolute;left:0;top:0;bottom:0;width:40%;background:rgba(82,156,202,0.15);border-radius:4px;"></div>
+                      4月 Workspace
+                    </div>
                   </div>
-                  <div class="row">
-                    <strong>Wed</strong><span class="right">Focus 状态机</span>
+                  <!-- April Tasks -->
+                  <div style="height:34px;display:flex;align-items:center;position:relative;">
+                    <div style="position:absolute;height:14px;border-radius:3px;cursor:pointer;overflow:hidden;white-space:nowrap;background:rgba(74,222,128,0.3);border:1px solid rgba(74,222,128,0.4);left:190px;width:50px;" title="数据模型设计 ✓"></div>
+                  </div>
+                  <div style="height:34px;display:flex;align-items:center;position:relative;">
+                    <div style="position:absolute;height:14px;border-radius:3px;cursor:pointer;overflow:hidden;white-space:nowrap;background:rgba(91,138,245,0.4);border:1px solid rgba(91,138,245,0.5);left:240px;width:70px;" title="看板状态模型"></div>
+                  </div>
+                  <div style="height:34px;display:flex;align-items:center;position:relative;">
+                    <div style="position:absolute;height:14px;border-radius:3px;cursor:pointer;overflow:hidden;white-space:nowrap;background:rgba(147,153,176,0.3);border:1px solid rgba(147,153,176,0.3);left:280px;width:60px;" title="Agent Pull"></div>
+                  </div>
+                  <div style="height:34px;display:flex;align-items:center;position:relative;">
+                    <div style="position:absolute;height:14px;border-radius:3px;cursor:pointer;overflow:hidden;white-space:nowrap;background:rgba(147,153,176,0.3);border:1px solid rgba(147,153,176,0.3);left:300px;width:50px;" title="Terminal"></div>
+                  </div>
+                  <div style="height:34px;display:flex;align-items:center;position:relative;">
+                    <div style="position:absolute;height:14px;border-radius:3px;cursor:pointer;overflow:hidden;white-space:nowrap;background:rgba(255,255,255,0.06);color:var(--dim);left:320px;width:30px;" title="主题适配"></div>
+                  </div>
+                  <!-- Spacer -->
+                  <div style="height:6px;"></div>
+                  <!-- May Goal bar -->
+                  <div style="height:34px;display:flex;align-items:center;position:relative;">
+                    <div style="position:absolute;height:20px;border-radius:4px;display:flex;align-items:center;padding:0 8px;font-size:9px;font-weight:500;cursor:pointer;overflow:hidden;white-space:nowrap;background:rgba(82,156,202,0.2);border:1px solid rgba(82,156,202,0.3);color:var(--accent);left:360px;width:150px;">
+                      <div style="position:absolute;left:0;top:0;bottom:0;width:0%;background:rgba(82,156,202,0.15);border-radius:4px;"></div>
+                      5月 AI Crew
+                    </div>
+                  </div>
+                  <!-- May Tasks -->
+                  <div style="height:34px;display:flex;align-items:center;position:relative;">
+                    <div style="position:absolute;height:14px;border-radius:3px;cursor:pointer;overflow:hidden;white-space:nowrap;background:rgba(255,255,255,0.06);color:var(--dim);left:370px;width:50px;" title="Crew 配置"></div>
+                  </div>
+                  <div style="height:34px;display:flex;align-items:center;position:relative;">
+                    <div style="position:absolute;height:14px;border-radius:3px;cursor:pointer;overflow:hidden;white-space:nowrap;background:rgba(255,255,255,0.06);color:var(--dim);left:420px;width:60px;" title="知识管道"></div>
+                  </div>
+                  <div style="height:34px;display:flex;align-items:center;position:relative;">
+                    <div style="position:absolute;height:14px;border-radius:3px;cursor:pointer;overflow:hidden;white-space:nowrap;background:rgba(255,255,255,0.06);color:var(--dim);left:460px;width:40px;" title="Anki 同步"></div>
+                  </div>
+                  <!-- Spacer -->
+                  <div style="height:6px;"></div>
+                  <!-- June Goal bar -->
+                  <div style="height:34px;display:flex;align-items:center;position:relative;">
+                    <div style="position:absolute;height:20px;border-radius:4px;display:flex;align-items:center;padding:0 8px;font-size:9px;font-weight:500;cursor:pointer;overflow:hidden;white-space:nowrap;background:rgba(82,156,202,0.2);border:1px solid rgba(82,156,202,0.3);color:var(--accent);left:520px;width:120px;opacity:0.5;">
+                      <div style="position:absolute;left:0;top:0;bottom:0;width:0%;background:rgba(82,156,202,0.15);border-radius:4px;"></div>
+                      6月 测试发布
+                    </div>
                   </div>
                 </div>
               </div>
-              <div class="card">
-                <div class="card-head">
-                  <h3>今日计划</h3>
-                  <span class="pill amber">4 剩余</span>
+            </div>
+            <!-- 周规划 -->
+            <div class="fp-sub" id="fp-week" style="display:none;grid-template-columns:280px 1fr;gap:0;border-radius:var(--radius);overflow:hidden;flex:1;">
+              <!-- Left: Task List -->
+              <div style="border-right:1px solid var(--line-soft);overflow-y:auto;padding:0;background:var(--surface);">
+                <!-- Week Title -->
+                <div style="height:36px;display:flex;align-items:center;padding:0 12px;gap:6px;font-size:12px;font-weight:600;border-bottom:1px solid var(--line-soft);background:var(--surface);">
+                  📅 本周计划 · 天视图
+                  <span style="font-size:10px;font-weight:400;color:var(--dim);font-family:var(--mono);">W22 · 05-25 ~ 05-31</span>
                 </div>
-                <div class="card-body">
-                  <div class="row">☐ 完成壳层母版</div>
-                  <div class="row">☐ 合入 Review 状态</div>
-                  <div class="row">☐ 校验链接</div>
+                <!-- Legend -->
+                <div style="display:flex;align-items:center;gap:10px;padding:4px 12px;font-size:9px;color:var(--dim);border-bottom:1px solid var(--line-soft);">
+                  <span style="display:flex;align-items:center;gap:3px;"><span style="width:10px;height:4px;border-radius:2px;background:rgba(91,138,245,0.4);"></span>执行中</span>
+                  <span style="display:flex;align-items:center;gap:3px;"><span style="width:10px;height:4px;border-radius:2px;background:rgba(147,153,176,0.3);"></span>待执行</span>
+                  <span style="display:flex;align-items:center;gap:3px;"><span style="width:10px;height:4px;border-radius:2px;background:rgba(74,222,128,0.3);"></span>已完成</span>
+                </div>
+                <!-- Scheduled tasks -->
+                <div style="padding:6px 0 0;">
+                  <div style="padding:0 12px 4px;font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;color:var(--dim);">已排期 · 4 项</div>
+                  <div onclick="openTaskDetail()" style="height:34px;display:flex;align-items:center;gap:6px;padding:0 12px;cursor:pointer;border-radius:var(--radius);font-size:12px;">
+                    <span style="width:7px;height:7px;border-radius:50%;flex-shrink:0;border:1.5px solid #5b8af5;background:#5b8af5;"></span>
+                    <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">看板状态模型实现</span>
+                    <span style="font-size:10px;padding:2px 6px;border-radius:3px;font-weight:500;background:rgba(248,113,113,0.15);color:var(--red);">P0</span>
+                    <span style="font-size:11px;flex-shrink:0;">🤖</span>
+                  </div>
+                  <div onclick="openTaskDetail()" style="height:34px;display:flex;align-items:center;gap:6px;padding:0 12px;cursor:pointer;border-radius:var(--radius);font-size:12px;">
+                    <span style="width:7px;height:7px;border-radius:50%;flex-shrink:0;border:1.5px solid #9399b0;background:transparent;"></span>
+                    <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">Agent Pull 执行管道</span>
+                    <span style="font-size:10px;padding:2px 6px;border-radius:3px;font-weight:500;background:rgba(249,115,22,0.15);color:#f97316;">P1</span>
+                    <span style="font-size:11px;flex-shrink:0;">🤖</span>
+                  </div>
+                  <div onclick="openTaskDetail()" style="height:34px;display:flex;align-items:center;gap:6px;padding:0 12px;cursor:pointer;border-radius:var(--radius);font-size:12px;">
+                    <span style="width:7px;height:7px;border-radius:50%;flex-shrink:0;border:1.5px solid #9399b0;background:transparent;"></span>
+                    <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">整理会议记录</span>
+                    <span style="font-size:10px;padding:2px 6px;border-radius:3px;font-weight:500;background:rgba(99,105,133,0.2);color:var(--dim);">P2</span>
+                    <span style="font-size:11px;flex-shrink:0;">🖐</span>
+                  </div>
+                  <div onclick="openTaskDetail()" style="height:34px;display:flex;align-items:center;gap:6px;padding:0 12px;cursor:pointer;border-radius:var(--radius);font-size:12px;">
+                    <span style="width:7px;height:7px;border-radius:50%;flex-shrink:0;border:1.5px solid #9399b0;background:transparent;"></span>
+                    <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">Terminal 手动执行</span>
+                    <span style="font-size:10px;padding:2px 6px;border-radius:3px;font-weight:500;background:rgba(249,115,22,0.15);color:#f97316;">P1</span>
+                    <span style="font-size:11px;flex-shrink:0;">🖐</span>
+                  </div>
+                </div>
+                <!-- Unscheduled tasks -->
+                <div style="padding:4px 0 8px;border-top:1px dashed var(--line-soft);margin-top:4px;">
+                  <div style="padding:4px 12px;font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;color:var(--dim);">未排期 · 3 项</div>
+                  <div onclick="openTaskDetail()" style="height:28px;display:flex;align-items:center;gap:6px;padding:0 12px;cursor:pointer;font-size:11px;color:var(--dim);">
+                    <span style="width:6px;height:6px;border-radius:50%;border:1px solid #636985;flex-shrink:0;"></span>
+                    <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">读《Designing Data Apps》</span>
+                    <span style="font-size:9px;color:var(--dim);">P2</span>
+                  </div>
+                  <div onclick="openTaskDetail()" style="height:28px;display:flex;align-items:center;gap:6px;padding:0 12px;cursor:pointer;font-size:11px;color:var(--dim);">
+                    <span style="width:6px;height:6px;border-radius:50%;border:1px solid #636985;flex-shrink:0;"></span>
+                    <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">写周报</span>
+                    <span style="font-size:9px;color:var(--dim);">P2</span>
+                  </div>
+                  <div onclick="openTaskDetail()" style="height:28px;display:flex;align-items:center;gap:6px;padding:0 12px;cursor:pointer;font-size:11px;color:var(--dim);">
+                    <span style="width:6px;height:6px;border-radius:50%;border:1px solid #636985;flex-shrink:0;"></span>
+                    <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">Anki 卡片整理</span>
+                    <span style="font-size:9px;color:var(--dim);">P2</span>
+                  </div>
+                </div>
+              </div>
+              <!-- Right: Week Gantt (7 days) -->
+              <div style="flex:1;overflow-x:auto;overflow-y:auto;position:relative;background:var(--bg);">
+                <!-- Gantt Header: Mon-Sun -->
+                <div style="position:sticky;top:0;z-index:5;display:flex;background:var(--surface);border-bottom:1px solid var(--line-soft);height:36px;">
+                  <div style="min-width:103px;flex:1;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;color:var(--accent);border-right:1px solid var(--line-soft);position:relative;"><span>周一</span><span style="margin-left:4px;font-family:var(--mono);font-size:9px;">25</span><span style="position:absolute;bottom:0;left:0;right:0;height:2px;background:var(--accent);"></span></div>
+                  <div style="min-width:103px;flex:1;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;color:var(--dim);border-right:1px solid var(--line-soft);position:relative;"><span>周二</span><span style="margin-left:4px;font-family:var(--mono);font-size:9px;opacity:0.6;">26</span></div>
+                  <div style="min-width:103px;flex:1;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;color:var(--dim);border-right:1px solid var(--line-soft);position:relative;"><span>周三</span><span style="margin-left:4px;font-family:var(--mono);font-size:9px;opacity:0.6;">27</span></div>
+                  <div style="min-width:103px;flex:1;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;color:var(--dim);border-right:1px solid var(--line-soft);position:relative;"><span>周四</span><span style="margin-left:4px;font-family:var(--mono);font-size:9px;opacity:0.6;">28</span></div>
+                  <div style="min-width:103px;flex:1;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;color:var(--dim);border-right:1px solid var(--line-soft);position:relative;"><span>周五</span><span style="margin-left:4px;font-family:var(--mono);font-size:9px;opacity:0.6;">29</span></div>
+                  <div style="min-width:103px;flex:1;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;color:var(--dim);border-right:1px solid var(--line-soft);position:relative;background:rgba(255,255,255,0.02);"><span>周六</span><span style="margin-left:4px;font-family:var(--mono);font-size:9px;opacity:0.6;">30</span></div>
+                  <div style="min-width:103px;flex:1;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;color:var(--dim);position:relative;background:rgba(255,255,255,0.02);"><span>周日</span><span style="margin-left:4px;font-family:var(--mono);font-size:9px;opacity:0.6;">31</span></div>
+                </div>
+                <!-- Gantt Body -->
+                <div style="min-height:100%;position:relative;min-width:721px;">
+                  <!-- Today line (Mon = col 1, early) -->
+                  <div style="position:absolute;top:0;bottom:0;width:1px;background:var(--red);z-index:3;opacity:0.6;left:15px;"><span style="position:absolute;top:4px;left:-14px;font-size:9px;color:var(--red);font-weight:500;">今天</span></div>
+                  <!-- Weekend bg (Sat+Sun = col 6-7) -->
+                  <div style="position:absolute;top:0;bottom:0;left:515px;width:206px;background:rgba(255,255,255,0.015);z-index:0;"></div>
+                  <!-- Legend (mirrors left panel structure for natural alignment) -->
+                  <div style="display:flex;align-items:center;gap:10px;padding:4px 12px;font-size:9px;color:var(--dim);border-bottom:1px solid var(--line-soft);">
+                    <span style="display:flex;align-items:center;gap:3px;"><span style="width:10px;height:4px;border-radius:2px;background:rgba(91,138,245,0.4);"></span>执行中</span>
+                    <span style="display:flex;align-items:center;gap:3px;"><span style="width:10px;height:4px;border-radius:2px;background:rgba(147,153,176,0.3);"></span>待执行</span>
+                    <span style="display:flex;align-items:center;gap:3px;"><span style="width:10px;height:4px;border-radius:2px;background:rgba(74,222,128,0.3);"></span>已完成</span>
+                  </div>
+                  <!-- Scheduled rows -->
+                  <div style="padding:6px 0 0;">
+                    <div style="padding:0 12px 4px;font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;color:var(--dim);">时间线</div>
+                    <!-- Row 1: 看板状态模型 Mon~Wed (in_progress) -->
+                    <div style="height:34px;display:flex;align-items:center;position:relative;">
+                      <div style="position:absolute;height:14px;border-radius:3px;cursor:pointer;overflow:hidden;white-space:nowrap;display:flex;align-items:center;padding:0 6px;font-size:9px;color:rgba(255,255,255,0.8);background:rgba(91,138,245,0.4);border:1px solid rgba(91,138,245,0.5);left:4px;width:305px;" title="看板状态模型实现">看板状态模型实现</div>
+                    </div>
+                    <!-- Row 2: Agent Pull Wed~Thu (todo) -->
+                    <div style="height:34px;display:flex;align-items:center;position:relative;">
+                      <div style="position:absolute;height:14px;border-radius:3px;cursor:pointer;overflow:hidden;white-space:nowrap;display:flex;align-items:center;padding:0 6px;font-size:9px;color:rgba(255,255,255,0.6);background:rgba(147,153,176,0.3);border:1px solid rgba(147,153,176,0.3);left:210px;width:200px;" title="Agent Pull 执行管道">Agent Pull</div>
+                    </div>
+                    <!-- Row 3: 整理会议记录 Thu (todo) -->
+                    <div style="height:34px;display:flex;align-items:center;position:relative;">
+                      <div style="position:absolute;height:14px;border-radius:3px;cursor:pointer;overflow:hidden;white-space:nowrap;display:flex;align-items:center;padding:0 6px;font-size:9px;color:rgba(255,255,255,0.6);background:rgba(147,153,176,0.3);border:1px solid rgba(147,153,176,0.3);left:313px;width:99px;" title="整理会议记录">整理会议记录</div>
+                    </div>
+                    <!-- Row 4: Terminal Fri (todo) -->
+                    <div style="height:34px;display:flex;align-items:center;position:relative;">
+                      <div style="position:absolute;height:14px;border-radius:3px;cursor:pointer;overflow:hidden;white-space:nowrap;display:flex;align-items:center;padding:0 6px;font-size:9px;color:rgba(255,255,255,0.6);background:rgba(147,153,176,0.3);border:1px solid rgba(147,153,176,0.3);left:416px;width:99px;" title="Terminal 手动执行">Terminal</div>
+                    </div>
+                  </div>
+                  <!-- Unscheduled drop targets (per-row, mirrors left) -->
+                  <div style="padding:4px 0 8px;border-top:1px dashed var(--line-soft);margin-top:4px;">
+                    <div style="padding:4px 12px;font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;color:var(--dim);opacity:0.5;">未排期</div>
+                    <div style="height:28px;display:flex;align-items:center;position:relative;border-bottom:1px dashed rgba(99,105,133,0.1);"></div>
+                    <div style="height:28px;display:flex;align-items:center;position:relative;border-bottom:1px dashed rgba(99,105,133,0.1);"></div>
+                    <div style="height:28px;display:flex;align-items:center;justify-content:center;position:relative;">
+                      <span style="font-size:9px;color:var(--dim);opacity:0.3;">← 拖到日期列排期</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <!-- 日规划 -->
+            <div class="fp-sub" id="fp-day" style="display:none;grid-template-columns:280px 1fr;gap:0;border-radius:var(--radius);overflow:hidden;flex:1;">
+              <!-- Left: Task List -->
+              <div style="border-right:1px solid var(--line-soft);overflow-y:auto;padding:0;background:var(--surface);">
+                <!-- Day Title -->
+                <div style="height:36px;display:flex;align-items:center;padding:0 12px;gap:6px;font-size:12px;font-weight:600;border-bottom:1px solid var(--line-soft);background:var(--surface);">
+                  🔥 今日聚焦 · 小时视图
+                  <span style="font-size:10px;font-weight:400;color:var(--dim);font-family:var(--mono);">05-25 · 周一</span>
+                </div>
+                <!-- Legend -->
+                <div style="display:flex;align-items:center;gap:10px;padding:4px 12px;font-size:9px;color:var(--dim);border-bottom:1px solid var(--line-soft);">
+                  <span style="display:flex;align-items:center;gap:3px;"><span style="width:10px;height:4px;border-radius:2px;background:rgba(91,138,245,0.4);"></span>执行中</span>
+                  <span style="display:flex;align-items:center;gap:3px;"><span style="width:10px;height:4px;border-radius:2px;background:rgba(147,153,176,0.3);"></span>待执行</span>
+                  <span style="display:flex;align-items:center;gap:3px;"><span style="width:10px;height:4px;border-radius:2px;background:rgba(74,222,128,0.3);"></span>已完成</span>
+                </div>
+                <!-- Scheduled tasks -->
+                <div style="padding:6px 0 0;">
+                  <div style="padding:0 12px 4px;font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;color:var(--dim);">已排时间 · 2 项</div>
+                  <div onclick="openTaskDetail()" style="height:34px;display:flex;align-items:center;gap:6px;padding:0 12px;cursor:pointer;border-radius:var(--radius);font-size:12px;">
+                    <span style="width:7px;height:7px;border-radius:50%;flex-shrink:0;border:1.5px solid var(--green);background:var(--green);"></span>
+                    <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-decoration:line-through;color:var(--dim);">数据模型设计</span>
+                    <span style="font-size:10px;padding:2px 6px;border-radius:3px;font-weight:500;background:rgba(248,113,113,0.15);color:var(--red);">P0</span>
+                    <span style="font-size:10px;color:var(--green);">✓</span>
+                  </div>
+                  <div onclick="openTaskDetail()" style="height:34px;display:flex;align-items:center;gap:6px;padding:0 12px;cursor:pointer;border-radius:var(--radius);font-size:12px;">
+                    <span style="width:7px;height:7px;border-radius:50%;flex-shrink:0;border:1.5px solid #5b8af5;background:#5b8af5;"></span>
+                    <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">看板状态模型实现</span>
+                    <span style="font-size:10px;padding:2px 6px;border-radius:3px;font-weight:500;background:rgba(248,113,113,0.15);color:var(--red);">P0</span>
+                    <span style="font-size:11px;flex-shrink:0;">🤖</span>
+                  </div>
+                </div>
+                <!-- Unscheduled tasks -->
+                <div style="padding:4px 0 8px;border-top:1px dashed var(--line-soft);margin-top:4px;">
+                  <div style="padding:4px 12px;font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;color:var(--dim);">未排时间 · 2 项</div>
+                  <div onclick="openTaskDetail()" style="height:28px;display:flex;align-items:center;gap:6px;padding:0 12px;cursor:pointer;font-size:11px;color:var(--dim);">
+                    <span style="width:6px;height:6px;border-radius:50%;border:1px solid #636985;flex-shrink:0;"></span>
+                    <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">读《Designing Data Apps》第 3 章</span>
+                    <span style="font-size:9px;color:var(--dim);">P2</span>
+                  </div>
+                  <div onclick="openTaskDetail()" style="height:28px;display:flex;align-items:center;gap:6px;padding:0 12px;cursor:pointer;font-size:11px;color:var(--dim);">
+                    <span style="width:6px;height:6px;border-radius:50%;border:1px solid #636985;flex-shrink:0;"></span>
+                    <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">整理本周会议记录</span>
+                    <span style="font-size:9px;color:var(--dim);">P2</span>
+                  </div>
+                </div>
+              </div>
+              <!-- Right: Day Gantt (hourly) -->
+              <div style="flex:1;overflow-x:auto;overflow-y:auto;position:relative;background:var(--bg);">
+                <!-- Gantt Header: 8:00-17:00 (10 hour slots) -->
+                <div style="position:sticky;top:0;z-index:5;display:flex;background:var(--surface);border-bottom:1px solid var(--line-soft);height:36px;">
+                  <div style="min-width:72px;flex:1;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:500;color:var(--dim);border-right:1px solid var(--line-soft);font-family:var(--mono);position:relative;">8</div>
+                  <div style="min-width:72px;flex:1;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:500;color:var(--dim);border-right:1px solid var(--line-soft);font-family:var(--mono);position:relative;">9</div>
+                  <div style="min-width:72px;flex:1;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:500;color:var(--dim);border-right:1px solid var(--line-soft);font-family:var(--mono);position:relative;">10</div>
+                  <div style="min-width:72px;flex:1;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:500;color:var(--dim);border-right:1px solid var(--line-soft);font-family:var(--mono);position:relative;">11</div>
+                  <div style="min-width:72px;flex:1;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:500;color:var(--dim);border-right:1px solid var(--line-soft);font-family:var(--mono);position:relative;">12</div>
+                  <div style="min-width:72px;flex:1;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:500;color:var(--dim);border-right:1px solid var(--line-soft);font-family:var(--mono);position:relative;">13</div>
+                  <div style="min-width:72px;flex:1;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:500;color:var(--accent);border-right:1px solid var(--line-soft);font-family:var(--mono);position:relative;">14<span style="position:absolute;bottom:0;left:0;right:0;height:2px;background:var(--accent);"></span></div>
+                  <div style="min-width:72px;flex:1;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:500;color:var(--dim);border-right:1px solid var(--line-soft);font-family:var(--mono);position:relative;">15</div>
+                  <div style="min-width:72px;flex:1;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:500;color:var(--dim);border-right:1px solid var(--line-soft);font-family:var(--mono);position:relative;">16</div>
+                  <div style="min-width:72px;flex:1;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:500;color:var(--dim);font-family:var(--mono);position:relative;">17</div>
+                </div>
+                <!-- Gantt Body (only scheduled tasks have bars) -->
+                <div style="min-height:100%;position:relative;min-width:720px;">
+                  <!-- Now line (14:00) -->
+                  <div style="position:absolute;top:0;bottom:0;width:1px;background:var(--red);z-index:3;opacity:0.6;left:432px;"><span style="position:absolute;top:4px;left:-10px;font-size:9px;color:var(--red);font-weight:500;">现在</span></div>
+                  <!-- Current hour column highlight -->
+                  <div style="position:absolute;top:0;bottom:0;left:432px;width:72px;background:rgba(91,138,245,0.04);z-index:1;"></div>
+                  <!-- Legend (mirrors left panel structure for natural alignment) -->
+                  <div style="display:flex;align-items:center;gap:10px;padding:4px 12px;font-size:9px;color:var(--dim);border-bottom:1px solid var(--line-soft);">
+                    <span style="display:flex;align-items:center;gap:3px;"><span style="width:10px;height:4px;border-radius:2px;background:rgba(91,138,245,0.4);"></span>执行中</span>
+                    <span style="display:flex;align-items:center;gap:3px;"><span style="width:10px;height:4px;border-radius:2px;background:rgba(147,153,176,0.3);"></span>待执行</span>
+                    <span style="display:flex;align-items:center;gap:3px;"><span style="width:10px;height:4px;border-radius:2px;background:rgba(74,222,128,0.3);"></span>已完成</span>
+                  </div>
+                  <!-- Scheduled rows -->
+                  <div style="padding:6px 0 0;">
+                    <div style="padding:0 12px 4px;font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;color:var(--dim);">时间线</div>
+                    <!-- Row 1: 数据模型设计 8:00-10:00 (done) -->
+                    <div style="height:34px;display:flex;align-items:center;position:relative;">
+                      <div style="position:absolute;height:14px;border-radius:3px;cursor:pointer;overflow:hidden;white-space:nowrap;display:flex;align-items:center;padding:0 6px;font-size:9px;color:rgba(255,255,255,0.5);background:rgba(74,222,128,0.3);border:1px solid rgba(74,222,128,0.4);left:4px;width:140px;opacity:0.5;" title="数据模型设计 ✓">数据模型设计 ✓</div>
+                    </div>
+                    <!-- Row 2: 看板状态模型 10:00-14:00 (in_progress) -->
+                    <div style="height:34px;display:flex;align-items:center;position:relative;">
+                      <div style="position:absolute;height:14px;border-radius:3px;cursor:pointer;overflow:hidden;white-space:nowrap;display:flex;align-items:center;padding:0 6px;font-size:9px;color:rgba(255,255,255,0.8);background:rgba(91,138,245,0.4);border:1px solid rgba(91,138,245,0.5);left:148px;width:284px;" title="看板状态模型实现">看板状态模型实现</div>
+                    </div>
+                  </div>
+                  <!-- Unscheduled drop targets (per-row, mirrors left) -->
+                  <div style="padding:4px 0 8px;border-top:1px dashed var(--line-soft);margin-top:4px;">
+                    <div style="padding:4px 12px;font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;color:var(--dim);opacity:0.5;">未排时间</div>
+                    <div style="height:28px;display:flex;align-items:center;position:relative;border-bottom:1px dashed rgba(99,105,133,0.1);"></div>
+                    <div style="height:28px;display:flex;align-items:center;justify-content:center;position:relative;">
+                      <span style="font-size:9px;color:var(--dim);opacity:0.3;">← 拖到小时列排时</span>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
           <div class="work panel" id="focus-board">
-            <div class="kanban">
-              <div class="lane">
-                <h3>Todo <span>4</span></h3>
-                <div class="task">
-                  <div class="task-title">frontmatter 解析</div>
-                  <div class="task-meta">
-                    <span>p0</span><span>FocusPilot</span>
+            <div class="kanban" id="fp-kanban" style="grid-template-columns:repeat(6,minmax(200px,1fr))">
+              <!-- Backlog -->
+              <div class="lane fp-col" data-fp-col="backlog">
+                <h3><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--dim);margin-right:4px;vertical-align:middle"></span> Backlog <span class="fp-col-count">2</span></h3>
+                <div class="task fp-card" onclick="openTaskDetail()" data-fp-schedule="" data-fp-mode="auto">
+                  <div style="font-size:10px;font-family:var(--mono);color:var(--dim);margin-bottom:2px">FP-006</div>
+                  <div class="task-title">主题系统适配</div>
+                  <div class="task-meta" style="flex-wrap:wrap;gap:4px">
+                    <span class="pill" style="font-size:9px;padding:1px 5px;border-color:rgba(112,120,135,.3);color:var(--dim)">P2</span>
+                    <span class="pill" style="font-size:9px;padding:1px 5px;border-color:rgba(82,156,202,.3);color:var(--accent)">auto</span>
+                    <span style="font-size:10px;color:var(--dim)">→ 4月/WS</span>
+                  </div>
+                  <div style="display:flex;align-items:center;justify-content:space-between;margin-top:6px;padding-top:6px;border-top:1px solid var(--line-soft);font-size:10px;color:var(--dim)">
+                    <span>🧑‍💻 代码工程师</span><span style="font-family:var(--mono)">—</span>
                   </div>
                 </div>
-                <div class="task">
-                  <div class="task-title">录入弹窗原型</div>
-                  <div class="task-meta"><span>p1</span><span>Inbox</span></div>
+                <div class="task fp-card" onclick="openTaskDetail()" data-fp-schedule="" data-fp-mode="auto">
+                  <div style="font-size:10px;font-family:var(--mono);color:var(--dim);margin-bottom:2px">FP-009</div>
+                  <div class="task-title">Anki 同步接口设计</div>
+                  <div class="task-meta" style="flex-wrap:wrap;gap:4px">
+                    <span class="pill" style="font-size:9px;padding:1px 5px;border-color:rgba(112,120,135,.3);color:var(--dim)">P2</span>
+                    <span class="pill" style="font-size:9px;padding:1px 5px;border-color:rgba(82,156,202,.3);color:var(--accent)">auto</span>
+                    <span style="font-size:10px;color:var(--dim)">→ 5月/AI Crew</span>
+                  </div>
+                  <div style="display:flex;align-items:center;justify-content:space-between;margin-top:6px;padding-top:6px;border-top:1px solid var(--line-soft);font-size:10px;color:var(--dim)">
+                    <span>🧑‍💻 代码工程师</span><span style="font-family:var(--mono)">—</span>
+                  </div>
                 </div>
+                <div style="display:flex;align-items:center;justify-content:center;gap:4px;padding:8px;border-radius:var(--radius);border:1px dashed var(--line);color:var(--dim);font-size:12px;cursor:pointer;margin-top:4px" onclick="openNewTaskModal()">＋ 新建任务</div>
               </div>
-              <div class="lane">
-                <h3>In Progress <span>3</span></h3>
-                <div class="task">
-                  <div class="task-title">壳层母版</div>
-                  <div class="task-meta">
-                    <span>semi-auto</span><span>60%</span>
+              <!-- Todo -->
+              <div class="lane fp-col" data-fp-col="todo">
+                <h3><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--muted);margin-right:4px;vertical-align:middle"></span> Todo <span class="fp-col-count">3</span></h3>
+                <div class="task fp-card" onclick="openTaskDetail()" data-fp-schedule="week" data-fp-mode="auto">
+                  <div style="font-size:10px;font-family:var(--mono);color:var(--dim);margin-bottom:2px">FP-003</div>
+                  <div class="task-title">Agent Pull 执行管道</div>
+                  <div class="task-meta" style="flex-wrap:wrap;gap:4px">
+                    <span class="pill" style="font-size:9px;padding:1px 5px;border-color:rgba(242,196,15,.3);color:var(--amber)">P1</span>
+                    <span class="pill" style="font-size:9px;padding:1px 5px;border-color:rgba(82,156,202,.3);color:var(--accent)">auto</span>
+                    <span style="font-size:10px;color:var(--dim)">→ 4月/WS</span>
+                  </div>
+                  <div style="display:flex;align-items:center;justify-content:space-between;margin-top:6px;padding-top:6px;border-top:1px solid var(--line-soft);font-size:10px;color:var(--dim)">
+                    <span>🧑‍💻 代码工程师</span><span style="font-family:var(--mono)">04-25</span>
+                  </div>
+                </div>
+                <div class="task fp-card" onclick="openTaskDetail()" data-fp-schedule="week" data-fp-mode="manual">
+                  <div style="font-size:10px;font-family:var(--mono);color:var(--dim);margin-bottom:2px">FP-004</div>
+                  <div class="task-title">Terminal 手动执行模式</div>
+                  <div class="task-meta" style="flex-wrap:wrap;gap:4px">
+                    <span class="pill" style="font-size:9px;padding:1px 5px;border-color:rgba(242,196,15,.3);color:var(--amber)">P1</span>
+                    <span class="pill" style="font-size:9px;padding:1px 5px;border-color:rgba(167,139,250,.3);color:var(--purple)">manual</span>
+                    <span style="font-size:10px;color:var(--dim)">→ 4月/WS</span>
+                  </div>
+                  <div style="display:flex;align-items:center;justify-content:space-between;margin-top:6px;padding-top:6px;border-top:1px solid var(--line-soft);font-size:10px;color:var(--dim)">
+                    <span>👤 手动执行</span><span style="font-family:var(--mono)">04-28</span>
+                  </div>
+                </div>
+                <div class="task fp-card" onclick="openTaskDetail()" data-fp-schedule="today" data-fp-mode="manual">
+                  <div style="font-size:10px;font-family:var(--mono);color:var(--dim);margin-bottom:2px">FP-010</div>
+                  <div class="task-title">整理本周会议记录</div>
+                  <div class="task-meta" style="flex-wrap:wrap;gap:4px">
+                    <span class="pill" style="font-size:9px;padding:1px 5px;border-color:rgba(112,120,135,.3);color:var(--dim)">P2</span>
+                    <span class="pill" style="font-size:9px;padding:1px 5px;border-color:rgba(167,139,250,.3);color:var(--purple)">manual</span>
+                  </div>
+                  <div style="display:flex;align-items:center;justify-content:space-between;margin-top:6px;padding-top:6px;border-top:1px solid var(--line-soft);font-size:10px;color:var(--dim)">
+                    <span>👤 手动执行</span><span style="font-family:var(--mono)">05-24</span>
+                  </div>
+                </div>
+                <div style="display:flex;align-items:center;justify-content:center;gap:4px;padding:8px;border-radius:var(--radius);border:1px dashed var(--line);color:var(--dim);font-size:12px;cursor:pointer;margin-top:4px" onclick="openNewTaskModal()">＋ 新建任务</div>
+              </div>
+              <!-- In Progress -->
+              <div class="lane fp-col" data-fp-col="progress">
+                <h3><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--accent);margin-right:4px;vertical-align:middle"></span> In Progress <span class="fp-col-count">2</span></h3>
+                <div class="task fp-card" onclick="openTaskDetail()" data-fp-schedule="week" data-fp-mode="auto" data-fp-agent="yes" style="border-color:rgba(82,156,202,.3)">
+                  <div style="font-size:10px;font-family:var(--mono);color:var(--dim);margin-bottom:2px">FP-002</div>
+                  <div class="task-title">看板状态模型实现</div>
+                  <div class="task-meta" style="flex-wrap:wrap;gap:4px">
+                    <span class="pill" style="font-size:9px;padding:1px 5px;border-color:rgba(248,113,113,.3);color:var(--red)">P0</span>
+                    <span class="pill" style="font-size:9px;padding:1px 5px;border-color:rgba(82,156,202,.3);color:var(--accent)">auto</span>
+                    <span style="font-size:10px;color:var(--dim)">→ 4月/WS</span>
+                    <span class="pill blue" style="font-size:9px;padding:1px 5px;font-weight:600">Agent 执行中</span>
+                  </div>
+                  <div style="display:flex;align-items:center;justify-content:space-between;margin-top:6px;padding-top:6px;border-top:1px solid var(--line-soft);font-size:10px;color:var(--dim)">
+                    <span style="color:var(--accent)">🧑‍💻 代码工程师</span><span style="font-family:var(--mono)">04-20</span>
+                  </div>
+                </div>
+                <div class="task fp-card" onclick="openTaskDetail()" data-fp-schedule="today" data-fp-mode="manual">
+                  <div style="font-size:10px;font-family:var(--mono);color:var(--dim);margin-bottom:2px">FP-011</div>
+                  <div class="task-title">研究 Multica 执行模型</div>
+                  <div class="task-meta" style="flex-wrap:wrap;gap:4px">
+                    <span class="pill" style="font-size:9px;padding:1px 5px;border-color:rgba(242,196,15,.3);color:var(--amber)">P1</span>
+                    <span class="pill" style="font-size:9px;padding:1px 5px;border-color:rgba(167,139,250,.3);color:var(--purple)">manual</span>
+                    <span class="pill blue" style="font-size:9px;padding:1px 5px;font-weight:600">对话中</span>
+                  </div>
+                  <div style="display:flex;align-items:center;justify-content:space-between;margin-top:6px;padding-top:6px;border-top:1px solid var(--line-soft);font-size:10px;color:var(--dim)">
+                    <span>👤 手动执行</span><span style="font-family:var(--mono)">05-24</span>
                   </div>
                 </div>
               </div>
-              <div class="lane">
-                <h3>Evaluation <span>1</span></h3>
-                <div class="task">
-                  <div class="task-title">Review 今日队列</div>
-                  <div class="task-meta">
-                    <span>eval</span><span>等待决策</span>
+              <!-- In Evaluation -->
+              <div class="lane fp-col" data-fp-col="evaluation">
+                <h3><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--purple);margin-right:4px;vertical-align:middle"></span> Evaluation <span class="fp-col-count">1</span></h3>
+                <div class="task fp-card" onclick="openTaskDetail()" data-fp-schedule="week" data-fp-mode="auto" data-fp-decision="yes" style="border-color:rgba(167,139,250,.3)">
+                  <div style="font-size:10px;font-family:var(--mono);color:var(--dim);margin-bottom:2px">FP-005</div>
+                  <div class="task-title">规划引擎接口设计</div>
+                  <div class="task-meta" style="flex-wrap:wrap;gap:4px">
+                    <span class="pill" style="font-size:9px;padding:1px 5px;border-color:rgba(248,113,113,.3);color:var(--red)">P0</span>
+                    <span class="pill" style="font-size:9px;padding:1px 5px;border-color:rgba(82,156,202,.3);color:var(--accent)">auto</span>
+                    <span style="font-size:10px;color:var(--dim)">→ 4月/WS</span>
+                    <span class="pill amber" style="font-size:9px;padding:1px 5px;font-weight:600">等你决策</span>
+                  </div>
+                  <div style="display:flex;align-items:center;justify-content:space-between;margin-top:6px;padding-top:6px;border-top:1px solid var(--line-soft);font-size:10px;color:var(--dim)">
+                    <span style="color:var(--amber)">🧑‍💻 等你处理评估</span><span style="font-family:var(--mono)">04-17</span>
                   </div>
                 </div>
               </div>
-              <div class="lane">
-                <h3>Done <span>12</span></h3>
-                <div class="task">
-                  <div class="task-title">页面模板治理</div>
-                  <div class="task-meta">
-                    <span>done</span><span>docs</span>
+              <!-- Done -->
+              <div class="lane fp-col" data-fp-col="done">
+                <h3><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--green);margin-right:4px;vertical-align:middle"></span> Done <span class="fp-col-count">2</span></h3>
+                <div class="task fp-card" style="opacity:.7" data-fp-schedule="week" data-fp-mode="auto">
+                  <div style="font-size:10px;font-family:var(--mono);color:var(--dim);margin-bottom:2px">FP-001</div>
+                  <div class="task-title" style="text-decoration:line-through">数据模型设计</div>
+                  <div class="task-meta" style="flex-wrap:wrap;gap:4px">
+                    <span class="pill" style="font-size:9px;padding:1px 5px;border-color:rgba(248,113,113,.3);color:var(--red)">P0</span>
+                    <span class="pill" style="font-size:9px;padding:1px 5px;border-color:rgba(82,156,202,.3);color:var(--accent)">auto</span>
+                  </div>
+                  <div style="display:flex;align-items:center;justify-content:space-between;margin-top:6px;padding-top:6px;border-top:1px solid var(--line-soft);font-size:10px;color:var(--dim)">
+                    <span>🧑‍💻 代码工程师</span><span style="font-family:var(--mono);color:var(--green)">✓ 04-15</span>
+                  </div>
+                </div>
+                <div class="task fp-card" style="opacity:.7" data-fp-schedule="week" data-fp-mode="manual">
+                  <div style="font-size:10px;font-family:var(--mono);color:var(--dim);margin-bottom:2px">FP-007</div>
+                  <div class="task-title" style="text-decoration:line-through">PRD 文档整合</div>
+                  <div class="task-meta" style="flex-wrap:wrap;gap:4px">
+                    <span class="pill" style="font-size:9px;padding:1px 5px;border-color:rgba(242,196,15,.3);color:var(--amber)">P1</span>
+                    <span class="pill" style="font-size:9px;padding:1px 5px;border-color:rgba(167,139,250,.3);color:var(--purple)">manual</span>
+                  </div>
+                  <div style="display:flex;align-items:center;justify-content:space-between;margin-top:6px;padding-top:6px;border-top:1px solid var(--line-soft);font-size:10px;color:var(--dim)">
+                    <span>👤 手动完成</span><span style="font-family:var(--mono);color:var(--green)">✓ 04-16</span>
+                  </div>
+                </div>
+              </div>
+              <!-- Blocked/Cancelled (collapsed) -->
+              <div class="lane fp-col" data-fp-col="blocked" style="opacity:.6;min-width:140px">
+                <h3 style="cursor:pointer"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:rgba(249,115,22,.7);margin-right:4px;vertical-align:middle"></span> Blocked <span class="fp-col-count">1</span> <span style="float:right;font-size:10px;color:var(--dim)">▸</span></h3>
+                <div class="task fp-card" style="border-left:2px solid rgba(249,115,22,.7);display:none" data-fp-schedule="" data-fp-mode="auto">
+                  <div style="font-size:10px;font-family:var(--mono);color:var(--dim);margin-bottom:2px">FP-008</div>
+                  <div class="task-title">配置迁移脚本</div>
+                  <div class="task-meta" style="flex-wrap:wrap;gap:4px">
+                    <span class="pill" style="font-size:9px;padding:1px 5px;border-color:rgba(249,115,22,.3);color:rgba(249,115,22,1)">已阻塞</span>
+                    <span style="font-size:10px;color:var(--dim)">等待依赖</span>
                   </div>
                 </div>
               </div>
             </div>
           </div>
-          <div class="work panel" id="focus-list">
-            <div class="card">
-              <div class="card-head">
-                <h3>全部工作项</h3>
-                <span class="pill">45 项</span>
-              </div>
-              <div class="card-body">
-                <table>
-                  <thead>
-                    <tr>
-                      <th>标题</th>
-                      <th>状态</th>
-                      <th>模式</th>
-                      <th>归属</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr>
-                      <td><strong>壳层母版</strong></td>
-                      <td>in_progress</td>
-                      <td>semi_auto</td>
-                      <td>FocusPilot</td>
-                    </tr>
-                    <tr>
-                      <td><strong>URL 解析</strong></td>
-                      <td>todo</td>
-                      <td>manual</td>
-                      <td>Inbox</td>
-                    </tr>
-                    <tr>
-                      <td><strong>卡片库统计</strong></td>
-                      <td>todo</td>
-                      <td>none</td>
-                      <td>Review</td>
+          <div class="work panel" id="focus-list" style="overflow:auto;padding:0 18px 18px">
+            <!-- Group 1 -->
+            <div style="display:flex;align-items:center;gap:8px;padding:12px 0 6px;font-size:12px;font-weight:700;color:var(--muted);border-bottom:1px solid var(--line-soft);position:sticky;top:0;background:var(--bg);z-index:2">
+              📌 Q2 / 4月 — Workspace + Engine 原型
+              <span style="font-weight:400;color:var(--dim);font-family:var(--mono);font-size:11px" class="fp-list-group-count">5 项</span>
+            </div>
+            <table style="width:100%;border-collapse:collapse" class="fp-list-table">
+              <thead>
+                <tr>
+                  <th style="width:40px;text-align:left;padding:8px 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);border-bottom:1px solid var(--line-soft)">状态</th>
+                  <th style="text-align:left;padding:8px 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);border-bottom:1px solid var(--line-soft)">标题</th>
+                  <th style="width:70px;text-align:left;padding:8px 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);border-bottom:1px solid var(--line-soft)">安排</th>
+                  <th style="width:50px;text-align:left;padding:8px 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);border-bottom:1px solid var(--line-soft)">优先级</th>
+                  <th style="width:50px;text-align:left;padding:8px 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);border-bottom:1px solid var(--line-soft)">模式</th>
+                  <th style="width:90px;text-align:left;padding:8px 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);border-bottom:1px solid var(--line-soft)">Agent</th>
+                  <th style="width:60px;text-align:left;padding:8px 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);border-bottom:1px solid var(--line-soft)">来源</th>
+                  <th style="width:60px;text-align:left;padding:8px 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);border-bottom:1px solid var(--line-soft)">截止</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr class="fp-list-row" onclick="openTaskDetail()" style="cursor:pointer" data-fp-schedule="week" data-fp-mode="auto" data-fp-agent="yes">
+                  <td style="padding:8px 10px"><span class="pill blue" style="font-size:10px;padding:1px 6px">● 进行</span></td>
+                  <td style="padding:8px 10px"><strong>看板状态模型实现</strong></td>
+                  <td style="padding:8px 10px;font-size:12px;color:var(--muted)">本周</td>
+                  <td style="padding:8px 10px"><span class="pill" style="font-size:9px;padding:1px 5px;border-color:rgba(248,113,113,.3);color:var(--red)">P0</span></td>
+                  <td style="padding:8px 10px;font-size:12px">🤖</td>
+                  <td style="padding:8px 10px;font-size:11px;color:var(--muted)">代码工程师</td>
+                  <td style="padding:8px 10px;font-size:11px;color:var(--dim)">area</td>
+                  <td style="padding:8px 10px;font-size:11px;font-family:var(--mono);color:var(--muted)">04-20</td>
+                </tr>
+                <tr class="fp-list-row" onclick="openTaskDetail()" style="cursor:pointer" data-fp-schedule="week" data-fp-mode="auto">
+                  <td style="padding:8px 10px"><span class="pill" style="font-size:10px;padding:1px 6px;border-color:rgba(163,169,181,.3);color:var(--muted)">○ 待做</span></td>
+                  <td style="padding:8px 10px"><strong>Agent Pull 执行管道</strong></td>
+                  <td style="padding:8px 10px;font-size:12px;color:var(--muted)">本周</td>
+                  <td style="padding:8px 10px"><span class="pill" style="font-size:9px;padding:1px 5px;border-color:rgba(242,196,15,.3);color:var(--amber)">P1</span></td>
+                  <td style="padding:8px 10px;font-size:12px">🤖</td>
+                  <td style="padding:8px 10px;font-size:11px;color:var(--muted)">代码工程师</td>
+                  <td style="padding:8px 10px;font-size:11px;color:var(--dim)">area</td>
+                  <td style="padding:8px 10px;font-size:11px;font-family:var(--mono);color:var(--muted)">04-25</td>
+                </tr>
+                <tr class="fp-list-row" onclick="openTaskDetail()" style="cursor:pointer" data-fp-schedule="week" data-fp-mode="manual">
+                  <td style="padding:8px 10px"><span class="pill" style="font-size:10px;padding:1px 6px;border-color:rgba(163,169,181,.3);color:var(--muted)">○ 待做</span></td>
+                  <td style="padding:8px 10px"><strong>Terminal 手动执行模式</strong></td>
+                  <td style="padding:8px 10px;font-size:12px;color:var(--muted)">本周</td>
+                  <td style="padding:8px 10px"><span class="pill" style="font-size:9px;padding:1px 5px;border-color:rgba(242,196,15,.3);color:var(--amber)">P1</span></td>
+                  <td style="padding:8px 10px;font-size:12px">🖐</td>
+                  <td style="padding:8px 10px;font-size:11px;color:var(--muted)">手动执行</td>
+                  <td style="padding:8px 10px;font-size:11px;color:var(--dim)">area</td>
+                  <td style="padding:8px 10px;font-size:11px;font-family:var(--mono);color:var(--muted)">04-28</td>
+                </tr>
+                <tr class="fp-list-row" style="cursor:pointer" data-fp-schedule="week" data-fp-mode="auto">
+                  <td style="padding:8px 10px"><span class="pill green" style="font-size:10px;padding:1px 6px">✓ 完成</span></td>
+                  <td style="padding:8px 10px;text-decoration:line-through;color:var(--dim)"><strong style="color:var(--dim)">数据模型设计</strong></td>
+                  <td style="padding:8px 10px;font-size:12px;color:var(--dim)">本周</td>
+                  <td style="padding:8px 10px"><span class="pill" style="font-size:9px;padding:1px 5px;border-color:rgba(248,113,113,.3);color:var(--red)">P0</span></td>
+                  <td style="padding:8px 10px;font-size:12px">🤖</td>
+                  <td style="padding:8px 10px;font-size:11px;color:var(--muted)">代码工程师</td>
+                  <td style="padding:8px 10px;font-size:11px;color:var(--dim)">area</td>
+                  <td style="padding:8px 10px;font-size:11px;font-family:var(--mono);color:var(--green)">✓ 04-15</td>
+                </tr>
+                <tr class="fp-list-row" style="cursor:pointer" data-fp-schedule="" data-fp-mode="auto">
+                  <td style="padding:8px 10px"><span class="pill" style="font-size:10px;padding:1px 6px;border-color:rgba(112,120,135,.3);color:var(--dim)">◦ 待排</span></td>
+                  <td style="padding:8px 10px"><strong>主题系统适配</strong></td>
+                  <td style="padding:8px 10px;font-size:12px;color:var(--dim)">—</td>
+                  <td style="padding:8px 10px"><span class="pill" style="font-size:9px;padding:1px 5px;border-color:rgba(112,120,135,.3);color:var(--dim)">P2</span></td>
+                  <td style="padding:8px 10px;font-size:12px">🤖</td>
+                  <td style="padding:8px 10px;font-size:11px;color:var(--muted)">代码工程师</td>
+                  <td style="padding:8px 10px;font-size:11px;color:var(--dim)">area</td>
+                  <td style="padding:8px 10px;font-size:11px;font-family:var(--mono);color:var(--muted)">—</td>
+                </tr>
+              </tbody>
+            </table>
+            <!-- Group 2 -->
+            <div style="display:flex;align-items:center;gap:8px;padding:12px 0 6px;font-size:12px;font-weight:700;color:var(--muted);border-bottom:1px solid var(--line-soft);margin-top:8px">
+              ✏️ 未关联目标
+              <span style="font-weight:400;color:var(--dim);font-family:var(--mono);font-size:11px" class="fp-list-group-count">2 项</span>
+            </div>
+            <table style="width:100%;border-collapse:collapse" class="fp-list-table">
+              <thead>
+                <tr>
+                  <th style="width:40px;text-align:left;padding:8px 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);border-bottom:1px solid var(--line-soft)">状态</th>
+                  <th style="text-align:left;padding:8px 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);border-bottom:1px solid var(--line-soft)">标题</th>
+                  <th style="width:70px;text-align:left;padding:8px 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);border-bottom:1px solid var(--line-soft)">安排</th>
+                  <th style="width:50px;text-align:left;padding:8px 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);border-bottom:1px solid var(--line-soft)">优先级</th>
+                  <th style="width:50px;text-align:left;padding:8px 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);border-bottom:1px solid var(--line-soft)">模式</th>
+                  <th style="width:90px;text-align:left;padding:8px 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);border-bottom:1px solid var(--line-soft)">Agent</th>
+                  <th style="width:60px;text-align:left;padding:8px 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);border-bottom:1px solid var(--line-soft)">来源</th>
+                  <th style="width:60px;text-align:left;padding:8px 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);border-bottom:1px solid var(--line-soft)">截止</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr class="fp-list-row" onclick="openTaskDetail()" style="cursor:pointer" data-fp-schedule="today" data-fp-mode="manual">
+                  <td style="padding:8px 10px"><span class="pill blue" style="font-size:10px;padding:1px 6px">● 进行</span></td>
+                  <td style="padding:8px 10px"><strong>研究 Multica 执行模型</strong></td>
+                  <td style="padding:8px 10px;font-size:12px;color:var(--muted)">今天</td>
+                  <td style="padding:8px 10px"><span class="pill" style="font-size:9px;padding:1px 5px;border-color:rgba(242,196,15,.3);color:var(--amber)">P1</span></td>
+                  <td style="padding:8px 10px;font-size:12px">🖐</td>
+                  <td style="padding:8px 10px;font-size:11px;color:var(--muted)">手动执行</td>
+                  <td style="padding:8px 10px;font-size:11px;color:var(--dim)">adhoc</td>
+                  <td style="padding:8px 10px;font-size:11px;font-family:var(--mono);color:var(--muted)">05-24</td>
+                </tr>
+                <tr class="fp-list-row" style="cursor:pointer" data-fp-schedule="today" data-fp-mode="manual">
+                  <td style="padding:8px 10px"><span class="pill" style="font-size:10px;padding:1px 6px;border-color:rgba(163,169,181,.3);color:var(--muted)">○ 待做</span></td>
+                  <td style="padding:8px 10px"><strong>整理本周会议记录</strong></td>
+                  <td style="padding:8px 10px;font-size:12px;color:var(--muted)">今天</td>
+                  <td style="padding:8px 10px"><span class="pill" style="font-size:9px;padding:1px 5px;border-color:rgba(112,120,135,.3);color:var(--dim)">P2</span></td>
+                  <td style="padding:8px 10px;font-size:12px">🖐</td>
+                  <td style="padding:8px 10px;font-size:11px;color:var(--muted)">手动执行</td>
+                  <td style="padding:8px 10px;font-size:11px;color:var(--dim)">adhoc</td>
+                  <td style="padding:8px 10px;font-size:11px;font-family:var(--mono);color:var(--muted)">05-24</td>
                     </tr>
                   </tbody>
                 </table>
               </div>
             </div>
           </div>
+          <!-- ═══ Focus: Task Detail Slide Panel ═══ -->
+          <div id="fpDetailOverlay" style="position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:50;opacity:0;pointer-events:none;transition:opacity .3s;backdrop-filter:blur(2px)" onclick="closeTaskDetail()"></div>
+          <div id="fpDetailPanel" style="position:fixed;top:0;right:0;width:720px;max-width:88vw;height:100vh;background:var(--surface);border-left:1px solid var(--line-soft);z-index:51;transform:translateX(100%);transition:transform .3s;display:flex;flex-direction:column;box-shadow:-8px 0 40px rgba(0,0,0,.3)">
+            <div style="padding:14px 18px;border-bottom:1px solid var(--line-soft);display:flex;align-items:center;gap:12px">
+              <div style="cursor:pointer;color:var(--dim);font-size:16px" onclick="closeTaskDetail()">✕</div>
+              <div style="flex:1"><div style="font-size:10px;font-family:var(--mono);color:var(--dim)">FP-002</div><div style="font-size:15px;font-weight:600">看板状态模型实现</div></div>
+              <span class="pill blue" style="font-size:11px">● In Progress</span>
+            </div>
+            <div style="background:var(--elevated);border:1px solid var(--line);border-radius:var(--radius);padding:10px 14px;margin:12px 18px 0;font-size:11px">
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><span style="width:7px;height:7px;border-radius:50%;background:var(--green);animation:pulse 2s infinite"></span><strong>代码工程师</strong><span style="color:var(--dim)">· Running · 00:03:42 · 步骤 3/5</span></div>
+              <div style="font-family:var(--mono);font-size:10px;line-height:1.7;color:var(--muted);background:var(--bg);padding:6px 8px;border-radius:4px;max-height:60px;overflow-y:auto">> 正在修改 Models.swift...<br>> 添加 blocked→todo 状态转换<br>> 运行测试套件...</div>
+              <div style="display:flex;gap:6px;margin-top:8px"><button class="btn" style="font-size:10px;min-height:24px;padding:0 8px;color:var(--red)">停止</button><button class="btn" style="font-size:10px;min-height:24px;padding:0 8px">手动接管</button><button class="btn" style="font-size:10px;min-height:24px;padding:0 8px">Transcript</button><button class="btn" style="font-size:10px;min-height:24px;padding:0 8px">产物</button></div>
+            </div>
+            <div style="display:flex;flex:1;overflow:hidden">
+              <div style="flex:1;display:flex;flex-direction:column;overflow:hidden">
+                <div style="display:flex;gap:0;padding:0 18px;border-bottom:1px solid var(--line-soft)">
+                  <div class="fp-dtab active" data-t="fp-t-plan" style="padding:10px 14px;font-size:12px;font-weight:500;color:var(--accent);cursor:pointer;border-bottom:2px solid var(--accent)">规划 ✓</div>
+                  <div class="fp-dtab" data-t="fp-t-approval" style="padding:10px 14px;font-size:12px;font-weight:500;color:var(--dim);cursor:pointer;border-bottom:2px solid transparent">确认 ✓</div>
+                  <div class="fp-dtab" data-t="fp-t-exec" style="padding:10px 14px;font-size:12px;font-weight:500;color:var(--dim);cursor:pointer;border-bottom:2px solid transparent">执行 ●</div>
+                  <div class="fp-dtab" data-t="fp-t-eval" style="padding:10px 14px;font-size:12px;font-weight:500;color:var(--dim);cursor:pointer;border-bottom:2px solid transparent">评估</div>
+                  <div class="fp-dtab" data-t="fp-t-accept" style="padding:10px 14px;font-size:12px;font-weight:500;color:var(--dim);cursor:pointer;border-bottom:2px solid transparent">验收</div>
+                </div>
+                <div id="fp-t-plan" style="flex:1;overflow-y:auto;padding:14px 18px">
+                  <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);margin-bottom:6px">📝 任务描述</div>
+                  <div style="background:var(--bg);border:1px solid var(--line-soft);border-radius:var(--radius);padding:10px;font-size:12px;line-height:1.6;color:var(--muted);margin-bottom:16px">实现 Workspace 看板视图的状态模型，采用 Multica 7 态流转：backlog → todo → in_progress → in_evaluation → done，旁路状态 blocked / cancelled。需要实现拖拽跨列变更状态，状态变更持久化，以及与规划视图的数据同步。</div>
+                  <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);margin-bottom:6px">📋 规划文档 <span style="color:var(--green);margin-left:4px">● READY</span></div>
+                  <div style="background:var(--bg);border:1px solid var(--line-soft);border-radius:var(--radius);overflow:hidden">
+                    <div style="display:flex;justify-content:space-between;padding:6px 10px;background:var(--elevated);border-bottom:1px solid var(--line-soft);font-size:10px;color:var(--dim)"><span style="color:var(--green)">✓ plan.md</span><span><button class="btn" style="font-size:9px;min-height:20px;padding:0 6px">重新规划</button></span></div>
+                    <div style="padding:12px;font-size:12px;line-height:1.7;color:var(--muted)"><strong style="color:var(--text)">实现步骤</strong><ol style="padding-left:18px;margin:6px 0"><li>定义 TaskStatus 枚举（7 态 + 转换矩阵）</li><li>创建 KanbanDataSource（分组、排序）</li><li>实现 NSTableView drag & drop</li><li>持久化到 ConfigStore</li><li>添加拖拽动画 0.25s ease-out</li><li>同步规划视图状态标记</li></ol><strong style="color:var(--text)">验收标准</strong><div style="margin:6px 0;font-size:11px">☐ 拖拽后 status 正确更新且持久化<br>☐ 动画流畅，响应 &lt; 100ms<br>☐ 重启后状态不丢失<br>☐ blocked/cancelled 独立折叠区</div></div>
+                  </div>
+                </div>
+                <div id="fp-t-approval" style="display:none;flex:1;overflow-y:auto;padding:14px 18px">
+                  <div style="font-size:12px;font-weight:600;margin-bottom:10px">规划产物审批</div>
+                  <div style="background:var(--bg);border:1px solid var(--line-soft);border-radius:var(--radius);padding:12px;margin-bottom:14px;font-size:12px;line-height:1.8;color:var(--muted)">
+                    <div style="font-weight:500;color:var(--text);margin-bottom:6px">plan.md — 看板状态模型实现方案</div>
+                    <div>1. 定义 TaskStatus 枚举（7 态）</div>
+                    <div>2. 实现拖拽跨列变更 + validTransitions 校验</div>
+                    <div>3. NSTableView 替代方案（性能）</div>
+                    <div>4. 持久化到 ConfigStore</div>
+                  </div>
+                  <div style="display:flex;gap:8px"><button class="btn primary" style="font-size:11px;min-height:28px">批准并执行</button><button class="btn" style="font-size:11px;min-height:28px">退回修改</button></div>
+                </div>
+                <div id="fp-t-exec" style="display:none;flex:1;overflow-y:auto;padding:14px 18px">
+                  <div style="background:var(--bg);border:1px solid var(--line-soft);border-radius:var(--radius);overflow:hidden"><div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--elevated);border-bottom:1px solid var(--line-soft);font-size:11px"><strong>代码工程师</strong><span style="color:var(--accent)">· 执行中</span><span style="margin-left:auto;font-family:var(--mono);font-size:10px;color:var(--dim)">00:03:42</span></div><div style="padding:10px 12px;font-family:var(--mono);font-size:10px;line-height:1.8;color:var(--muted);max-height:240px;overflow-y:auto">▸ 加载 plan.md ...<br>▸ 创建 TaskStatus 枚举 — 7 态<br>▸ 写入 Models.swift (+42行)<br>▸ 创建 KanbanDataSource.swift<br>▸ 实现 drag & drop 协议<br>▸ <span style="color:var(--green)">✓ Build succeeded</span><br>▸ 同步规划视图状态...<br>▸ <span style="color:var(--accent)">生成报告...</span></div></div>
+                  <div style="margin-top:12px;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);margin-bottom:6px">📦 产出物</div>
+                  <div style="font-family:var(--mono);font-size:11px;line-height:1.8;color:var(--muted)"><span style="color:var(--green)">NEW</span> KanbanDataSource.swift +186<br><span style="color:var(--amber)">MOD</span> Models.swift +42<br><span style="color:var(--amber)">MOD</span> QuickPanelView.swift +67 -12<br><span style="color:var(--amber)">MOD</span> ConfigStore.swift +15</div>
+                </div>
+                <div id="fp-t-eval" style="display:none;flex:1;overflow-y:auto;padding:14px 18px">
+                  <div style="font-size:12px;font-weight:600;margin-bottom:10px">评估意见（Evaluation Agent · 第 1 轮）</div>
+                  <div style="padding:7px 10px;background:rgba(248,113,113,.08);border-left:3px solid var(--red);border-radius:0 4px 4px 0;margin-bottom:5px;font-size:11px"><strong style="color:var(--red)">Critical</strong> 状态转换缺少 blocked→todo 路径</div>
+                  <div style="padding:7px 10px;background:rgba(242,196,15,.08);border-left:3px solid var(--amber);border-radius:0 4px 4px 0;margin-bottom:5px;font-size:11px"><strong style="color:var(--amber)">Important</strong> 拖拽动画帧率偏低</div>
+                  <div style="padding:7px 10px;background:var(--elevated);border-left:3px solid var(--dim);border-radius:0 4px 4px 0;font-size:11px"><strong>Nit</strong> 变量命名风格不一致</div>
+                  <div style="display:flex;gap:8px;margin-top:14px"><button class="btn primary" style="font-size:11px;min-height:28px">按建议处理</button><button class="btn" style="font-size:11px;min-height:28px">忽略并完成</button><button class="btn" style="font-size:11px;min-height:28px">手动接管</button></div>
+                </div>
+                <div id="fp-t-accept" style="display:none;flex:1;overflow-y:auto;padding:14px 18px">
+                  <div style="font-size:12px;font-weight:600;margin-bottom:10px">最终验收</div>
+                  <div style="background:var(--bg);border-radius:var(--radius);padding:12px;font-family:var(--mono);font-size:11px;line-height:1.8;color:var(--muted);margin-bottom:14px">Models.swift — TaskStatus 枚举<br>KanbanDataSource.swift — 拖拽跨列<br>plan.md — 实现方案<br>execution.log — 执行日志</div>
+                  <div style="display:flex;gap:8px"><button class="btn" style="font-size:11px;min-height:28px;background:rgba(46,204,113,.15);color:var(--green);border-color:rgba(46,204,113,.3)">验收通过 → Done</button><button class="btn" style="font-size:11px;min-height:28px">退回修改</button></div>
+                </div>
+              </div>
+              <div style="width:200px;border-left:1px solid var(--line-soft);padding:14px;overflow-y:auto;font-size:11px">
+                <div style="margin-bottom:12px"><div style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);margin-bottom:3px">状态</div><span class="pill blue">in_progress</span></div>
+                <div style="margin-bottom:12px"><div style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);margin-bottom:3px">优先级</div><span class="pill" style="background:rgba(248,113,113,.15);color:var(--red)">P0</span></div>
+                <div style="margin-bottom:12px"><div style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);margin-bottom:3px">安排</div>本周</div>
+                <div style="height:1px;background:var(--line-soft);margin:10px 0"></div>
+                <div style="margin-bottom:12px"><div style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);margin-bottom:3px">归属目标</div><span style="color:var(--dim)">Q2 / 4月</span><br>Workspace 原型</div>
+                <div style="margin-bottom:12px"><div style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);margin-bottom:3px">来源</div>📁 AreaProject</div>
+                <div style="height:1px;background:var(--line-soft);margin:10px 0"></div>
+                <div style="margin-bottom:12px"><div style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);margin-bottom:3px">执行模式</div>全自动</div>
+                <div style="margin-bottom:12px"><div style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);margin-bottom:3px">Agent</div>代码工程师</div>
+                <div style="margin-bottom:12px"><div style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);margin-bottom:3px">截止</div><span style="font-family:var(--mono)">2026-04-20</span></div>
+              </div>
+            </div>
+          </div>
+          <!-- ═══ Focus: New Task Modal ═══ -->
+          <div id="fpNewTaskModal" style="position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:60;display:none;align-items:center;justify-content:center;backdrop-filter:blur(4px)">
+            <div style="width:480px;max-width:90vw;background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,.5)" onclick="event.stopPropagation()">
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 18px;border-bottom:1px solid var(--line-soft)"><h3 style="font-size:14px;font-weight:600">新建任务</h3><div style="cursor:pointer;color:var(--dim)" onclick="closeNewTaskModal()">✕</div></div>
+              <div style="padding:16px 18px">
+                <div style="margin-bottom:12px"><label style="display:block;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--dim);margin-bottom:4px">标题</label><input type="text" placeholder="任务标题..." style="width:100%;background:var(--bg);border:1px solid var(--line-soft);border-radius:var(--radius);padding:7px 10px;color:var(--text);font-size:12px;font-family:var(--sans);outline:none"></div>
+                <div style="margin-bottom:12px"><label style="display:block;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--dim);margin-bottom:4px">描述</label><textarea placeholder="描述任务内容..." style="width:100%;background:var(--bg);border:1px solid var(--line-soft);border-radius:var(--radius);padding:7px 10px;color:var(--text);font-size:12px;font-family:var(--sans);outline:none;resize:vertical;min-height:50px"></textarea></div>
+                <div style="display:flex;gap:10px;margin-bottom:12px"><div style="flex:1"><label style="display:block;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--dim);margin-bottom:4px">安排</label><select style="width:100%;background:var(--bg);border:1px solid var(--line-soft);border-radius:var(--radius);padding:6px 8px;color:var(--text);font-size:11px;font-family:var(--sans)"><option>今天</option><option selected>本周</option><option>本月</option><option>Backlog</option></select></div><div style="flex:1"><label style="display:block;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--dim);margin-bottom:4px">优先级</label><select style="width:100%;background:var(--bg);border:1px solid var(--line-soft);border-radius:var(--radius);padding:6px 8px;color:var(--text);font-size:11px;font-family:var(--sans)"><option>P0 — 紧急</option><option selected>P1 — 重要</option><option>P2 — 普通</option></select></div></div>
+                <div style="background:var(--bg);border:1px solid var(--line-soft);border-radius:var(--radius);padding:10px;margin-top:8px">
+                  <div style="font-size:10px;color:var(--dim);margin-bottom:8px">执行模式</div>
+                  <div style="display:flex;gap:0;border:1px solid var(--line);border-radius:var(--radius);overflow:hidden"><label style="flex:1;text-align:center;padding:5px 0;cursor:pointer;font-size:11px;background:var(--elevated);color:var(--text);border-right:1px solid var(--line)"><input type="radio" name="fp-exec" checked style="display:none"> 普通</label><label style="flex:1;text-align:center;padding:5px 0;cursor:pointer;font-size:11px;color:var(--muted);border-right:1px solid var(--line)"><input type="radio" name="fp-exec" style="display:none"> 对话</label><label style="flex:1;text-align:center;padding:5px 0;cursor:pointer;font-size:11px;color:var(--muted);border-right:1px solid var(--line)"><input type="radio" name="fp-exec" style="display:none"> 半自动</label><label style="flex:1;text-align:center;padding:5px 0;cursor:pointer;font-size:11px;color:var(--muted)"><input type="radio" name="fp-exec" style="display:none"> 全自动</label></div>
+                  <div style="display:flex;gap:10px;margin-top:8px"><div style="flex:1"><label style="display:block;font-size:10px;color:var(--dim);margin-bottom:3px">Agent</label><select style="width:100%;background:var(--surface);border:1px solid var(--line-soft);border-radius:var(--radius);padding:5px 6px;color:var(--text);font-size:10px;font-family:var(--sans)"><option selected>代码工程师</option><option>数据分析师</option></select></div><div style="flex:1"><label style="display:block;font-size:10px;color:var(--dim);margin-bottom:3px">归属</label><select style="width:100%;background:var(--surface);border:1px solid var(--line-soft);border-radius:var(--radius);padding:5px 6px;color:var(--text);font-size:10px;font-family:var(--sans)"><option>无（临时任务）</option><option>Q2/4月/WS原型</option><option>Q2/5月/AI Crew</option></select></div></div>
+                  <label style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted);cursor:pointer;margin-top:8px"><input type="checkbox" style="accent-color:var(--accent)"> 启用评估</label>
+                </div>
+              </div>
+              <div style="display:flex;justify-content:flex-end;gap:8px;padding:12px 18px;border-top:1px solid var(--line-soft)"><button class="btn" onclick="closeNewTaskModal()">取消</button><button class="btn">创建</button><button class="btn primary">创建并规划</button></div>
+            </div>
+          </div>
         </section>
 
         <section class="page" data-page="studio">
           <header class="topbar">
-            <h1>Studio</h1>
-            <span class="meta">FocusPilot · ✳ Claude Code</span>
+            <h1 style="display:flex;align-items:center;gap:6px">📂 FocusPilot <span style="color:var(--dim);font-weight:400">·</span> <span style="font-weight:500">🧑‍💻 代码工程师</span> <span style="color:var(--dim);font-weight:400;font-size:12px">(✳ Claude Code)</span></h1>
             <div class="top-actions">
-              <button class="btn">🔧 打开工具</button
-              ><button class="btn">🖥 终端</button
-              ><button class="btn">◨ 右侧栏</button>
+              <button class="btn" style="font-size:11px">🔧 打开工具 ▾</button
+              ><button class="btn" style="font-size:11px" id="studioTermToggle" onclick="toggleStudioTerminal()">🖥 终端</button
+              ><button class="btn" style="font-size:11px" id="studioSideToggle" onclick="toggleStudioSidebar()">◨ 右侧栏</button>
             </div>
           </header>
-          <div class="work">
-            <div class="studio-layout">
-              <div class="card chat">
-                <div class="card-body">
-                  <div class="message user">
-                    检查 QuickPanel 的未读角标刷新链路。
+          <div class="work" style="padding:0;overflow:hidden">
+            <div class="studio-layout" style="display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:0;min-height:620px">
+              <!-- ═══ Left: Chat + Input + Terminal ═══ -->
+              <div style="display:flex;flex-direction:column;min-width:0;border-right:1px solid var(--line-soft)">
+                <!-- C区: 对话区 -->
+                <div style="flex:1;overflow-y:auto;padding:18px 20px">
+                  <!-- 空态: Agent 信息 -->
+                  <div style="text-align:center;padding:24px 0 20px;color:var(--dim)">
+                    <div style="font-size:18px;margin-bottom:4px">🧑‍💻 代码工程师</div>
+                    <div style="font-size:11px;font-family:var(--mono);color:var(--muted)">✳ Claude Code · claude-opus-4</div>
+                    <div style="font-size:11px;color:var(--dim);margin-top:4px">全栈开发、调试、重构、代码审查</div>
                   </div>
-                  <div class="message agent">
-                    我会从 CoderBridgeService 的通知入口开始追踪，再确认
-                    QuickPanelView 的 reload 路径。
-                  </div>
-                  <div class="message agent">
-                    发现关注 Tab 的角标依赖
-                    `coderBridgeSessionChanged`，窗口行点击后会调用
-                    `markAsRead(windowID:)`。
+                  <!-- 消息流 -->
+                  <div style="display:flex;flex-direction:column;gap:16px">
+                    <!-- 用户消息 1 -->
+                    <div style="display:flex;gap:8px;align-items:flex-start">
+                      <div style="flex-shrink:0;width:22px;height:22px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;margin-top:2px">👤</div>
+                      <div style="background:var(--elevated);border:1px solid var(--line-soft);border-radius:10px;padding:10px 14px;font-size:12px;line-height:1.6;max-width:80%">帮我把 animateRow 的动画改成 0.2s ease-out</div>
+                    </div>
+                    <!-- Agent 回复 1 + Diff 卡片 -->
+                    <div style="display:flex;gap:8px;align-items:flex-start">
+                      <div style="flex-shrink:0;width:22px;height:22px;border-radius:50%;background:var(--surface);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:11px;margin-top:2px">🤖</div>
+                      <div style="max-width:85%">
+                        <div style="font-size:12px;line-height:1.6;color:var(--text);margin-bottom:8px">好的，我来修改 KanbanDataSource 中的动画参数。</div>
+                        <div style="background:var(--bg);border:1px solid var(--line-soft);border-radius:var(--radius);padding:8px 12px;font-family:var(--mono);font-size:11px;line-height:1.5;color:var(--muted);display:flex;align-items:center;justify-content:space-between">
+                          <span>已修改: <span style="color:var(--amber)">~</span> KanbanDataSource.swift <span style="color:var(--green)">+3</span> <span style="color:var(--red)">-2</span></span>
+                          <span style="color:var(--accent);cursor:pointer;font-size:10px">查看 Diff →</span>
+                        </div>
+                      </div>
+                    </div>
+                    <!-- 用户消息 2 -->
+                    <div style="display:flex;gap:8px;align-items:flex-start">
+                      <div style="flex-shrink:0;width:22px;height:22px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;margin-top:2px">👤</div>
+                      <div style="background:var(--elevated);border:1px solid var(--line-soft);border-radius:10px;padding:10px 14px;font-size:12px;line-height:1.6;max-width:80%">编译一下</div>
+                    </div>
+                    <!-- Agent 回复 2 (terminal output) -->
+                    <div style="display:flex;gap:8px;align-items:flex-start">
+                      <div style="flex-shrink:0;width:22px;height:22px;border-radius:50%;background:var(--surface);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:11px;margin-top:2px">🤖</div>
+                      <div style="max-width:85%">
+                        <div style="background:var(--bg);border:1px solid var(--line-soft);border-radius:var(--radius);padding:8px 12px;font-family:var(--mono);font-size:11px;line-height:1.6;color:var(--green);margin-bottom:8px">$ make build<br><span style="color:var(--green)">✓ Build succeeded</span></div>
+                      </div>
+                    </div>
+                    <!-- 审批卡片 -->
+                    <div style="display:flex;gap:8px;align-items:flex-start">
+                      <div style="flex-shrink:0;width:22px;height:22px;border-radius:50%;background:var(--surface);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:11px;margin-top:2px">🤖</div>
+                      <div style="max-width:85%">
+                        <div style="background:var(--bg);border:1px solid var(--line-soft);border-radius:var(--radius);padding:10px 12px">
+                          <div style="font-family:var(--mono);font-size:11px;color:var(--muted);margin-bottom:8px">$ rm -rf /tmp/old-build</div>
+                          <div style="display:flex;gap:6px">
+                            <button class="btn" style="font-size:10px;color:var(--green);border-color:var(--green)">✓ Approve</button>
+                            <button class="btn" style="font-size:10px;color:var(--red);border-color:var(--red)">✗ Deny</button>
+                            <button class="btn" style="font-size:10px">✎ Edit</button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
-                <div class="card-body">
-                  <div class="composer">
-                    <textarea
-                      placeholder="继续描述要让 Agent 做什么..."
-                    ></textarea
-                    ><button class="btn primary">发送</button>
+                <!-- D区: 输入区 -->
+                <div style="border-top:1px solid var(--line-soft);padding:10px 14px;display:flex;gap:8px;align-items:flex-end">
+                  <textarea placeholder="描述内容..." style="flex:1;background:var(--bg);border:1px solid var(--line-soft);border-radius:var(--radius);padding:8px 12px;color:var(--text);font-size:12px;font-family:var(--sans);outline:none;resize:none;min-height:36px;max-height:120px;line-height:1.5"></textarea>
+                  <button class="btn primary" style="font-size:11px;min-height:36px;padding:0 14px;white-space:nowrap">↑ 发送</button>
+                </div>
+                <!-- F区: 终端面板 -->
+                <div id="studioTerminal" style="border-top:1px solid var(--line-soft)">
+                  <div style="display:flex;align-items:center;background:var(--bg);border-bottom:1px solid var(--line-soft);padding:0 8px;height:30px;gap:0">
+                    <div style="display:flex;align-items:center;gap:4px;padding:4px 10px;font-size:10px;font-weight:500;color:var(--text);border-bottom:2px solid var(--accent);cursor:pointer">Terminal 1 <span style="color:var(--dim);font-size:9px;cursor:pointer">✕</span></div>
+                    <div style="display:flex;align-items:center;gap:4px;padding:4px 10px;font-size:10px;color:var(--muted);cursor:pointer">Terminal 2 <span style="color:var(--dim);font-size:9px;cursor:pointer">✕</span></div>
+                    <div style="padding:4px 8px;font-size:11px;color:var(--dim);cursor:pointer;margin-left:2px">+</div>
                   </div>
-                  <div class="terminal">
-                    $ make build&#10;Build complete:
-                    /tmp/focuspilot-build/FocusPilot.app
-                  </div>
+                  <div style="background:#1a1a1a;padding:10px 14px;font-family:var(--mono);font-size:11px;line-height:1.7;color:var(--green);min-height:80px">$ make build<br>Build complete.<br><span style="opacity:.7">$ </span><span style="display:inline-block;width:6px;height:13px;background:var(--green);animation:blink 1s step-end infinite;vertical-align:text-bottom"></span></div>
                 </div>
               </div>
-              <div class="card">
-                <div class="card-head">
-                  <h3>右侧栏</h3>
-                  <span class="pill">AppConfigView.swift</span>
+              <!-- ═══ Right: E区 Diff 审查 + Git 操作 ═══ -->
+              <div id="studioRightSidebar" style="display:flex;flex-direction:column;min-width:0;overflow:hidden">
+                <!-- Diff Tab 条 -->
+                <div style="display:flex;align-items:center;background:var(--bg);border-bottom:1px solid var(--line-soft);padding:0 8px;height:34px;gap:0">
+                  <div style="display:flex;align-items:center;gap:4px;padding:5px 10px;font-size:11px;font-weight:500;color:var(--text);border-bottom:2px solid var(--accent);cursor:pointer">KanbanDataSource.swift</div>
+                  <div style="display:flex;align-items:center;gap:4px;padding:5px 10px;font-size:11px;color:var(--muted);cursor:pointer">Models.swift <span style="color:var(--dim);font-size:9px;cursor:pointer">✕</span></div>
                 </div>
-                <div class="card-body">
-                  <div class="code">
-                    1 import SwiftUI 2 3 struct AppConfigView: View { 4
-                    @ObservedObject var store: ConfigStore 5 var body: some View
-                    { ... } 6 }
+                <!-- Diff 内容 -->
+                <div style="flex:1;overflow-y:auto;padding:10px 0;font-family:var(--mono);font-size:11px;line-height:1.8">
+                  <div style="display:flex"><span style="display:inline-block;width:36px;text-align:right;color:var(--dim);user-select:none;padding-right:12px">12</span><span style="background:rgba(255,100,100,.12);color:var(--red);display:block;width:100%;padding-left:4px">- let duration = 0.3</span></div>
+                  <div style="display:flex"><span style="display:inline-block;width:36px;text-align:right;color:var(--dim);user-select:none;padding-right:12px">12</span><span style="background:rgba(100,255,100,.12);color:var(--green);display:block;width:100%;padding-left:4px">+ let duration = 0.2</span></div>
+                  <div style="display:flex"><span style="display:inline-block;width:36px;text-align:right;color:var(--dim);user-select:none;padding-right:12px">13</span><span style="color:var(--muted);padding-left:4px">  let curve = CAMediaTimingFunction(</span></div>
+                  <div style="display:flex"><span style="display:inline-block;width:36px;text-align:right;color:var(--dim);user-select:none;padding-right:12px">14</span><span style="background:rgba(255,100,100,.12);color:var(--red);display:block;width:100%;padding-left:4px">-   name: .easeInEaseOut</span></div>
+                  <div style="display:flex"><span style="display:inline-block;width:36px;text-align:right;color:var(--dim);user-select:none;padding-right:12px">14</span><span style="background:rgba(100,255,100,.12);color:var(--green);display:block;width:100%;padding-left:4px">+   name: .easeOut</span></div>
+                  <div style="display:flex"><span style="display:inline-block;width:36px;text-align:right;color:var(--dim);user-select:none;padding-right:12px">15</span><span style="color:var(--muted);padding-left:4px">  )</span></div>
+                  <!-- inline 评论 -->
+                  <div style="margin:6px 8px;background:var(--elevated);border:1px solid var(--line-soft);border-radius:var(--radius);padding:8px 10px">
+                    <div style="font-size:10px;color:var(--accent);margin-bottom:4px">💬 Inline 评论</div>
+                    <div style="font-size:11px;color:var(--text);font-family:var(--sans)">ease-out 比 ease-in-out 更自然</div>
+                  </div>
+                </div>
+                <!-- 变更文件列表 + Git 操作 -->
+                <div style="border-top:1px solid var(--line-soft);padding:8px">
+                  <div style="font-size:10px;font-weight:600;color:var(--dim);margin-bottom:6px;display:flex;justify-content:space-between">变更文件 <span>2</span></div>
+                  <div class="side-item" style="font-size:11px;padding:3px 4px">
+                    <span>☑ 📝 KanbanDataSource.swift</span><span class="count" style="color:var(--amber)">M</span>
+                  </div>
+                  <div class="side-item" style="font-size:11px;padding:3px 4px">
+                    <span>☑ 📝 新文件.swift</span><span class="count" style="color:var(--green)">U</span>
+                  </div>
+                  <div style="display:flex;flex-direction:column;gap:4px;margin-top:8px">
+                    <div style="display:flex;gap:4px">
+                      <button class="btn" style="flex:1;font-size:10px;min-height:26px">✓ Stage</button>
+                      <button class="btn" style="flex:1;font-size:10px;min-height:26px">↩ Revert</button>
+                    </div>
+                    <button class="btn primary" style="font-size:10px;min-height:26px">📝 Commit ⌘↩</button>
+                    <div style="display:flex;gap:4px">
+                      <button class="btn" style="flex:1;font-size:10px;min-height:26px">⬆ Push</button>
+                      <button class="btn" style="flex:1;font-size:10px;min-height:26px">🔀 Create PR</button>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -2058,13 +2855,13 @@
               <label>标题</label><input placeholder="输入任务标题" />
             </div>
             <div class="field">
-              <label>执行模式</label
-              ><select>
-                <option>none</option>
-                <option>manual</option>
-                <option>semi_auto</option>
-                <option>auto</option>
-              </select>
+              <label>执行模式</label>
+              <div class="seg" style="display:inline-flex;">
+                <button class="active">普通任务</button
+                ><button>对话执行</button
+                ><button>半自动</button
+                ><button>全自动</button>
+              </div>
             </div>
             <div class="field">
               <label>评估</label
@@ -2407,6 +3204,77 @@
           )
         }
       })
+
+      /* ── Focus: 侧边栏筛选联动（Scope 自动驱动模式切换 + 看板/列表筛选） ── */
+      function applyFocusFilter(el) {
+        el.closest('.side-scroll').querySelectorAll('[data-focus-filter]').forEach(i => i.classList.remove('active'));
+        el.classList.add('active');
+        const filter = el.dataset.focusFilter;
+        const modeMap = { today: 'fp-day', week: 'fp-week' };
+        const targetId = modeMap[filter] || 'fp-year';
+        document.querySelectorAll('.fp-sub').forEach(p => { p.style.display = 'none'; p.classList.remove('active'); });
+        const target = document.getElementById(targetId);
+        if (target) { target.style.display = 'grid'; target.classList.add('active'); }
+        const timeLabels = { all: '本月', today: '今天', week: '本周' };
+        document.getElementById('fp-filter-time').textContent = '时间: ' + (timeLabels[filter] || '全部') + ' ▾';
+        document.querySelectorAll('.fp-card').forEach(c => {
+          if (filter === 'all') { c.style.display = ''; return; }
+          if (filter === 'today') { c.style.display = c.dataset.fpSchedule === 'today' ? '' : 'none'; return; }
+          if (filter === 'week') { c.style.display = (c.dataset.fpSchedule === 'week' || c.dataset.fpSchedule === 'today') ? '' : 'none'; return; }
+          if (filter === 'agent') { c.style.display = c.dataset.fpAgent === 'yes' ? '' : 'none'; return; }
+          if (filter === 'decision') { c.style.display = c.dataset.fpDecision === 'yes' ? '' : 'none'; return; }
+          c.style.display = '';
+        });
+        document.querySelectorAll('.fp-list-row').forEach(r => {
+          if (filter === 'all') { r.style.display = ''; return; }
+          if (filter === 'today') { r.style.display = r.dataset.fpSchedule === 'today' ? '' : 'none'; return; }
+          if (filter === 'week') { r.style.display = (r.dataset.fpSchedule === 'week' || r.dataset.fpSchedule === 'today') ? '' : 'none'; return; }
+          if (filter === 'agent') { r.style.display = r.dataset.fpAgent === 'yes' ? '' : 'none'; return; }
+          if (filter === 'decision') { r.style.display = r.dataset.fpDecision === 'yes' ? '' : 'none'; return; }
+          r.style.display = '';
+        });
+      }
+
+      /* ── Focus: Task Detail ── */
+      function openTaskDetail() {
+        document.getElementById('fpDetailOverlay').style.opacity = '1';
+        document.getElementById('fpDetailOverlay').style.pointerEvents = 'all';
+        document.getElementById('fpDetailPanel').style.transform = 'translateX(0)';
+      }
+      function closeTaskDetail() {
+        document.getElementById('fpDetailOverlay').style.opacity = '0';
+        document.getElementById('fpDetailOverlay').style.pointerEvents = 'none';
+        document.getElementById('fpDetailPanel').style.transform = 'translateX(100%)';
+      }
+      document.querySelectorAll('.fp-dtab').forEach(tab => {
+        tab.addEventListener('click', () => {
+          document.querySelectorAll('.fp-dtab').forEach(t => { t.style.color = 'var(--dim)'; t.style.borderBottomColor = 'transparent'; });
+          tab.style.color = 'var(--accent)'; tab.style.borderBottomColor = 'var(--accent)';
+          ['fp-t-plan','fp-t-approval','fp-t-exec','fp-t-eval','fp-t-accept'].forEach(id => { document.getElementById(id).style.display = 'none'; });
+          document.getElementById(tab.dataset.t).style.display = '';
+        });
+      });
+
+      /* ── Focus: New Task Modal ── */
+      function openNewTaskModal() { document.getElementById('fpNewTaskModal').style.display = 'flex'; }
+      function closeNewTaskModal() { document.getElementById('fpNewTaskModal').style.display = 'none'; }
+      document.getElementById('fpNewTaskModal').addEventListener('click', closeNewTaskModal);
+
+      /* ── Studio: Toggle Functions ── */
+      function toggleStudioTerminal() {
+        const t = document.getElementById('studioTerminal');
+        t.style.display = t.style.display === 'none' ? '' : 'none';
+      }
+      function toggleStudioSidebar() {
+        const s = document.getElementById('studioRightSidebar');
+        s.style.display = s.style.display === 'none' ? '' : 'none';
+        const grid = s.closest('.studio-layout');
+        if (s.style.display === 'none') {
+          grid.style.gridTemplateColumns = 'minmax(0,1fr)';
+        } else {
+          grid.style.gridTemplateColumns = 'minmax(0,1fr) 320px';
+        }
+      }
     </script>
   </body>
 </html>

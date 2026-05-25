@@ -40,7 +40,7 @@
         --status-backlog: #636985;
         --status-todo: #9399b0;
         --status-progress: #5b8af5;
-        --status-review: #a07cf5;
+        --status-evaluation: #a07cf5;
         --status-done: #4ade80;
         --status-blocked: #f97316;
         --status-cancelled: #f87171;
@@ -469,7 +469,7 @@
       .task-status-dot.backlog { border-color: var(--status-backlog); background: transparent; }
       .task-status-dot.todo { border-color: var(--status-todo); background: transparent; }
       .task-status-dot.in_progress { border-color: var(--status-progress); background: var(--status-progress); }
-      .task-status-dot.in_review { border-color: var(--status-review); background: var(--status-review); }
+      .task-status-dot.in_evaluation { border-color: var(--status-evaluation); background: var(--status-evaluation); }
       .task-status-dot.done { border-color: var(--status-done); background: var(--status-done); }
 
       .health-tag {
@@ -827,7 +827,7 @@
       .status-pill.backlog { background: rgba(99,105,133,0.15); color: var(--status-backlog); }
       .status-pill.todo { background: rgba(147,153,176,0.15); color: var(--status-todo); }
       .status-pill.in_progress { background: rgba(91,138,245,0.15); color: var(--status-progress); }
-      .status-pill.in_review { background: rgba(160,124,245,0.15); color: var(--status-review); }
+      .status-pill.in_evaluation { background: rgba(160,124,245,0.15); color: var(--status-evaluation); }
       .status-pill.done { background: var(--accent-green-dim); color: var(--status-done); }
 
       .mode-icon { font-size: 12px; }
@@ -1886,6 +1886,17 @@
               >2</span
             >
           </div>
+          <div class="sidebar-item" data-filter="decision">
+            <span class="icon">🔔</span> 等我决策
+            <span
+              class="badge"
+              style="
+                background: rgba(251, 191, 36, 0.2);
+                color: var(--accent-yellow);
+              "
+              >1</span
+            >
+          </div>
 
           <div class="sidebar-label" style="margin-top: 12px">目标树</div>
           <div class="goal-tree-item active">
@@ -2039,7 +2050,7 @@
                               <span class="node-title">看板状态模型实现</span>
                               <div class="node-meta">
                                 <span class="card-tag priority-p0">P0</span>
-                                <span class="card-tag auto">🤖 auto</span>
+                                <span class="card-tag auto">auto</span>
                                 <span
                                   style="
                                     font-size: 10px;
@@ -2066,7 +2077,7 @@
                               >
                               <div class="node-meta">
                                 <span class="card-tag priority-p1">P1</span>
-                                <span class="card-tag auto">🤖 auto</span>
+                                <span class="card-tag auto">auto</span>
                                 <span
                                   style="
                                     font-size: 10px;
@@ -2093,7 +2104,7 @@
                               >
                               <div class="node-meta">
                                 <span class="card-tag priority-p1">P1</span>
-                                <span class="card-tag manual">🖐 manual</span>
+                                <span class="card-tag manual">manual</span>
                                 <span
                                   style="
                                     font-size: 10px;
@@ -2583,7 +2594,7 @@
                   <div class="card-title">主题系统适配</div>
                   <div class="card-meta">
                     <span class="card-tag priority-p2">P2</span>
-                    <span class="card-tag auto">🤖 auto</span>
+                    <span class="card-tag auto">auto</span>
                     <span class="card-tag goal-ref">→ 4月/WS原型</span>
                   </div>
                   <div class="card-footer">
@@ -2598,7 +2609,7 @@
                   <div class="card-title">Anki 同步接口设计</div>
                   <div class="card-meta">
                     <span class="card-tag priority-p2">P2</span>
-                    <span class="card-tag auto">🤖 auto</span>
+                    <span class="card-tag auto">auto</span>
                     <span class="card-tag goal-ref">→ 5月/AI Crew</span>
                   </div>
                   <div class="card-footer">
@@ -2631,7 +2642,7 @@
                   <div class="card-title">Agent Pull 执行管道</div>
                   <div class="card-meta">
                     <span class="card-tag priority-p1">P1</span>
-                    <span class="card-tag auto">🤖 auto</span>
+                    <span class="card-tag auto">auto</span>
                     <span class="card-tag goal-ref">→ 4月/WS原型</span>
                   </div>
                   <div class="card-footer">
@@ -2649,7 +2660,7 @@
                   <div class="card-title">Terminal 手动执行模式</div>
                   <div class="card-meta">
                     <span class="card-tag priority-p1">P1</span>
-                    <span class="card-tag manual">🖐 manual</span>
+                    <span class="card-tag manual">manual</span>
                     <span class="card-tag goal-ref">→ 4月/WS原型</span>
                   </div>
                   <div class="card-footer">
@@ -2664,7 +2675,7 @@
                   <div class="card-title">整理本周会议记录</div>
                   <div class="card-meta">
                     <span class="card-tag priority-p2">P2</span>
-                    <span class="card-tag manual">🖐 manual</span>
+                    <span class="card-tag manual">manual</span>
                   </div>
                   <div class="card-footer">
                     <div class="card-agent">
@@ -2696,8 +2707,9 @@
                   <div class="card-title">看板状态模型实现</div>
                   <div class="card-meta">
                     <span class="card-tag priority-p0">P0</span>
-                    <span class="card-tag auto">🤖 auto</span>
+                    <span class="card-tag auto">auto</span>
                     <span class="card-tag goal-ref">→ 4月/WS原型</span>
+                    <span class="card-tag" style="background:rgba(91,138,245,0.15);color:var(--accent-blue);font-weight:500;">Agent 执行中</span>
                   </div>
                   <div class="card-footer">
                     <div class="card-agent">
@@ -2713,7 +2725,7 @@
                         >🧑‍💻</span
                       >
                       <span style="color: var(--accent-blue)"
-                        >代码工程师 · 执行中</span
+                        >代码工程师</span
                       >
                     </div>
                     <span class="card-date">04-20</span>
@@ -2724,7 +2736,8 @@
                   <div class="card-title">研究 Multica 执行模型</div>
                   <div class="card-meta">
                     <span class="card-tag priority-p1">P1</span>
-                    <span class="card-tag manual">🖐 manual</span>
+                    <span class="card-tag manual">manual</span>
+                    <span class="card-tag" style="background:rgba(91,138,245,0.15);color:var(--accent-blue);font-weight:500;">对话中</span>
                   </div>
                   <div class="card-footer">
                     <div class="card-agent">
@@ -2736,28 +2749,29 @@
               </div>
             </div>
 
-            <!-- In Review -->
+            <!-- In Evaluation -->
             <div class="kanban-column">
               <div class="kanban-col-header">
                 <span
                   class="col-dot"
-                  style="background: var(--status-review)"
+                  style="background: var(--status-evaluation)"
                 ></span>
-                In Review
+                In Evaluation
                 <span class="col-count">1</span>
               </div>
               <div class="kanban-cards">
                 <div
                   class="kanban-card animate-in delay-3"
-                  onclick="openTaskDetail('review')"
+                  onclick="openTaskDetail('evaluation')"
                   style="border-color: rgba(160, 124, 245, 0.3)"
                 >
                   <div class="card-id">FP-005</div>
                   <div class="card-title">规划引擎接口设计</div>
                   <div class="card-meta">
                     <span class="card-tag priority-p0">P0</span>
-                    <span class="card-tag auto">🤖 auto</span>
+                    <span class="card-tag auto">auto</span>
                     <span class="card-tag goal-ref">→ 4月/WS原型</span>
+                    <span class="card-tag" style="background:rgba(251,191,36,0.15);color:var(--accent-yellow);font-weight:500;">等你决策</span>
                   </div>
                   <div class="card-footer">
                     <div class="card-agent">
@@ -2766,7 +2780,7 @@
                         style="background: var(--accent-purple)"
                         >🧑‍💻</span
                       >
-                      <span style="color: var(--accent-purple)">待验收</span>
+                      <span style="color: var(--accent-yellow)">等你处理评估</span>
                     </div>
                     <span class="card-date">04-17</span>
                   </div>
@@ -2795,7 +2809,7 @@
                   </div>
                   <div class="card-meta">
                     <span class="card-tag priority-p0">P0</span>
-                    <span class="card-tag auto">🤖 auto</span>
+                    <span class="card-tag auto">auto</span>
                   </div>
                   <div class="card-footer">
                     <div class="card-agent">
@@ -2816,7 +2830,7 @@
                   </div>
                   <div class="card-meta">
                     <span class="card-tag priority-p1">P1</span>
-                    <span class="card-tag manual">🖐 manual</span>
+                    <span class="card-tag manual">manual</span>
                   </div>
                   <div class="card-footer">
                     <div class="card-agent">
@@ -2827,6 +2841,18 @@
                     >
                   </div>
                 </div>
+              </div>
+            </div>
+
+            <!-- Blocked / Cancelled (collapsed) -->
+            <div class="kanban-column" style="opacity:0.6;min-width:180px;">
+              <div class="kanban-col-header" style="cursor:pointer;">
+                <span class="col-dot" style="background: var(--status-blocked)"></span>
+                Blocked / Cancelled
+                <span class="col-count">0</span>
+                <span style="margin-left:auto;font-size:10px;color:var(--text-tertiary)">▸</span>
+              </div>
+              <div class="kanban-cards" style="display:none;">
               </div>
             </div>
           </div>
@@ -3013,11 +3039,36 @@
 
       <div class="detail-body">
         <div class="detail-main">
+          <!-- Agent Live Card -->
+          <div style="background:var(--bg-elevated);border:1px solid var(--border-default);border-radius:var(--radius-md);padding:12px 16px;margin-bottom:12px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+              <div style="display:flex;align-items:center;gap:8px;">
+                <span style="width:8px;height:8px;border-radius:50%;background:var(--accent-green);animation:pulse 2s infinite;"></span>
+                <span style="font-weight:600;font-size:12px;">代码工程师</span>
+                <span style="font-size:11px;color:var(--text-tertiary);">· Running · 00:03:42</span>
+              </div>
+              <span style="font-size:11px;color:var(--accent-blue);">步骤 3/5 · 执行</span>
+            </div>
+            <div style="font-family:var(--font-mono);font-size:11px;line-height:1.7;color:var(--text-secondary);background:var(--bg-base);padding:8px 10px;border-radius:var(--radius-sm);max-height:80px;overflow-y:auto;margin-bottom:8px;">
+              <div style="color:var(--text-tertiary);">> 正在修改 Models.swift...</div>
+              <div style="color:var(--text-tertiary);">> 添加 blocked→todo 状态转换</div>
+              <div>> 运行测试套件...</div>
+            </div>
+            <div style="display:flex;gap:6px;">
+              <button style="font-size:11px;padding:3px 10px;background:var(--bg-hover);border:1px solid var(--border-default);border-radius:var(--radius-sm);color:var(--accent-red);cursor:pointer;">停止</button>
+              <button style="font-size:11px;padding:3px 10px;background:var(--bg-hover);border:1px solid var(--border-default);border-radius:var(--radius-sm);color:var(--text-primary);cursor:pointer;">手动接管</button>
+              <button style="font-size:11px;padding:3px 10px;background:var(--bg-hover);border:1px solid var(--border-default);border-radius:var(--radius-sm);color:var(--text-secondary);cursor:pointer;">Transcript</button>
+              <button style="font-size:11px;padding:3px 10px;background:var(--bg-hover);border:1px solid var(--border-default);border-radius:var(--radius-sm);color:var(--text-secondary);cursor:pointer;">产物</button>
+            </div>
+          </div>
+
           <!-- Tabs -->
           <div class="detail-tabs">
-            <div class="detail-tab active" data-dtab="plan">📄 规划</div>
-            <div class="detail-tab" data-dtab="auto">🤖 自动</div>
-            <div class="detail-tab" data-dtab="manual">🖐 手动</div>
+            <div class="detail-tab active" data-dtab="plan">规划 ✓</div>
+            <div class="detail-tab" data-dtab="approval">确认 ✓</div>
+            <div class="detail-tab" data-dtab="execute" style="color:var(--accent-blue)">执行 ●</div>
+            <div class="detail-tab" data-dtab="evaluation">评估</div>
+            <div class="detail-tab" data-dtab="acceptance">验收</div>
           </div>
 
           <!-- Plan Tab -->
@@ -3026,7 +3077,7 @@
               <div class="plan-section-title">📝 任务描述</div>
               <div class="plan-description">
                 实现 Workspace 看板视图的状态模型，采用 Multica 7
-                态流转：backlog → todo → in_progress → in_review →
+                态流转：backlog → todo → in_progress → in_evaluation →
                 done，旁路状态 blocked /
                 cancelled。需要实现拖拽跨列变更状态，状态变更持久化，以及与规划视图的数据同步。
               </div>
@@ -3101,8 +3152,8 @@
             </div>
           </div>
 
-          <!-- Auto Tab -->
-          <div class="detail-tab-content" id="dtab-auto">
+          <!-- Execute Tab -->
+          <div class="detail-tab-content" id="dtab-execute">
             <div class="execution-stream">
               <div class="stream-header">
                 <span style="font-size: 14px">🤖</span>
@@ -3234,7 +3285,7 @@
               </div>
             </div>
 
-            <!-- Review actions (shown when in_review) -->
+            <!-- Review actions (shown when in_evaluation) -->
             <div class="review-actions">
               <button class="review-btn approve">✅ 通过</button>
               <button class="review-btn reject">↩️ 退回</button>
@@ -3243,130 +3294,66 @@
             </div>
           </div>
 
-          <!-- Manual Tab -->
-          <div
-            class="detail-tab-content"
-            id="dtab-manual"
-            style="display: none; height: 100%"
-          >
-            <div class="chat-container">
-              <div class="chat-messages">
-                <div class="chat-msg">
-                  <div class="chat-avatar system">📋</div>
-                  <div class="chat-body">
-                    <div
-                      class="chat-sender"
-                      style="color: var(--text-tertiary)"
-                    >
-                      系统
-                    </div>
-                    <div class="chat-text">
-                      已加载规划文档作为上下文。你可以基于规划执行，也可以进一步调整方案。
-                      <div class="plan-ref">
-                        📄 看板状态模型实现 — plan.md &nbsp;→
-                      </div>
-                    </div>
-                  </div>
-                </div>
+          <!-- Approval Tab -->
+          <div class="detail-tab-content" id="dtab-approval">
+            <div style="padding:20px;">
+              <div style="font-size:13px;font-weight:600;margin-bottom:12px;">规划产物审批</div>
+              <div style="background:var(--bg-base);border-radius:var(--radius-md);padding:16px;margin-bottom:16px;font-size:12px;line-height:1.8;color:var(--text-secondary);">
+                <div style="font-weight:500;color:var(--text-primary);margin-bottom:8px;">plan.md — 看板状态模型实现方案</div>
+                <div>1. 定义 TaskStatus 枚举（7 态）</div>
+                <div>2. 实现拖拽跨列变更 + validTransitions 校验</div>
+                <div>3. NSTableView 替代方案（性能）</div>
+                <div>4. 持久化到 ConfigStore</div>
+              </div>
+              <div style="display:flex;gap:8px;">
+                <button style="padding:6px 16px;background:var(--accent-blue);color:#fff;border:none;border-radius:var(--radius-sm);font-size:12px;cursor:pointer;">批准并执行</button>
+                <button style="padding:6px 16px;background:var(--bg-hover);border:1px solid var(--border-default);border-radius:var(--radius-sm);font-size:12px;color:var(--text-secondary);cursor:pointer;">退回修改</button>
+              </div>
+            </div>
+          </div>
 
-                <div class="chat-msg">
-                  <div class="chat-avatar user">👤</div>
-                  <div class="chat-body">
-                    <div class="chat-sender">你</div>
-                    <div class="chat-text">
-                      先实现 TaskStatus 枚举，但我想用 struct + static let
-                      的模式而不是 enum，方便后续扩展自定义状态
-                    </div>
-                  </div>
+          <!-- Evaluation Tab -->
+          <div class="detail-tab-content" id="dtab-evaluation">
+            <div style="padding:20px;">
+              <div style="font-size:13px;font-weight:600;margin-bottom:12px;">评估意见（Evaluation Agent · 第 1 轮）</div>
+              <div style="margin-bottom:12px;">
+                <div style="display:flex;align-items:center;gap:6px;padding:8px 12px;background:rgba(248,113,113,0.1);border-left:3px solid var(--accent-red);border-radius:0 var(--radius-sm) var(--radius-sm) 0;margin-bottom:6px;">
+                  <span style="font-size:11px;font-weight:600;color:var(--accent-red);">Critical</span>
+                  <span style="font-size:12px;">状态转换缺少 blocked→todo 路径</span>
                 </div>
-
-                <div class="chat-msg">
-                  <div class="chat-avatar agent">🤖</div>
-                  <div class="chat-body">
-                    <div class="chat-sender" style="color: var(--accent-blue)">
-                      代码工程师
-                    </div>
-                    <div class="chat-text">
-                      好的，使用 <code>struct TaskStatus: Hashable</code> +
-                      <code>static let</code>
-                      的模式。这样支持运行时扩展自定义状态，同时保持类型安全。
-                      <br /><br />
-                      已完成修改：
-                      <div class="file-change">
-                        <span class="modified">~</span> Models.swift
-                        <span style="color: var(--accent-green)">+38</span>
-                        <span style="color: var(--accent-red)">-0</span>
-                      </div>
-                      <br />
-                      包含 7 个预设状态 +
-                      <code>isValid(transition:)</code>
-                      转换校验方法。需要我继续下一步吗？
-                    </div>
-                  </div>
+                <div style="display:flex;align-items:center;gap:6px;padding:8px 12px;background:rgba(251,191,36,0.1);border-left:3px solid var(--accent-yellow);border-radius:0 var(--radius-sm) var(--radius-sm) 0;margin-bottom:6px;">
+                  <span style="font-size:11px;font-weight:600;color:var(--accent-yellow);">Important</span>
+                  <span style="font-size:12px;">拖拽动画帧率偏低</span>
                 </div>
-
-                <div class="chat-msg">
-                  <div class="chat-avatar user">👤</div>
-                  <div class="chat-body">
-                    <div class="chat-sender">你</div>
-                    <div class="chat-text">
-                      好的，继续实现 KanbanDataSource，编译测试一下
-                    </div>
-                  </div>
-                </div>
-
-                <div class="chat-msg">
-                  <div class="chat-avatar agent">🤖</div>
-                  <div class="chat-body">
-                    <div class="chat-sender" style="color: var(--accent-blue)">
-                      代码工程师
-                    </div>
-                    <div class="chat-text">
-                      已创建
-                      <code>KanbanDataSource.swift</code> 并实现拖拽协议：
-                      <div class="file-change">
-                        <span class="added">+</span> KanbanDataSource.swift
-                        <span style="color: var(--accent-green)">+156</span>
-                      </div>
-                      <div class="file-change">
-                        <span class="modified">~</span> QuickPanelView.swift
-                        <span style="color: var(--accent-green)">+23</span>
-                        <span style="color: var(--accent-red)">-5</span>
-                      </div>
-                      <br />
-                      <span
-                        style="
-                          font-family: var(--font-mono);
-                          font-size: 11px;
-                          color: var(--text-tertiary);
-                        "
-                        >$ make build</span
-                      ><br />
-                      <span style="color: var(--accent-green)"
-                        >✓ Build succeeded (0 warnings)</span
-                      >
-                    </div>
-                  </div>
+                <div style="display:flex;align-items:center;gap:6px;padding:8px 12px;background:var(--bg-elevated);border-left:3px solid var(--text-tertiary);border-radius:0 var(--radius-sm) var(--radius-sm) 0;">
+                  <span style="font-size:11px;font-weight:600;color:var(--text-tertiary);">Nit</span>
+                  <span style="font-size:12px;">变量命名风格不一致</span>
                 </div>
               </div>
+              <div style="display:flex;gap:8px;">
+                <button style="padding:6px 16px;background:var(--accent-blue);color:#fff;border:none;border-radius:var(--radius-sm);font-size:12px;cursor:pointer;">按建议处理</button>
+                <button style="padding:6px 16px;background:var(--bg-hover);border:1px solid var(--border-default);border-radius:var(--radius-sm);font-size:12px;color:var(--text-secondary);cursor:pointer;">忽略并完成</button>
+                <button style="padding:6px 16px;background:var(--bg-hover);border:1px solid var(--border-default);border-radius:var(--radius-sm);font-size:12px;color:var(--text-secondary);cursor:pointer;">手动接管</button>
+              </div>
+            </div>
+          </div>
 
-              <div class="chat-input-area">
-                <div class="chat-input-wrapper">
-                  <textarea
-                    class="chat-input"
-                    placeholder="输入消息..."
-                    rows="1"
-                  ></textarea>
-                  <button class="chat-send">▶</button>
+          <!-- Acceptance Tab -->
+          <div class="detail-tab-content" id="dtab-acceptance">
+            <div style="padding:20px;">
+              <div style="font-size:13px;font-weight:600;margin-bottom:12px;">最终验收</div>
+              <div style="background:var(--bg-base);border-radius:var(--radius-md);padding:16px;margin-bottom:16px;">
+                <div style="font-size:12px;color:var(--text-secondary);margin-bottom:8px;">产出物汇总</div>
+                <div style="font-size:11px;font-family:var(--font-mono);line-height:1.8;color:var(--text-secondary);">
+                  <div>Models.swift — TaskStatus 枚举 + validTransitions</div>
+                  <div>KanbanDataSource.swift — 拖拽跨列实现</div>
+                  <div>plan.md — 实现方案（已完成）</div>
+                  <div>execution.log — 执行日志</div>
                 </div>
-                <div class="chat-actions">
-                  <button class="chat-action-btn done-btn">
-                    ✅ 标记完成 → done
-                  </button>
-                  <button class="chat-action-btn review-btn">
-                    📤 提交验收 → in_review
-                  </button>
-                </div>
+              </div>
+              <div style="display:flex;gap:8px;">
+                <button style="padding:6px 16px;background:var(--accent-green);color:#000;border:none;border-radius:var(--radius-sm);font-size:12px;font-weight:500;cursor:pointer;">验收通过 → Done</button>
+                <button style="padding:6px 16px;background:var(--bg-hover);border:1px solid var(--border-default);border-radius:var(--radius-sm);font-size:12px;color:var(--text-secondary);cursor:pointer;">退回修改</button>
               </div>
             </div>
           </div>
@@ -3381,7 +3368,7 @@
                 <option>backlog</option>
                 <option>todo</option>
                 <option selected>in_progress</option>
-                <option>in_review</option>
+                <option>in_evaluation</option>
                 <option>done</option>
                 <option>blocked</option>
                 <option>cancelled</option>
@@ -3452,8 +3439,10 @@
             <div class="detail-field-label">执行模式</div>
             <div class="detail-field-value">
               <select>
-                <option selected>🤖 自动</option>
-                <option>🖐 手动</option>
+                <option>普通任务</option>
+                <option>对话执行</option>
+                <option>半自动</option>
+                <option selected>全自动</option>
               </select>
             </div>
           </div>
@@ -3461,9 +3450,9 @@
             <div class="detail-field-label">Agent</div>
             <div class="detail-field-value">
               <select>
-                <option selected>🧑‍💻 代码工程师</option>
-                <option>📊 数据分析师</option>
-                <option>📝 内容编辑</option>
+                <option selected>代码工程师</option>
+                <option>数据分析师</option>
+                <option>内容编辑</option>
               </select>
             </div>
           </div>
@@ -3596,32 +3585,47 @@
 
           <div class="form-config">
             <div class="form-config-title">
-              ⚙️ 执行 & 规划配置（可折叠，有全局默认值）
+              执行 & 规划配置（可折叠，有全局默认值）
             </div>
-            <div class="form-row">
-              <div class="form-field">
-                <label class="form-label">执行模式</label>
-                <select class="form-select">
-                  <option selected>🤖 自动（Agent Pull）</option>
-                  <option>🖐 手动（对话式）</option>
-                </select>
+            <div class="form-field">
+              <label class="form-label">执行模式</label>
+              <div class="seg-control" style="display:flex;gap:0;border:1px solid var(--border-default);border-radius:var(--radius-md);overflow:hidden;margin-top:4px;">
+                <label style="flex:1;text-align:center;padding:6px 0;cursor:pointer;font-size:12px;background:var(--bg-active);color:var(--text-primary);border-right:1px solid var(--border-default);">
+                  <input type="radio" name="exec-mode" value="none" checked style="display:none"> 普通任务
+                </label>
+                <label style="flex:1;text-align:center;padding:6px 0;cursor:pointer;font-size:12px;color:var(--text-secondary);border-right:1px solid var(--border-default);">
+                  <input type="radio" name="exec-mode" value="manual" style="display:none"> 对话执行
+                </label>
+                <label style="flex:1;text-align:center;padding:6px 0;cursor:pointer;font-size:12px;color:var(--text-secondary);border-right:1px solid var(--border-default);">
+                  <input type="radio" name="exec-mode" value="semi_auto" style="display:none"> 半自动
+                </label>
+                <label style="flex:1;text-align:center;padding:6px 0;cursor:pointer;font-size:12px;color:var(--text-secondary);">
+                  <input type="radio" name="exec-mode" value="auto" style="display:none"> 全自动
+                </label>
               </div>
+            </div>
+            <div class="form-row" style="margin-top:8px;">
               <div class="form-field">
                 <label class="form-label">Agent</label>
                 <select class="form-select">
-                  <option selected>🧑‍💻 代码工程师</option>
-                  <option>📊 数据分析师</option>
-                  <option>📝 内容编辑</option>
+                  <option selected>代码工程师</option>
+                  <option>数据分析师</option>
+                  <option>内容编辑</option>
+                </select>
+              </div>
+              <div class="form-field">
+                <label class="form-label">规划引擎</label>
+                <select class="form-select">
+                  <option selected>brainstorming</option>
+                  <option>writing-plans</option>
+                  <option>自定义 Skill</option>
                 </select>
               </div>
             </div>
-            <div class="form-field">
-              <label class="form-label">规划引擎</label>
-              <select class="form-select">
-                <option selected>brainstorming</option>
-                <option>writing-plans</option>
-                <option>自定义 Skill</option>
-              </select>
+            <div class="form-field" style="margin-top:8px;">
+              <label style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text-secondary);cursor:pointer;">
+                <input type="checkbox" style="accent-color:var(--accent-blue);"> 启用评估（Evaluation Agent 产出修改建议）
+              </label>
             </div>
           </div>
         </div>
@@ -3679,7 +3683,7 @@
         } else if (filter === "today") {
           modeC.classList.add("active")
         } else {
-          // 'all' and 'agent' both show mode A (goal tree + gantt)
+          // 'all', 'agent', 'decision' all show mode A (goal tree + gantt)
           modeA.style.display = ""
         }
       }
@@ -3702,6 +3706,7 @@
           today: "时间: 今天 ▾",
           week: "时间: 本周 ▾",
           agent: "时间: 全部 ▾",
+          decision: "时间: 全部 ▾",
         }
         filterTimeBtn.textContent = filterMap[filter] || filterMap["all"]
 
@@ -3767,12 +3772,19 @@
             const inProgressCol =
               statusDot &&
               getComputedStyle(statusDot).backgroundColor.includes("91")
-            // Show cards that are 🤖 auto and in progress-like state
+            // Show cards that are auto and in progress-like state
             const agentCard =
               hasAuto &&
               (card.querySelector('.card-agent span[style*="accent-blue"]') ||
                 inProgressCol)
             card.style.display = agentCard ? "" : "none"
+          })
+        } else if (filter === "decision") {
+          // Show cards awaiting user decision (in_evaluation or approval pending)
+          columns.forEach((col) => (col.style.display = ""))
+          cards.forEach((card) => {
+            const hasDecisionTag = card.querySelector('.card-tag[style*="accent-yellow"]')
+            card.style.display = hasDecisionTag ? "" : "none"
           })
         }
 
@@ -3825,6 +3837,14 @@
             row.style.display = isProgress && isAuto ? "" : "none"
           })
           groups.forEach((g) => (g.style.display = ""))
+        } else if (filter === "decision") {
+          rows.forEach((row) => {
+            const statusCell = row.querySelector(".status-pill")
+            const isEval =
+              statusCell && statusCell.classList.contains("in_evaluation")
+            row.style.display = isEval ? "" : "none"
+          })
+          groups.forEach((g) => (g.style.display = ""))
         }
 
         // Update group counts
@@ -3862,8 +3882,7 @@
           tab.classList.add("active")
           const content = document.getElementById("dtab-" + tab.dataset.dtab)
           content.classList.add("active")
-          content.style.display =
-            tab.dataset.dtab === "manual" ? "flex" : "block"
+          content.style.display = "block"
         })
       })
 
