@@ -506,7 +506,7 @@ ExecutionRun:
 │                          │                                     │
 │ 快捷视图                 │  [📐 规划]  [📋 看板]  [📄 列表]              │
 │  全局规划  (11)          │                                     │
-│  本月计划  (10)          │  视图内容（随侧边栏筛选联动）        │
+│  本月计划  (5)           │  视图内容（随侧边栏筛选联动）        │
 │  本周计划  (8)           │                                     │
 │  今日聚焦  (2)           │                                     │
 │  Agent 执行中 (2)        │                                     │
@@ -531,7 +531,7 @@ ExecutionRun:
 | 侧边栏选择   | 筛选条件                                 |
 | ------------ | ---------------------------------------- |
 | 全局规划     | 无筛选                                   |
-| 本月计划     | schedule=today\|week\|month              |
+| 本月计划     | goal.month=当前日历月 的任务 + 未关联目标中 schedule∈{today,week,month} 的任务 |
 | 本周计划     | schedule=today\|week                     |
 | 今日聚焦     | schedule=today                           |
 | Agent 执行中 | status=in_progress & execution_mode≠none |
@@ -539,7 +539,7 @@ ExecutionRun:
 | 目标树某节点 | goal_id=选中目标及其子目标               |
 | 来源项       | source=对应值                            |
 
-**schedule 派生与包含规则**：`schedule` 字段由 `scheduled_date` / `due_date` 相对当前日期自动派生，不可手动设置。过滤关系为严格包含：`全局规划 ⊃ 本月计划 ⊃ 本周计划 ⊃ 今日聚焦`。即本月计划包含本周和今日的任务，本周计划包含今日的任务。
+**schedule 派生与包含规则**：`schedule` 字段由 `scheduled_date` / `due_date` 相对当前日期自动派生，不可手动设置。过滤关系：`全局规划 ⊃ 本月计划 ⊃ 本周计划 ⊃ 今日聚焦`。**本月计划按日历月过滤**：读取系统当前月份，仅显示归属于当月目标的任务 + 未关联目标中 schedule∈{today,week,month} 的任务；非当月的目标容器及其任务整体隐藏。本周/今日仍按 schedule 时间范围过滤。
 
 ---
 

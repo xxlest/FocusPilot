@@ -955,7 +955,7 @@
               <span>📋 全局规划</span><span class="count">11</span>
             </div>
             <div class="side-item" data-focus-filter="month" onclick="applyFocusFilter(this)">
-              <span>📆 本月计划</span><span class="count">10</span>
+              <span>📆 本月计划</span><span class="count">5</span>
             </div>
             <div class="side-item" data-focus-filter="week" onclick="applyFocusFilter(this)">
               <span>📅 本周计划</span><span class="count">8</span>
@@ -1617,7 +1617,7 @@
                 <!-- Title -->
                 <div id="fpYearTitle" style="height:36px;display:flex;align-items:center;padding:0 12px;gap:6px;font-size:12px;font-weight:600;border-bottom:1px solid var(--line-soft);background:var(--surface);position:sticky;top:0;z-index:2;">
                   📋 全局规划 · 月视图
-                  <span style="font-size:10px;font-weight:400;color:var(--dim);font-family:var(--mono);">12 项</span>
+                  <span style="font-size:10px;font-weight:400;color:var(--dim);font-family:var(--mono);">11 项</span>
                 </div>
                 <!-- Year -->
                 <div style="margin-bottom:2px;padding:16px;">
@@ -2164,7 +2164,7 @@
               <!-- Backlog -->
               <div class="lane fp-col" data-fp-col="backlog">
                 <h3><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--dim);margin-right:4px;vertical-align:middle"></span> Backlog <span class="fp-col-count">2</span></h3>
-                <div class="task fp-card" onclick="openTaskDetail()" data-fp-schedule="month" data-fp-mode="auto">
+                <div class="task fp-card" onclick="openTaskDetail()" data-fp-schedule="month" data-fp-month="5" data-fp-mode="auto">
                   <div style="font-size:10px;font-family:var(--mono);color:var(--dim);margin-bottom:2px">FP-006</div>
                   <div class="task-title">主题系统适配</div>
                   <div class="task-meta" style="flex-wrap:wrap;gap:4px">
@@ -2176,7 +2176,7 @@
                     <span>🧑‍💻 代码工程师</span><span style="font-family:var(--mono)">—</span>
                   </div>
                 </div>
-                <div class="task fp-card" onclick="openTaskDetail()" data-fp-schedule="month" data-fp-mode="auto">
+                <div class="task fp-card" onclick="openTaskDetail()" data-fp-schedule="month" data-fp-month="5" data-fp-mode="auto">
                   <div style="font-size:10px;font-family:var(--mono);color:var(--dim);margin-bottom:2px">FP-009</div>
                   <div class="task-title">Anki 同步接口设计</div>
                   <div class="task-meta" style="flex-wrap:wrap;gap:4px">
@@ -2193,7 +2193,7 @@
               <!-- Todo -->
               <div class="lane fp-col" data-fp-col="todo">
                 <h3><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--muted);margin-right:4px;vertical-align:middle"></span> Todo <span class="fp-col-count">3</span></h3>
-                <div class="task fp-card" onclick="openTaskDetail()" data-fp-schedule="week" data-fp-mode="auto">
+                <div class="task fp-card" onclick="openTaskDetail()" data-fp-schedule="week" data-fp-month="4" data-fp-mode="auto">
                   <div style="font-size:10px;font-family:var(--mono);color:var(--dim);margin-bottom:2px">FP-003</div>
                   <div class="task-title">Agent Pull 执行管道</div>
                   <div class="task-meta" style="flex-wrap:wrap;gap:4px">
@@ -2205,7 +2205,7 @@
                     <span>🧑‍💻 代码工程师</span><span style="font-family:var(--mono)">04-25</span>
                   </div>
                 </div>
-                <div class="task fp-card" onclick="openTaskDetail()" data-fp-schedule="week" data-fp-mode="manual">
+                <div class="task fp-card" onclick="openTaskDetail()" data-fp-schedule="week" data-fp-month="4" data-fp-mode="manual">
                   <div style="font-size:10px;font-family:var(--mono);color:var(--dim);margin-bottom:2px">FP-004</div>
                   <div class="task-title">Terminal 手动执行模式</div>
                   <div class="task-meta" style="flex-wrap:wrap;gap:4px">
@@ -2233,7 +2233,7 @@
               <!-- In Progress -->
               <div class="lane fp-col" data-fp-col="progress">
                 <h3><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--accent);margin-right:4px;vertical-align:middle"></span> In Progress <span class="fp-col-count">2</span></h3>
-                <div class="task fp-card" onclick="openTaskDetail()" data-fp-schedule="week" data-fp-mode="auto" data-fp-agent="yes" style="border-color:rgba(82,156,202,.3)">
+                <div class="task fp-card" onclick="openTaskDetail()" data-fp-schedule="week" data-fp-month="4" data-fp-mode="auto" data-fp-agent="yes" style="border-color:rgba(82,156,202,.3)">
                   <div style="font-size:10px;font-family:var(--mono);color:var(--dim);margin-bottom:2px">FP-002</div>
                   <div class="task-title">看板状态模型实现</div>
                   <div class="task-meta" style="flex-wrap:wrap;gap:4px">
@@ -2262,7 +2262,7 @@
               <!-- In Evaluation -->
               <div class="lane fp-col" data-fp-col="evaluation">
                 <h3><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--purple);margin-right:4px;vertical-align:middle"></span> Evaluation <span class="fp-col-count">1</span></h3>
-                <div class="task fp-card" onclick="openTaskDetail()" data-fp-schedule="week" data-fp-mode="auto" data-fp-decision="yes" style="border-color:rgba(167,139,250,.3)">
+                <div class="task fp-card" onclick="openTaskDetail()" data-fp-schedule="week" data-fp-month="4" data-fp-mode="auto" data-fp-decision="yes" style="border-color:rgba(167,139,250,.3)">
                   <div style="font-size:10px;font-family:var(--mono);color:var(--dim);margin-bottom:2px">FP-005</div>
                   <div class="task-title">规划引擎接口设计</div>
                   <div class="task-meta" style="flex-wrap:wrap;gap:4px">
@@ -2279,7 +2279,7 @@
               <!-- Done -->
               <div class="lane fp-col" data-fp-col="done">
                 <h3><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--green);margin-right:4px;vertical-align:middle"></span> Done <span class="fp-col-count">2</span></h3>
-                <div class="task fp-card" style="opacity:.7" data-fp-schedule="week" data-fp-mode="auto">
+                <div class="task fp-card" style="opacity:.7" data-fp-schedule="week" data-fp-month="4" data-fp-mode="auto">
                   <div style="font-size:10px;font-family:var(--mono);color:var(--dim);margin-bottom:2px">FP-001</div>
                   <div class="task-title" style="text-decoration:line-through">数据模型设计</div>
                   <div class="task-meta" style="flex-wrap:wrap;gap:4px">
@@ -2322,7 +2322,7 @@
               📌 Q2 / 4月 — Workspace + Engine 原型
               <span style="font-weight:400;color:var(--dim);font-family:var(--mono);font-size:11px" class="fp-list-group-count">5 项</span>
             </div>
-            <table style="width:100%;border-collapse:collapse" class="fp-list-table">
+            <table style="width:100%;border-collapse:collapse" class="fp-list-table" data-fp-month-group="4">
               <thead>
                 <tr>
                   <th style="width:40px;text-align:left;padding:8px 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);border-bottom:1px solid var(--line-soft)">状态</th>
@@ -2393,7 +2393,7 @@
               📆 Q2 / 5月 — AI + Crew 集成
               <span style="font-weight:400;color:var(--dim);font-family:var(--mono);font-size:11px" class="fp-list-group-count">2 项</span>
             </div>
-            <table style="width:100%;border-collapse:collapse" class="fp-list-table">
+            <table style="width:100%;border-collapse:collapse" class="fp-list-table" data-fp-month-group="5">
               <thead>
                 <tr>
                   <th style="width:40px;text-align:left;padding:8px 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);border-bottom:1px solid var(--line-soft)">状态</th>
@@ -3469,9 +3469,14 @@
         document.getElementById('fp-filter-time').textContent = '时间: ' + (timeLabels[filter] || '全部') + ' ▾';
         const monthSet = ['month', 'week', 'today'];
         const weekSet = ['week', 'today'];
+        var curMonth = (filter === 'month') ? String(new Date().getMonth() + 1) : '';
         document.querySelectorAll('.fp-card').forEach(c => {
           if (filter === 'all') { c.style.display = ''; return; }
-          if (filter === 'month') { c.style.display = monthSet.includes(c.dataset.fpSchedule) ? '' : 'none'; return; }
+          if (filter === 'month') {
+            if (c.dataset.fpMonth) { c.style.display = c.dataset.fpMonth === curMonth ? '' : 'none'; }
+            else { c.style.display = monthSet.includes(c.dataset.fpSchedule) ? '' : 'none'; }
+            return;
+          }
           if (filter === 'week') { c.style.display = weekSet.includes(c.dataset.fpSchedule) ? '' : 'none'; return; }
           if (filter === 'today') { c.style.display = c.dataset.fpSchedule === 'today' ? '' : 'none'; return; }
           if (filter === 'agent') { c.style.display = c.dataset.fpAgent === 'yes' ? '' : 'none'; return; }
@@ -3480,17 +3485,27 @@
         });
         document.querySelectorAll('.fp-list-row').forEach(r => {
           if (filter === 'all') { r.style.display = ''; return; }
-          if (filter === 'month') { r.style.display = monthSet.includes(r.dataset.fpSchedule) ? '' : 'none'; return; }
+          if (filter === 'month') {
+            var monthGroup = r.closest('[data-fp-month-group]');
+            if (monthGroup) { r.style.display = monthGroup.dataset.fpMonthGroup === curMonth ? '' : 'none'; }
+            else { r.style.display = monthSet.includes(r.dataset.fpSchedule) ? '' : 'none'; }
+            return;
+          }
           if (filter === 'week') { r.style.display = weekSet.includes(r.dataset.fpSchedule) ? '' : 'none'; return; }
           if (filter === 'today') { r.style.display = r.dataset.fpSchedule === 'today' ? '' : 'none'; return; }
           if (filter === 'agent') { r.style.display = r.dataset.fpAgent === 'yes' ? '' : 'none'; return; }
           if (filter === 'decision') { r.style.display = r.dataset.fpDecision === 'yes' ? '' : 'none'; return; }
           r.style.display = '';
         });
-        // 规划视图任务行过滤（与看板/列表同一套逻辑）
+        // 规划视图任务行过滤
         document.querySelectorAll('.fp-plan-task').forEach(function(el) {
           if (filter === 'all') { el.style.display = ''; return; }
-          if (filter === 'month') { el.style.display = monthSet.includes(el.dataset.fpSchedule) ? '' : 'none'; return; }
+          if (filter === 'month') {
+            var container = el.closest('[data-fp-plan-month]');
+            if (container) { el.style.display = container.dataset.fpPlanMonth === curMonth ? '' : 'none'; }
+            else { el.style.display = monthSet.includes(el.dataset.fpSchedule) ? '' : 'none'; }
+            return;
+          }
           if (filter === 'week') { el.style.display = weekSet.includes(el.dataset.fpSchedule) ? '' : 'none'; return; }
           if (filter === 'today') { el.style.display = el.dataset.fpSchedule === 'today' ? '' : 'none'; return; }
           el.style.display = '';
@@ -3514,6 +3529,7 @@
         // 规划视图：隐藏无可见任务的目标容器
         document.querySelectorAll('[data-fp-plan-month]').forEach(function(container) {
           if (filter === 'all') { container.style.display = ''; return; }
+          if (filter === 'month') { container.style.display = container.dataset.fpPlanMonth === curMonth ? '' : 'none'; return; }
           var hasVisible = false;
           container.querySelectorAll('.fp-plan-task').forEach(function(t) {
             if (t.style.display !== 'none') hasVisible = true;
@@ -3530,6 +3546,15 @@
           var label = labels[filter] || '📋 全局规划';
           titleEl.innerHTML = label + ' · 月视图 <span style="font-size:10px;font-weight:400;color:var(--dim);font-family:var(--mono);">' + visCount + ' 项</span>';
         }
+        // 列表视图：隐藏无可见行的分组
+        document.querySelectorAll('#focus-list .fp-list-table').forEach(function(table) {
+          if (filter === 'all') { table.style.display = ''; var gh = table.previousElementSibling; if (gh) gh.style.display = ''; return; }
+          var hasVisible = false;
+          table.querySelectorAll('.fp-list-row').forEach(function(row) { if (row.style.display !== 'none') hasVisible = true; });
+          var gh = table.previousElementSibling;
+          if (gh) gh.style.display = hasVisible ? '' : 'none';
+          table.style.display = hasVisible ? '' : 'none';
+        });
       }
 
       /* ── Focus: Task Detail ── */
