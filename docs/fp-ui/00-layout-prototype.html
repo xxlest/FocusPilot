@@ -299,6 +299,7 @@
       }
 
       .work {
+        flex: 1;
         min-height: 0;
         overflow: auto;
         padding: 18px;
@@ -1001,11 +1002,19 @@
             </div>
           </div>
           <div class="side-scroll">
+            <!-- 📌 置顶区 -->
+            <div id="studioPinArea">
+              <div id="studioPinHeader" style="padding:4px 8px 2px;font-size:10px;font-weight:600;color:var(--dim);text-transform:uppercase;letter-spacing:.04em">置顶</div>
+              <div class="side-item indent active studio-session" oncontextmenu="openSessionMenu(event,this);return false" onclick="selectStudioSession(this)" data-workspace="FocusPilot" data-session="重构 auth" data-session-id="s1" data-runtime="✳ Claude Code" data-pinned="true" style="font-size:11px">
+                <span>📌 重构 auth</span><span class="count" style="font-size:10px;color:var(--dim)">FocusPilot</span>
+              </div>
+              <div id="studioPinSep" style="border-bottom:1px solid var(--line-soft);margin:6px 8px"></div>
+            </div>
             <!-- 📥 Triage 收件箱 -->
             <div class="side-item" style="font-weight:500;display:flex;align-items:center;justify-content:space-between">
               <span>📥 Triage</span><span style="background:var(--red);color:#fff;border-radius:8px;padding:1px 6px;font-size:10px;min-width:16px;text-align:center">3</span>
             </div>
-            <div class="side-item indent" style="font-size:11px">
+            <div class="side-item indent" style="font-size:11px;cursor:pointer" onclick="showTriageDetail()">
               <span>🔄 每日代码审查</span><span class="count" style="color:var(--amber);font-size:10px">发现 2 个问题</span>
             </div>
             <div class="side-item indent" style="font-size:11px">
@@ -1016,25 +1025,26 @@
             </div>
             <div style="border-bottom:1px solid var(--line-soft);margin:8px 8px"></div>
             <!-- 🔍 搜索 -->
-            <div style="padding:0 8px 8px"><input class="search" placeholder="🔍 搜索 Threads..." style="width:100%" /></div>
-            <!-- 📂 Thread 列表（按项目分组） -->
-            <div class="side-item" style="font-weight:500">
-              <span>▾ 📂 FocusPilot</span><span class="count" style="cursor:pointer">+</span>
+            <div style="padding:0 8px 8px"><input class="search" placeholder="🔍 搜索对话..." style="width:100%" /></div>
+            <!-- 📂 项目 Workspace -->
+            <div style="padding:4px 8px 2px;font-size:10px;font-weight:600;color:var(--dim);text-transform:uppercase;letter-spacing:.04em">项目 Workspace</div>
+            <div class="side-item ws-row" data-workspace="FocusPilot" style="font-weight:500;cursor:pointer" onclick="setCurrentWorkspace(this.dataset.workspace)">
+              <span>📂 FocusPilot</span><span class="count" style="cursor:pointer;display:flex;gap:8px"><span onclick="event.stopPropagation();openWorkspaceMenu(event,this.closest('.ws-row').dataset.workspace)" title="项目菜单">···</span><span onclick="event.stopPropagation();openNewSessionModal(this.closest('.ws-row').dataset.workspace)" title="在此项目中新建对话">+</span></span>
             </div>
-            <div class="side-item indent active">
-              <span>🧑‍💻 重构 auth</span><span class="count"><span style="color:var(--dim);font-size:10px">✳</span> <span style="color:var(--accent)">● 3m</span></span>
+            <div class="side-item indent studio-session" oncontextmenu="openSessionMenu(event,this);return false" onclick="selectStudioSession(this)" data-workspace="FocusPilot" data-session="代码审查" data-session-id="s2" data-runtime="✳ Claude Code" style="font-size:11px">
+              <span>🔍 代码审查</span><span class="count"><span style="color:var(--green)">✅ 1h</span></span>
             </div>
-            <div class="side-item indent">
-              <span>🔍 代码审查</span><span class="count"><span style="color:var(--dim);font-size:10px">✳</span> <span style="color:var(--green)">✅ 1h</span></span>
+            <div class="side-item indent studio-session" oncontextmenu="openSessionMenu(event,this);return false" onclick="selectStudioSession(this)" data-workspace="FocusPilot" data-session="Bug fix #12" data-session-id="s3" data-runtime="⚡ Codex CLI" style="font-size:11px">
+              <span>⚡ Bug fix #12</span><span class="count"><span style="color:var(--accent)">● 15m</span></span>
             </div>
-            <div class="side-item indent">
-              <span>⚡ Bug fix #12</span><span class="count"><span style="color:var(--dim);font-size:10px">⚡</span> <span style="color:var(--accent)">● 15m</span></span>
+            <div class="side-item ws-row" data-workspace="PilotOne" style="font-weight:500;cursor:pointer" onclick="setCurrentWorkspace(this.dataset.workspace)">
+              <span>📂 PilotOne</span><span class="count" style="cursor:pointer;display:flex;gap:8px"><span onclick="event.stopPropagation();openWorkspaceMenu(event,this.closest('.ws-row').dataset.workspace)" title="项目菜单">···</span><span onclick="event.stopPropagation();openNewSessionModal(this.closest('.ws-row').dataset.workspace)" title="在此项目中新建对话">+</span></span>
             </div>
-            <div class="side-item" style="font-weight:500">
-              <span>▸ 📂 PilotOne</span><span class="count" style="cursor:pointer">+</span>
-            </div>
-            <div style="display:flex;align-items:center;justify-content:center;gap:4px;padding:8px;margin:8px 8px 0;border-radius:var(--radius);border:1px dashed var(--line);color:var(--dim);font-size:11px;cursor:pointer">+ 添加项目</div>
-            <div style="border-bottom:1px solid var(--line-soft);margin:10px 8px"></div>
+            <div class="side-item indent" style="font-size:11px;color:var(--dim)">暂无对话</div>
+            <div style="border-bottom:1px solid var(--line-soft);margin:8px 8px"></div>
+            <!-- 添加项目文件夹 -->
+            <div onclick="openNewWorkspaceModal()" style="display:flex;align-items:center;justify-content:center;gap:4px;padding:8px;margin:0 8px;border-radius:var(--radius);border:1px dashed var(--line);color:var(--dim);font-size:11px;cursor:pointer">+ 添加项目文件夹</div>
+            <div style="border-bottom:1px solid var(--line-soft);margin:8px 8px"></div>
             <!-- 🤖 Automations（默认折叠） -->
             <div class="side-item" style="font-weight:500;cursor:pointer" onclick="var c=this.nextElementSibling;c.style.display=c.style.display==='none'?'':'none';this.querySelector('.ta').textContent=c.style.display==='none'?'▸':'▾'">
               <span><span class="ta">▸</span> 自动化</span><span class="count">2</span>
@@ -1043,13 +1053,12 @@
               <div class="side-item indent" style="font-size:11px">
                 <span>🔄 每日代码审查</span><span class="count" style="color:var(--green);font-size:10px">✅ 2h前</span>
               </div>
-              <div class="side-item indent" style="font-size:11px">
+              <div class="side-item indent" style="font-size:11px;cursor:pointer" onclick="showAutomationLog()">
                 <span>🔄 PR 自动检查</span><span class="count" style="color:var(--accent);font-size:10px">🔄 运行中</span>
               </div>
             </div>
           </div>
           <div class="side-footer">
-            <button class="btn" style="display:flex;align-items:center;gap:4px">+ New <span style="font-size:9px;color:var(--dim)">⌘N</span></button>
             <button class="btn">⚙ 设置</button>
           </div>
         </section>
@@ -2409,19 +2418,23 @@
 
         <section class="page" data-page="studio">
           <header class="topbar">
-            <h1 style="display:flex;align-items:center;gap:6px">📂 FocusPilot <span style="color:var(--dim);font-weight:400">·</span> <span style="font-weight:500">🧑‍💻 代码工程师</span> <span style="color:var(--dim);font-weight:400;font-size:12px">(✳ Claude Code)</span></h1>
+            <h1 id="studioTopbarTitle" style="display:flex;align-items:center;gap:6px">📂 FocusPilot <span style="color:var(--dim);font-weight:400">·</span> <span style="font-weight:500">重构 auth</span> <span style="color:var(--dim);font-weight:400">·</span> <span style="color:var(--dim);font-weight:400;font-size:12px">✳ Claude Code</span></h1>
             <div class="top-actions">
               <button class="btn" style="font-size:11px">🔧 打开工具 ▾</button
               ><button class="btn" style="font-size:11px" id="studioTermToggle" onclick="toggleStudioTerminal()">🖥 终端</button
               ><button class="btn" style="font-size:11px" id="studioSideToggle" onclick="toggleStudioSidebar()">◨ 右侧栏</button>
             </div>
           </header>
+          <div id="studioEmptyTopbar" style="display:none;align-items:center;justify-content:center;gap:12px;padding:14px 18px;border-bottom:1px solid var(--line-soft);background:var(--surface)">
+            <span id="studioEmptyText" style="font-size:12px;color:var(--dim)">添加项目文件夹开始使用 Studio</span>
+            <button class="btn primary" style="font-size:11px" onclick="openNewWorkspaceModal()">+ 添加项目文件夹</button>
+          </div>
           <div class="work" style="padding:0;overflow:hidden">
             <div class="studio-layout" style="display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:0;min-height:620px">
               <!-- ═══ Left: Chat + Input + Terminal ═══ -->
               <div style="display:flex;flex-direction:column;min-width:0;border-right:1px solid var(--line-soft)">
                 <!-- C区: 对话区 -->
-                <div style="flex:1;overflow-y:auto;padding:18px 20px">
+                <div id="studioChatArea" style="flex:1;overflow-y:auto;padding:18px 20px">
                   <!-- 空态: Agent 信息 -->
                   <div style="text-align:center;padding:24px 0 20px;color:var(--dim)">
                     <div style="font-size:18px;margin-bottom:4px">🧑‍💻 代码工程师</div>
@@ -2491,38 +2504,96 @@
               </div>
               <!-- ═══ Right: E区 Diff 审查 + Git 操作 ═══ -->
               <div id="studioRightSidebar" style="display:flex;flex-direction:column;min-width:0;overflow:hidden">
-                <!-- Diff Tab 条 -->
-                <div style="display:flex;align-items:center;background:var(--bg);border-bottom:1px solid var(--line-soft);padding:0 8px;height:34px;gap:0">
-                  <div style="display:flex;align-items:center;gap:4px;padding:5px 10px;font-size:11px;font-weight:500;color:var(--text);border-bottom:2px solid var(--accent);cursor:pointer">KanbanDataSource.swift</div>
-                  <div style="display:flex;align-items:center;gap:4px;padding:5px 10px;font-size:11px;color:var(--muted);cursor:pointer">Models.swift <span style="color:var(--dim);font-size:9px;cursor:pointer">✕</span></div>
+                <!-- ── Mode: Diff ── -->
+                <div id="studioDiffPanel" style="display:flex;flex-direction:column;flex:1;overflow:hidden">
+                  <!-- Diff Tab 条 -->
+                  <div style="display:flex;align-items:center;background:var(--bg);border-bottom:1px solid var(--line-soft);padding:0 8px;height:34px;gap:0">
+                    <div style="display:flex;align-items:center;gap:4px;padding:5px 10px;font-size:11px;font-weight:500;color:var(--text);border-bottom:2px solid var(--accent);cursor:pointer">KanbanDataSource.swift</div>
+                    <div style="display:flex;align-items:center;gap:4px;padding:5px 10px;font-size:11px;color:var(--muted);cursor:pointer">Models.swift <span style="color:var(--dim);font-size:9px;cursor:pointer">✕</span></div>
+                  </div>
+                  <!-- Diff 内容 -->
+                  <div style="flex:1;overflow-y:auto;padding:10px 0;font-family:var(--mono);font-size:11px;line-height:1.8">
+                    <div style="display:flex"><span style="display:inline-block;width:36px;text-align:right;color:var(--dim);user-select:none;padding-right:12px">12</span><span style="background:rgba(255,100,100,.12);color:var(--red);display:block;width:100%;padding-left:4px">- let duration = 0.3</span></div>
+                    <div style="display:flex"><span style="display:inline-block;width:36px;text-align:right;color:var(--dim);user-select:none;padding-right:12px">12</span><span style="background:rgba(100,255,100,.12);color:var(--green);display:block;width:100%;padding-left:4px">+ let duration = 0.2</span></div>
+                    <div style="display:flex"><span style="display:inline-block;width:36px;text-align:right;color:var(--dim);user-select:none;padding-right:12px">13</span><span style="color:var(--muted);padding-left:4px">  let curve = CAMediaTimingFunction(</span></div>
+                    <div style="display:flex"><span style="display:inline-block;width:36px;text-align:right;color:var(--dim);user-select:none;padding-right:12px">14</span><span style="background:rgba(255,100,100,.12);color:var(--red);display:block;width:100%;padding-left:4px">-   name: .easeInEaseOut</span></div>
+                    <div style="display:flex"><span style="display:inline-block;width:36px;text-align:right;color:var(--dim);user-select:none;padding-right:12px">14</span><span style="background:rgba(100,255,100,.12);color:var(--green);display:block;width:100%;padding-left:4px">+   name: .easeOut</span></div>
+                    <div style="display:flex"><span style="display:inline-block;width:36px;text-align:right;color:var(--dim);user-select:none;padding-right:12px">15</span><span style="color:var(--muted);padding-left:4px">  )</span></div>
+                    <!-- inline 评论 -->
+                    <div style="margin:6px 8px;background:var(--elevated);border:1px solid var(--line-soft);border-radius:var(--radius);padding:8px 10px">
+                      <div style="font-size:10px;color:var(--accent);margin-bottom:4px">💬 Inline 评论</div>
+                      <div style="font-size:11px;color:var(--text);font-family:var(--sans)">ease-out 比 ease-in-out 更自然</div>
+                    </div>
+                  </div>
                 </div>
-                <!-- Diff 内容 -->
-                <div style="flex:1;overflow-y:auto;padding:10px 0;font-family:var(--mono);font-size:11px;line-height:1.8">
-                  <div style="display:flex"><span style="display:inline-block;width:36px;text-align:right;color:var(--dim);user-select:none;padding-right:12px">12</span><span style="background:rgba(255,100,100,.12);color:var(--red);display:block;width:100%;padding-left:4px">- let duration = 0.3</span></div>
-                  <div style="display:flex"><span style="display:inline-block;width:36px;text-align:right;color:var(--dim);user-select:none;padding-right:12px">12</span><span style="background:rgba(100,255,100,.12);color:var(--green);display:block;width:100%;padding-left:4px">+ let duration = 0.2</span></div>
-                  <div style="display:flex"><span style="display:inline-block;width:36px;text-align:right;color:var(--dim);user-select:none;padding-right:12px">13</span><span style="color:var(--muted);padding-left:4px">  let curve = CAMediaTimingFunction(</span></div>
-                  <div style="display:flex"><span style="display:inline-block;width:36px;text-align:right;color:var(--dim);user-select:none;padding-right:12px">14</span><span style="background:rgba(255,100,100,.12);color:var(--red);display:block;width:100%;padding-left:4px">-   name: .easeInEaseOut</span></div>
-                  <div style="display:flex"><span style="display:inline-block;width:36px;text-align:right;color:var(--dim);user-select:none;padding-right:12px">14</span><span style="background:rgba(100,255,100,.12);color:var(--green);display:block;width:100%;padding-left:4px">+   name: .easeOut</span></div>
-                  <div style="display:flex"><span style="display:inline-block;width:36px;text-align:right;color:var(--dim);user-select:none;padding-right:12px">15</span><span style="color:var(--muted);padding-left:4px">  )</span></div>
-                  <!-- inline 评论 -->
-                  <div style="margin:6px 8px;background:var(--elevated);border:1px solid var(--line-soft);border-radius:var(--radius);padding:8px 10px">
-                    <div style="font-size:10px;color:var(--accent);margin-bottom:4px">💬 Inline 评论</div>
-                    <div style="font-size:11px;color:var(--text);font-family:var(--sans)">ease-out 比 ease-in-out 更自然</div>
+                <!-- ── Mode: Triage 详情 ── -->
+                <div id="studioTriagePanel" style="display:none;flex-direction:column;flex:1;overflow-y:auto">
+                  <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border-bottom:1px solid var(--line-soft)">
+                    <span style="font-size:12px;font-weight:600">📥 Triage 详情</span>
+                    <span style="cursor:pointer;color:var(--dim);font-size:11px" onclick="showStudioRightMode('diff')">✕ 关闭</span>
+                  </div>
+                  <div style="padding:12px">
+                    <div style="background:var(--bg);border:1px solid var(--line-soft);border-radius:var(--radius);padding:12px;margin-bottom:12px">
+                      <div style="font-size:13px;font-weight:600;margin-bottom:6px">🔄 每日代码审查</div>
+                      <div style="display:inline-block;background:var(--amber);color:#000;border-radius:8px;padding:1px 8px;font-size:10px;font-weight:600;margin-bottom:8px">发现 2 个潜在问题</div>
+                      <div style="font-size:11px;color:var(--muted);line-height:1.6">
+                        <div style="margin-bottom:6px"><strong style="color:var(--amber)">1.</strong> <code style="font-family:var(--mono);background:var(--surface);padding:1px 4px;border-radius:3px">WindowService.swift:142</code> — 未处理的可选值解包，可能导致运行时崩溃</div>
+                        <div><strong style="color:var(--amber)">2.</strong> <code style="font-family:var(--mono);background:var(--surface);padding:1px 4px;border-radius:3px">AppDelegate.swift:89</code> — 废弃 API 调用，建议迁移到新接口</div>
+                      </div>
+                    </div>
+                    <div style="display:flex;gap:6px">
+                      <button class="btn primary" style="font-size:10px;min-height:26px">接受</button>
+                      <button class="btn" style="font-size:10px;min-height:26px">派生对话</button>
+                      <button class="btn" style="font-size:10px;min-height:26px">归档</button>
+                    </div>
+                  </div>
+                </div>
+                <!-- ── Mode: Automation 日志 ── -->
+                <div id="studioAutomationPanel" style="display:none;flex-direction:column;flex:1;overflow-y:auto">
+                  <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border-bottom:1px solid var(--line-soft)">
+                    <span style="font-size:12px;font-weight:600">🔄 Automation 日志</span>
+                    <span style="cursor:pointer;color:var(--dim);font-size:11px" onclick="showStudioRightMode('diff')">✕ 关闭</span>
+                  </div>
+                  <div style="padding:12px">
+                    <div style="margin-bottom:12px">
+                      <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px">
+                        <span style="font-size:13px;font-weight:600">PR 自动检查</span>
+                        <span style="display:inline-block;background:var(--accent);color:#000;border-radius:8px;padding:1px 8px;font-size:10px;font-weight:600">运行中</span>
+                      </div>
+                      <div style="font-size:10px;color:var(--dim);margin-bottom:10px">触发时间：2 分钟前 · PR #47 feat: add kanban view</div>
+                    </div>
+                    <div style="background:#1a1a1a;border-radius:var(--radius);padding:10px 12px;font-family:var(--mono);font-size:10px;line-height:1.8;color:var(--green)">
+                      <div style="color:var(--dim)">[14:32:01] 开始执行 PR 自动检查...</div>
+                      <div style="color:var(--dim)">[14:32:02] 拉取 PR #47 分支 feat/kanban-view</div>
+                      <div style="color:var(--dim)">[14:32:05] 运行 lint 检查...</div>
+                      <div>[14:32:08] ✅ lint 通过 (0 errors, 2 warnings)</div>
+                      <div>[14:32:09] 运行单元测试...</div>
+                      <div style="color:var(--amber)">[14:32:15] ⚠ 2 个测试跳过 (标记 @disabled)</div>
+                      <div>[14:32:18] 运行构建检查...</div>
+                      <div style="animation:blink 1s step-end infinite">▊</div>
+                    </div>
+                    <div style="display:flex;gap:6px;margin-top:12px">
+                      <button class="btn" style="font-size:10px;min-height:26px">⏹ 终止</button>
+                      <button class="btn" style="font-size:10px;min-height:26px">📋 复制日志</button>
+                    </div>
                   </div>
                 </div>
                 <!-- 变更文件列表 + Git 操作 -->
                 <div style="border-top:1px solid var(--line-soft);padding:8px">
-                  <div style="font-size:10px;font-weight:600;color:var(--dim);margin-bottom:6px;display:flex;justify-content:space-between">变更文件 <span>2</span></div>
-                  <div class="side-item" style="font-size:11px;padding:3px 4px">
-                    <span>☑ 📝 KanbanDataSource.swift</span><span class="count" style="color:var(--amber)">M</span>
+                  <div id="studioGitHeader" style="font-size:10px;font-weight:600;color:var(--dim);margin-bottom:6px;display:flex;justify-content:space-between">变更文件 <span id="studioGitCount">2</span></div>
+                  <div id="studioGitFiles">
+                    <div class="side-item" style="font-size:11px;padding:3px 4px">
+                      <span>☑ 📝 KanbanDataSource.swift</span><span class="count" style="color:var(--amber)">M</span>
+                    </div>
+                    <div class="side-item" style="font-size:11px;padding:3px 4px">
+                      <span>☑ 📝 新文件.swift</span><span class="count" style="color:var(--green)">U</span>
+                    </div>
                   </div>
-                  <div class="side-item" style="font-size:11px;padding:3px 4px">
-                    <span>☑ 📝 新文件.swift</span><span class="count" style="color:var(--green)">U</span>
-                  </div>
-                  <div style="display:flex;flex-direction:column;gap:4px;margin-top:8px">
+                  <div id="studioGitWarn" style="font-size:9px;color:var(--dim);margin:4px 0">⚠ U 未追踪文件不可 Revert</div>
+                  <div id="studioGitActions" style="display:flex;flex-direction:column;gap:4px;margin-top:8px">
                     <div style="display:flex;gap:4px">
                       <button class="btn" style="flex:1;font-size:10px;min-height:26px">✓ Stage</button>
-                      <button class="btn" style="flex:1;font-size:10px;min-height:26px">↩ Revert</button>
+                      <button id="studioRevertBtn" class="btn" style="flex:1;font-size:10px;min-height:26px;opacity:0.4;cursor:not-allowed" disabled title="选中文件包含未追踪文件，不可 Revert">↩ Revert</button>
                     </div>
                     <button class="btn primary" style="font-size:10px;min-height:26px">📝 Commit ⌘↩</button>
                     <div style="display:flex;gap:4px">
@@ -3192,6 +3263,14 @@
           event.preventDefault()
           showPage(pageOrder[index])
         }
+        if (event.key.toLowerCase() === "n") {
+          var activeNav = document.querySelector('.nav-btn.active')
+          if (activeNav && activeNav.dataset.page === 'studio') {
+            event.preventDefault()
+            if (currentStudioWorkspace) { openNewSessionModal(currentStudioWorkspace) } else { openNewWorkspaceModal() }
+            return
+          }
+        }
         if (event.key.toLowerCase() === "b") {
           event.preventDefault()
           document.documentElement.style.setProperty(
@@ -3275,6 +3354,646 @@
           grid.style.gridTemplateColumns = 'minmax(0,1fr) 320px';
         }
       }
+      function selectAgent(el) {
+        if (el.dataset.disabled === 'true') return;
+        el.parentElement.querySelectorAll('.agent-row').forEach(r => { r.style.borderColor = 'var(--line-soft)'; r.classList.remove('selected'); });
+        el.style.borderColor = 'var(--accent)'; el.classList.add('selected');
+      }
+      function toggleCustomAgent() {
+        var sec = document.getElementById('customAgentExpand');
+        sec.style.display = sec.style.display === 'none' ? '' : 'none';
+      }
+
+      /* ── Studio: Right Panel Mode Switch ── */
+      var studioRightModes = ['studioDiffPanel', 'studioTriagePanel', 'studioAutomationPanel'];
+      function showStudioRightMode(mode) {
+        var modeMap = { diff: 'studioDiffPanel', triage: 'studioTriagePanel', automation: 'studioAutomationPanel' };
+        var targetId = modeMap[mode] || modeMap['diff'];
+        studioRightModes.forEach(function(id) {
+          var el = document.getElementById(id);
+          if (el) el.style.display = id === targetId ? 'flex' : 'none';
+        });
+      }
+      function showTriageDetail() { showStudioRightMode('triage'); }
+      function showAutomationLog() { showStudioRightMode('automation'); }
+
+      /* ── Studio: Session mock 数据（按 sessionId 索引） ── */
+      var currentStudioWorkspace = 'FocusPilot';
+      var studioSessions = {
+        s1: {
+          name: '重构 auth', agent: '✳ Claude Code', agentIcon: '✳', agentName: 'Claude Code', model: 'claude-opus-4', preset: '代码工程师 preset',
+          messages: [
+            { role: 'user', text: '帮我把 animateRow 的动画改成 0.2s ease-out' },
+            { role: 'agent', text: '好的，我来修改 KanbanDataSource 中的动画参数。', diff: 'KanbanDataSource.swift' },
+            { role: 'user', text: '编译一下' },
+            { role: 'agent', text: '', terminal: '$ make build\n✓ Build succeeded' }
+          ],
+          diffFiles: [
+            { name: 'KanbanDataSource.swift', status: 'M', active: true },
+            { name: '新文件.swift', status: 'U', active: false }
+          ],
+          diffContent: [
+            { line: 12, type: 'del', text: '- let duration = 0.3' },
+            { line: 12, type: 'add', text: '+ let duration = 0.2' },
+            { line: 13, type: 'ctx', text: '  let curve = CAMediaTimingFunction(' },
+            { line: 14, type: 'del', text: '-   name: .easeInEaseOut' },
+            { line: 14, type: 'add', text: '+   name: .easeOut' },
+            { line: 15, type: 'ctx', text: '  )' }
+          ],
+          terminalLines: '$ make build\nBuild complete.',
+          terminalTabs: ['Terminal 1', 'Terminal 2']
+        },
+        s2: {
+          name: '代码审查', agent: '✳ Claude Code', agentIcon: '✳', agentName: 'Claude Code', model: 'claude-opus-4', preset: '代码审查 preset',
+          messages: [
+            { role: 'user', text: '审查 PR #42 的安全性' },
+            { role: 'agent', text: '我已经完成了 PR #42 的审查，发现 2 个问题：\n1. SQL 查询未使用参数化绑定\n2. 用户输入未做 XSS 过滤', diff: 'AuthService.swift' }
+          ],
+          diffFiles: [
+            { name: 'AuthService.swift', status: 'M', active: true },
+            { name: 'UserInput.swift', status: 'M', active: false }
+          ],
+          diffContent: [
+            { line: 89, type: 'del', text: '- let query = "SELECT * FROM users WHERE id = \\(userId)"' },
+            { line: 89, type: 'add', text: '+ let query = "SELECT * FROM users WHERE id = ?"' },
+            { line: 90, type: 'add', text: '+ stmt.bind(userId)' }
+          ],
+          terminalLines: '$ swift test\nTest Suite passed: 42 tests, 0 failures.',
+          terminalTabs: ['Terminal 1']
+        },
+        s3: {
+          name: 'Bug fix #12', agent: '⚡ Codex CLI', agentIcon: '⚡', agentName: 'Codex CLI', model: 'codex', preset: '',
+          messages: [
+            { role: 'user', text: '修复 issue #12：登录页面在暗色模式下文字不可见' },
+            { role: 'agent', text: '已找到问题：LoginView.swift 中 textColor 使用了固定的 .black，暗色模式下不可见。已修改为 .labelColor。', diff: 'LoginView.swift' }
+          ],
+          diffFiles: [
+            { name: 'LoginView.swift', status: 'M', active: true }
+          ],
+          diffContent: [
+            { line: 27, type: 'del', text: '- label.textColor = .black' },
+            { line: 27, type: 'add', text: '+ label.textColor = .labelColor' }
+          ],
+          terminalLines: '$ make install\n✓ Build succeeded\n✓ Installed to /Applications',
+          terminalTabs: ['Terminal 1']
+        }
+      };
+
+      function renderStudioChat(sid) {
+        var data = studioSessions[sid];
+        if (!data) return;
+        var chatArea = document.getElementById('studioChatArea');
+        if (!chatArea) return;
+        var html = '<div style="text-align:center;padding:24px 0 20px;color:var(--dim)">';
+        html += '<div style="font-size:18px;margin-bottom:4px">' + data.agentIcon + ' ' + data.agentName + '</div>';
+        html += '<div style="font-size:11px;font-family:var(--mono);color:var(--muted)">' + data.agent + ' · ' + data.model + '</div>';
+        if (data.preset) html += '<div style="font-size:11px;color:var(--dim);margin-top:4px">' + data.preset + '</div>';
+        html += '</div><div style="display:flex;flex-direction:column;gap:16px">';
+        data.messages.forEach(function(m) {
+          if (m.role === 'user') {
+            html += '<div style="display:flex;gap:8px;align-items:flex-start"><div style="flex-shrink:0;width:22px;height:22px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;margin-top:2px">👤</div><div style="background:var(--elevated);border:1px solid var(--line-soft);border-radius:10px;padding:10px 14px;font-size:12px;line-height:1.6;max-width:80%">' + m.text + '</div></div>';
+          } else {
+            html += '<div style="display:flex;gap:8px;align-items:flex-start"><div style="flex-shrink:0;width:22px;height:22px;border-radius:50%;background:var(--surface);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:11px;margin-top:2px">🤖</div><div style="max-width:85%">';
+            if (m.text) html += '<div style="font-size:12px;line-height:1.6;color:var(--text);margin-bottom:8px;white-space:pre-line">' + m.text + '</div>';
+            if (m.terminal) html += '<div style="background:var(--bg);border:1px solid var(--line-soft);border-radius:var(--radius);padding:8px 12px;font-family:var(--mono);font-size:11px;line-height:1.6;color:var(--green);margin-bottom:8px;white-space:pre">' + m.terminal + '</div>';
+            if (m.diff) html += '<div style="background:var(--bg);border:1px solid var(--line-soft);border-radius:var(--radius);padding:8px 12px;font-family:var(--mono);font-size:11px;line-height:1.5;color:var(--muted);display:flex;align-items:center;justify-content:space-between"><span>已修改: <span style="color:var(--amber)">~</span> ' + m.diff + '</span><span style="color:var(--accent);cursor:pointer;font-size:10px">查看 Diff →</span></div>';
+            html += '</div></div>';
+          }
+        });
+        html += '</div>';
+        chatArea.innerHTML = html;
+      }
+
+      function renderStudioDiff(sid) {
+        var data = studioSessions[sid];
+        var panel = document.getElementById('studioDiffPanel');
+        if (!panel || !data) return;
+        var tabBar = panel.children[0];
+        var diffBody = panel.children[1];
+        var tabs = '';
+        data.diffFiles.forEach(function(f) {
+          if (f.active) {
+            tabs += '<div style="display:flex;align-items:center;gap:4px;padding:5px 10px;font-size:11px;font-weight:500;color:var(--text);border-bottom:2px solid var(--accent);cursor:pointer">' + f.name + '</div>';
+          } else {
+            tabs += '<div style="display:flex;align-items:center;gap:4px;padding:5px 10px;font-size:11px;color:var(--muted);cursor:pointer">' + f.name + ' <span style="color:var(--dim);font-size:9px;cursor:pointer">✕</span></div>';
+          }
+        });
+        if (!data.diffFiles.length) tabs = '<div style="padding:5px 10px;font-size:11px;color:var(--dim)">暂无变更文件</div>';
+        tabBar.innerHTML = tabs;
+        var lines = '';
+        data.diffContent.forEach(function(d) {
+          var bg = d.type === 'del' ? 'rgba(255,100,100,.12)' : d.type === 'add' ? 'rgba(100,255,100,.12)' : '';
+          var clr = d.type === 'del' ? 'var(--red)' : d.type === 'add' ? 'var(--green)' : 'var(--muted)';
+          lines += '<div style="display:flex"><span style="display:inline-block;width:36px;text-align:right;color:var(--dim);user-select:none;padding-right:12px">' + d.line + '</span><span style="' + (bg ? 'background:' + bg + ';' : '') + 'color:' + clr + ';display:block;width:100%;padding-left:4px">' + d.text + '</span></div>';
+        });
+        if (!lines) lines = '<div style="padding:20px;text-align:center;color:var(--dim);font-size:11px">暂无 Diff 内容</div>';
+        diffBody.innerHTML = lines;
+        var countEl = document.getElementById('studioGitCount');
+        var filesEl = document.getElementById('studioGitFiles');
+        var warnEl = document.getElementById('studioGitWarn');
+        var revertBtn = document.getElementById('studioRevertBtn');
+        if (countEl) countEl.textContent = data.diffFiles.length;
+        if (filesEl) {
+          var fhtml = '';
+          var hasU = false;
+          data.diffFiles.forEach(function(f) {
+            var sc = f.status === 'M' ? 'var(--amber)' : f.status === 'U' ? 'var(--green)' : 'var(--red)';
+            fhtml += '<div class="side-item" style="font-size:11px;padding:3px 4px"><span>☑ 📝 ' + f.name + '</span><span class="count" style="color:' + sc + '">' + f.status + '</span></div>';
+            if (f.status === 'U') hasU = true;
+          });
+          if (!fhtml) fhtml = '<div style="font-size:11px;color:var(--dim);padding:3px 4px">无变更文件</div>';
+          filesEl.innerHTML = fhtml;
+          if (warnEl) warnEl.style.display = hasU ? '' : 'none';
+          if (revertBtn) {
+            if (hasU) { revertBtn.disabled = true; revertBtn.style.opacity = '0.4'; revertBtn.style.cursor = 'not-allowed'; }
+            else { revertBtn.disabled = false; revertBtn.style.opacity = '1'; revertBtn.style.cursor = 'pointer'; }
+          }
+        }
+      }
+
+      function renderStudioTerminal(sid) {
+        var data = studioSessions[sid];
+        var term = document.getElementById('studioTerminal');
+        if (!term || !data) return;
+        var tabBar = term.children[0];
+        var tabs = '';
+        data.terminalTabs.forEach(function(t, i) {
+          if (i === 0) {
+            tabs += '<div style="display:flex;align-items:center;gap:4px;padding:4px 10px;font-size:10px;font-weight:500;color:var(--text);border-bottom:2px solid var(--accent);cursor:pointer">' + t + ' <span style="color:var(--dim);font-size:9px;cursor:pointer">✕</span></div>';
+          } else {
+            tabs += '<div style="display:flex;align-items:center;gap:4px;padding:4px 10px;font-size:10px;color:var(--muted);cursor:pointer">' + t + ' <span style="color:var(--dim);font-size:9px;cursor:pointer">✕</span></div>';
+          }
+        });
+        tabs += '<div style="padding:4px 8px;font-size:11px;color:var(--dim);cursor:pointer;margin-left:2px">+</div>';
+        tabBar.innerHTML = tabs;
+        var body = term.children[1];
+        body.innerHTML = data.terminalLines.replace(/\n/g, '<br>') + '<br><span style="opacity:.7">$ </span><span style="display:inline-block;width:6px;height:13px;background:var(--green);animation:blink 1s step-end infinite;vertical-align:text-bottom"></span>';
+      }
+
+      /* ── Studio: Session 行点击切换（四区联动 + active 同步） ── */
+      function selectStudioSession(el) {
+        var sid = el.dataset.sessionId || '';
+        document.querySelectorAll('.studio-session').forEach(function(t) { t.classList.remove('active'); });
+        if (sid) {
+          document.querySelectorAll('.studio-session[data-session-id="' + sid + '"]').forEach(function(t) { t.classList.add('active'); });
+        } else {
+          el.classList.add('active');
+        }
+        var workspace = el.dataset.workspace || '';
+        var runtime = el.dataset.runtime || '';
+        var sessionName = el.dataset.session || '';
+        currentStudioWorkspace = workspace;
+        var title = document.getElementById('studioTopbarTitle');
+        var emptyTop = document.getElementById('studioEmptyTopbar');
+        if (title) {
+          title.innerHTML = '📂 ' + workspace +
+            ' <span style="color:var(--dim);font-weight:400">·</span> ' +
+            '<span style="font-weight:500">' + sessionName + '</span> ' +
+            '<span style="color:var(--dim);font-weight:400">·</span> ' +
+            '<span style="color:var(--dim);font-weight:400;font-size:12px">' + runtime + '</span>';
+          title.style.display = '';
+        }
+        if (emptyTop) emptyTop.style.display = 'none';
+        if (sid) {
+          renderStudioChat(sid);
+          renderStudioDiff(sid);
+          renderStudioTerminal(sid);
+        }
+        showStudioRightMode('diff');
+      }
+
+      /* ── Studio: 添加项目文件夹交互 ── */
+      var wsExamplePaths = [
+        '/Users/bruce/Workspace/MyApp',
+        '/Users/bruce/Workspace/Backend',
+        '/Users/bruce/Workspace/Docs'
+      ];
+      var wsPathIndex = 0;
+      function pickWorkspaceFolder() {
+        var display = document.getElementById('wsPathDisplay');
+        var btn = document.getElementById('wsAddBtn');
+        display.textContent = wsExamplePaths[wsPathIndex % wsExamplePaths.length];
+        display.style.color = 'var(--text)';
+        btn.style.opacity = '1';
+        btn.style.pointerEvents = 'auto';
+        wsPathIndex++;
+      }
+      function addWorkspaceFromModal() {
+        var path = document.getElementById('wsPathDisplay').textContent;
+        var name = path.split('/').pop();
+        var list = document.querySelector('[data-page="studio"] .side-scroll');
+        var anchor = list.querySelector('[onclick*="openNewWorkspaceModal"]');
+        if (anchor && name) {
+          var wsRow = document.createElement('div');
+          wsRow.className = 'side-item ws-row';
+          wsRow.dataset.workspace = name;
+          wsRow.style.cssText = 'font-weight:500;cursor:pointer';
+          wsRow.onclick = function() { setCurrentWorkspace(this.dataset.workspace); };
+          wsRow.innerHTML = '<span>📂 ' + name + '</span><span class="count" style="cursor:pointer;display:flex;gap:8px"><span onclick="event.stopPropagation();openWorkspaceMenu(event,this.closest(\'.ws-row\').dataset.workspace)" title="项目菜单">···</span><span onclick="event.stopPropagation();openNewSessionModal(this.closest(\'.ws-row\').dataset.workspace)" title="新建对话">+</span></span>';
+          var emptyRow = document.createElement('div');
+          emptyRow.className = 'side-item indent';
+          emptyRow.style.cssText = 'font-size:11px;color:var(--dim)';
+          emptyRow.textContent = '暂无对话';
+          anchor.parentNode.insertBefore(wsRow, anchor);
+          anchor.parentNode.insertBefore(emptyRow, anchor);
+          currentStudioWorkspace = name;
+        }
+        closeNewWorkspaceModal();
+        document.getElementById('wsPathDisplay').textContent = '点击右侧选择文件夹...';
+        document.getElementById('wsPathDisplay').style.color = 'var(--dim)';
+        document.getElementById('wsAddBtn').style.opacity = '0.4';
+        document.getElementById('wsAddBtn').style.pointerEvents = 'none';
+      }
+
+      /* ── Studio: Workspace 创建弹窗 ── */
+      function openNewWorkspaceModal() { document.getElementById('studioNewWorkspaceModal').style.display = 'flex'; }
+      function closeNewWorkspaceModal() { document.getElementById('studioNewWorkspaceModal').style.display = 'none'; }
+
+      /* ── Studio: 新建对话弹窗 ── */
+      var currentSessionWorkspace = '';
+      function openNewSessionModal(workspace) {
+        currentSessionWorkspace = workspace || '';
+        document.getElementById('sessionWorkspaceLabel').textContent = '📂 ' + currentSessionWorkspace;
+        document.getElementById('studioNewSessionModal').style.display = 'flex';
+      }
+      function closeNewSessionModal() { document.getElementById('studioNewSessionModal').style.display = 'none'; currentSessionWorkspace = ''; }
+
+      /* ── Studio: Workspace 菜单 ── */
+      function openWorkspaceMenu(event, workspace) {
+        event.stopPropagation();
+        currentStudioWorkspace = workspace;
+        var menu = document.getElementById('studioWorkspaceMenu');
+        menu.dataset.workspace = workspace;
+        menu.querySelector('.wm-title').textContent = '📂 ' + workspace;
+        var isPinned = !!document.querySelector('.ws-row[data-workspace="' + workspace + '"][data-pinned]');
+        var pinBtn = document.getElementById('wmPinToggle');
+        pinBtn.textContent = isPinned ? '📌 取消置顶' : '📌 置顶项目';
+        var rect = event.target.getBoundingClientRect();
+        menu.style.left = rect.left + 'px';
+        menu.style.top = (rect.bottom + 4) + 'px';
+        menu.style.display = 'block';
+        setTimeout(function() {
+          document.addEventListener('click', function closeMenu() {
+            menu.style.display = 'none';
+            document.removeEventListener('click', closeMenu);
+          });
+        }, 0);
+      }
+      function workspaceMenuAction(action) {
+        var menu = document.getElementById('studioWorkspaceMenu');
+        var ws = menu.dataset.workspace || '';
+        menu.style.display = 'none';
+        if (action === 'new-session') { openNewSessionModal(ws); return; }
+        if (action === 'pin') {
+          togglePinWorkspace(ws);
+          return;
+        }
+        if (action === 'rename') {
+          var newName = prompt('重命名项目 "' + ws + '"：', ws);
+          if (newName && newName !== ws) {
+            document.querySelectorAll('[data-page="studio"] .side-scroll .ws-row[data-workspace="' + ws + '"]').forEach(function(row) {
+              row.dataset.workspace = newName;
+              var span = row.querySelector('span');
+              if (span) span.textContent = '📂 ' + newName;
+            });
+            document.querySelectorAll('.studio-session[data-workspace="' + ws + '"]').forEach(function(s) { s.dataset.workspace = newName; });
+            document.querySelectorAll('#studioPinArea .studio-session[data-workspace="' + ws + '"]').forEach(function(p) { p.dataset.workspace = newName; var cs = p.querySelector('.count'); if (cs) cs.innerHTML = '<span style="font-size:10px;color:var(--dim)">' + newName + '</span>'; });
+            if (currentStudioWorkspace === ws) currentStudioWorkspace = newName;
+          }
+          return;
+        }
+        if (action === 'finder') {
+          console.log('[Studio] 在 Finder 中打开：' + ws);
+          return;
+        }
+        if (action === 'archive') {
+          var wsItems = document.querySelectorAll('[data-page="studio"] .side-scroll .side-item');
+          var archiving = false;
+          wsItems.forEach(function(item) {
+            if (item.querySelector('span') && item.querySelector('span').textContent.indexOf('📂 ' + ws) === 0) { archiving = true; return; }
+            if (archiving && item.classList.contains('indent') && item.classList.contains('studio-session')) {
+              item.style.display = 'none';
+            } else if (archiving && item.classList.contains('indent') && !item.classList.contains('studio-session')) {
+              item.textContent = '已归档所有对话'; item.style.color = 'var(--dim)'; item.style.fontStyle = 'italic';
+              archiving = false;
+            } else { archiving = false; }
+          });
+          return;
+        }
+        if (action === 'remove') {
+          var items = document.querySelectorAll('[data-page="studio"] .side-scroll .side-item');
+          var removing = false;
+          var toRemove = [];
+          items.forEach(function(item) {
+            if (item.querySelector('span') && item.querySelector('span').textContent.indexOf('📂 ' + ws) === 0) { removing = true; toRemove.push(item); return; }
+            if (removing && item.classList.contains('indent')) { toRemove.push(item); }
+            else { removing = false; }
+          });
+          toRemove.forEach(function(el) { el.remove(); });
+          document.querySelectorAll('#studioPinArea .studio-session[data-workspace="' + ws + '"]').forEach(function(pin) { pin.remove(); });
+          document.querySelectorAll('#studioPinArea .ws-row[data-workspace="' + ws + '"]').forEach(function(pin) { pin.remove(); });
+          document.querySelectorAll('.studio-session[data-workspace="' + ws + '"]').forEach(function(s) { s.remove(); });
+          if (currentStudioWorkspace === ws) {
+            currentStudioWorkspace = '';
+            var title = document.getElementById('studioTopbarTitle');
+            if (title) title.style.display = 'none';
+            var empty = document.getElementById('studioEmptyTopbar');
+            if (empty) empty.style.display = 'flex';
+          }
+          return;
+        }
+      }
+      function setCurrentWorkspace(ws) {
+        currentStudioWorkspace = ws;
+        var title = document.getElementById('studioTopbarTitle');
+        if (title) {
+          title.innerHTML = '📂 ' + ws + ' <span style="color:var(--dim);font-weight:400;font-size:12px">— 选择左侧对话开始</span>';
+          title.style.display = '';
+        }
+        var emptyTop = document.getElementById('studioEmptyTopbar');
+        if (emptyTop) emptyTop.style.display = 'none';
+      }
+
+      /* ── Studio: 新建对话闭环 ── */
+      var sessionCounter = 4;
+      function createSessionFromModal() {
+        var ws = currentSessionWorkspace || currentStudioWorkspace || '';
+        if (!ws) return;
+        var selectedRow = document.querySelector('#studioNewSessionModal .agent-row.selected');
+        var runtime = selectedRow ? (selectedRow.dataset.runtime || '✳ Claude Code') : '✳ Claude Code';
+        var runtimeLabel = selectedRow ? selectedRow.querySelector('div > div').textContent : '✳ Claude Code';
+        var sessionName = '新对话 #' + sessionCounter;
+        var sid = 's' + (sessionCounter + 10);
+        sessionCounter++;
+        studioSessions[sid] = {
+          name: sessionName, agent: runtime, agentIcon: runtime.charAt(0), agentName: runtimeLabel.replace(/^[✳⚡◆]\s*/, ''), model: '', preset: '',
+          messages: [],
+          diffFiles: [],
+          diffContent: [],
+          terminalLines: '$ ',
+          terminalTabs: ['Terminal 1']
+        };
+        var wsItems = document.querySelectorAll('[data-page="studio"] .side-scroll .side-item');
+        var targetWs = null;
+        wsItems.forEach(function(item) {
+          var span = item.querySelector('span');
+          if (span && span.textContent.indexOf('📂 ' + ws) === 0) targetWs = item;
+        });
+        if (targetWs) {
+          var emptyHint = targetWs.nextElementSibling;
+          if (emptyHint && emptyHint.textContent.trim() === '暂无对话') emptyHint.remove();
+          var newRow = document.createElement('div');
+          newRow.className = 'side-item indent studio-session';
+          newRow.dataset.workspace = ws;
+          newRow.dataset.session = sessionName;
+          newRow.dataset.sessionId = sid;
+          newRow.dataset.runtime = runtime;
+          newRow.style.cssText = 'font-size:11px;cursor:pointer';
+          newRow.onclick = function() { selectStudioSession(this); };
+          newRow.oncontextmenu = function(e) { openSessionMenu(e, this); return false; };
+          newRow.innerHTML = '<span>' + runtime.charAt(0) + ' ' + sessionName + '</span><span class="count"><span style="color:var(--accent)">● 0m</span></span>';
+          var next = targetWs.nextElementSibling;
+          while (next && next.classList.contains('indent') && next.classList.contains('studio-session')) { next = next.nextElementSibling; }
+          targetWs.parentNode.insertBefore(newRow, next);
+          selectStudioSession(newRow);
+        }
+        closeNewSessionModal();
+      }
+
+      /* ── Studio: 置顶区可见性 ── */
+      function updatePinAreaVisibility() {
+        var pinArea = document.getElementById('studioPinArea');
+        var header = document.getElementById('studioPinHeader');
+        var sep = document.getElementById('studioPinSep');
+        if (!pinArea) return;
+        var hasPinned = pinArea.querySelector('[data-pinned]');
+        if (header) header.style.display = hasPinned ? '' : 'none';
+        if (sep) sep.style.display = hasPinned ? '' : 'none';
+      }
+
+      /* ── Studio: Workspace 置顶/取消置顶 ── */
+      function togglePinWorkspace(ws) {
+        var wsRow = document.querySelector('.ws-row[data-workspace="' + ws + '"]');
+        if (!wsRow) return;
+        var pinArea = document.getElementById('studioPinArea');
+        var pinSep = document.getElementById('studioPinSep');
+        if (!pinArea || !pinSep) return;
+
+        if (wsRow.dataset.pinned) {
+          // 取消置顶：移回项目列表
+          var addBtn = document.querySelector('[data-page="studio"] .side-scroll [onclick*="openNewWorkspaceModal"]');
+          var nodes = [wsRow];
+          var next = wsRow.nextElementSibling;
+          while (next && next !== pinSep && next.classList.contains('indent')) {
+            nodes.push(next);
+            next = next.nextElementSibling;
+          }
+          nodes.forEach(function(n) { if (addBtn) addBtn.parentNode.insertBefore(n, addBtn); });
+          delete wsRow.dataset.pinned;
+        } else {
+          // 置顶：移到置顶区
+          var nodes = [wsRow];
+          var next = wsRow.nextElementSibling;
+          while (next && next.classList.contains('indent')) {
+            nodes.push(next);
+            next = next.nextElementSibling;
+          }
+          nodes.forEach(function(n) { pinArea.insertBefore(n, pinSep); });
+          wsRow.dataset.pinned = 'true';
+        }
+        updatePinAreaVisibility();
+      }
+
+      /* ── Studio: Session 置顶/取消置顶 ── */
+      function togglePinSession(el) {
+        var pinArea = document.getElementById('studioPinArea');
+        var pinSep = document.getElementById('studioPinSep');
+        if (!pinArea || !pinSep || !el) return;
+        var ws = el.dataset.workspace || '';
+
+        if (el.dataset.pinned) {
+          // 取消置顶：移回原 Workspace 下
+          delete el.dataset.pinned;
+          var span = el.querySelector('span');
+          var icon = el.dataset.runtime ? el.dataset.runtime.charAt(0) : '💬';
+          if (span) span.textContent = icon + ' ' + el.dataset.session;
+          var countSpan = el.querySelector('.count');
+          if (countSpan && el.dataset.originalCount) countSpan.innerHTML = el.dataset.originalCount;
+          delete el.dataset.originalCount;
+          var wsRow = document.querySelector('.ws-row[data-workspace="' + ws + '"]');
+          if (wsRow) {
+            var next = wsRow.nextElementSibling;
+            while (next && next.classList.contains('indent') && next.classList.contains('studio-session')) { next = next.nextElementSibling; }
+            wsRow.parentNode.insertBefore(el, next);
+          }
+        } else {
+          // 置顶：移到置顶区
+          el.dataset.pinned = 'true';
+          var countSpan = el.querySelector('.count');
+          if (countSpan) el.dataset.originalCount = countSpan.innerHTML;
+          var span = el.querySelector('span');
+          if (span) span.textContent = '📌 ' + el.dataset.session;
+          if (countSpan) countSpan.innerHTML = '<span style="font-size:10px;color:var(--dim)">' + ws + '</span>';
+          pinArea.insertBefore(el, pinSep);
+        }
+        updatePinAreaVisibility();
+      }
+
+      /* ── Studio: Session 右键菜单 ── */
+      var currentSessionMenuTarget = null;
+      function openSessionMenu(event, el) {
+        event.preventDefault();
+        event.stopPropagation();
+        currentSessionMenuTarget = el;
+        var menu = document.getElementById('studioSessionMenu');
+        menu.querySelector('.sm-title').textContent = el.dataset.session || '对话';
+        var pinBtn = document.getElementById('smPinToggle');
+        pinBtn.textContent = el.dataset.pinned ? '📌 取消置顶' : '📌 置顶对话';
+        var rect = el.getBoundingClientRect();
+        menu.style.left = (rect.left + 30) + 'px';
+        menu.style.top = rect.bottom + 'px';
+        menu.style.display = 'block';
+        setTimeout(function() {
+          document.addEventListener('click', function closeMenu() {
+            menu.style.display = 'none';
+            document.removeEventListener('click', closeMenu);
+          });
+        }, 0);
+      }
+      function sessionMenuAction(action) {
+        var menu = document.getElementById('studioSessionMenu');
+        menu.style.display = 'none';
+        var el = currentSessionMenuTarget;
+        if (!el) return;
+        if (action === 'pin') {
+          togglePinSession(el);
+          return;
+        }
+        if (action === 'rename') {
+          var oldName = el.dataset.session || '';
+          var newName = prompt('重命名对话 "' + oldName + '"：', oldName);
+          if (newName && newName !== oldName) {
+            el.dataset.session = newName;
+            var span = el.querySelector('span');
+            var prefix = el.dataset.pinned ? '📌 ' : (el.dataset.runtime ? el.dataset.runtime.charAt(0) + ' ' : '💬 ');
+            if (span) span.textContent = prefix + newName;
+          }
+          return;
+        }
+        if (action === 'remove') {
+          var sid = el.dataset.sessionId;
+          if (sid && studioSessions[sid]) delete studioSessions[sid];
+          el.remove();
+          updatePinAreaVisibility();
+          return;
+        }
+      }
     </script>
+
+    <!-- ═══ Studio: Workspace 菜单 popover ═══ -->
+    <div id="studioWorkspaceMenu" style="display:none;position:fixed;z-index:70;background:var(--surface);border:1px solid var(--line);border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,.4);min-width:180px;padding:4px 0;font-size:11px">
+      <div class="wm-title" style="padding:6px 12px;font-size:10px;color:var(--dim);font-weight:600;border-bottom:1px solid var(--line-soft);margin-bottom:2px">📂 FocusPilot</div>
+      <div onclick="workspaceMenuAction('new-session')" style="padding:6px 12px;cursor:pointer;color:var(--text)" onmouseover="this.style.background='var(--elevated)'" onmouseout="this.style.background=''">+ 新建对话</div>
+      <div id="wmPinToggle" onclick="workspaceMenuAction('pin')" style="padding:6px 12px;cursor:pointer;color:var(--text)" onmouseover="this.style.background='var(--elevated)'" onmouseout="this.style.background=''">📌 置顶项目</div>
+      <div onclick="workspaceMenuAction('finder')" style="padding:6px 12px;cursor:pointer;color:var(--text)" onmouseover="this.style.background='var(--elevated)'" onmouseout="this.style.background=''">📂 在 Finder 中打开</div>
+      <div onclick="workspaceMenuAction('rename')" style="padding:6px 12px;cursor:pointer;color:var(--text)" onmouseover="this.style.background='var(--elevated)'" onmouseout="this.style.background=''">✏️ 重命名</div>
+      <div style="border-top:1px solid var(--line-soft);margin:2px 0"></div>
+      <div onclick="workspaceMenuAction('archive')" style="padding:6px 12px;cursor:pointer;color:var(--text)" onmouseover="this.style.background='var(--elevated)'" onmouseout="this.style.background=''">📦 归档所有对话</div>
+      <div onclick="workspaceMenuAction('remove')" style="padding:6px 12px;cursor:pointer;color:var(--red)" onmouseover="this.style.background='var(--elevated)'" onmouseout="this.style.background=''">🗑 移除项目</div>
+    </div>
+
+    <!-- ═══ Studio: Session 右键菜单 popover ═══ -->
+    <div id="studioSessionMenu" style="display:none;position:fixed;z-index:70;background:var(--surface);border:1px solid var(--line);border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,.4);min-width:160px;padding:4px 0;font-size:11px">
+      <div class="sm-title" style="padding:6px 12px;font-size:10px;color:var(--dim);font-weight:600;border-bottom:1px solid var(--line-soft);margin-bottom:2px">对话</div>
+      <div id="smPinToggle" onclick="sessionMenuAction('pin')" style="padding:6px 12px;cursor:pointer;color:var(--text)" onmouseover="this.style.background='var(--elevated)'" onmouseout="this.style.background=''">📌 置顶对话</div>
+      <div onclick="sessionMenuAction('rename')" style="padding:6px 12px;cursor:pointer;color:var(--text)" onmouseover="this.style.background='var(--elevated)'" onmouseout="this.style.background=''">✏️ 重命名</div>
+      <div style="border-top:1px solid var(--line-soft);margin:2px 0"></div>
+      <div onclick="sessionMenuAction('remove')" style="padding:6px 12px;cursor:pointer;color:var(--red)" onmouseover="this.style.background='var(--elevated)'" onmouseout="this.style.background=''">🗑 删除对话</div>
+    </div>
+
+    <!-- ═══ Studio: 添加项目文件夹弹窗 ═══ -->
+    <div id="studioNewWorkspaceModal" style="position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:60;display:none;align-items:center;justify-content:center;backdrop-filter:blur(4px)" onclick="closeNewWorkspaceModal()">
+      <div style="width:420px;max-width:90vw;background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,.5)" onclick="event.stopPropagation()">
+        <div style="padding:16px 18px;border-bottom:1px solid var(--line-soft)">
+          <h3 style="font-size:14px;font-weight:600;margin-bottom:2px">添加项目文件夹</h3>
+          <div style="font-size:11px;color:var(--dim)">选择本地项目目录作为 Workspace</div>
+        </div>
+        <div style="padding:16px 18px">
+          <label style="display:block;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--dim);margin-bottom:6px">项目路径</label>
+          <div style="display:flex;gap:8px;align-items:center">
+            <div id="wsPathDisplay" style="flex:1;background:var(--bg);border:1px solid var(--line-soft);border-radius:var(--radius);padding:8px 10px;font-size:11px;color:var(--dim);font-family:var(--mono)">点击右侧选择文件夹...</div>
+            <button class="btn" style="font-size:11px;white-space:nowrap" onclick="pickWorkspaceFolder()">📂 选择文件夹</button>
+          </div>
+        </div>
+        <div style="display:flex;justify-content:flex-end;gap:8px;padding:12px 18px;border-top:1px solid var(--line-soft)">
+          <button class="btn" onclick="closeNewWorkspaceModal()">取消</button>
+          <button id="wsAddBtn" class="btn primary" style="opacity:0.4;pointer-events:none" onclick="addWorkspaceFromModal()">添加</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ Studio: 新建对话弹窗 ═══ -->
+    <div id="studioNewSessionModal" style="position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:60;display:none;align-items:center;justify-content:center;backdrop-filter:blur(4px)" onclick="closeNewSessionModal()">
+      <div style="width:480px;max-width:90vw;background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,.5)" onclick="event.stopPropagation()">
+        <!-- Header -->
+        <div style="padding:16px 18px;border-bottom:1px solid var(--line-soft)">
+          <h3 style="font-size:14px;font-weight:600;margin-bottom:2px">新建对话</h3>
+          <div id="sessionWorkspaceLabel" style="font-size:11px;color:var(--dim)">📂 FocusPilot</div>
+        </div>
+        <!-- Agent List: Runtime 优先 -->
+        <div style="padding:12px 18px;display:flex;flex-direction:column;gap:8px">
+          <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--dim);margin-bottom:2px">选择执行器</div>
+          <div class="agent-row selected" onclick="selectAgent(this)" data-runtime="✳ Claude Code" style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border:1.5px solid var(--accent);border-radius:var(--radius);cursor:pointer;background:var(--bg)">
+            <div>
+              <div style="font-size:12px;font-weight:500">✳ Claude Code</div>
+              <div style="font-size:10px;color:var(--dim);margin-top:2px">代码工程师 preset · 全栈开发、调试、重构、代码审查</div>
+            </div>
+          </div>
+          <div class="agent-row" onclick="selectAgent(this)" data-runtime="✳ Claude Code" style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border:1.5px solid var(--line-soft);border-radius:var(--radius);cursor:pointer;background:var(--bg)">
+            <div>
+              <div style="font-size:12px;font-weight:500">✳ Claude Code</div>
+              <div style="font-size:10px;color:var(--dim);margin-top:2px">代码审查 preset · PR 审查、安全审计、代码质量</div>
+            </div>
+          </div>
+          <div class="agent-row" onclick="selectAgent(this)" data-runtime="⚡ Codex CLI" style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border:1.5px solid var(--line-soft);border-radius:var(--radius);cursor:pointer;background:var(--bg)">
+            <div>
+              <div style="font-size:12px;font-weight:500">⚡ Codex CLI</div>
+              <div style="font-size:10px;color:var(--dim);margin-top:2px">代码修改、自动验证、并行任务</div>
+            </div>
+          </div>
+          <div class="agent-row" data-disabled="true" data-runtime="◆ Gemini CLI" style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border:1.5px solid var(--line-soft);border-radius:var(--radius);background:var(--bg);opacity:0.4;pointer-events:none">
+            <div>
+              <div style="font-size:12px;font-weight:500">◆ Gemini CLI</div>
+              <div style="font-size:10px;color:var(--dim);margin-top:2px">长文本分析、文档生成</div>
+            </div>
+            <div style="font-size:9px;color:var(--red);font-weight:500">未安装</div>
+          </div>
+        </div>
+        <!-- Separator + Custom Agent -->
+        <div style="padding:0 18px">
+          <div style="border-top:1px dashed var(--line);margin:4px 0 8px"></div>
+          <div onclick="toggleCustomAgent()" style="display:flex;align-items:center;gap:4px;padding:6px 0;font-size:11px;color:var(--accent);cursor:pointer">＋ 自定义 Agent...</div>
+          <div id="customAgentExpand" style="display:none;padding:8px 0 4px">
+            <div style="margin-bottom:8px">
+              <label style="display:block;font-size:10px;font-weight:600;color:var(--dim);margin-bottom:4px">Runtime</label>
+              <select style="width:100%;background:var(--bg);border:1px solid var(--line-soft);border-radius:var(--radius);padding:6px 8px;color:var(--text);font-size:11px;font-family:var(--sans)">
+                <option>claude-code</option><option>codex-cli</option><option>gemini-cli</option>
+              </select>
+            </div>
+            <div style="margin-bottom:6px">
+              <label style="display:block;font-size:10px;font-weight:600;color:var(--dim);margin-bottom:4px">指令</label>
+              <textarea placeholder="输入自定义指令..." style="width:100%;background:var(--bg);border:1px solid var(--line-soft);border-radius:var(--radius);padding:7px 10px;color:var(--text);font-size:11px;font-family:var(--sans);outline:none;resize:vertical;min-height:50px"></textarea>
+            </div>
+            <div style="font-size:9px;color:var(--dim)">仅本对话使用，不保存到 AICrew</div>
+          </div>
+        </div>
+        <!-- Footer -->
+        <div style="display:flex;justify-content:flex-end;gap:8px;padding:12px 18px;border-top:1px solid var(--line-soft);margin-top:8px">
+          <button class="btn" onclick="closeNewSessionModal()">取消</button>
+          <button class="btn primary" onclick="createSessionFromModal()">新建对话</button>
+        </div>
+      </div>
+    </div>
+
   </body>
 </html>

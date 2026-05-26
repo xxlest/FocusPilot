@@ -128,7 +128,7 @@
 | 🏠 | **Home** | 全局概览入口：摘要数字条 + 重点列表 + 对话视图 | **可开发** | [01-home.md](fp-ui/01-home.md) | [00-layout-prototype.html](fp-ui/00-layout-prototype.html) |
 | 📥 | **Inbox** | 收集箱：待阅读/灵感/临时事项 + 流出规则 | **可开发** | [02-inbox.md](fp-ui/02-inbox.md) | [00-layout-prototype.html](fp-ui/00-layout-prototype.html) |
 | 🎯 | **Focus** | 结构化行动工作台：规划+看板+列表+Agent Live Card | **可开发** | [03-focus.md](fp-ui/03-focus.md) | [00-layout-prototype.html](fp-ui/00-layout-prototype.html)、[03-focus-prototype.html](fp-ui/03-focus-prototype.html) |
-| 💻 | **Studio** | 项目级 AI 编程指挥台：六区布局（Triage+Thread列表+Automations 侧边栏/Agent顶栏/对话/输入/Diff审查+Git右面板/终端面板） | **可开发** | [04-studio.md](fp-ui/04-studio.md) | [00-layout-prototype.html](fp-ui/00-layout-prototype.html) |
+| 💻 | **Studio** | 项目级 AI 编程指挥台：六区布局（置顶+Triage+Workspace对话列表+Automations 侧边栏/顶栏/对话/输入/Diff审查+Git右面板/终端面板） | **可开发** | [04-studio.md](fp-ui/04-studio.md) | [00-layout-prototype.html](fp-ui/00-layout-prototype.html) |
 | 📁 | AreaProjects | 项目资产沉淀（执行类+知识类），文件树+编辑器 | 草稿 | [05-area-projects.md](fp-ui/05-area-projects.md) | [00-layout-prototype.html](fp-ui/00-layout-prototype.html) |
 | 🧠 | **Review** | 复习与内化中心：今日复习 / 内化挑战 / 卡片库 / 统计 | **设计中** | [06-review.md](fp-ui/06-review.md) | [00-layout-prototype.html](fp-ui/00-layout-prototype.html)、[06-review-today-prototype.html](fp-ui/06-review-today-prototype.html)、[06-review-challenge-prototype.html](fp-ui/06-review-challenge-prototype.html) |
 | 🤖 | AICrew | Agent 团队管理（角色/头像/擅长/MCP/并发数） | 草稿 | [07-ai-crew.md](fp-ui/07-ai-crew.md) | [00-layout-prototype.html](fp-ui/00-layout-prototype.html) |

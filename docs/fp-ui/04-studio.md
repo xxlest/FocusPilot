@@ -1,7 +1,7 @@
 # Studio 页面设计
 
-> **状态**：设计中
-> **更新**：2026-05-25
+> **状态**：可开发
+> **更新**：2026-05-26
 > **原型**：[00-layout-prototype.html](00-layout-prototype.html)
 > **参考**：[Codex App macOS 竞品调研](../竞品分析/Codex%20App%20macOS%20竞品调研.md)、[Codex UI 功能层次梳理](../竞品分析/Codex%20UI%20功能层次梳理.md)
 > **旧版备份**：[04-studio-backup-v1.md](04-studio-backup-v1.md)
@@ -10,9 +10,9 @@
 
 ## 1. 定位
 
-Studio 是 FocusPilot 的**项目级 AI 编程指挥台**。复刻 Codex App 桌面端的核心体验：Thread 管理、对话执行、Diff 审查、Git 交付、终端操控和后台自动化，统一收束在一个六区布局中。
+Studio 是 FocusPilot 的**项目级 AI 编程指挥台**。复刻 Codex App 桌面端的核心体验：Session 管理、对话执行、Diff 审查、Git 交付、终端操控和后台自动化，统一收束在一个六区布局中。
 
-**V1 功能范围**：Thread 管理 + AICrew 执行器选择 + 对话执行 + Diff 审查 + Git 操作 + 终端 + Automations/Triage 基础入口。
+**V1 功能范围**：Session 管理 + AICrew 执行器选择 + 对话执行 + Diff 审查 + Git 操作 + 终端 + Automations/Triage 基础入口。
 
 **V2 预留**：Worktree 隔离执行、Cloud 执行模式、Handoff、Computer Use、Appshot、内置浏览器。
 
@@ -21,27 +21,27 @@ Studio 是 FocusPilot 的**项目级 AI 编程指挥台**。复刻 Codex App 桌
 | 模块 | 参考来源 | 吸收内容 |
 |------|---------|---------|
 | **整体布局** | Codex Desktop App | 六区布局（侧边栏 + 顶栏 + 对话区 + 输入区 + 右面板 + 终端面板） |
-| **侧边栏** | Codex Desktop App | Triage 收件箱 + Thread 列表（按项目分组）+ Automations 上下堆叠 |
-| **Thread 管理** | Codex Desktop App | Thread 状态、项目分组 |
+| **侧边栏** | Codex Desktop App | Triage 收件箱 + 对话列表（按项目分组）+ Automations 上下堆叠 |
+| **Session 管理** | Codex Desktop App | Session 状态、项目分组 |
 | **Diff 审查** | Codex Desktop App | Diff 视图 + inline 评论 + Stage/Revert + Commit/Push/PR |
 | **自动化** | Codex Desktop App | Automations 规则定义 + Triage 结果收件箱 |
-| **Agent 选择** | FocusPilot AICrew | Thread 创建时选择 AICrew 配置的 Agent 成员 |
+| **Agent 选择** | FocusPilot AICrew | Session 创建时选择 AICrew 配置的 Agent 成员 |
 
 ### 与其他页面的职责边界
 
 | 页面 | 职责 | 与 Studio 的边界 |
 |------|------|-----------------|
-| **Home** | AI 对话入口（含自由聊天）+ 最近操作 | Home = 自由对话；Studio = 项目级 Thread 对话 |
-| **Focus** | 任务规划、看板、列表、评估、验收 | Focus 管"任务怎么推进"；Studio 管"代码怎么改"。Studio Thread 可关联 Focus Task，但不替代 Focus 的任务状态机 |
+| **Home** | AI 对话入口（含自由聊天）+ 最近操作 | Home = 自由对话；Studio = 项目级 Session 对话 |
+| **Focus** | 任务规划、看板、列表、评估、验收 | Focus 管"任务怎么推进"；Studio 管"代码怎么改"。Studio Session 可关联 Focus Task，但不替代 Focus 的任务状态机 |
 | **AreaProjects** | 项目资产管理和长期沉淀 | AreaProjects = 文件组织/编辑/预览；Studio = AI 驱动的代码变更和交付 |
-| **AICrew** | Agent 团队管理（角色/能力/MCP） | AICrew 定义 Agent 成员；Studio 消费 Agent 成员（Thread 创建时选择） |
+| **AICrew** | Agent 团队管理（角色/能力/MCP） | AICrew 定义 Agent 成员；Studio 消费 Agent 成员（Session 创建时选择） |
 
 ### 核心交互原则
 
-1. **Thread = 可执行工作单元**。每个 Thread 绑定项目和 Agent，有独立的对话、终端、变更和 Git 状态
+1. **Session = 可执行工作单元**。每个 Session 绑定项目和 Agent，有独立的对话、终端、变更和 Git 状态
 2. **不打断**。高频导航不弹确认框，顶栏和侧边栏已充分标识当前上下文
-3. **切换即清场**。切换 Thread 时，右面板清空 Diff/文件、终端关闭所有实例并自动收起，确保上下文不污染
-4. **审查再交付**。AI 产出的代码变更必须经过 Diff 审查，Stage/Revert 只能操作当前 Thread 产生的文件
+3. **切换即切换**。切换 Session 时，右面板清空 Diff/文件；终端切换到目标 Session 的终端组（不销毁其他 Session 终端），目标无终端时自动收起
+4. **审查再交付**。AI 产出的代码变更必须经过 Diff 审查，Stage/Revert 只能操作当前 Session 产生的文件
 
 ---
 
@@ -77,18 +77,18 @@ Studio 是 FocusPilot 的**项目级 AI 编程指挥台**。复刻 Codex App 桌
 
 | 区域 | 尺寸 | 说明 |
 |------|------|------|
-| **A 侧边栏** | 260px 固定，⌘B 收起/展开 | Triage + 搜索 + Thread 列表 + Automations + 底部按钮 |
+| **A 侧边栏** | 260px 固定，⌘B 收起/展开 | Triage + 搜索 + 对话列表 + Automations + 底部按钮 |
 | **B 顶栏** | 44px 固定 | 项目名 + Agent 角色 + Runtime + 工具按钮 |
 | **C 对话区** | flex 可滚动 | 消息流 + 内嵌 Diff 卡片 + 终端输出卡片 + 审批卡片 |
 | **D 输入区** | 对话区下方 | 多行自适应输入框 |
 | **E 右面板** | 可选，◨ 或 ⌘⇧B 切换 | Diff 审查 + inline 评论 + Git 操作按钮 |
-| **F 终端面板** | 可选，⌘J 切换 | 多 Tab 终端，工作目录跟随 Thread |
+| **F 终端面板** | 可选，⌘J 切换 | 多 Tab 终端，工作目录跟随 Session |
 
 ---
 
 ## 3. A 区：侧边栏（260px，⌘B 收起/展开）
 
-侧边栏分五层：Triage（固定顶部）→ 搜索 → Thread 列表（可滚动）→ Automations（可折叠）→ 底部（固定）。
+侧边栏分五层：Triage（固定顶部）→ 搜索 → 对话列表（可滚动）→ Automations（可折叠）→ 底部（固定）。
 
 ### 3.1 Triage 收件箱（固定顶部）
 
@@ -113,7 +113,7 @@ Studio 是 FocusPilot 的**项目级 AI 编程指挥台**。复刻 Codex App 桌
 |------|------|
 | 计数角标 | 待处理结果数量，有新结果时红色高亮 |
 | 点击结果行 | 右面板打开详情/日志视图 |
-| 操作 | [接受] / [派生 Thread] / [归档] |
+| 操作 | [接受] / [派生对话] / [归档] |
 | 无结果时 | 折叠为一行摘要，不占空间 |
 
 **Triage vs Automations 的职责边界**：
@@ -128,51 +128,72 @@ Studio 是 FocusPilot 的**项目级 AI 编程指挥台**。复刻 Codex App 桌
 
 ```
 ┌──────────────────────────────────┐
-│ 🔍 搜索 Threads...               │
+│ 🔍 搜索对话...                    │
 └──────────────────────────────────┘
 ```
 
-按名称搜索 Thread。
+按名称搜索对话 Session。
 
-### 3.3 Thread 列表（按项目分组，可滚动）
+### 3.3 置顶区
+
+侧边栏最上方显示全局置顶项（对话置顶 + 项目置顶），无置顶项时隐藏。
 
 ```
-▾ 📂 FocusPilot                                [+]
-  🧑‍💻 重构 auth                         ✳  ● 3m
-  🔍 代码审查                            ✳  ✅ 1h
-  ⚡ Bug fix #12                         ⚡  ● 15m
-▸ 📂 PilotOne                                  [+]
-
-── + 添加项目 ──
+── 置顶 ──────────────────────────
+  📌 重构 auth              FocusPilot   ← 置顶对话（标注来源 Workspace）
+  📂 PilotOne                            ← 置顶 Workspace
 ```
 
-**Thread 显示格式**：`Agent图标 + 标题 + Runtime mini badge + 状态 + 时长`
+| 操作 | 效果 |
+|------|------|
+| 对话置顶 | 出现在置顶区，标注来源 Workspace 名 |
+| Workspace 置顶 | 整个项目提升到置顶区 |
+| 取消置顶 | 回到"项目 Workspace"区原位 |
 
-- Agent 图标：来自 AICrew 配置的角色图标，标识"谁来做"
-- Runtime mini badge（✳/⚡/◆）：低对比度色显示，标识"用什么工具做"，不抢 Agent 主位
+### 3.4 项目 Workspace 列表（可滚动）
+
+```
+── 项目 Workspace ────────────────
+  📂 FocusPilot                ··· [+]
+    🧑‍💻 重构 auth           ● 3m        ← 对话 Session
+    🔍 代码审查              ✅ 1h
+    ⚡ Bug fix #12           ● 15m
+    展开显示
+  📂 PilotOne                  ··· [+]
+    暂无对话
+```
+
+**对话 Session 显示格式**：`Agent图标 + 标题 + 状态 + 时长`
+
+- Agent 图标：来自 AICrew 配置的角色图标，标识该对话使用的执行器
 - 状态：● 活跃 / ✅ 完成
+- 点击对话 → 顶栏、对话区、右面板、终端组全部切换到该 Session 上下文
 
-**项目行操作**（hover 时显示 [+]）：
+**Workspace 行操作**：
 
 | 按钮 | 操作 |
 |------|------|
-| **[+]** | 创建 Thread：弹出 Agent 选择 |
+| **[+]** | 新建对话：弹出 Agent 选择器（见 §4.2） |
+| **[···]** | 打开 Workspace 菜单 |
 
-**项目行右键菜单**：
+**Workspace [···] 菜单**：
 ```
 ┌─────────────────────────┐
-│ + 创建 Thread            │
+│ + 新建对话               │
 │ ─────────────────────── │
-│ ✏️ 编辑名称              │
+│ 📌 置顶项目              │
 │ 📂 在访达中打开          │
+│ ✏️ 重命名                │
 │ ─────────────────────── │
+│ 🗄️ 归档所有对话          │
 │ ✕ 移除项目              │
 └─────────────────────────┘
 ```
 
-**Thread 右键菜单**：
+**对话右键菜单**：
 ```
 ┌─────────────────────────┐
+│ 📌 置顶对话              │
 │ ✏️ 重命名                │
 │ ─────────────────────── │
 │ 🗄️ 归档                 │
@@ -180,17 +201,15 @@ Studio 是 FocusPilot 的**项目级 AI 编程指挥台**。复刻 Codex App 桌
 └─────────────────────────┘
 ```
 
-**添加项目**：
+### 3.5 添加项目文件夹
 
 ```
-点击 [+ 添加项目] →
-┌───────────────────────────────┐
-│ 📁 从电脑打开文件夹...         │
-│ 📋 从 AreaProjects 选择...    │
-└───────────────────────────────┘
+── + 添加项目文件夹 ──
 ```
 
-### 3.4 Automations（可折叠）
+点击弹出 Workspace 创建弹窗（见 §4.1）。
+
+### 3.6 Automations（可折叠）
 
 ```
 ── 自动化 ──────────────────  [▾ 折叠]
@@ -209,23 +228,45 @@ Studio 是 FocusPilot 的**项目级 AI 编程指挥台**。复刻 Codex App 桌
 | 运行状态 | ✅ 完成 + 时间 / 🔄 运行中 / ❌ 失败 |
 | 右键操作 | 编辑 / 启用/禁用 / 立即运行 / 查看历史 / 删除 |
 
-### 3.5 底部（36px，固定）
+### 3.7 底部（36px，固定）
 
 ```
-[+ New ⌘N]                [⚙ 设置]
+[⚙ 设置]
 ```
 
 ---
 
-## 4. Thread 创建流程
+## 4. 创建流程
 
-点击 [+] 或 ⌘N 弹出创建弹窗。
+Studio 有两层创建：添加项目文件夹（Workspace）和新建对话（Session）。
 
-### 4.1 选择 Agent 执行器
+### 4.1 添加项目文件夹（Workspace 创建）
+
+入口：侧边栏 Workspace 列表末尾 [+ 添加项目文件夹] 虚线按钮。
 
 ```
 ┌────────────────────────────────────────────┐
-│ 新建 Thread                                │
+│ 添加项目文件夹                              │
+│ 选择本地项目目录作为 Workspace              │
+│ ────────────────────────────────────────── │
+│                                            │
+│ 项目路径                                    │
+│ [/Users/bruce/Workspace/...] [📂 选择文件夹]│
+│                                            │
+│                       [取消]   [添加]        │
+└────────────────────────────────────────────┘
+```
+
+Workspace 只绑定本地路径和项目名，不绑定 Agent/Runtime。
+
+### 4.2 新建对话（Session 创建）
+
+入口：Workspace 行 [+] 按钮、Workspace [···] 菜单 → 新建对话、⌘N（在当前活跃 Workspace 下新建；无活跃 Workspace 时弹出 §4.1 添加项目文件夹）。
+
+```
+┌────────────────────────────────────────────┐
+│ 新建对话                                    │
+│ 📂 FocusPilot                              │ ← 只读上下文
 │ ────────────────────────────────────────── │
 │                                            │
 │ 选择 Agent 执行器                           │
@@ -237,26 +278,34 @@ Studio 是 FocusPilot 的**项目级 AI 编程指挥台**。复刻 Codex App 桌
 │   PR 审查、安全审计、代码质量               │
 │                                            │
 │   ⚡ Codex 工程师            ⚡ Codex CLI    │
-│   并行任务、Worktree 隔离执行              │
+│   并行任务、代码修改、自动验证              │
 │                                            │
 │   ◆ Gemini 助手             ◆ Gemini CLI    │
 │   长文本分析、文档生成                      │
 │                                            │
 │ ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈ │
-│   + 自定义 Agent...                        │ ← 仅本 Thread 使用
+│   + 自定义 Agent...                        │ ← 仅本对话使用
 │     临时指定 Runtime + 指令，不保存到 AICrew │
 │                                            │
-│                    [取消]   [创建 Thread]    │
+│                     [取消]   [新建对话]      │
 └────────────────────────────────────────────┘
 ```
+
+**绑定层级**：
+
+| 层级 | 绑定内容 |
+|------|---------|
+| **Workspace** | 本地路径、项目名、置顶状态 |
+| **Session** | Agent 执行器、对话历史、终端组、Diff/Git 状态、运行日志 |
+
+同一 Workspace 下允许多个 Session 使用不同执行器。Session 创建后绑定 Agent 不可更改。
 
 **AICrew 依赖 fallback 规则**：
 
 - AICrew 已配置成员：直接列出所有成员
 - AICrew 为空（未配置）：显示内置默认成员「🧑‍💻 代码工程师 / ✳ Claude Code」，底部显示「去 AICrew 配置更多 Agent →」引导链接
-- Thread 创建后绑定 Agent 不可更改
 
-### 4.2 Runtime 可用性
+### 4.3 Runtime 可用性
 
 Agent 行右侧显示其绑定 Runtime 的可用状态：
 
@@ -267,24 +316,24 @@ Agent 行右侧显示其绑定 Runtime 的可用状态：
 | **权限缺失** | 禁用 + 「授权」提示 | 否 |
 | **版本过低** | 禁用 + 「更新」提示 | 否 |
 
-[创建 Thread] 按钮仅在选中可用 Agent 时启用。
+[新建对话] 按钮仅在选中可用 Agent 时启用。
 
-### 4.3 自定义 Agent
+### 4.4 自定义 Agent
 
 选择「+ 自定义 Agent...」时展开临时配置：
 
 ```
 ┌────────────────────────────────────────────┐
-│ 自定义 Agent（仅本 Thread 使用）            │
+│ 自定义 Agent（仅本对话使用）                │
 │                                            │
 │ Runtime   [claude-code ▾]                  │
 │ 指令      [                             ]  │
 │                                            │
-│            [取消]   [创建 Thread]            │
+│              [取消]   [新建对话]              │
 └────────────────────────────────────────────┘
 ```
 
-顶栏对自定义 Agent 显示为 `📂 项目名 · ⚙ Custom (✳ Claude Code)`，明确标识为临时配置。
+顶栏对自定义 Agent 显示为 `📂 项目名 · 对话名 · ⚙ Custom`，明确标识为临时配置。
 
 ---
 
@@ -292,16 +341,16 @@ Agent 行右侧显示其绑定 Runtime 的可用状态：
 
 ```
 ┌──────────────────────────────────────────────────────────┐
-│ 📂 FocusPilot · 🧑‍💻 代码工程师 (✳ Claude Code)            │
+│ 📂 FocusPilot · 重构 auth · ✳ Claude Code                │
 │                             [🔧 ▾]  [🖥]  [◨]           │
 └──────────────────────────────────────────────────────────┘
 ```
 
 | 元素 | 说明 |
 |------|------|
-| 📂 项目名 | 当前 Thread 所属项目 |
-| Agent 角色名 | 当前 Thread 绑定的 AICrew 成员角色名（🧑‍💻 代码工程师） |
-| (Runtime) | 括号内显示 Runtime（✳ Claude Code / ⚡ Codex CLI / ◆ Gemini CLI） |
+| 📂 项目名 | 当前 Session 所属 Workspace |
+| 对话名 | 当前活跃 Session 名称 |
+| Runtime | 该 Session 绑定的执行器（✳ Claude Code / ⚡ Codex CLI / ◆ Gemini CLI） |
 | [🔧 ▾] | 用相关工具打开（自动检测已安装开发工具） |
 | [🖥] | 终端面板显隐（⌘J） |
 | [◨] | 右面板显隐（⌘⇧B） |
@@ -320,13 +369,13 @@ Agent 行右侧显示其绑定 Runtime 的可用状态：
 └──────────────────────┘
 ```
 
-自动扫描 `/Applications` 和已知路径，识别 IDE/编辑器/终端/文件管理器。点击后以当前 Thread 项目目录为工作目录打开。
+自动扫描 `/Applications` 和已知路径，识别 IDE/编辑器/终端/文件管理器。点击后以当前 Workspace 项目目录为工作目录打开。
 
-**无 Thread 选中时**：
+**无 Session 选中时**：
 
 ```
 ┌──────────────────────────────────────────────────────────┐
-│ 选择左侧 Thread 或创建新的                [+ 创建 Thread] │
+│ 选择左侧对话或添加项目文件夹         [+ 添加项目文件夹]     │
 └──────────────────────────────────────────────────────────┘
 ```
 
@@ -363,7 +412,7 @@ Agent 行右侧显示其绑定 Runtime 的可用状态：
 | **终端输出卡片** | 命令 + 输出结果，深色背景 |
 | **审批卡片** | 危险命令需用户确认：[✓ Approve] / [✗ Deny] / [✎ Edit] |
 
-**新建 Thread 空状态**：
+**新建对话 空状态**：
 
 ```
               🧑‍💻 代码工程师
@@ -446,10 +495,10 @@ Agent 行右侧显示其绑定 Runtime 的可用状态：
 
 | 规则 | 说明 |
 |------|------|
-| **作用范围** | 默认只允许操作当前 Thread 产生的 changed files |
+| **作用范围** | 默认只允许操作当前 Session 产生的 changed files |
 | **Revert 二次确认** | Revert 必须展示即将还原的文件清单，用户二次确认后执行 |
 | **未追踪文件** | 仅允许 Stage，不允许 Revert（无法还原） |
-| **用户外部修改** | 非当前 Thread 产生的修改，标记为"外部修改"，不可直接 Stage/Revert |
+| **用户外部修改** | 非当前 Session 产生的修改，标记为"外部修改"，不可直接 Stage/Revert |
 | **冲突状态** | 存在 Git 冲突的文件，显示冲突标记，不可直接操作，需先解决冲突 |
 
 ### 8.5 打开路径
@@ -485,18 +534,19 @@ Agent 行右侧显示其绑定 Runtime 的可用状态：
 | **切换显隐** | 顶栏 [🖥] 按钮或 ⌘J 快捷键 |
 | **[+] 新建终端** | Tab 条右侧，点击新建终端实例 |
 | **✕ 关闭终端** | 每个 Tab 可单独关闭，最后一个关闭后面板自动收起 |
-| **工作目录** | 自动设为当前 Thread 的项目路径 |
-| **切换 Thread** | 关闭所有终端实例，面板自动收起（切换即清场） |
+| **工作目录** | 自动设为当前 Session 的项目路径 |
+| **切换 Session** | 终端实例与 Session 绑定，切换时显示目标 Session 的终端组；目标无终端时面板自动收起。不销毁原 Session 的运行中进程 |
+| **关闭运行中终端** | 终端内有活跃进程时，关闭需二次确认（"终端中有正在运行的进程，确定关闭？"） |
 
 ---
 
 ## 10. 数据模型
 
-### 10.1 StudioThread
+### 10.1 StudioSession
 
 ```yaml
-StudioThread:
-  id: "thread_abc"
+StudioSession:
+  id: "session_abc"
   title: "重构 auth 模块"
 
   # 项目
@@ -519,7 +569,7 @@ StudioThread:
   status: active                           # active | idle | done | ended
   is_custom_agent: false                   # true = 自定义 Agent，不保存到 AICrew
 
-  transcript_ref: "threads/thread_abc/transcript.jsonl"
+  transcript_ref: "sessions/session_abc/transcript.jsonl"
 
   created_at: "2026-05-25T10:00:00"
   last_active_at: "2026-05-25T10:30:00"
@@ -558,8 +608,8 @@ TriageItem:
   detail_ref: "triage/triage_001/detail.md"
 
   # 用户操作
-  status: pending                          # pending | accepted | archived | spawned_thread
-  spawned_thread_id: null                  # 如果用户选择派生 Thread
+  status: pending                          # pending | accepted | archived | spawned_session
+  spawned_session_id: null                  # 如果用户选择派生对话
 
   created_at: "2026-05-25T09:01:00"
 ```
@@ -576,13 +626,13 @@ TriageItem:
 
 ## 11. 交互规则汇总
 
-### 11.1 Thread 上下文切换
+### 11.1 Session 上下文切换
 
 | 操作 | 行为 |
 |------|------|
-| 点击任意 Thread | 对话区 + 顶栏 + 右面板 + 终端，全部切换到该 Thread 上下文 |
-| 切换 Thread 时右面板 | 清空所有已打开的 Diff Tab，自动收起 |
-| 切换 Thread 时终端 | 关闭所有终端实例，自动收起 |
+| 点击任意对话 Session | 对话区 + 顶栏 + 右面板 + 终端，全部切换到该 Session 上下文 |
+| 切换 Session 时右面板 | 清空所有已打开的 Diff Tab，自动收起 |
+| 切换 Session 时终端 | 切换到目标 Session 的终端组（不销毁原 Session 终端），目标无终端时收起 |
 
 ### 11.2 快捷键
 
@@ -591,7 +641,7 @@ TriageItem:
 | ⌘B | 切换左侧边栏显隐 |
 | ⌘⇧B | 切换右面板显隐 |
 | ⌘J | 切换终端面板显隐 |
-| ⌘N | 创建新 Thread（当前项目下） |
+| ⌘N | 新建对话（当前项目下） |
 | ⌘↩ | Git 提交（右面板内） |
 
 ---
@@ -600,23 +650,23 @@ TriageItem:
 
 | 术语 | 定义 |
 |------|------|
-| **Thread** | Studio 的核心工作单元，绑定项目和 Agent，有独立对话和终端 |
+| **Session（对话）** | Studio 的核心工作单元，绑定项目和 Agent，有独立对话和终端 |
 | **Triage** | 自动化结果中需要用户处理的项目收件箱 |
 | **Automation** | 后台自动化规则（定时代码审查、PR 检查等） |
-| **Agent 执行器** | Thread 创建时选择的 AICrew 成员，决定用什么 Runtime 和配置执行 |
+| **Agent 执行器** | Session 创建时选择的 AICrew 成员，决定用什么 Runtime 和配置执行 |
 
 ---
 
 ## 13. V2 预留
 
-V1 不展示 Local/Worktree/Cloud/Handoff 入口；这些能力仅作为内部或后续扩展，不出现在创建弹窗、顶栏、Thread 行、右面板按钮和右键菜单中。
+V1 不展示 Local/Worktree/Cloud/Handoff 入口；这些能力仅作为内部或后续扩展，不出现在创建弹窗、顶栏、Session 行、右面板按钮和右键菜单中。
 
 - Worktree 隔离执行（Git worktree 并行执行）
 - Cloud 执行模式（远程容器执行）
 - Handoff（Worktree 变更迁移到主工作区）
 - Computer Use（macOS 桌面 GUI 操控）
-- Appshot（窗口截图采集到 Thread 上下文）
+- Appshot（窗口截图采集到 Session 上下文）
 - 内置浏览器（本地 Web 应用预览 + 元素评论）
-- Resume / Fork Thread（恢复/分叉历史 Thread）
+- Resume / Fork Session（恢复/分叉历史 Session）
 - 右面板文件编辑能力
-- Pop-out Window（Thread 弹出为独立窗口）
+- Pop-out Window（Session 弹出为独立窗口）
