@@ -1706,14 +1706,16 @@
                                 </div>
                               </div>
                             </div>
-                            <!-- Task: 主题系统适配 (backlog) -->
-                            <div class="fp-plan-task" data-fp-schedule="month" style="margin-bottom:2px;">
-                              <div style="display:flex;align-items:center;gap:6px;padding:6px 8px;border-radius:var(--radius);cursor:pointer;font-size:13px;">
+                            <!-- Task: 规划引擎接口设计 (in_evaluation) -->
+                            <div class="fp-plan-task" data-fp-schedule="week" style="margin-bottom:2px;">
+                              <div onclick="openTaskDetail()" style="display:flex;align-items:center;gap:6px;padding:6px 8px;border-radius:var(--radius);cursor:pointer;font-size:13px;">
                                 <span style="font-size:10px;width:14px;visibility:hidden;flex-shrink:0;">▶</span>
-                                <span style="width:7px;height:7px;border-radius:50%;flex-shrink:0;border:1.5px solid #636985;background:transparent;"></span>
-                                <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">主题系统适配</span>
+                                <span style="width:7px;height:7px;border-radius:50%;flex-shrink:0;border:1.5px solid var(--purple);background:var(--purple);"></span>
+                                <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">规划引擎接口设计</span>
                                 <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
-                                  <span style="font-size:10px;padding:2px 6px;border-radius:3px;font-weight:500;background:rgba(99,105,133,0.2);color:var(--dim);">P2</span>
+                                  <span style="font-size:10px;padding:2px 6px;border-radius:3px;font-weight:500;background:rgba(248,113,113,0.15);color:var(--red);">P0</span>
+                                  <span style="font-size:10px;padding:2px 6px;border-radius:3px;font-weight:500;background:rgba(242,196,15,0.15);color:var(--amber);">等你决策</span>
+                                  <span style="font-size:10px;color:var(--dim);font-family:var(--mono);">04-17</span>
                                 </div>
                               </div>
                             </div>
@@ -1722,13 +1724,39 @@
                         <!-- May -->
                         <div data-fp-plan-month="5" style="margin-bottom:2px;">
                           <div style="display:flex;align-items:center;gap:6px;padding:6px 8px;border-radius:var(--radius);cursor:pointer;font-size:13px;font-weight:500;">
-                            <span style="font-size:10px;color:var(--dim);width:14px;text-align:center;flex-shrink:0;">▶</span>
+                            <span style="font-size:10px;color:var(--dim);width:14px;text-align:center;transform:rotate(90deg);flex-shrink:0;">▶</span>
                             <span style="font-size:12px;flex-shrink:0;">📆</span>
-                            <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">5月 — AI Crew 配置 + 知识管道</span>
+                            <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">5月 — AI + Crew 集成</span>
                             <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
                               <span style="font-size:10px;padding:1px 6px;border-radius:10px;font-weight:500;background:rgba(74,222,128,0.15);color:var(--green);">active</span>
                               <div style="width:48px;height:4px;background:rgba(255,255,255,0.06);border-radius:2px;overflow:hidden;flex-shrink:0;"><div style="height:100%;width:0%;border-radius:2px;"></div></div>
                               <span style="font-size:10px;font-family:var(--mono);color:var(--dim);width:28px;text-align:right;flex-shrink:0;">0%</span>
+                            </div>
+                          </div>
+                          <div style="padding-left:22px;">
+                            <!-- Task: 主题系统适配 (backlog) -->
+                            <div class="fp-plan-task" data-fp-schedule="month" style="margin-bottom:2px;">
+                              <div style="display:flex;align-items:center;gap:6px;padding:6px 8px;border-radius:var(--radius);cursor:pointer;font-size:13px;">
+                                <span style="font-size:10px;width:14px;visibility:hidden;flex-shrink:0;">▶</span>
+                                <span style="width:7px;height:7px;border-radius:50%;flex-shrink:0;border:1.5px solid #636985;background:transparent;"></span>
+                                <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">主题系统适配</span>
+                                <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
+                                  <span style="font-size:10px;padding:2px 6px;border-radius:3px;font-weight:500;background:rgba(99,105,133,0.2);color:var(--dim);">P2</span>
+                                  <span style="font-size:10px;padding:2px 6px;border-radius:3px;font-weight:500;background:rgba(82,156,202,0.15);color:var(--accent);">auto</span>
+                                </div>
+                              </div>
+                            </div>
+                            <!-- Task: Anki 同步接口设计 (backlog) -->
+                            <div class="fp-plan-task" data-fp-schedule="month" style="margin-bottom:2px;">
+                              <div style="display:flex;align-items:center;gap:6px;padding:6px 8px;border-radius:var(--radius);cursor:pointer;font-size:13px;">
+                                <span style="font-size:10px;width:14px;visibility:hidden;flex-shrink:0;">▶</span>
+                                <span style="width:7px;height:7px;border-radius:50%;flex-shrink:0;border:1.5px solid #636985;background:transparent;"></span>
+                                <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">Anki 同步接口设计</span>
+                                <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
+                                  <span style="font-size:10px;padding:2px 6px;border-radius:3px;font-weight:500;background:rgba(99,105,133,0.2);color:var(--dim);">P2</span>
+                                  <span style="font-size:10px;padding:2px 6px;border-radius:3px;font-weight:500;background:rgba(82,156,202,0.15);color:var(--accent);">auto</span>
+                                </div>
+                              </div>
                             </div>
                           </div>
                         </div>
@@ -1756,6 +1784,66 @@
                         <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
                           <div style="width:48px;height:4px;background:rgba(255,255,255,0.06);border-radius:2px;overflow:hidden;flex-shrink:0;"><div style="height:100%;width:0%;border-radius:2px;"></div></div>
                           <span style="font-size:10px;font-family:var(--mono);color:var(--dim);width:28px;text-align:right;flex-shrink:0;">0%</span>
+                        </div>
+                      </div>
+                    </div>
+                    <!-- 未关联目标 -->
+                    <div style="border-top:1px solid var(--line-soft);margin-top:8px;padding-top:8px;">
+                      <div style="display:flex;align-items:center;gap:6px;padding:6px 8px;border-radius:var(--radius);font-size:13px;font-weight:500;">
+                        <span style="font-size:12px;flex-shrink:0;">✏️</span>
+                        <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">未关联目标</span>
+                        <span style="font-size:10px;font-weight:400;color:var(--dim);font-family:var(--mono);">4 项</span>
+                      </div>
+                      <div style="padding-left:22px;">
+                        <!-- Task: PRD 文档整合 (done) -->
+                        <div class="fp-plan-task" data-fp-schedule="week" style="margin-bottom:2px;">
+                          <div style="display:flex;align-items:center;gap:6px;padding:6px 8px;border-radius:var(--radius);cursor:pointer;font-size:13px;">
+                            <span style="font-size:10px;width:14px;visibility:hidden;flex-shrink:0;">▶</span>
+                            <span style="width:7px;height:7px;border-radius:50%;flex-shrink:0;border:1.5px solid var(--green);background:var(--green);"></span>
+                            <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-decoration:line-through;color:var(--dim);">PRD 文档整合</span>
+                            <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
+                              <span style="font-size:10px;padding:2px 6px;border-radius:3px;font-weight:500;background:rgba(249,115,22,0.15);color:#f97316;">P1</span>
+                              <span style="font-size:10px;padding:2px 6px;border-radius:3px;font-weight:500;background:rgba(160,124,245,0.15);color:var(--purple);">manual</span>
+                              <span style="font-size:10px;color:var(--green);font-family:var(--mono);">✓04-16</span>
+                            </div>
+                          </div>
+                        </div>
+                        <!-- Task: 配置迁移脚本 (blocked) -->
+                        <div class="fp-plan-task" data-fp-schedule="" style="margin-bottom:2px;opacity:.5;">
+                          <div style="display:flex;align-items:center;gap:6px;padding:6px 8px;border-radius:var(--radius);cursor:pointer;font-size:13px;">
+                            <span style="font-size:10px;width:14px;visibility:hidden;flex-shrink:0;">▶</span>
+                            <span style="width:7px;height:7px;border-radius:50%;flex-shrink:0;border:1.5px solid rgba(249,115,22,0.7);background:rgba(249,115,22,0.7);"></span>
+                            <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">配置迁移脚本</span>
+                            <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
+                              <span style="font-size:10px;padding:2px 6px;border-radius:3px;font-weight:500;background:rgba(249,115,22,0.15);color:rgba(249,115,22,1);">阻塞</span>
+                            </div>
+                          </div>
+                        </div>
+                        <!-- Task: 整理本周会议记录 (todo) -->
+                        <div class="fp-plan-task" data-fp-schedule="today" style="margin-bottom:2px;">
+                          <div style="display:flex;align-items:center;gap:6px;padding:6px 8px;border-radius:var(--radius);cursor:pointer;font-size:13px;">
+                            <span style="font-size:10px;width:14px;visibility:hidden;flex-shrink:0;">▶</span>
+                            <span style="width:7px;height:7px;border-radius:50%;flex-shrink:0;border:1.5px solid #9399b0;background:transparent;"></span>
+                            <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">整理本周会议记录</span>
+                            <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
+                              <span style="font-size:10px;padding:2px 6px;border-radius:3px;font-weight:500;background:rgba(99,105,133,0.2);color:var(--dim);">P2</span>
+                              <span style="font-size:10px;padding:2px 6px;border-radius:3px;font-weight:500;background:rgba(160,124,245,0.15);color:var(--purple);">manual</span>
+                              <span style="font-size:10px;color:var(--dim);font-family:var(--mono);">05-24</span>
+                            </div>
+                          </div>
+                        </div>
+                        <!-- Task: 研究 Multica 执行模型 (in_progress) -->
+                        <div class="fp-plan-task" data-fp-schedule="today" style="margin-bottom:2px;">
+                          <div onclick="openTaskDetail()" style="display:flex;align-items:center;gap:6px;padding:6px 8px;border-radius:var(--radius);cursor:pointer;font-size:13px;">
+                            <span style="font-size:10px;width:14px;visibility:hidden;flex-shrink:0;">▶</span>
+                            <span style="width:7px;height:7px;border-radius:50%;flex-shrink:0;border:1.5px solid #5b8af5;background:#5b8af5;"></span>
+                            <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">研究 Multica 执行模型</span>
+                            <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
+                              <span style="font-size:10px;padding:2px 6px;border-radius:3px;font-weight:500;background:rgba(249,115,22,0.15);color:#f97316;">P1</span>
+                              <span style="font-size:10px;padding:2px 6px;border-radius:3px;font-weight:500;background:rgba(160,124,245,0.15);color:var(--purple);">manual</span>
+                              <span style="font-size:10px;color:var(--dim);font-family:var(--mono);">05-24</span>
+                            </div>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -1803,8 +1891,8 @@
                   <div class="fp-plan-task" data-fp-schedule="week" style="height:34px;display:flex;align-items:center;position:relative;">
                     <div style="position:absolute;height:14px;border-radius:3px;cursor:pointer;overflow:hidden;white-space:nowrap;background:rgba(147,153,176,0.3);border:1px solid rgba(147,153,176,0.3);left:300px;width:50px;" title="Terminal"></div>
                   </div>
-                  <div class="fp-plan-task" data-fp-schedule="month" style="height:34px;display:flex;align-items:center;position:relative;">
-                    <div style="position:absolute;height:14px;border-radius:3px;cursor:pointer;overflow:hidden;white-space:nowrap;background:rgba(255,255,255,0.06);color:var(--dim);left:320px;width:30px;" title="主题适配"></div>
+                  <div class="fp-plan-task" data-fp-schedule="week" style="height:34px;display:flex;align-items:center;position:relative;">
+                    <div style="position:absolute;height:14px;border-radius:3px;cursor:pointer;overflow:hidden;white-space:nowrap;background:rgba(167,139,250,0.3);border:1px solid rgba(167,139,250,0.4);left:250px;width:30px;" title="规划引擎接口设计 ◈ 等你决策"></div>
                   </div>
                   <!-- Spacer -->
                   <div style="height:6px;"></div>
@@ -1814,18 +1902,15 @@
                   <div style="height:34px;display:flex;align-items:center;position:relative;">
                     <div style="position:absolute;height:20px;border-radius:4px;display:flex;align-items:center;padding:0 8px;font-size:9px;font-weight:500;cursor:pointer;overflow:hidden;white-space:nowrap;background:rgba(82,156,202,0.2);border:1px solid rgba(82,156,202,0.3);color:var(--accent);left:360px;width:150px;">
                       <div style="position:absolute;left:0;top:0;bottom:0;width:0%;background:rgba(82,156,202,0.15);border-radius:4px;"></div>
-                      5月 AI Crew
+                      5月 AI + Crew
                     </div>
                   </div>
                   <!-- May Tasks -->
                   <div class="fp-plan-task" data-fp-schedule="month" style="height:34px;display:flex;align-items:center;position:relative;">
-                    <div style="position:absolute;height:14px;border-radius:3px;cursor:pointer;overflow:hidden;white-space:nowrap;background:rgba(255,255,255,0.06);color:var(--dim);left:370px;width:50px;" title="Crew 配置"></div>
+                    <div style="position:absolute;height:14px;border-radius:3px;cursor:pointer;overflow:hidden;white-space:nowrap;background:rgba(255,255,255,0.06);color:var(--dim);left:370px;width:50px;" title="主题系统适配"></div>
                   </div>
                   <div class="fp-plan-task" data-fp-schedule="month" style="height:34px;display:flex;align-items:center;position:relative;">
-                    <div style="position:absolute;height:14px;border-radius:3px;cursor:pointer;overflow:hidden;white-space:nowrap;background:rgba(255,255,255,0.06);color:var(--dim);left:420px;width:60px;" title="知识管道"></div>
-                  </div>
-                  <div class="fp-plan-task" data-fp-schedule="month" style="height:34px;display:flex;align-items:center;position:relative;">
-                    <div style="position:absolute;height:14px;border-radius:3px;cursor:pointer;overflow:hidden;white-space:nowrap;background:rgba(255,255,255,0.06);color:var(--dim);left:460px;width:40px;" title="Anki 同步"></div>
+                    <div style="position:absolute;height:14px;border-radius:3px;cursor:pointer;overflow:hidden;white-space:nowrap;background:rgba(255,255,255,0.06);color:var(--dim);left:420px;width:50px;" title="Anki 同步接口设计"></div>
                   </div>
                   <!-- Spacer -->
                   <div style="height:6px;"></div>
@@ -1837,6 +1922,27 @@
                       <div style="position:absolute;left:0;top:0;bottom:0;width:0%;background:rgba(82,156,202,0.15);border-radius:4px;"></div>
                       6月 测试发布
                     </div>
+                  </div>
+                  </div>
+                  <!-- 未关联目标甘特区 -->
+                  <div style="border-top:1px solid var(--line-soft);margin-top:6px;padding-top:6px;">
+                  <!-- Unassociated label -->
+                  <div style="height:28px;display:flex;align-items:center;padding:0 8px;font-size:10px;font-weight:500;color:var(--dim);">✏️ 未关联目标</div>
+                  <!-- FP-007: PRD 文档整合 (done) -->
+                  <div class="fp-plan-task" data-fp-schedule="week" style="height:34px;display:flex;align-items:center;position:relative;opacity:0.5;">
+                    <div style="position:absolute;height:14px;border-radius:3px;cursor:pointer;overflow:hidden;white-space:nowrap;background:rgba(74,222,128,0.3);border:1px solid rgba(74,222,128,0.4);left:210px;width:30px;" title="PRD 文档整合 ✓"></div>
+                  </div>
+                  <!-- FP-008: 配置迁移脚本 (blocked) -->
+                  <div class="fp-plan-task" data-fp-schedule="" style="height:34px;display:flex;align-items:center;position:relative;opacity:0.5;">
+                    <div style="position:absolute;height:14px;border-radius:3px;cursor:pointer;overflow:hidden;white-space:nowrap;background:transparent;border:1px dashed rgba(249,115,22,0.5);left:180px;width:40px;" title="配置迁移脚本 ⊘ 阻塞"></div>
+                  </div>
+                  <!-- FP-010: 整理本周会议记录 (todo) -->
+                  <div class="fp-plan-task" data-fp-schedule="today" style="height:34px;display:flex;align-items:center;position:relative;">
+                    <div style="position:absolute;height:14px;border-radius:3px;cursor:pointer;overflow:hidden;white-space:nowrap;background:rgba(147,153,176,0.3);border:1px solid rgba(147,153,176,0.3);left:305px;width:10px;" title="整理本周会议记录"></div>
+                  </div>
+                  <!-- FP-011: 研究 Multica 执行模型 (in_progress) -->
+                  <div class="fp-plan-task" data-fp-schedule="today" style="height:34px;display:flex;align-items:center;position:relative;">
+                    <div style="position:absolute;height:14px;border-radius:3px;cursor:pointer;overflow:hidden;white-space:nowrap;background:rgba(91,138,245,0.4);border:1px solid rgba(91,138,245,0.5);left:305px;width:10px;" title="研究 Multica 执行模型"></div>
                   </div>
                   </div>
                 </div>
@@ -1859,49 +1965,52 @@
                 </div>
                 <!-- Scheduled tasks -->
                 <div style="padding:6px 0 0;">
-                  <div style="padding:0 12px 4px;font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;color:var(--dim);">已排期 · 4 项</div>
-                  <div onclick="openTaskDetail()" style="height:34px;display:flex;align-items:center;gap:6px;padding:0 12px;cursor:pointer;border-radius:var(--radius);font-size:12px;">
+                  <div style="padding:0 12px 4px;font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;color:var(--dim);">已排期 · 8 项</div>
+                  <div class="fp-week-task" data-fp-schedule="week" onclick="openTaskDetail()" style="height:34px;display:flex;align-items:center;gap:6px;padding:0 12px;cursor:pointer;border-radius:var(--radius);font-size:12px;">
                     <span style="width:7px;height:7px;border-radius:50%;flex-shrink:0;border:1.5px solid #5b8af5;background:#5b8af5;"></span>
                     <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">看板状态模型实现</span>
                     <span style="font-size:10px;padding:2px 6px;border-radius:3px;font-weight:500;background:rgba(248,113,113,0.15);color:var(--red);">P0</span>
                     <span style="font-size:11px;flex-shrink:0;">🤖</span>
                   </div>
-                  <div onclick="openTaskDetail()" style="height:34px;display:flex;align-items:center;gap:6px;padding:0 12px;cursor:pointer;border-radius:var(--radius);font-size:12px;">
+                  <div class="fp-week-task" data-fp-schedule="week" onclick="openTaskDetail()" style="height:34px;display:flex;align-items:center;gap:6px;padding:0 12px;cursor:pointer;border-radius:var(--radius);font-size:12px;">
                     <span style="width:7px;height:7px;border-radius:50%;flex-shrink:0;border:1.5px solid #9399b0;background:transparent;"></span>
                     <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">Agent Pull 执行管道</span>
                     <span style="font-size:10px;padding:2px 6px;border-radius:3px;font-weight:500;background:rgba(249,115,22,0.15);color:#f97316;">P1</span>
                     <span style="font-size:11px;flex-shrink:0;">🤖</span>
                   </div>
-                  <div onclick="openTaskDetail()" style="height:34px;display:flex;align-items:center;gap:6px;padding:0 12px;cursor:pointer;border-radius:var(--radius);font-size:12px;">
+                  <div class="fp-week-task" data-fp-schedule="week" onclick="openTaskDetail()" style="height:34px;display:flex;align-items:center;gap:6px;padding:0 12px;cursor:pointer;border-radius:var(--radius);font-size:12px;">
                     <span style="width:7px;height:7px;border-radius:50%;flex-shrink:0;border:1.5px solid #9399b0;background:transparent;"></span>
-                    <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">整理会议记录</span>
-                    <span style="font-size:10px;padding:2px 6px;border-radius:3px;font-weight:500;background:rgba(99,105,133,0.2);color:var(--dim);">P2</span>
-                    <span style="font-size:11px;flex-shrink:0;">🖐</span>
-                  </div>
-                  <div onclick="openTaskDetail()" style="height:34px;display:flex;align-items:center;gap:6px;padding:0 12px;cursor:pointer;border-radius:var(--radius);font-size:12px;">
-                    <span style="width:7px;height:7px;border-radius:50%;flex-shrink:0;border:1.5px solid #9399b0;background:transparent;"></span>
-                    <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">Terminal 手动执行</span>
+                    <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">Terminal 手动执行模式</span>
                     <span style="font-size:10px;padding:2px 6px;border-radius:3px;font-weight:500;background:rgba(249,115,22,0.15);color:#f97316;">P1</span>
                     <span style="font-size:11px;flex-shrink:0;">🖐</span>
                   </div>
-                </div>
-                <!-- Unscheduled tasks -->
-                <div style="padding:4px 0 8px;border-top:1px dashed var(--line-soft);margin-top:4px;">
-                  <div style="padding:4px 12px;font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;color:var(--dim);">未排期 · 3 项</div>
-                  <div onclick="openTaskDetail()" style="height:28px;display:flex;align-items:center;gap:6px;padding:0 12px;cursor:pointer;font-size:11px;color:var(--dim);">
-                    <span style="width:6px;height:6px;border-radius:50%;border:1px solid #636985;flex-shrink:0;"></span>
-                    <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">读《Designing Data Apps》</span>
-                    <span style="font-size:9px;color:var(--dim);">P2</span>
+                  <div class="fp-week-task" data-fp-schedule="week" onclick="openTaskDetail()" style="height:34px;display:flex;align-items:center;gap:6px;padding:0 12px;cursor:pointer;border-radius:var(--radius);font-size:12px;">
+                    <span style="width:7px;height:7px;border-radius:50%;flex-shrink:0;border:1.5px solid var(--purple);background:var(--purple);"></span>
+                    <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">规划引擎接口设计</span>
+                    <span style="font-size:10px;padding:2px 6px;border-radius:3px;font-weight:500;background:rgba(248,113,113,0.15);color:var(--red);">P0</span>
+                    <span style="font-size:10px;padding:2px 6px;border-radius:3px;font-weight:500;background:rgba(242,196,15,0.15);color:var(--amber);">等你决策</span>
                   </div>
-                  <div onclick="openTaskDetail()" style="height:28px;display:flex;align-items:center;gap:6px;padding:0 12px;cursor:pointer;font-size:11px;color:var(--dim);">
-                    <span style="width:6px;height:6px;border-radius:50%;border:1px solid #636985;flex-shrink:0;"></span>
-                    <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">写周报</span>
-                    <span style="font-size:9px;color:var(--dim);">P2</span>
+                  <div class="fp-week-task" data-fp-schedule="today" onclick="openTaskDetail()" style="height:34px;display:flex;align-items:center;gap:6px;padding:0 12px;cursor:pointer;border-radius:var(--radius);font-size:12px;">
+                    <span style="width:7px;height:7px;border-radius:50%;flex-shrink:0;border:1.5px solid #9399b0;background:transparent;"></span>
+                    <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">整理本周会议记录</span>
+                    <span style="font-size:10px;padding:2px 6px;border-radius:3px;font-weight:500;background:rgba(99,105,133,0.2);color:var(--dim);">P2</span>
+                    <span style="font-size:11px;flex-shrink:0;">🖐</span>
                   </div>
-                  <div onclick="openTaskDetail()" style="height:28px;display:flex;align-items:center;gap:6px;padding:0 12px;cursor:pointer;font-size:11px;color:var(--dim);">
-                    <span style="width:6px;height:6px;border-radius:50%;border:1px solid #636985;flex-shrink:0;"></span>
-                    <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">Anki 卡片整理</span>
-                    <span style="font-size:9px;color:var(--dim);">P2</span>
+                  <div class="fp-week-task" data-fp-schedule="today" onclick="openTaskDetail()" style="height:34px;display:flex;align-items:center;gap:6px;padding:0 12px;cursor:pointer;border-radius:var(--radius);font-size:12px;">
+                    <span style="width:7px;height:7px;border-radius:50%;flex-shrink:0;border:1.5px solid #5b8af5;background:#5b8af5;"></span>
+                    <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">研究 Multica 执行模型</span>
+                    <span style="font-size:10px;padding:2px 6px;border-radius:3px;font-weight:500;background:rgba(249,115,22,0.15);color:#f97316;">P1</span>
+                    <span style="font-size:11px;flex-shrink:0;">🖐</span>
+                  </div>
+                  <div class="fp-week-task" data-fp-schedule="week" style="height:34px;display:flex;align-items:center;gap:6px;padding:0 12px;cursor:pointer;border-radius:var(--radius);font-size:12px;opacity:.6;">
+                    <span style="width:7px;height:7px;border-radius:50%;flex-shrink:0;border:1.5px solid var(--green);background:var(--green);"></span>
+                    <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-decoration:line-through;color:var(--dim);">数据模型设计</span>
+                    <span style="font-size:10px;color:var(--green);">✓</span>
+                  </div>
+                  <div class="fp-week-task" data-fp-schedule="week" style="height:34px;display:flex;align-items:center;gap:6px;padding:0 12px;cursor:pointer;border-radius:var(--radius);font-size:12px;opacity:.6;">
+                    <span style="width:7px;height:7px;border-radius:50%;flex-shrink:0;border:1.5px solid var(--green);background:var(--green);"></span>
+                    <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-decoration:line-through;color:var(--dim);">PRD 文档整合</span>
+                    <span style="font-size:10px;color:var(--green);">✓</span>
                   </div>
                 </div>
               </div>
@@ -1932,30 +2041,37 @@
                   <!-- Scheduled rows -->
                   <div style="padding:6px 0 0;">
                     <div style="padding:0 12px 4px;font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;color:var(--dim);">时间线</div>
-                    <!-- Row 1: 看板状态模型 Mon~Wed (in_progress) -->
-                    <div style="height:34px;display:flex;align-items:center;position:relative;">
+                    <!-- Row 1: FP-002 看板状态模型 Mon~Wed (in_progress) -->
+                    <div class="fp-week-task" data-fp-schedule="week" style="height:34px;display:flex;align-items:center;position:relative;">
                       <div style="position:absolute;height:14px;border-radius:3px;cursor:pointer;overflow:hidden;white-space:nowrap;display:flex;align-items:center;padding:0 6px;font-size:9px;color:rgba(255,255,255,0.8);background:rgba(91,138,245,0.4);border:1px solid rgba(91,138,245,0.5);left:4px;width:305px;" title="看板状态模型实现">看板状态模型实现</div>
                     </div>
-                    <!-- Row 2: Agent Pull Wed~Thu (todo) -->
-                    <div style="height:34px;display:flex;align-items:center;position:relative;">
+                    <!-- Row 2: FP-003 Agent Pull Wed~Thu (todo) -->
+                    <div class="fp-week-task" data-fp-schedule="week" style="height:34px;display:flex;align-items:center;position:relative;">
                       <div style="position:absolute;height:14px;border-radius:3px;cursor:pointer;overflow:hidden;white-space:nowrap;display:flex;align-items:center;padding:0 6px;font-size:9px;color:rgba(255,255,255,0.6);background:rgba(147,153,176,0.3);border:1px solid rgba(147,153,176,0.3);left:210px;width:200px;" title="Agent Pull 执行管道">Agent Pull</div>
                     </div>
-                    <!-- Row 3: 整理会议记录 Thu (todo) -->
-                    <div style="height:34px;display:flex;align-items:center;position:relative;">
-                      <div style="position:absolute;height:14px;border-radius:3px;cursor:pointer;overflow:hidden;white-space:nowrap;display:flex;align-items:center;padding:0 6px;font-size:9px;color:rgba(255,255,255,0.6);background:rgba(147,153,176,0.3);border:1px solid rgba(147,153,176,0.3);left:313px;width:99px;" title="整理会议记录">整理会议记录</div>
+                    <!-- Row 3: FP-004 Terminal Fri (todo) -->
+                    <div class="fp-week-task" data-fp-schedule="week" style="height:34px;display:flex;align-items:center;position:relative;">
+                      <div style="position:absolute;height:14px;border-radius:3px;cursor:pointer;overflow:hidden;white-space:nowrap;display:flex;align-items:center;padding:0 6px;font-size:9px;color:rgba(255,255,255,0.6);background:rgba(147,153,176,0.3);border:1px solid rgba(147,153,176,0.3);left:416px;width:99px;" title="Terminal 手动执行模式">Terminal</div>
                     </div>
-                    <!-- Row 4: Terminal Fri (todo) -->
-                    <div style="height:34px;display:flex;align-items:center;position:relative;">
-                      <div style="position:absolute;height:14px;border-radius:3px;cursor:pointer;overflow:hidden;white-space:nowrap;display:flex;align-items:center;padding:0 6px;font-size:9px;color:rgba(255,255,255,0.6);background:rgba(147,153,176,0.3);border:1px solid rgba(147,153,176,0.3);left:416px;width:99px;" title="Terminal 手动执行">Terminal</div>
+                    <!-- Row 4: FP-005 规划引擎 Tue (in_evaluation) -->
+                    <div class="fp-week-task" data-fp-schedule="week" style="height:34px;display:flex;align-items:center;position:relative;">
+                      <div style="position:absolute;height:14px;border-radius:3px;cursor:pointer;overflow:hidden;white-space:nowrap;display:flex;align-items:center;padding:0 6px;font-size:9px;color:rgba(255,255,255,0.8);background:rgba(167,139,250,0.3);border:1px solid rgba(167,139,250,0.4);left:107px;width:99px;" title="规划引擎接口设计">规划引擎</div>
                     </div>
-                  </div>
-                  <!-- Unscheduled drop targets (per-row, mirrors left) -->
-                  <div style="padding:4px 0 8px;border-top:1px dashed var(--line-soft);margin-top:4px;">
-                    <div style="padding:4px 12px;font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;color:var(--dim);opacity:0.5;">未排期</div>
-                    <div style="height:28px;display:flex;align-items:center;position:relative;border-bottom:1px dashed rgba(99,105,133,0.1);"></div>
-                    <div style="height:28px;display:flex;align-items:center;position:relative;border-bottom:1px dashed rgba(99,105,133,0.1);"></div>
-                    <div style="height:28px;display:flex;align-items:center;justify-content:center;position:relative;">
-                      <span style="font-size:9px;color:var(--dim);opacity:0.3;">← 拖到日期列排期</span>
+                    <!-- Row 5: FP-010 会议记录 Mon (todo) -->
+                    <div class="fp-week-task" data-fp-schedule="today" style="height:34px;display:flex;align-items:center;position:relative;">
+                      <div style="position:absolute;height:14px;border-radius:3px;cursor:pointer;overflow:hidden;white-space:nowrap;display:flex;align-items:center;padding:0 6px;font-size:9px;color:rgba(255,255,255,0.6);background:rgba(147,153,176,0.3);border:1px solid rgba(147,153,176,0.3);left:50px;width:50px;" title="整理本周会议记录">会议记录</div>
+                    </div>
+                    <!-- Row 6: FP-011 Multica 研究 Mon (in_progress) -->
+                    <div class="fp-week-task" data-fp-schedule="today" style="height:34px;display:flex;align-items:center;position:relative;">
+                      <div style="position:absolute;height:14px;border-radius:3px;cursor:pointer;overflow:hidden;white-space:nowrap;display:flex;align-items:center;padding:0 6px;font-size:9px;color:rgba(255,255,255,0.8);background:rgba(91,138,245,0.4);border:1px solid rgba(91,138,245,0.5);left:4px;width:99px;" title="研究 Multica 执行模型">Multica 研究</div>
+                    </div>
+                    <!-- Row 7: FP-001 数据模型设计 Mon (done) -->
+                    <div class="fp-week-task" data-fp-schedule="week" style="height:34px;display:flex;align-items:center;position:relative;opacity:0.5;">
+                      <div style="position:absolute;height:14px;border-radius:3px;cursor:pointer;overflow:hidden;white-space:nowrap;display:flex;align-items:center;padding:0 6px;font-size:9px;color:rgba(255,255,255,0.5);background:rgba(74,222,128,0.3);border:1px solid rgba(74,222,128,0.4);left:4px;width:99px;" title="数据模型设计 ✓">数据模型设计 ✓</div>
+                    </div>
+                    <!-- Row 8: FP-007 PRD 文档整合 Mon (done) -->
+                    <div class="fp-week-task" data-fp-schedule="week" style="height:34px;display:flex;align-items:center;position:relative;opacity:0.5;">
+                      <div style="position:absolute;height:14px;border-radius:3px;cursor:pointer;overflow:hidden;white-space:nowrap;display:flex;align-items:center;padding:0 6px;font-size:9px;color:rgba(255,255,255,0.5);background:rgba(74,222,128,0.3);border:1px solid rgba(74,222,128,0.4);left:4px;width:80px;" title="PRD 文档整合 ✓">PRD 文档整合 ✓</div>
                     </div>
                   </div>
                 </div>
@@ -1978,29 +2094,18 @@
                 </div>
                 <!-- Scheduled tasks -->
                 <div style="padding:6px 0 0;">
-                  <div style="padding:0 12px 4px;font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;color:var(--dim);">已排时间 · 2 项</div>
-                  <div onclick="openTaskDetail()" style="height:34px;display:flex;align-items:center;gap:6px;padding:0 12px;cursor:pointer;border-radius:var(--radius);font-size:12px;">
-                    <span style="width:7px;height:7px;border-radius:50%;flex-shrink:0;border:1.5px solid var(--green);background:var(--green);"></span>
-                    <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-decoration:line-through;color:var(--dim);">数据模型设计</span>
-                    <span style="font-size:10px;padding:2px 6px;border-radius:3px;font-weight:500;background:rgba(248,113,113,0.15);color:var(--red);">P0</span>
-                    <span style="font-size:10px;color:var(--green);">✓</span>
-                  </div>
-                  <div onclick="openTaskDetail()" style="height:34px;display:flex;align-items:center;gap:6px;padding:0 12px;cursor:pointer;border-radius:var(--radius);font-size:12px;">
+                  <div style="padding:0 12px 4px;font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;color:var(--dim);">已排时间 · 1 项</div>
+                  <div class="fp-day-task" data-fp-schedule="today" onclick="openTaskDetail()" style="height:34px;display:flex;align-items:center;gap:6px;padding:0 12px;cursor:pointer;border-radius:var(--radius);font-size:12px;">
                     <span style="width:7px;height:7px;border-radius:50%;flex-shrink:0;border:1.5px solid #5b8af5;background:#5b8af5;"></span>
-                    <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">看板状态模型实现</span>
-                    <span style="font-size:10px;padding:2px 6px;border-radius:3px;font-weight:500;background:rgba(248,113,113,0.15);color:var(--red);">P0</span>
-                    <span style="font-size:11px;flex-shrink:0;">🤖</span>
+                    <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">研究 Multica 执行模型</span>
+                    <span style="font-size:10px;padding:2px 6px;border-radius:3px;font-weight:500;background:rgba(249,115,22,0.15);color:#f97316;">P1</span>
+                    <span style="font-size:11px;flex-shrink:0;">🖐</span>
                   </div>
                 </div>
                 <!-- Unscheduled tasks -->
                 <div style="padding:4px 0 8px;border-top:1px dashed var(--line-soft);margin-top:4px;">
-                  <div style="padding:4px 12px;font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;color:var(--dim);">未排时间 · 2 项</div>
-                  <div onclick="openTaskDetail()" style="height:28px;display:flex;align-items:center;gap:6px;padding:0 12px;cursor:pointer;font-size:11px;color:var(--dim);">
-                    <span style="width:6px;height:6px;border-radius:50%;border:1px solid #636985;flex-shrink:0;"></span>
-                    <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">读《Designing Data Apps》第 3 章</span>
-                    <span style="font-size:9px;color:var(--dim);">P2</span>
-                  </div>
-                  <div onclick="openTaskDetail()" style="height:28px;display:flex;align-items:center;gap:6px;padding:0 12px;cursor:pointer;font-size:11px;color:var(--dim);">
+                  <div style="padding:4px 12px;font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;color:var(--dim);">未排时间 · 1 项</div>
+                  <div class="fp-day-task" data-fp-schedule="today" onclick="openTaskDetail()" style="height:28px;display:flex;align-items:center;gap:6px;padding:0 12px;cursor:pointer;font-size:11px;color:var(--dim);">
                     <span style="width:6px;height:6px;border-radius:50%;border:1px solid #636985;flex-shrink:0;"></span>
                     <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">整理本周会议记录</span>
                     <span style="font-size:9px;color:var(--dim);">P2</span>
@@ -2037,19 +2142,15 @@
                   <!-- Scheduled rows -->
                   <div style="padding:6px 0 0;">
                     <div style="padding:0 12px 4px;font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;color:var(--dim);">时间线</div>
-                    <!-- Row 1: 数据模型设计 8:00-10:00 (done) -->
-                    <div style="height:34px;display:flex;align-items:center;position:relative;">
-                      <div style="position:absolute;height:14px;border-radius:3px;cursor:pointer;overflow:hidden;white-space:nowrap;display:flex;align-items:center;padding:0 6px;font-size:9px;color:rgba(255,255,255,0.5);background:rgba(74,222,128,0.3);border:1px solid rgba(74,222,128,0.4);left:4px;width:140px;opacity:0.5;" title="数据模型设计 ✓">数据模型设计 ✓</div>
-                    </div>
-                    <!-- Row 2: 看板状态模型 10:00-14:00 (in_progress) -->
-                    <div style="height:34px;display:flex;align-items:center;position:relative;">
-                      <div style="position:absolute;height:14px;border-radius:3px;cursor:pointer;overflow:hidden;white-space:nowrap;display:flex;align-items:center;padding:0 6px;font-size:9px;color:rgba(255,255,255,0.8);background:rgba(91,138,245,0.4);border:1px solid rgba(91,138,245,0.5);left:148px;width:284px;" title="看板状态模型实现">看板状态模型实现</div>
+                    <!-- Row 1: FP-011 研究 Multica 10:00-14:00 (in_progress) -->
+                    <div class="fp-day-task" data-fp-schedule="today" style="height:34px;display:flex;align-items:center;position:relative;">
+                      <div style="position:absolute;height:14px;border-radius:3px;cursor:pointer;overflow:hidden;white-space:nowrap;display:flex;align-items:center;padding:0 6px;font-size:9px;color:rgba(255,255,255,0.8);background:rgba(91,138,245,0.4);border:1px solid rgba(91,138,245,0.5);left:148px;width:284px;" title="研究 Multica 执行模型">研究 Multica 执行模型</div>
                     </div>
                   </div>
                   <!-- Unscheduled drop targets (per-row, mirrors left) -->
                   <div style="padding:4px 0 8px;border-top:1px dashed var(--line-soft);margin-top:4px;">
                     <div style="padding:4px 12px;font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;color:var(--dim);opacity:0.5;">未排时间</div>
-                    <div style="height:28px;display:flex;align-items:center;position:relative;border-bottom:1px dashed rgba(99,105,133,0.1);"></div>
+                    <div class="fp-day-task" data-fp-schedule="today" style="height:28px;display:flex;align-items:center;position:relative;border-bottom:1px dashed rgba(99,105,133,0.1);"></div>
                     <div style="height:28px;display:flex;align-items:center;justify-content:center;position:relative;">
                       <span style="font-size:9px;color:var(--dim);opacity:0.3;">← 拖到小时列排时</span>
                     </div>
@@ -2275,21 +2376,21 @@
                   <td style="padding:8px 10px;font-size:11px;color:var(--dim)">area</td>
                   <td style="padding:8px 10px;font-size:11px;font-family:var(--mono);color:var(--green)">✓ 04-15</td>
                 </tr>
-                <tr class="fp-list-row" style="cursor:pointer" data-fp-schedule="month" data-fp-mode="auto">
-                  <td style="padding:8px 10px"><span class="pill" style="font-size:10px;padding:1px 6px;border-color:rgba(112,120,135,.3);color:var(--dim)">◦ 待排</span></td>
-                  <td style="padding:8px 10px"><strong>主题系统适配</strong></td>
-                  <td style="padding:8px 10px;font-size:12px;color:var(--dim)">—</td>
-                  <td style="padding:8px 10px"><span class="pill" style="font-size:9px;padding:1px 5px;border-color:rgba(112,120,135,.3);color:var(--dim)">P2</span></td>
+                <tr class="fp-list-row" onclick="openTaskDetail()" style="cursor:pointer" data-fp-schedule="week" data-fp-mode="auto" data-fp-decision="yes">
+                  <td style="padding:8px 10px"><span class="pill" style="font-size:10px;padding:1px 6px;border-color:rgba(167,139,250,.3);color:var(--purple)">◈ 评估</span></td>
+                  <td style="padding:8px 10px"><strong>规划引擎接口设计</strong></td>
+                  <td style="padding:8px 10px;font-size:12px;color:var(--muted)">本周</td>
+                  <td style="padding:8px 10px"><span class="pill" style="font-size:9px;padding:1px 5px;border-color:rgba(248,113,113,.3);color:var(--red)">P0</span></td>
                   <td style="padding:8px 10px;font-size:12px">🤖</td>
-                  <td style="padding:8px 10px;font-size:11px;color:var(--muted)">代码工程师</td>
+                  <td style="padding:8px 10px;font-size:11px;color:var(--amber)">代码工程师→等你处理评估</td>
                   <td style="padding:8px 10px;font-size:11px;color:var(--dim)">area</td>
-                  <td style="padding:8px 10px;font-size:11px;font-family:var(--mono);color:var(--muted)">—</td>
+                  <td style="padding:8px 10px;font-size:11px;font-family:var(--mono);color:var(--muted)">04-17</td>
                 </tr>
               </tbody>
             </table>
-            <!-- Group 2 -->
+            <!-- Group 2: Q2/5月 -->
             <div style="display:flex;align-items:center;gap:8px;padding:12px 0 6px;font-size:12px;font-weight:700;color:var(--muted);border-bottom:1px solid var(--line-soft);margin-top:8px">
-              ✏️ 未关联目标
+              📆 Q2 / 5月 — AI + Crew 集成
               <span style="font-weight:400;color:var(--dim);font-family:var(--mono);font-size:11px" class="fp-list-group-count">2 项</span>
             </div>
             <table style="width:100%;border-collapse:collapse" class="fp-list-table">
@@ -2306,6 +2407,67 @@
                 </tr>
               </thead>
               <tbody>
+                <tr class="fp-list-row" style="cursor:pointer" data-fp-schedule="month" data-fp-mode="auto">
+                  <td style="padding:8px 10px"><span class="pill" style="font-size:10px;padding:1px 6px;border-color:rgba(112,120,135,.3);color:var(--dim)">◦ 待排</span></td>
+                  <td style="padding:8px 10px"><strong>主题系统适配</strong></td>
+                  <td style="padding:8px 10px;font-size:12px;color:var(--dim)">本月</td>
+                  <td style="padding:8px 10px"><span class="pill" style="font-size:9px;padding:1px 5px;border-color:rgba(112,120,135,.3);color:var(--dim)">P2</span></td>
+                  <td style="padding:8px 10px;font-size:12px">🤖</td>
+                  <td style="padding:8px 10px;font-size:11px;color:var(--muted)">代码工程师</td>
+                  <td style="padding:8px 10px;font-size:11px;color:var(--dim)">area</td>
+                  <td style="padding:8px 10px;font-size:11px;font-family:var(--mono);color:var(--muted)">—</td>
+                </tr>
+                <tr class="fp-list-row" style="cursor:pointer" data-fp-schedule="month" data-fp-mode="auto">
+                  <td style="padding:8px 10px"><span class="pill" style="font-size:10px;padding:1px 6px;border-color:rgba(112,120,135,.3);color:var(--dim)">◦ 待排</span></td>
+                  <td style="padding:8px 10px"><strong>Anki 同步接口设计</strong></td>
+                  <td style="padding:8px 10px;font-size:12px;color:var(--dim)">本月</td>
+                  <td style="padding:8px 10px"><span class="pill" style="font-size:9px;padding:1px 5px;border-color:rgba(112,120,135,.3);color:var(--dim)">P2</span></td>
+                  <td style="padding:8px 10px;font-size:12px">🤖</td>
+                  <td style="padding:8px 10px;font-size:11px;color:var(--muted)">代码工程师</td>
+                  <td style="padding:8px 10px;font-size:11px;color:var(--dim)">area</td>
+                  <td style="padding:8px 10px;font-size:11px;font-family:var(--mono);color:var(--muted)">—</td>
+                </tr>
+              </tbody>
+            </table>
+            <!-- Group 3: 未关联目标 -->
+            <div style="display:flex;align-items:center;gap:8px;padding:12px 0 6px;font-size:12px;font-weight:700;color:var(--muted);border-bottom:1px solid var(--line-soft);margin-top:8px">
+              ✏️ 未关联目标
+              <span style="font-weight:400;color:var(--dim);font-family:var(--mono);font-size:11px" class="fp-list-group-count">4 项</span>
+            </div>
+            <table style="width:100%;border-collapse:collapse" class="fp-list-table">
+              <thead>
+                <tr>
+                  <th style="width:40px;text-align:left;padding:8px 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);border-bottom:1px solid var(--line-soft)">状态</th>
+                  <th style="text-align:left;padding:8px 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);border-bottom:1px solid var(--line-soft)">标题</th>
+                  <th style="width:70px;text-align:left;padding:8px 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);border-bottom:1px solid var(--line-soft)">安排</th>
+                  <th style="width:50px;text-align:left;padding:8px 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);border-bottom:1px solid var(--line-soft)">优先级</th>
+                  <th style="width:50px;text-align:left;padding:8px 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);border-bottom:1px solid var(--line-soft)">模式</th>
+                  <th style="width:90px;text-align:left;padding:8px 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);border-bottom:1px solid var(--line-soft)">Agent</th>
+                  <th style="width:60px;text-align:left;padding:8px 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);border-bottom:1px solid var(--line-soft)">来源</th>
+                  <th style="width:60px;text-align:left;padding:8px 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);border-bottom:1px solid var(--line-soft)">截止</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr class="fp-list-row" style="cursor:pointer" data-fp-schedule="week" data-fp-mode="manual">
+                  <td style="padding:8px 10px"><span class="pill green" style="font-size:10px;padding:1px 6px">✓ 完成</span></td>
+                  <td style="padding:8px 10px;text-decoration:line-through;color:var(--dim)"><strong style="color:var(--dim)">PRD 文档整合</strong></td>
+                  <td style="padding:8px 10px;font-size:12px;color:var(--dim)">本周</td>
+                  <td style="padding:8px 10px"><span class="pill" style="font-size:9px;padding:1px 5px;border-color:rgba(242,196,15,.3);color:var(--amber)">P1</span></td>
+                  <td style="padding:8px 10px;font-size:12px">🖐</td>
+                  <td style="padding:8px 10px;font-size:11px;color:var(--muted)">手动完成</td>
+                  <td style="padding:8px 10px;font-size:11px;color:var(--dim)">area</td>
+                  <td style="padding:8px 10px;font-size:11px;font-family:var(--mono);color:var(--green)">✓ 04-16</td>
+                </tr>
+                <tr class="fp-list-row" style="cursor:pointer;opacity:.5" data-fp-schedule="" data-fp-mode="auto">
+                  <td style="padding:8px 10px"><span class="pill" style="font-size:10px;padding:1px 6px;border-color:rgba(249,115,22,.3);color:rgba(249,115,22,1)">⊘ 阻塞</span></td>
+                  <td style="padding:8px 10px"><strong>配置迁移脚本</strong></td>
+                  <td style="padding:8px 10px;font-size:12px;color:var(--dim)">—</td>
+                  <td style="padding:8px 10px"><span class="pill" style="font-size:9px;padding:1px 5px;border-color:rgba(112,120,135,.3);color:var(--dim)">P2</span></td>
+                  <td style="padding:8px 10px;font-size:12px">🤖</td>
+                  <td style="padding:8px 10px;font-size:11px;color:var(--muted)">代码工程师</td>
+                  <td style="padding:8px 10px;font-size:11px;color:var(--dim)">area</td>
+                  <td style="padding:8px 10px;font-size:11px;font-family:var(--mono);color:var(--muted)">—</td>
+                </tr>
                 <tr class="fp-list-row" onclick="openTaskDetail()" style="cursor:pointer" data-fp-schedule="today" data-fp-mode="manual">
                   <td style="padding:8px 10px"><span class="pill blue" style="font-size:10px;padding:1px 6px">● 进行</span></td>
                   <td style="padding:8px 10px"><strong>研究 Multica 执行模型</strong></td>
@@ -2325,11 +2487,11 @@
                   <td style="padding:8px 10px;font-size:11px;color:var(--muted)">手动执行</td>
                   <td style="padding:8px 10px;font-size:11px;color:var(--dim)">adhoc</td>
                   <td style="padding:8px 10px;font-size:11px;font-family:var(--mono);color:var(--muted)">05-24</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
           </div>
           <!-- ═══ Focus: Task Detail Slide Panel ═══ -->
           <div id="fpDetailOverlay" style="position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:50;opacity:0;pointer-events:none;transition:opacity .3s;backdrop-filter:blur(2px)" onclick="closeTaskDetail()"></div>
@@ -3327,6 +3489,22 @@
         });
         // 规划视图任务行过滤（与看板/列表同一套逻辑）
         document.querySelectorAll('.fp-plan-task').forEach(function(el) {
+          if (filter === 'all') { el.style.display = ''; return; }
+          if (filter === 'month') { el.style.display = monthSet.includes(el.dataset.fpSchedule) ? '' : 'none'; return; }
+          if (filter === 'week') { el.style.display = weekSet.includes(el.dataset.fpSchedule) ? '' : 'none'; return; }
+          if (filter === 'today') { el.style.display = el.dataset.fpSchedule === 'today' ? '' : 'none'; return; }
+          el.style.display = '';
+        });
+        // 周视图任务行过滤
+        document.querySelectorAll('.fp-week-task').forEach(function(el) {
+          if (filter === 'all') { el.style.display = ''; return; }
+          if (filter === 'month') { el.style.display = monthSet.includes(el.dataset.fpSchedule) ? '' : 'none'; return; }
+          if (filter === 'week') { el.style.display = weekSet.includes(el.dataset.fpSchedule) ? '' : 'none'; return; }
+          if (filter === 'today') { el.style.display = el.dataset.fpSchedule === 'today' ? '' : 'none'; return; }
+          el.style.display = '';
+        });
+        // 日视图任务行过滤
+        document.querySelectorAll('.fp-day-task').forEach(function(el) {
           if (filter === 'all') { el.style.display = ''; return; }
           if (filter === 'month') { el.style.display = monthSet.includes(el.dataset.fpSchedule) ? '' : 'none'; return; }
           if (filter === 'week') { el.style.display = weekSet.includes(el.dataset.fpSchedule) ? '' : 'none'; return; }
