@@ -48,7 +48,7 @@ WorkItem:
   scheduled_date: "2026-04-21" # 计划执行日期（驱动周视图/日视图定位）
   due_date: "2026-04-25" # 截止日期（驱动甘特条右端点）
   start_date: "2026-04-18" # 开始日期（驱动甘特条左端点，可选）
-  schedule: week # 自动派生: today|week|month|backlog（由 scheduled_date 相对当前日期计算）
+  schedule: week # UI 派生标签，不持久化: today|week|month|backlog（由 scheduled_date 相对当前日期实时计算）
 
   # ── 执行配置 ──
   execution_mode: semi_auto # none|manual|semi_auto|auto
@@ -506,8 +506,9 @@ ExecutionRun:
 │                          │                                     │
 │ 快捷视图                 │  [📐 规划]  [📋 看板]  [📄 列表]              │
 │  全局规划  (12)          │                                     │
-│  今日聚焦  (4)           │  视图内容（随侧边栏筛选联动）        │
+│  本月计划  (9)           │  视图内容（随侧边栏筛选联动）        │
 │  本周计划  (7)           │                                     │
+│  今日聚焦  (4)           │                                     │
 │  Agent 执行中 (2)        │                                     │
 │  等我决策    (1)         │                                     │
 │                          │                                     │
@@ -530,12 +531,15 @@ ExecutionRun:
 | 侧边栏选择   | 筛选条件                                 |
 | ------------ | ---------------------------------------- |
 | 全局规划     | 无筛选                                   |
-| 今日聚焦     | schedule=today                           |
+| 本月计划     | schedule=today\|week\|month              |
 | 本周计划     | schedule=today\|week                     |
+| 今日聚焦     | schedule=today                           |
 | Agent 执行中 | status=in_progress & execution_mode≠none |
 | 等我决策     | status=in_evaluation \| (status=in_progress & step.type=approval & step.status=pending) |
 | 目标树某节点 | goal_id=选中目标及其子目标               |
 | 来源项       | source=对应值                            |
+
+**schedule 派生与包含规则**：`schedule` 字段由 `scheduled_date` / `due_date` 相对当前日期自动派生，不可手动设置。过滤关系为严格包含：`全局规划 ⊃ 本月计划 ⊃ 本周计划 ⊃ 今日聚焦`。即本月计划包含本周和今日的任务，本周计划包含今日的任务。
 
 ---
 
@@ -548,6 +552,7 @@ ExecutionRun:
 | 侧边栏选择                          | 展示模式                              | 时间粒度 |
 | ----------------------------------- | ------------------------------------- | -------- |
 | 全局规划 / 目标树节点 / Agent执行中 | **模式 A：目标树 + 月级甘特**         | 月       |
+| 本月计划                            | **模式 A**（过滤仅显示当月目标与任务，非当月内容隐藏） | 月       |
 | 本周计划                            | **模式 B：任务列表 + 天级甘特**       | 天       |
 | 今日聚焦                            | **模式 C：任务列表 + 小时级甘特**     | 小时     |
 | 等我决策                            | **模式 A**（仅显示待决策项）          | 月       |

@@ -954,11 +954,14 @@
             <div class="side-item active" data-focus-filter="all" onclick="applyFocusFilter(this)">
               <span>📋 全局规划</span><span class="count">12</span>
             </div>
-            <div class="side-item" data-focus-filter="today" onclick="applyFocusFilter(this)">
-              <span>🔥 今日聚焦</span><span class="count">4</span>
+            <div class="side-item" data-focus-filter="month" onclick="applyFocusFilter(this)">
+              <span>📆 本月计划</span><span class="count">10</span>
             </div>
             <div class="side-item" data-focus-filter="week" onclick="applyFocusFilter(this)">
-              <span>📅 本周计划</span><span class="count">7</span>
+              <span>📅 本周计划</span><span class="count">8</span>
+            </div>
+            <div class="side-item" data-focus-filter="today" onclick="applyFocusFilter(this)">
+              <span>🔥 今日聚焦</span><span class="count">2</span>
             </div>
             <div class="side-item" data-focus-filter="agent" onclick="applyFocusFilter(this)">
               <span>🤖 Agent 执行中</span><span class="count" style="background:rgba(82,156,202,.2);color:var(--accent)">2</span>
@@ -1612,7 +1615,7 @@
               <!-- Left: Goal Tree -->
               <div style="border-right:1px solid var(--line-soft);overflow-y:auto;padding:0;background:var(--surface);">
                 <!-- Title -->
-                <div style="height:36px;display:flex;align-items:center;padding:0 12px;gap:6px;font-size:12px;font-weight:600;border-bottom:1px solid var(--line-soft);background:var(--surface);position:sticky;top:0;z-index:2;">
+                <div id="fpYearTitle" style="height:36px;display:flex;align-items:center;padding:0 12px;gap:6px;font-size:12px;font-weight:600;border-bottom:1px solid var(--line-soft);background:var(--surface);position:sticky;top:0;z-index:2;">
                   📋 全局规划 · 月视图
                   <span style="font-size:10px;font-weight:400;color:var(--dim);font-family:var(--mono);">12 项</span>
                 </div>
@@ -1639,7 +1642,7 @@
                       </div>
                       <div style="padding-left:22px;">
                         <!-- April -->
-                        <div style="margin-bottom:2px;">
+                        <div data-fp-plan-month="4" style="margin-bottom:2px;">
                           <div style="display:flex;align-items:center;gap:6px;padding:6px 8px;border-radius:var(--radius);cursor:pointer;font-size:13px;font-weight:500;">
                             <span style="font-size:10px;color:var(--dim);width:14px;text-align:center;transform:rotate(90deg);flex-shrink:0;">▶</span>
                             <span style="font-size:12px;flex-shrink:0;">📆</span>
@@ -1653,7 +1656,7 @@
                           </div>
                           <div style="padding-left:22px;">
                             <!-- Task: 看板状态模型实现 (in_progress) -->
-                            <div style="margin-bottom:2px;">
+                            <div class="fp-plan-task" data-fp-schedule="week" style="margin-bottom:2px;">
                               <div onclick="openTaskDetail()" style="display:flex;align-items:center;gap:6px;padding:6px 8px;border-radius:var(--radius);cursor:pointer;font-size:13px;">
                                 <span style="font-size:10px;width:14px;visibility:hidden;flex-shrink:0;">▶</span>
                                 <span style="width:7px;height:7px;border-radius:50%;flex-shrink:0;border:1.5px solid #5b8af5;background:#5b8af5;"></span>
@@ -1666,7 +1669,7 @@
                               </div>
                             </div>
                             <!-- Task: Agent Pull 执行管道 (todo) -->
-                            <div style="margin-bottom:2px;">
+                            <div class="fp-plan-task" data-fp-schedule="week" style="margin-bottom:2px;">
                               <div onclick="openTaskDetail()" style="display:flex;align-items:center;gap:6px;padding:6px 8px;border-radius:var(--radius);cursor:pointer;font-size:13px;">
                                 <span style="font-size:10px;width:14px;visibility:hidden;flex-shrink:0;">▶</span>
                                 <span style="width:7px;height:7px;border-radius:50%;flex-shrink:0;border:1.5px solid #9399b0;background:transparent;"></span>
@@ -1679,7 +1682,7 @@
                               </div>
                             </div>
                             <!-- Task: Terminal 手动执行模式 (todo) -->
-                            <div style="margin-bottom:2px;">
+                            <div class="fp-plan-task" data-fp-schedule="week" style="margin-bottom:2px;">
                               <div onclick="openTaskDetail()" style="display:flex;align-items:center;gap:6px;padding:6px 8px;border-radius:var(--radius);cursor:pointer;font-size:13px;">
                                 <span style="font-size:10px;width:14px;visibility:hidden;flex-shrink:0;">▶</span>
                                 <span style="width:7px;height:7px;border-radius:50%;flex-shrink:0;border:1.5px solid #9399b0;background:transparent;"></span>
@@ -1692,7 +1695,7 @@
                               </div>
                             </div>
                             <!-- Task: 数据模型设计 (done) -->
-                            <div style="margin-bottom:2px;">
+                            <div class="fp-plan-task" data-fp-schedule="week" style="margin-bottom:2px;">
                               <div style="display:flex;align-items:center;gap:6px;padding:6px 8px;border-radius:var(--radius);cursor:pointer;font-size:13px;">
                                 <span style="font-size:10px;width:14px;visibility:hidden;flex-shrink:0;">▶</span>
                                 <span style="width:7px;height:7px;border-radius:50%;flex-shrink:0;border:1.5px solid var(--green);background:var(--green);"></span>
@@ -1704,7 +1707,7 @@
                               </div>
                             </div>
                             <!-- Task: 主题系统适配 (backlog) -->
-                            <div style="margin-bottom:2px;">
+                            <div class="fp-plan-task" data-fp-schedule="month" style="margin-bottom:2px;">
                               <div style="display:flex;align-items:center;gap:6px;padding:6px 8px;border-radius:var(--radius);cursor:pointer;font-size:13px;">
                                 <span style="font-size:10px;width:14px;visibility:hidden;flex-shrink:0;">▶</span>
                                 <span style="width:7px;height:7px;border-radius:50%;flex-shrink:0;border:1.5px solid #636985;background:transparent;"></span>
@@ -1717,7 +1720,7 @@
                           </div>
                         </div>
                         <!-- May -->
-                        <div style="margin-bottom:2px;">
+                        <div data-fp-plan-month="5" style="margin-bottom:2px;">
                           <div style="display:flex;align-items:center;gap:6px;padding:6px 8px;border-radius:var(--radius);cursor:pointer;font-size:13px;font-weight:500;">
                             <span style="font-size:10px;color:var(--dim);width:14px;text-align:center;flex-shrink:0;">▶</span>
                             <span style="font-size:12px;flex-shrink:0;">📆</span>
@@ -1730,7 +1733,7 @@
                           </div>
                         </div>
                         <!-- June -->
-                        <div style="margin-bottom:2px;">
+                        <div data-fp-plan-month="6" style="margin-bottom:2px;">
                           <div style="display:flex;align-items:center;gap:6px;padding:6px 8px;border-radius:var(--radius);cursor:pointer;font-size:13px;font-weight:500;">
                             <span style="font-size:10px;color:var(--dim);width:14px;text-align:center;flex-shrink:0;">▶</span>
                             <span style="font-size:12px;flex-shrink:0;">📆</span>
@@ -1745,7 +1748,7 @@
                       </div>
                     </div>
                     <!-- Q3 placeholder -->
-                    <div style="margin-bottom:2px;">
+                    <div data-fp-plan-month="other" style="margin-bottom:2px;">
                       <div style="display:flex;align-items:center;gap:6px;padding:6px 8px;border-radius:var(--radius);cursor:pointer;font-size:13px;font-weight:500;opacity:0.5;">
                         <span style="font-size:10px;color:var(--dim);width:14px;text-align:center;flex-shrink:0;">▶</span>
                         <span style="font-size:12px;flex-shrink:0;">📌</span>
@@ -1773,12 +1776,13 @@
                   <!-- Today line -->
                   <div style="position:absolute;top:0;bottom:0;width:1px;background:var(--red);z-index:3;opacity:0.6;left:310px;"><span style="position:absolute;top:40px;left:-14px;font-size:9px;color:var(--red);font-weight:500;">今天</span></div>
                   <!-- Q2 Goal bar -->
-                  <div style="height:34px;display:flex;align-items:center;position:relative;">
+                  <div data-fp-plan-month="q2" style="height:34px;display:flex;align-items:center;position:relative;">
                     <div style="position:absolute;height:20px;border-radius:4px;display:flex;align-items:center;padding:0 8px;font-size:10px;font-weight:500;cursor:pointer;overflow:hidden;white-space:nowrap;background:rgba(82,156,202,0.2);border:1px solid rgba(82,156,202,0.3);color:var(--accent);left:120px;width:480px;">
                       <div style="position:absolute;left:0;top:0;bottom:0;width:38%;background:rgba(82,156,202,0.15);border-radius:4px;"></div>
                       Q2 FocusPilot 0.0.1
                     </div>
                   </div>
+                  <div data-fp-plan-month="4">
                   <!-- April Goal bar -->
                   <div style="height:34px;display:flex;align-items:center;position:relative;margin-top:4px;">
                     <div style="position:absolute;height:20px;border-radius:4px;display:flex;align-items:center;padding:0 8px;font-size:9px;font-weight:500;cursor:pointer;overflow:hidden;white-space:nowrap;background:rgba(82,156,202,0.2);border:1px solid rgba(82,156,202,0.3);color:var(--accent);left:180px;width:170px;">
@@ -1787,23 +1791,25 @@
                     </div>
                   </div>
                   <!-- April Tasks -->
-                  <div style="height:34px;display:flex;align-items:center;position:relative;">
+                  <div class="fp-plan-task" data-fp-schedule="week" style="height:34px;display:flex;align-items:center;position:relative;">
                     <div style="position:absolute;height:14px;border-radius:3px;cursor:pointer;overflow:hidden;white-space:nowrap;background:rgba(74,222,128,0.3);border:1px solid rgba(74,222,128,0.4);left:190px;width:50px;" title="数据模型设计 ✓"></div>
                   </div>
-                  <div style="height:34px;display:flex;align-items:center;position:relative;">
+                  <div class="fp-plan-task" data-fp-schedule="week" style="height:34px;display:flex;align-items:center;position:relative;">
                     <div style="position:absolute;height:14px;border-radius:3px;cursor:pointer;overflow:hidden;white-space:nowrap;background:rgba(91,138,245,0.4);border:1px solid rgba(91,138,245,0.5);left:240px;width:70px;" title="看板状态模型"></div>
                   </div>
-                  <div style="height:34px;display:flex;align-items:center;position:relative;">
+                  <div class="fp-plan-task" data-fp-schedule="week" style="height:34px;display:flex;align-items:center;position:relative;">
                     <div style="position:absolute;height:14px;border-radius:3px;cursor:pointer;overflow:hidden;white-space:nowrap;background:rgba(147,153,176,0.3);border:1px solid rgba(147,153,176,0.3);left:280px;width:60px;" title="Agent Pull"></div>
                   </div>
-                  <div style="height:34px;display:flex;align-items:center;position:relative;">
+                  <div class="fp-plan-task" data-fp-schedule="week" style="height:34px;display:flex;align-items:center;position:relative;">
                     <div style="position:absolute;height:14px;border-radius:3px;cursor:pointer;overflow:hidden;white-space:nowrap;background:rgba(147,153,176,0.3);border:1px solid rgba(147,153,176,0.3);left:300px;width:50px;" title="Terminal"></div>
                   </div>
-                  <div style="height:34px;display:flex;align-items:center;position:relative;">
+                  <div class="fp-plan-task" data-fp-schedule="month" style="height:34px;display:flex;align-items:center;position:relative;">
                     <div style="position:absolute;height:14px;border-radius:3px;cursor:pointer;overflow:hidden;white-space:nowrap;background:rgba(255,255,255,0.06);color:var(--dim);left:320px;width:30px;" title="主题适配"></div>
                   </div>
                   <!-- Spacer -->
                   <div style="height:6px;"></div>
+                  </div>
+                  <div data-fp-plan-month="5">
                   <!-- May Goal bar -->
                   <div style="height:34px;display:flex;align-items:center;position:relative;">
                     <div style="position:absolute;height:20px;border-radius:4px;display:flex;align-items:center;padding:0 8px;font-size:9px;font-weight:500;cursor:pointer;overflow:hidden;white-space:nowrap;background:rgba(82,156,202,0.2);border:1px solid rgba(82,156,202,0.3);color:var(--accent);left:360px;width:150px;">
@@ -1812,23 +1818,26 @@
                     </div>
                   </div>
                   <!-- May Tasks -->
-                  <div style="height:34px;display:flex;align-items:center;position:relative;">
+                  <div class="fp-plan-task" data-fp-schedule="month" style="height:34px;display:flex;align-items:center;position:relative;">
                     <div style="position:absolute;height:14px;border-radius:3px;cursor:pointer;overflow:hidden;white-space:nowrap;background:rgba(255,255,255,0.06);color:var(--dim);left:370px;width:50px;" title="Crew 配置"></div>
                   </div>
-                  <div style="height:34px;display:flex;align-items:center;position:relative;">
+                  <div class="fp-plan-task" data-fp-schedule="month" style="height:34px;display:flex;align-items:center;position:relative;">
                     <div style="position:absolute;height:14px;border-radius:3px;cursor:pointer;overflow:hidden;white-space:nowrap;background:rgba(255,255,255,0.06);color:var(--dim);left:420px;width:60px;" title="知识管道"></div>
                   </div>
-                  <div style="height:34px;display:flex;align-items:center;position:relative;">
+                  <div class="fp-plan-task" data-fp-schedule="month" style="height:34px;display:flex;align-items:center;position:relative;">
                     <div style="position:absolute;height:14px;border-radius:3px;cursor:pointer;overflow:hidden;white-space:nowrap;background:rgba(255,255,255,0.06);color:var(--dim);left:460px;width:40px;" title="Anki 同步"></div>
                   </div>
                   <!-- Spacer -->
                   <div style="height:6px;"></div>
+                  </div>
+                  <div data-fp-plan-month="6">
                   <!-- June Goal bar -->
                   <div style="height:34px;display:flex;align-items:center;position:relative;">
                     <div style="position:absolute;height:20px;border-radius:4px;display:flex;align-items:center;padding:0 8px;font-size:9px;font-weight:500;cursor:pointer;overflow:hidden;white-space:nowrap;background:rgba(82,156,202,0.2);border:1px solid rgba(82,156,202,0.3);color:var(--accent);left:520px;width:120px;opacity:0.5;">
                       <div style="position:absolute;left:0;top:0;bottom:0;width:0%;background:rgba(82,156,202,0.15);border-radius:4px;"></div>
                       6月 测试发布
                     </div>
+                  </div>
                   </div>
                 </div>
               </div>
@@ -2054,19 +2063,19 @@
               <!-- Backlog -->
               <div class="lane fp-col" data-fp-col="backlog">
                 <h3><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--dim);margin-right:4px;vertical-align:middle"></span> Backlog <span class="fp-col-count">2</span></h3>
-                <div class="task fp-card" onclick="openTaskDetail()" data-fp-schedule="" data-fp-mode="auto">
+                <div class="task fp-card" onclick="openTaskDetail()" data-fp-schedule="month" data-fp-mode="auto">
                   <div style="font-size:10px;font-family:var(--mono);color:var(--dim);margin-bottom:2px">FP-006</div>
                   <div class="task-title">主题系统适配</div>
                   <div class="task-meta" style="flex-wrap:wrap;gap:4px">
                     <span class="pill" style="font-size:9px;padding:1px 5px;border-color:rgba(112,120,135,.3);color:var(--dim)">P2</span>
                     <span class="pill" style="font-size:9px;padding:1px 5px;border-color:rgba(82,156,202,.3);color:var(--accent)">auto</span>
-                    <span style="font-size:10px;color:var(--dim)">→ 4月/WS</span>
+                    <span style="font-size:10px;color:var(--dim)">→ 5月/AI</span>
                   </div>
                   <div style="display:flex;align-items:center;justify-content:space-between;margin-top:6px;padding-top:6px;border-top:1px solid var(--line-soft);font-size:10px;color:var(--dim)">
                     <span>🧑‍💻 代码工程师</span><span style="font-family:var(--mono)">—</span>
                   </div>
                 </div>
-                <div class="task fp-card" onclick="openTaskDetail()" data-fp-schedule="" data-fp-mode="auto">
+                <div class="task fp-card" onclick="openTaskDetail()" data-fp-schedule="month" data-fp-mode="auto">
                   <div style="font-size:10px;font-family:var(--mono);color:var(--dim);margin-bottom:2px">FP-009</div>
                   <div class="task-title">Anki 同步接口设计</div>
                   <div class="task-meta" style="flex-wrap:wrap;gap:4px">
@@ -2266,7 +2275,7 @@
                   <td style="padding:8px 10px;font-size:11px;color:var(--dim)">area</td>
                   <td style="padding:8px 10px;font-size:11px;font-family:var(--mono);color:var(--green)">✓ 04-15</td>
                 </tr>
-                <tr class="fp-list-row" style="cursor:pointer" data-fp-schedule="" data-fp-mode="auto">
+                <tr class="fp-list-row" style="cursor:pointer" data-fp-schedule="month" data-fp-mode="auto">
                   <td style="padding:8px 10px"><span class="pill" style="font-size:10px;padding:1px 6px;border-color:rgba(112,120,135,.3);color:var(--dim)">◦ 待排</span></td>
                   <td style="padding:8px 10px"><strong>主题系统适配</strong></td>
                   <td style="padding:8px 10px;font-size:12px;color:var(--dim)">—</td>
@@ -3294,24 +3303,50 @@
         document.querySelectorAll('.fp-sub').forEach(p => { p.style.display = 'none'; p.classList.remove('active'); });
         const target = document.getElementById(targetId);
         if (target) { target.style.display = 'grid'; target.classList.add('active'); }
-        const timeLabels = { all: '本月', today: '今天', week: '本周' };
+        const timeLabels = { all: '全部', month: '本月', today: '今天', week: '本周' };
         document.getElementById('fp-filter-time').textContent = '时间: ' + (timeLabels[filter] || '全部') + ' ▾';
+        const monthSet = ['month', 'week', 'today'];
+        const weekSet = ['week', 'today'];
         document.querySelectorAll('.fp-card').forEach(c => {
           if (filter === 'all') { c.style.display = ''; return; }
+          if (filter === 'month') { c.style.display = monthSet.includes(c.dataset.fpSchedule) ? '' : 'none'; return; }
+          if (filter === 'week') { c.style.display = weekSet.includes(c.dataset.fpSchedule) ? '' : 'none'; return; }
           if (filter === 'today') { c.style.display = c.dataset.fpSchedule === 'today' ? '' : 'none'; return; }
-          if (filter === 'week') { c.style.display = (c.dataset.fpSchedule === 'week' || c.dataset.fpSchedule === 'today') ? '' : 'none'; return; }
           if (filter === 'agent') { c.style.display = c.dataset.fpAgent === 'yes' ? '' : 'none'; return; }
           if (filter === 'decision') { c.style.display = c.dataset.fpDecision === 'yes' ? '' : 'none'; return; }
           c.style.display = '';
         });
         document.querySelectorAll('.fp-list-row').forEach(r => {
           if (filter === 'all') { r.style.display = ''; return; }
+          if (filter === 'month') { r.style.display = monthSet.includes(r.dataset.fpSchedule) ? '' : 'none'; return; }
+          if (filter === 'week') { r.style.display = weekSet.includes(r.dataset.fpSchedule) ? '' : 'none'; return; }
           if (filter === 'today') { r.style.display = r.dataset.fpSchedule === 'today' ? '' : 'none'; return; }
-          if (filter === 'week') { r.style.display = (r.dataset.fpSchedule === 'week' || r.dataset.fpSchedule === 'today') ? '' : 'none'; return; }
           if (filter === 'agent') { r.style.display = r.dataset.fpAgent === 'yes' ? '' : 'none'; return; }
           if (filter === 'decision') { r.style.display = r.dataset.fpDecision === 'yes' ? '' : 'none'; return; }
           r.style.display = '';
         });
+        // 规划视图任务行过滤（与看板/列表同一套逻辑）
+        document.querySelectorAll('.fp-plan-task').forEach(function(el) {
+          if (filter === 'all') { el.style.display = ''; return; }
+          if (filter === 'month') { el.style.display = monthSet.includes(el.dataset.fpSchedule) ? '' : 'none'; return; }
+          if (filter === 'week') { el.style.display = weekSet.includes(el.dataset.fpSchedule) ? '' : 'none'; return; }
+          if (filter === 'today') { el.style.display = el.dataset.fpSchedule === 'today' ? '' : 'none'; return; }
+          el.style.display = '';
+        });
+        // 规划标题联动
+        var titleEl = document.getElementById('fpYearTitle');
+        if (titleEl) {
+          var planTaskCount = document.querySelectorAll('.fp-plan-task').length;
+          if (filter === 'all') {
+            titleEl.innerHTML = '📋 全局规划 · 月视图 <span style="font-size:10px;font-weight:400;color:var(--dim);font-family:var(--mono);">' + planTaskCount + ' 项</span>';
+          } else if (filter === 'month') {
+            var monthCount = 0;
+            document.querySelectorAll('.fp-plan-task').forEach(function(el) { if (monthSet.includes(el.dataset.fpSchedule)) monthCount++; });
+            // 左侧+右侧各有一份，取一半
+            monthCount = Math.round(monthCount / 2);
+            titleEl.innerHTML = '📆 本月计划 · 月视图 <span style="font-size:10px;font-weight:400;color:var(--dim);font-family:var(--mono);">' + monthCount + ' 项</span>';
+          }
+        }
       }
 
       /* ── Focus: Task Detail ── */
