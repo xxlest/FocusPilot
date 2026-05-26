@@ -3711,7 +3711,7 @@
         el.closest('.side-scroll').querySelectorAll('[data-focus-filter]').forEach(i => i.classList.remove('active'));
         el.classList.add('active');
         const filter = el.dataset.focusFilter;
-        const modeMap = { today: 'fp-day', week: 'fp-week' };
+        const modeMap = { today: 'fp-day', week: 'fp-week', month: 'fp-month' };
         const targetId = modeMap[filter] || 'fp-year';
         document.querySelectorAll('.fp-sub').forEach(p => { p.style.display = 'none'; p.classList.remove('active'); });
         const target = document.getElementById(targetId);
@@ -3777,6 +3777,18 @@
           if (filter === 'today') { el.style.display = el.dataset.fpSchedule === 'today' ? '' : 'none'; return; }
           el.style.display = '';
         });
+        // 月视图任务行过滤
+        document.querySelectorAll('.fp-month-task').forEach(function(el) {
+          if (filter === 'all') { el.style.display = ''; return; }
+          if (filter === 'month') {
+            if (el.dataset.fpMonth) { el.style.display = el.dataset.fpMonth === curMonth ? '' : 'none'; }
+            else { el.style.display = monthSet.includes(el.dataset.fpSchedule) ? '' : 'none'; }
+            return;
+          }
+          if (filter === 'week') { el.style.display = weekSet.includes(el.dataset.fpSchedule) ? '' : 'none'; return; }
+          if (filter === 'today') { el.style.display = el.dataset.fpSchedule === 'today' ? '' : 'none'; return; }
+          el.style.display = '';
+        });
         // 规划视图：隐藏无可见任务的目标容器
         document.querySelectorAll('[data-fp-plan-month]').forEach(function(container) {
           if (filter === 'all') { container.style.display = ''; return; }
@@ -3787,15 +3799,21 @@
           });
           container.style.display = hasVisible ? '' : 'none';
         });
-        // 规划标题联动
+        // fp-year 标题
         var titleEl = document.getElementById('fpYearTitle');
         if (titleEl) {
           var visCount = 0;
           document.querySelectorAll('#fp-year .fp-plan-task').forEach(function(el) { if (el.style.display !== 'none') visCount++; });
           visCount = Math.round(visCount / 2);
-          var labels = { all: '📋 全局规划', month: '📆 本月计划', week: '📅 本周计划', today: '🔥 今日聚焦' };
-          var label = labels[filter] || '📋 全局规划';
-          titleEl.innerHTML = label + ' · 月视图 <span style="font-size:10px;font-weight:400;color:var(--dim);font-family:var(--mono);">' + visCount + ' 项</span>';
+          titleEl.innerHTML = '📋 全局规划 · 月视图 <span style="font-size:10px;font-weight:400;color:var(--dim);font-family:var(--mono);">' + visCount + ' 项</span>';
+        }
+        // fp-month 标题
+        var monthTitleEl = document.getElementById('fpMonthTitle');
+        if (monthTitleEl) {
+          var monthVisCount = 0;
+          document.querySelectorAll('#fp-month .fp-month-task').forEach(function(el) { if (el.style.display !== 'none') monthVisCount++; });
+          monthVisCount = Math.round(monthVisCount / 2);
+          monthTitleEl.innerHTML = '📆 本月计划 · 周视图 <span style="font-size:10px;font-weight:400;color:var(--dim);font-family:var(--mono);">' + monthVisCount + ' 项</span>';
         }
         // 列表视图：隐藏无可见行的分组
         document.querySelectorAll('#focus-list .fp-list-table').forEach(function(table) {
