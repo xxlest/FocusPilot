@@ -36,6 +36,8 @@ FocusPilot 定位为 macOS 上的个人自迭代系统（Personal AIOS）—— 
 
 修改 UI 前必读 DesignGuide.md，修改业务逻辑前必读 Architecture.md，修改功能边界时必读 Editions.md。PilotOne 新功能开发前必读 PRD.md。V1 新界面开发前必读 FP-UI.md 和对应页面设计文档。
 
+**原型变更联动规则**：每次调整 `docs/fp-ui/` 下的原型或页面规格时，必须检查 `docs/PRD.md` 中对应章节是否需要同步更新（如数据模型、状态定义、过滤规则、页面职责等）。原型是 PRD 的可视化表达，两者不能出现矛盾。
+
 ## 参考项目
 
 | 项目 | GitHub | 本地路径 | 参考用途 |
