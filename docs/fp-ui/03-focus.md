@@ -48,7 +48,9 @@ WorkItem:
   scheduled_date: "2026-04-21" # 计划执行日期（驱动周视图/日视图定位）
   due_date: "2026-04-25" # 截止日期（驱动甘特条右端点）
   start_date: "2026-04-18" # 开始日期（驱动甘特条左端点，可选）
-  schedule: week # UI 派生标签，不持久化: today|week|month|backlog（由 scheduled_date 相对当前日期实时计算）
+
+  # ── UI 派生字段（不持久化）──
+  schedule: week # today|week|month|backlog（由 scheduled_date 相对当前日期实时计算）
 
   # ── 执行配置 ──
   execution_mode: semi_auto # none|manual|semi_auto|auto

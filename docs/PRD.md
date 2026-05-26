@@ -221,6 +221,8 @@ Task 的 frontmatter 通过 `status` + `schedule` 形成**双轴管理**：
 - `status` 管**执行生命周期**：inbox → planning → ready → executing → done
 - `schedule` 管**时间安排**：backlog → month → week → today
 
+`schedule` 由 `scheduled_date` / `due_date` 相对当前日期自动派生（UI 派生字段，不持久化）。过滤关系：`全局规划 ⊃ 本月计划 ⊃ 本周计划 ⊃ 今日聚焦`。
+
 两者独立：一个 Task 可以 `status: ready` + `schedule: week`（本周要做，已规划好，等待执行）。
 
 | schedule 值 | 含义 | Dashboard 区域 |
@@ -236,6 +238,23 @@ Task 的 frontmatter 通过 `status` + `schedule` 形成**双轴管理**：
 |------|------|---------|
 | Dashboard「+ 新建任务」 | 输入内容 → 选择归属项目 → 选择时间维度 | 必选 |
 | 项目树内右键创建 | 在某个项目/Epic/Phase 下创建 | 自动继承 |
+
+#### Focus 页面三视图
+
+Focus 页面提供三个视图：`[📐 规划]  [📋 看板]  [📄 列表]`，侧边栏 Scope 切换后三个视图同步过滤。
+
+**规划视图：四级同构甘特**
+
+规划视图统一采用「左侧任务列表 + 右侧甘特时间轴」布局，四种模式按时间粒度递进：
+
+| 侧边栏选择 | 展示模式 | 甘特列 |
+|---|---|---|
+| 全局规划 | 目标树 + 月级甘特 | 月列 |
+| 本月计划 | 目标树 + 周级甘特 | 周列(4~5) |
+| 本周计划 | 按天分组 + 天级甘特 | 天列(7) |
+| 今日聚焦 | 任务列表 + 小时级甘特 | 小时列(10) |
+
+**本月计划过滤规则**：按日历月过滤，显示 `goal.month = 当前月` 的任务 + 未关联目标中 `schedule ∈ {today, week, month}` 的任务。非当月目标容器及其任务整体隐藏。
 
 ### 3.4 Crew 数字团队
 
