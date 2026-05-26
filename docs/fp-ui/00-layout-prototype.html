@@ -952,7 +952,7 @@
           <div class="side-scroll">
             <div class="label">快捷视图</div>
             <div class="side-item active" data-focus-filter="all" onclick="applyFocusFilter(this)">
-              <span>📋 全局规划</span><span class="count">12</span>
+              <span>📋 全局规划</span><span class="count">11</span>
             </div>
             <div class="side-item" data-focus-filter="month" onclick="applyFocusFilter(this)">
               <span>📆 本月计划</span><span class="count">10</span>
@@ -3511,19 +3511,24 @@
           if (filter === 'today') { el.style.display = el.dataset.fpSchedule === 'today' ? '' : 'none'; return; }
           el.style.display = '';
         });
+        // 规划视图：隐藏无可见任务的目标容器
+        document.querySelectorAll('[data-fp-plan-month]').forEach(function(container) {
+          if (filter === 'all') { container.style.display = ''; return; }
+          var hasVisible = false;
+          container.querySelectorAll('.fp-plan-task').forEach(function(t) {
+            if (t.style.display !== 'none') hasVisible = true;
+          });
+          container.style.display = hasVisible ? '' : 'none';
+        });
         // 规划标题联动
         var titleEl = document.getElementById('fpYearTitle');
         if (titleEl) {
-          var planTaskCount = document.querySelectorAll('.fp-plan-task').length;
-          if (filter === 'all') {
-            titleEl.innerHTML = '📋 全局规划 · 月视图 <span style="font-size:10px;font-weight:400;color:var(--dim);font-family:var(--mono);">' + planTaskCount + ' 项</span>';
-          } else if (filter === 'month') {
-            var monthCount = 0;
-            document.querySelectorAll('.fp-plan-task').forEach(function(el) { if (monthSet.includes(el.dataset.fpSchedule)) monthCount++; });
-            // 左侧+右侧各有一份，取一半
-            monthCount = Math.round(monthCount / 2);
-            titleEl.innerHTML = '📆 本月计划 · 月视图 <span style="font-size:10px;font-weight:400;color:var(--dim);font-family:var(--mono);">' + monthCount + ' 项</span>';
-          }
+          var visCount = 0;
+          document.querySelectorAll('#fp-year .fp-plan-task').forEach(function(el) { if (el.style.display !== 'none') visCount++; });
+          visCount = Math.round(visCount / 2);
+          var labels = { all: '📋 全局规划', month: '📆 本月计划', week: '📅 本周计划', today: '🔥 今日聚焦' };
+          var label = labels[filter] || '📋 全局规划';
+          titleEl.innerHTML = label + ' · 月视图 <span style="font-size:10px;font-weight:400;color:var(--dim);font-family:var(--mono);">' + visCount + ' 项</span>';
         }
       }
 
