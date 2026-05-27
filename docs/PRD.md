@@ -216,12 +216,12 @@ Project → 自由嵌套 → Task
 
 ### 3.3 Task 双轴管理
 
-Task 的 frontmatter 通过 `status` + `schedule` 形成**双轴管理**：
+Task 的 frontmatter 通过 `status` + `scheduled_date` / `due_date` 形成**双轴管理**：
 
 - `status` 管**执行生命周期**：inbox → planning → ready → executing → done
-- `schedule` 管**时间安排**：backlog → month → week → today
+- `scheduled_date` / `due_date` 管**时间安排**：驱动任务在时间轴上的定位
 
-`schedule` 由 `scheduled_date` / `due_date` 相对当前日期自动派生（UI 派生字段，不持久化）。过滤关系：`全局规划 ⊃ 本月计划 ⊃ 本周计划 ⊃ 今日聚焦`。
+`schedule`（today / week / month / backlog）是 UI 派生字段（不持久化），由 `scheduled_date` / `due_date` 相对当前日期自动计算。过滤关系：`全局规划 ⊃ 本月计划 ⊃ 本周计划 ⊃ 今日聚焦`。
 
 两者独立：一个 Task 可以 `status: ready` + `schedule: week`（本周要做，已规划好，等待执行）。
 
