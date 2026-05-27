@@ -509,6 +509,25 @@
         padding-bottom: 0 !important;
         box-sizing: border-box;
       }
+      #fpMonthTitle {
+        height: 44px !important;
+      }
+      #fp-month > div:first-child > div:nth-child(2) {
+        padding-top: 8px !important;
+      }
+      #fp-month > div:first-child > div:nth-child(2) > div:first-child,
+      #fp-month > div:first-child .fp-month-task > div:first-child {
+        height: 34px !important;
+        padding-top: 0 !important;
+        padding-bottom: 0 !important;
+        box-sizing: border-box;
+      }
+      #fp-month > div:first-child [data-fp-plan-week] > div:first-child {
+        height: 28px !important;
+        padding-top: 0 !important;
+        padding-bottom: 0 !important;
+        box-sizing: border-box;
+      }
       #areas-editor.active { display: flex !important; flex-direction: column; }
       #areas-kb.active { display: flex !important; flex-direction: column; }
       .area-children.collapsed { display: none; }
@@ -2159,7 +2178,7 @@
               <!-- Right: Week-column Gantt -->
               <div style="flex:1;overflow-x:auto;overflow-y:auto;position:relative;background:var(--bg);">
                 <!-- Gantt Header: W18~W22 (5月) -->
-                <div style="position:sticky;top:0;z-index:5;display:flex;background:var(--surface);border-bottom:1px solid var(--line-soft);height:44px;">
+                <div style="position:sticky;top:0;z-index:5;display:flex;background:var(--surface);border-bottom:1px solid var(--line-soft);height:44px;min-width:600px;width:600px;">
                   <!-- W18 -->
                   <div style="min-width:120px;flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:11px;font-weight:500;color:var(--dim);border-right:1px solid var(--line-soft);position:relative;gap:1px;">
                     <span>W18</span>
@@ -2188,7 +2207,7 @@
                   </div>
                 </div>
                 <!-- Gantt Body -->
-                <div style="padding:8px 0;min-height:100%;position:relative;min-width:600px;">
+                <div style="padding:8px 0;min-height:100%;position:relative;min-width:600px;width:600px;">
                   <!-- Today line (W22 = 5th col, ~30px into it → 480+30=510) -->
                   <div style="position:absolute;top:0;bottom:0;width:1px;background:var(--red);z-index:3;opacity:0.6;left:510px;">
                     <span style="position:absolute;top:8px;left:-14px;font-size:9px;color:var(--red);font-weight:500;">今天</span>
@@ -2362,7 +2381,7 @@
               <!-- Right: Week Gantt (7 days) -->
               <div style="flex:1;overflow-x:auto;overflow-y:auto;position:relative;background:var(--bg);">
                 <!-- Gantt Header: Mon-Sun -->
-                <div style="position:sticky;top:0;z-index:5;display:flex;background:var(--surface);border-bottom:1px solid var(--line-soft);height:36px;">
+                <div style="position:sticky;top:0;z-index:5;display:flex;background:var(--surface);border-bottom:1px solid var(--line-soft);height:36px;min-width:721px;width:721px;">
                   <div style="min-width:103px;flex:1;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;color:var(--dim);border-right:1px solid var(--line-soft);position:relative;"><span>周一</span><span style="margin-left:4px;font-family:var(--mono);font-size:9px;opacity:0.6;">25</span></div>
                   <div style="min-width:103px;flex:1;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;color:var(--dim);border-right:1px solid var(--line-soft);position:relative;"><span>周二</span><span style="margin-left:4px;font-family:var(--mono);font-size:9px;opacity:0.6;">26</span></div>
                   <div style="min-width:103px;flex:1;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;color:var(--accent);border-right:1px solid var(--line-soft);position:relative;"><span>周三</span><span style="margin-left:4px;font-family:var(--mono);font-size:9px;">27</span><span style="position:absolute;bottom:0;left:0;right:0;height:2px;background:var(--accent);"></span></div>
@@ -2372,7 +2391,7 @@
                   <div style="min-width:103px;flex:1;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;color:var(--dim);position:relative;background:rgba(255,255,255,0.02);"><span>周日</span><span style="margin-left:4px;font-family:var(--mono);font-size:9px;opacity:0.6;">31</span></div>
                 </div>
                 <!-- Gantt Body -->
-                <div style="min-height:100%;position:relative;min-width:721px;">
+                <div style="min-height:100%;position:relative;min-width:721px;width:721px;">
                   <!-- Today line (Wed = col 3, early) -->
                   <div style="position:absolute;top:0;bottom:0;width:1px;background:var(--red);z-index:3;opacity:0.6;left:221px;"><span style="position:absolute;top:4px;left:-14px;font-size:9px;color:var(--red);font-weight:500;">今天</span></div>
                   <!-- Weekend bg (Sat+Sun = col 6-7) -->
@@ -2460,7 +2479,7 @@
               <!-- Right: Day Gantt (hourly) -->
               <div style="flex:1;overflow-x:auto;overflow-y:auto;position:relative;background:var(--bg);">
                 <!-- Gantt Header: 8:00-17:00 (10 hour slots) -->
-                <div style="position:sticky;top:0;z-index:5;display:flex;background:var(--surface);border-bottom:1px solid var(--line-soft);height:36px;">
+                <div style="position:sticky;top:0;z-index:5;display:flex;background:var(--surface);border-bottom:1px solid var(--line-soft);height:36px;min-width:720px;width:720px;">
                   <div style="min-width:72px;flex:1;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:500;color:var(--dim);border-right:1px solid var(--line-soft);font-family:var(--mono);position:relative;">8</div>
                   <div style="min-width:72px;flex:1;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:500;color:var(--dim);border-right:1px solid var(--line-soft);font-family:var(--mono);position:relative;">9</div>
                   <div style="min-width:72px;flex:1;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:500;color:var(--dim);border-right:1px solid var(--line-soft);font-family:var(--mono);position:relative;">10</div>
@@ -2473,7 +2492,7 @@
                   <div style="min-width:72px;flex:1;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:500;color:var(--dim);font-family:var(--mono);position:relative;">17</div>
                 </div>
                 <!-- Gantt Body (only scheduled tasks have bars) -->
-                <div style="min-height:100%;position:relative;min-width:720px;">
+                <div style="min-height:100%;position:relative;min-width:720px;width:720px;">
                   <!-- Now line (14:00) -->
                   <div style="position:absolute;top:0;bottom:0;width:1px;background:var(--red);z-index:3;opacity:0.6;left:432px;"><span style="position:absolute;top:4px;left:-10px;font-size:9px;color:var(--red);font-weight:500;">现在</span></div>
                   <!-- Current hour column highlight -->
