@@ -495,6 +495,20 @@
         display: flex;
         flex-direction: column;
       }
+      #fp-year > div:first-child > div:nth-child(2) > div:first-child,
+      #fp-year > div:first-child [data-fp-plan-month] > div:first-child,
+      #fp-year > div:first-child .fp-plan-task > div:first-child {
+        height: 34px !important;
+        padding-top: 0 !important;
+        padding-bottom: 0 !important;
+        box-sizing: border-box;
+      }
+      #fp-year > div:first-child [data-fp-goal] {
+        height: 28px !important;
+        padding-top: 0 !important;
+        padding-bottom: 0 !important;
+        box-sizing: border-box;
+      }
       #areas-editor.active { display: flex !important; flex-direction: column; }
       #areas-kb.active { display: flex !important; flex-direction: column; }
       .area-children.collapsed { display: none; }
@@ -1930,19 +1944,21 @@
               <!-- Right: Gantt Chart -->
               <div style="flex:1;overflow-x:auto;overflow-y:auto;position:relative;background:var(--bg);">
                 <!-- Gantt Header -->
-                <div style="position:sticky;top:0;z-index:5;display:flex;background:var(--surface);border-bottom:1px solid var(--line-soft);height:36px;">
+                <div style="position:sticky;top:0;z-index:5;display:flex;background:var(--surface);border-bottom:1px solid var(--line-soft);height:36px;min-width:720px;width:720px;">
                   <div style="min-width:180px;flex:1;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;color:var(--dim);border-right:1px solid var(--line-soft);position:relative;">3月</div>
-                  <div style="min-width:180px;flex:1;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;color:var(--accent);border-right:1px solid var(--line-soft);position:relative;">4月<span style="position:absolute;bottom:0;left:0;right:0;height:2px;background:var(--accent);"></span></div>
-                  <div style="min-width:180px;flex:1;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;color:var(--dim);border-right:1px solid var(--line-soft);position:relative;">5月</div>
+                  <div style="min-width:180px;flex:1;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;color:var(--dim);border-right:1px solid var(--line-soft);position:relative;">4月</div>
+                  <div style="min-width:180px;flex:1;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;color:var(--accent);border-right:1px solid var(--line-soft);position:relative;">5月<span style="position:absolute;bottom:0;left:0;right:0;height:2px;background:var(--accent);"></span></div>
                   <div style="min-width:180px;flex:1;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;color:var(--dim);position:relative;">6月</div>
                 </div>
                 <!-- Gantt Body -->
-                <div style="padding:8px 0;min-height:100%;position:relative;min-width:720px;">
+                <div style="padding:16px 0;min-height:100%;position:relative;min-width:720px;width:720px;">
                   <!-- Today line -->
-                  <div style="position:absolute;top:0;bottom:0;width:1px;background:var(--red);z-index:3;opacity:0.6;left:310px;"><span style="position:absolute;top:40px;left:-14px;font-size:9px;color:var(--red);font-weight:500;">今天</span></div>
+                  <div style="position:absolute;top:0;bottom:0;width:1px;background:var(--red);z-index:3;opacity:0.6;left:515px;"><span style="position:absolute;top:40px;left:-14px;font-size:9px;color:var(--red);font-weight:500;">今天</span></div>
+                  <!-- Year row spacer: mirrors left-side "2026 年度目标" row -->
+                  <div style="height:34px;"></div>
                   <div data-fp-plan-month="4">
                   <!-- April Goal bar -->
-                  <div style="height:34px;display:flex;align-items:center;position:relative;margin-top:4px;">
+                  <div style="height:34px;display:flex;align-items:center;position:relative;">
                     <div style="position:absolute;height:20px;border-radius:4px;display:flex;align-items:center;padding:0 8px;font-size:9px;font-weight:500;cursor:pointer;overflow:hidden;white-space:nowrap;background:rgba(82,156,202,0.2);border:1px solid rgba(82,156,202,0.3);color:var(--accent);left:180px;width:170px;">
                       <div style="position:absolute;left:0;top:0;bottom:0;width:40%;background:rgba(82,156,202,0.15);border-radius:4px;"></div>
                       4月
@@ -1993,7 +2009,7 @@
                   <div data-fp-plan-month="6">
                   <!-- June Goal bar -->
                   <div style="height:34px;display:flex;align-items:center;position:relative;">
-                    <div style="position:absolute;height:20px;border-radius:4px;display:flex;align-items:center;padding:0 8px;font-size:9px;font-weight:500;cursor:pointer;overflow:hidden;white-space:nowrap;background:rgba(82,156,202,0.2);border:1px solid rgba(82,156,202,0.3);color:var(--accent);left:520px;width:120px;opacity:0.5;">
+                    <div style="position:absolute;height:20px;border-radius:4px;display:flex;align-items:center;padding:0 8px;font-size:9px;font-weight:500;cursor:pointer;overflow:hidden;white-space:nowrap;background:rgba(82,156,202,0.2);border:1px solid rgba(82,156,202,0.3);color:var(--accent);left:540px;width:120px;opacity:0.5;">
                       <div style="position:absolute;left:0;top:0;bottom:0;width:0%;background:rgba(82,156,202,0.15);border-radius:4px;"></div>
                       6月
                     </div>
