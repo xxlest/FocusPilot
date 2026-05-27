@@ -495,6 +495,12 @@
         display: flex;
         flex-direction: column;
       }
+      #areas-editor.active { display: flex !important; flex-direction: column; }
+      #areas-kb.active { display: flex !important; flex-direction: column; }
+      .area-children.collapsed { display: none; }
+      .area-arrow { display: inline-block; width: 12px; font-size: 10px; text-align: center; }
+      .areas-tab:hover { color: var(--text) !important; }
+      .area-kb-card:hover { background: var(--surface-2); }
 
       .kanban {
         display: grid;
@@ -971,16 +977,16 @@
             </div>
             <div class="label">目标树</div>
             <div class="side-item" style="font-weight:600">
-              <span>▾ 📌 Q2 FocusPilot 0.0.1</span><span class="count">38%</span>
+              <span>▾ 📌 FocusPilot 0.0.1</span><span class="count">38%</span>
             </div>
             <div class="side-item indent">
-              <span>▾ 📆 4月 Workspace 原型</span><span class="count">40%</span>
+              <span>▾ 📆 4月</span><span class="count">100%</span>
             </div>
             <div class="side-item indent" style="padding-left:36px">
-              <span>▾ 📆 5月 AI Crew</span><span class="count">0%</span>
+              <span>▾ 📆 5月</span><span class="count">20%</span>
             </div>
             <div class="side-item indent" style="padding-left:36px">
-              <span>▸ 📆 6月 测试发布</span><span class="count">0%</span>
+              <span>▸ 📆 6月</span><span class="count">0%</span>
             </div>
             <div class="side-item">
               <span>▸ 📌 知识沉淀</span><span class="count">25%</span>
@@ -1066,26 +1072,109 @@
           </div>
         </section>
 
-        <section class="side-view" data-page="areas">
+        <section class="side-view" data-page="areas" id="areas-sidebar">
           <div class="side-head">
             <div class="side-title">
               <h2>AreaProjects</h2>
               <button class="btn icon">📄</button>
             </div>
-            <input class="search" placeholder="搜索文件和项目..." />
+            <input class="search" id="areas-search" placeholder="搜索文件和项目..." />
           </div>
           <div class="side-scroll">
             <div class="seg" style="margin: 0 8px 10px">
               <button>📁</button><button>📄</button><button>⭐</button
-              ><button>⤡</button>
+              ><button id="areas-toggle-all">⤡</button>
             </div>
-            <div class="side-item active"><span>▾ 📂 FocusPilot</span></div>
-            <div class="side-item indent"><span>📄 架构设计.md</span></div>
-            <div class="side-item indent"><span>📄 技术选型.md</span></div>
-            <div class="side-item indent"><span>▸ 📂 参考资料</span></div>
-            <div class="side-item"><span>▾ 📂 大客户项目</span></div>
-            <div class="side-item indent"><span>📄 客户画像.md</span></div>
-            <div class="side-item indent"><span>📄 竞品分析.md</span></div>
+
+            <!-- 📂 FocusPilot（执行类） -->
+            <div class="side-item area-project active" data-area-id="fp" style="cursor:pointer">
+              <span><span class="area-arrow">▾</span> 📂 FocusPilot</span>
+              <span class="pill" style="font-size:9px;padding:1px 5px;margin-left:auto">执行</span>
+            </div>
+            <div class="area-children" data-area-parent="fp">
+              <div class="side-item indent area-file active" data-area-file="arch"><span>📄 架构设计.md</span></div>
+              <div class="side-item indent area-file" data-area-file="tech"><span>📄 技术选型.md</span></div>
+              <!-- _materials 知识管道 -->
+              <div class="side-item indent area-folder" data-area-id="fp-mat" style="cursor:pointer">
+                <span><span class="area-arrow">▸</span> 📥 _materials</span>
+                <span class="count">3</span>
+              </div>
+              <div class="area-children collapsed" data-area-parent="fp-mat">
+                <div class="side-item indent area-file" data-area-file="mat1" style="padding-left:36px"><span>📄 RAG工程化实践.md</span></div>
+                <div class="side-item indent area-file" data-area-file="mat2" style="padding-left:36px"><span>📄 向量数据库对比.md</span></div>
+                <div class="side-item indent area-file" data-area-file="mat3" style="padding-left:36px"><span>📄 分布式共识论文.pdf</span></div>
+              </div>
+              <!-- _reports 知识管道 -->
+              <div class="side-item indent area-folder" data-area-id="fp-rpt" style="cursor:pointer">
+                <span><span class="area-arrow">▸</span> 📊 _reports</span>
+                <span class="count">2</span>
+              </div>
+              <div class="area-children collapsed" data-area-parent="fp-rpt">
+                <div class="side-item indent area-file" data-area-file="rpt1" style="padding-left:36px"><span>📄 周报-W22.md</span></div>
+                <div class="side-item indent area-file" data-area-file="rpt2" style="padding-left:36px"><span>📄 月报-05.md</span></div>
+              </div>
+              <!-- _kb 知识管道（特殊） -->
+              <div class="side-item indent area-folder area-kb-folder" data-area-id="fp-kb" style="cursor:pointer">
+                <span><span class="area-arrow">▸</span> 🧠 _kb</span>
+                <span class="count">5</span>
+              </div>
+              <div class="area-children collapsed" data-area-parent="fp-kb">
+                <div class="side-item indent area-file area-kb-file" data-area-file="kb-cap" style="padding-left:36px"><span>🧠 CAP 定理.md</span></div>
+                <div class="side-item indent area-file area-kb-file" data-area-file="kb-raft" style="padding-left:36px"><span>🧠 Raft 选举机制.md</span></div>
+                <div class="side-item indent area-file area-kb-file" data-area-file="kb-vec" style="padding-left:36px"><span>🧠 向量数据库选型对比.md</span></div>
+                <div class="side-item indent area-file area-kb-file" data-area-file="kb-paxos" style="padding-left:36px"><span>🧠 Paxos vs Raft.md</span></div>
+                <div class="side-item indent area-file area-kb-file" data-area-file="kb-crdt" style="padding-left:36px"><span>🧠 CRDT 数据结构.md</span></div>
+              </div>
+            </div>
+
+            <!-- 📂 分布式系统笔记（知识类） -->
+            <div class="side-item area-project" data-area-id="dist" style="cursor:pointer">
+              <span><span class="area-arrow">▸</span> 📂 分布式系统笔记</span>
+              <span class="pill" style="font-size:9px;padding:1px 5px;margin-left:auto">知识</span>
+            </div>
+            <div class="area-children collapsed" data-area-parent="dist">
+              <div class="side-item indent area-file" data-area-file="dist-consensus"><span>📄 共识算法总结.md</span></div>
+              <div class="side-item indent area-file" data-area-file="dist-cap"><span>📄 CAP 与 BASE.md</span></div>
+              <div class="side-item indent area-folder" data-area-id="dist-mat" style="cursor:pointer">
+                <span><span class="area-arrow">▸</span> 📥 _materials</span>
+                <span class="count">2</span>
+              </div>
+              <div class="area-children collapsed" data-area-parent="dist-mat">
+                <div class="side-item indent area-file" data-area-file="dist-mat1" style="padding-left:36px"><span>📄 Raft 论文笔记.md</span></div>
+                <div class="side-item indent area-file" data-area-file="dist-mat2" style="padding-left:36px"><span>📄 CRDT 实战.md</span></div>
+              </div>
+              <div class="side-item indent area-folder area-kb-folder" data-area-id="dist-kb" style="cursor:pointer">
+                <span><span class="area-arrow">▸</span> 🧠 _kb</span>
+                <span class="count">3</span>
+              </div>
+              <div class="area-children collapsed" data-area-parent="dist-kb">
+                <div class="side-item indent area-file area-kb-file" data-area-file="dist-kb1" style="padding-left:36px"><span>🧠 Paxos 核心思想.md</span></div>
+                <div class="side-item indent area-file area-kb-file" data-area-file="dist-kb2" style="padding-left:36px"><span>🧠 一致性模型分类.md</span></div>
+                <div class="side-item indent area-file area-kb-file" data-area-file="dist-kb3" style="padding-left:36px"><span>🧠 分布式事务模式.md</span></div>
+              </div>
+            </div>
+
+            <!-- 📂 大客户跟踪（执行类） -->
+            <div class="side-item area-project" data-area-id="client" style="cursor:pointer">
+              <span><span class="area-arrow">▸</span> 📂 大客户跟踪</span>
+              <span class="pill" style="font-size:9px;padding:1px 5px;margin-left:auto">执行</span>
+            </div>
+            <div class="area-children collapsed" data-area-parent="client">
+              <div class="side-item indent area-file" data-area-file="client-profile"><span>📄 客户画像.md</span></div>
+              <div class="side-item indent area-file" data-area-file="client-comp"><span>📄 竞品分析.md</span></div>
+              <div class="side-item indent area-folder" data-area-id="client-rpt" style="cursor:pointer">
+                <span><span class="area-arrow">▸</span> 📊 _reports</span>
+                <span class="count">1</span>
+              </div>
+              <div class="area-children collapsed" data-area-parent="client-rpt">
+                <div class="side-item indent area-file" data-area-file="client-rpt1" style="padding-left:36px"><span>📄 Q2 跟进报告.md</span></div>
+              </div>
+            </div>
+
+            <!-- 添加项目按钮 -->
+            <div style="padding:10px 12px;margin-top:8px">
+              <button class="btn" style="width:100%;border-style:dashed;color:var(--dim)">+ 添加项目</button>
+            </div>
           </div>
         </section>
 
@@ -1602,7 +1691,7 @@
                 ><button data-target="focus-board">看板</button
                 ><button data-target="focus-list">列表</button>
               </div>
-              <button class="btn" id="fp-filter-time" style="font-size:11px;min-height:28px;padding:0 9px">时间: 本月 ▾</button>
+              <button class="btn" id="fp-filter-time" style="font-size:11px;min-height:28px;padding:0 9px">时间: 全部 ▾</button>
               <button class="btn" id="fp-filter-goal" style="font-size:11px;min-height:28px;padding:0 9px">目标: 全部 ▾</button>
               <button class="btn" id="fp-filter-source" style="font-size:11px;min-height:28px;padding:0 9px">来源: 全部 ▾</button>
               <button class="btn primary" onclick="openNewTaskModal()">新建 Task</button>
@@ -1627,26 +1716,12 @@
                     <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:var(--font);font-size:16px;">2026 年度目标</span>
                   </div>
                   <div style="padding-left:22px;">
-                    <!-- Q2 -->
-                    <div style="margin-bottom:2px;">
-                      <div style="display:flex;align-items:center;gap:6px;padding:6px 8px;border-radius:var(--radius);cursor:pointer;font-size:13px;font-weight:500;">
-                        <span style="font-size:10px;color:var(--dim);width:14px;text-align:center;transform:rotate(90deg);flex-shrink:0;">▶</span>
-                        <span style="font-size:12px;flex-shrink:0;">📌</span>
-                        <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">Q2 — FocusPilot 0.0.1 发布</span>
-                        <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
-                          <span style="font-size:10px;padding:1px 6px;border-radius:10px;font-weight:500;background:rgba(74,222,128,0.15);color:var(--green);">active</span>
-                          <span style="font-size:9px;padding:1px 5px;border-radius:3px;font-weight:500;letter-spacing:0.02em;background:rgba(74,222,128,0.15);color:var(--green);">ON TRACK</span>
-                          <div style="width:48px;height:4px;background:rgba(255,255,255,0.06);border-radius:2px;overflow:hidden;flex-shrink:0;"><div style="height:100%;width:38%;background:var(--accent);border-radius:2px;"></div></div>
-                          <span style="font-size:10px;font-family:var(--mono);color:var(--dim);width:28px;text-align:right;flex-shrink:0;">38%</span>
-                        </div>
-                      </div>
-                      <div style="padding-left:22px;">
-                        <!-- April -->
+                    <!-- April -->
                         <div data-fp-plan-month="4" style="margin-bottom:2px;">
                           <div style="display:flex;align-items:center;gap:6px;padding:6px 8px;border-radius:var(--radius);cursor:pointer;font-size:13px;font-weight:500;">
                             <span style="font-size:10px;color:var(--dim);width:14px;text-align:center;transform:rotate(90deg);flex-shrink:0;">▶</span>
                             <span style="font-size:12px;flex-shrink:0;">📆</span>
-                            <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">4月 — Workspace + Engine 原型</span>
+                            <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">4月</span>
                             <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
                               <span style="font-size:10px;padding:1px 6px;border-radius:10px;font-weight:500;background:rgba(74,222,128,0.15);color:var(--green);">done</span>
                               <span style="font-size:9px;padding:1px 5px;border-radius:3px;font-weight:500;letter-spacing:0.02em;background:rgba(74,222,128,0.15);color:var(--green);">ON TRACK</span>
@@ -1655,6 +1730,11 @@
                             </div>
                           </div>
                           <div style="padding-left:22px;">
+                            <!-- Goal sub-group: FocusPilot 0.0.1 发布 -->
+                            <div data-fp-goal="fp-001-release" style="display:flex;align-items:center;gap:6px;padding:4px 8px;border-radius:var(--radius);font-size:12px;font-weight:500;color:var(--muted);">
+                              <span style="font-size:10px;flex-shrink:0;">📌</span>
+                              <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">FocusPilot 0.0.1 发布</span>
+                            </div>
                             <!-- Task: 数据模型设计 (done) -->
                             <div class="fp-plan-task" data-fp-schedule="" style="margin-bottom:2px;">
                               <div style="display:flex;align-items:center;gap:6px;padding:6px 8px;border-radius:var(--radius);cursor:pointer;font-size:13px;">
@@ -1686,7 +1766,7 @@
                           <div style="display:flex;align-items:center;gap:6px;padding:6px 8px;border-radius:var(--radius);cursor:pointer;font-size:13px;font-weight:500;">
                             <span style="font-size:10px;color:var(--dim);width:14px;text-align:center;transform:rotate(90deg);flex-shrink:0;">▶</span>
                             <span style="font-size:12px;flex-shrink:0;">📆</span>
-                            <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">5月 — AI + Crew 集成</span>
+                            <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">5月</span>
                             <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
                               <span style="font-size:10px;padding:1px 6px;border-radius:10px;font-weight:500;background:rgba(74,222,128,0.15);color:var(--green);">active</span>
                               <div style="width:48px;height:4px;background:rgba(255,255,255,0.06);border-radius:2px;overflow:hidden;flex-shrink:0;"><div style="height:100%;width:20%;background:var(--accent);border-radius:2px;"></div></div>
@@ -1694,6 +1774,11 @@
                             </div>
                           </div>
                           <div style="padding-left:22px;">
+                            <!-- Goal sub-group: FocusPilot 0.0.1 发布 -->
+                            <div data-fp-goal="fp-001-release" style="display:flex;align-items:center;gap:6px;padding:4px 8px;border-radius:var(--radius);font-size:12px;font-weight:500;color:var(--muted);">
+                              <span style="font-size:10px;flex-shrink:0;">📌</span>
+                              <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">FocusPilot 0.0.1 发布</span>
+                            </div>
                             <!-- Task: 看板状态模型实现 (in_progress) -->
                             <div class="fp-plan-task" data-fp-schedule="week" style="margin-bottom:2px;">
                               <div onclick="openTaskDetail()" style="display:flex;align-items:center;gap:6px;padding:6px 8px;border-radius:var(--radius);cursor:pointer;font-size:13px;">
@@ -1746,6 +1831,26 @@
                                 </div>
                               </div>
                             </div>
+                          </div>
+                        </div>
+                        <!-- June -->
+                        <div data-fp-plan-month="6" style="margin-bottom:2px;">
+                          <div style="display:flex;align-items:center;gap:6px;padding:6px 8px;border-radius:var(--radius);cursor:pointer;font-size:13px;font-weight:500;">
+                            <span style="font-size:10px;color:var(--dim);width:14px;text-align:center;transform:rotate(90deg);flex-shrink:0;">▶</span>
+                            <span style="font-size:12px;flex-shrink:0;">📆</span>
+                            <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">6月</span>
+                            <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
+                              <span style="font-size:10px;padding:1px 6px;border-radius:10px;font-weight:500;background:rgba(251,191,36,0.15);color:var(--amber);">paused</span>
+                              <div style="width:48px;height:4px;background:rgba(255,255,255,0.06);border-radius:2px;overflow:hidden;flex-shrink:0;"><div style="height:100%;width:0%;border-radius:2px;"></div></div>
+                              <span style="font-size:10px;font-family:var(--mono);color:var(--dim);width:28px;text-align:right;flex-shrink:0;">0%</span>
+                            </div>
+                          </div>
+                          <div style="padding-left:22px;">
+                            <!-- Goal sub-group: FocusPilot 0.0.1 发布 -->
+                            <div data-fp-goal="fp-001-release" style="display:flex;align-items:center;gap:6px;padding:4px 8px;border-radius:var(--radius);font-size:12px;font-weight:500;color:var(--muted);">
+                              <span style="font-size:10px;flex-shrink:0;">📌</span>
+                              <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">FocusPilot 0.0.1 发布</span>
+                            </div>
                             <!-- Task: 主题系统适配 (backlog) -->
                             <div class="fp-plan-task" data-fp-schedule="month" style="margin-bottom:2px;">
                               <div style="display:flex;align-items:center;gap:6px;padding:6px 8px;border-radius:var(--radius);cursor:pointer;font-size:13px;">
@@ -1772,33 +1877,6 @@
                             </div>
                           </div>
                         </div>
-                        <!-- June -->
-                        <div data-fp-plan-month="6" style="margin-bottom:2px;">
-                          <div style="display:flex;align-items:center;gap:6px;padding:6px 8px;border-radius:var(--radius);cursor:pointer;font-size:13px;font-weight:500;">
-                            <span style="font-size:10px;color:var(--dim);width:14px;text-align:center;flex-shrink:0;">▶</span>
-                            <span style="font-size:12px;flex-shrink:0;">📆</span>
-                            <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">6月 — 集成测试 + 首版发布</span>
-                            <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
-                              <span style="font-size:10px;padding:1px 6px;border-radius:10px;font-weight:500;background:rgba(251,191,36,0.15);color:var(--amber);">paused</span>
-                              <div style="width:48px;height:4px;background:rgba(255,255,255,0.06);border-radius:2px;overflow:hidden;flex-shrink:0;"><div style="height:100%;width:0%;border-radius:2px;"></div></div>
-                              <span style="font-size:10px;font-family:var(--mono);color:var(--dim);width:28px;text-align:right;flex-shrink:0;">0%</span>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    <!-- Q3 placeholder -->
-                    <div data-fp-plan-month="other" style="margin-bottom:2px;">
-                      <div style="display:flex;align-items:center;gap:6px;padding:6px 8px;border-radius:var(--radius);cursor:pointer;font-size:13px;font-weight:500;opacity:0.5;">
-                        <span style="font-size:10px;color:var(--dim);width:14px;text-align:center;flex-shrink:0;">▶</span>
-                        <span style="font-size:12px;flex-shrink:0;">📌</span>
-                        <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">Q3 — PilotOne 企业版启动</span>
-                        <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
-                          <div style="width:48px;height:4px;background:rgba(255,255,255,0.06);border-radius:2px;overflow:hidden;flex-shrink:0;"><div style="height:100%;width:0%;border-radius:2px;"></div></div>
-                          <span style="font-size:10px;font-family:var(--mono);color:var(--dim);width:28px;text-align:right;flex-shrink:0;">0%</span>
-                        </div>
-                      </div>
-                    </div>
                     <!-- 未关联目标 -->
                     <div style="border-top:1px solid var(--line-soft);margin-top:8px;padding-top:8px;">
                       <div style="display:flex;align-items:center;gap:6px;padding:6px 8px;border-radius:var(--radius);font-size:13px;font-weight:500;">
@@ -1862,21 +1940,16 @@
                 <div style="padding:8px 0;min-height:100%;position:relative;min-width:720px;">
                   <!-- Today line -->
                   <div style="position:absolute;top:0;bottom:0;width:1px;background:var(--red);z-index:3;opacity:0.6;left:310px;"><span style="position:absolute;top:40px;left:-14px;font-size:9px;color:var(--red);font-weight:500;">今天</span></div>
-                  <!-- Q2 Goal bar -->
-                  <div data-fp-plan-month="q2" style="height:34px;display:flex;align-items:center;position:relative;">
-                    <div style="position:absolute;height:20px;border-radius:4px;display:flex;align-items:center;padding:0 8px;font-size:10px;font-weight:500;cursor:pointer;overflow:hidden;white-space:nowrap;background:rgba(82,156,202,0.2);border:1px solid rgba(82,156,202,0.3);color:var(--accent);left:120px;width:480px;">
-                      <div style="position:absolute;left:0;top:0;bottom:0;width:38%;background:rgba(82,156,202,0.15);border-radius:4px;"></div>
-                      Q2 FocusPilot 0.0.1
-                    </div>
-                  </div>
                   <div data-fp-plan-month="4">
                   <!-- April Goal bar -->
                   <div style="height:34px;display:flex;align-items:center;position:relative;margin-top:4px;">
                     <div style="position:absolute;height:20px;border-radius:4px;display:flex;align-items:center;padding:0 8px;font-size:9px;font-weight:500;cursor:pointer;overflow:hidden;white-space:nowrap;background:rgba(82,156,202,0.2);border:1px solid rgba(82,156,202,0.3);color:var(--accent);left:180px;width:170px;">
                       <div style="position:absolute;left:0;top:0;bottom:0;width:40%;background:rgba(82,156,202,0.15);border-radius:4px;"></div>
-                      4月 Workspace
+                      4月
                     </div>
                   </div>
+                  <!-- April Goal sub-group bar -->
+                  <div data-fp-goal="fp-001-release" style="height:28px;display:flex;align-items:center;padding:0 8px;font-size:10px;color:var(--muted);">📌 FocusPilot 0.0.1 发布</div>
                   <!-- April Tasks -->
                   <div class="fp-plan-task" data-fp-schedule="" style="height:34px;display:flex;align-items:center;position:relative;">
                     <div style="position:absolute;height:14px;border-radius:3px;cursor:pointer;overflow:hidden;white-space:nowrap;background:rgba(74,222,128,0.3);border:1px solid rgba(74,222,128,0.4);left:190px;width:50px;" title="数据模型设计 ✓"></div>
@@ -1892,9 +1965,11 @@
                   <div style="height:34px;display:flex;align-items:center;position:relative;">
                     <div style="position:absolute;height:20px;border-radius:4px;display:flex;align-items:center;padding:0 8px;font-size:9px;font-weight:500;cursor:pointer;overflow:hidden;white-space:nowrap;background:rgba(82,156,202,0.2);border:1px solid rgba(82,156,202,0.3);color:var(--accent);left:360px;width:150px;">
                       <div style="position:absolute;left:0;top:0;bottom:0;width:0%;background:rgba(82,156,202,0.15);border-radius:4px;"></div>
-                      5月 AI + Crew
+                      5月
                     </div>
                   </div>
+                  <!-- May Goal sub-group bar -->
+                  <div data-fp-goal="fp-001-release" style="height:28px;display:flex;align-items:center;padding:0 8px;font-size:10px;color:var(--muted);">📌 FocusPilot 0.0.1 发布</div>
                   <!-- May Tasks -->
                   <!-- FP-002: 看板状态模型实现 (in_progress) -->
                   <div class="fp-plan-task" data-fp-schedule="week" style="height:34px;display:flex;align-items:center;position:relative;">
@@ -1912,14 +1987,6 @@
                   <div class="fp-plan-task" data-fp-schedule="week" style="height:34px;display:flex;align-items:center;position:relative;">
                     <div style="position:absolute;height:14px;border-radius:3px;cursor:pointer;overflow:hidden;white-space:nowrap;background:rgba(167,139,250,0.3);border:1px solid rgba(167,139,250,0.4);left:430px;width:40px;" title="规划引擎接口设计 ◈ 等你决策"></div>
                   </div>
-                  <!-- FP-006: 主题系统适配 (backlog) -->
-                  <div class="fp-plan-task" data-fp-schedule="month" style="height:34px;display:flex;align-items:center;position:relative;">
-                    <div style="position:absolute;height:14px;border-radius:3px;cursor:pointer;overflow:hidden;white-space:nowrap;background:rgba(255,255,255,0.06);color:var(--dim);left:370px;width:50px;" title="主题系统适配"></div>
-                  </div>
-                  <!-- FP-009: Anki 同步接口设计 (backlog) -->
-                  <div class="fp-plan-task" data-fp-schedule="month" style="height:34px;display:flex;align-items:center;position:relative;">
-                    <div style="position:absolute;height:14px;border-radius:3px;cursor:pointer;overflow:hidden;white-space:nowrap;background:rgba(255,255,255,0.06);color:var(--dim);left:420px;width:50px;" title="Anki 同步接口设计"></div>
-                  </div>
                   <!-- Spacer -->
                   <div style="height:6px;"></div>
                   </div>
@@ -1928,8 +1995,18 @@
                   <div style="height:34px;display:flex;align-items:center;position:relative;">
                     <div style="position:absolute;height:20px;border-radius:4px;display:flex;align-items:center;padding:0 8px;font-size:9px;font-weight:500;cursor:pointer;overflow:hidden;white-space:nowrap;background:rgba(82,156,202,0.2);border:1px solid rgba(82,156,202,0.3);color:var(--accent);left:520px;width:120px;opacity:0.5;">
                       <div style="position:absolute;left:0;top:0;bottom:0;width:0%;background:rgba(82,156,202,0.15);border-radius:4px;"></div>
-                      6月 测试发布
+                      6月
                     </div>
+                  </div>
+                  <!-- June Goal sub-group bar -->
+                  <div data-fp-goal="fp-001-release" style="height:28px;display:flex;align-items:center;padding:0 8px;font-size:10px;color:var(--muted);">📌 FocusPilot 0.0.1 发布</div>
+                  <!-- FP-006: 主题系统适配 (backlog) -->
+                  <div class="fp-plan-task" data-fp-schedule="month" style="height:34px;display:flex;align-items:center;position:relative;">
+                    <div style="position:absolute;height:14px;border-radius:3px;cursor:pointer;overflow:hidden;white-space:nowrap;background:rgba(255,255,255,0.06);color:var(--dim);left:530px;width:50px;" title="主题系统适配"></div>
+                  </div>
+                  <!-- FP-009: Anki 同步接口设计 (backlog) -->
+                  <div class="fp-plan-task" data-fp-schedule="month" style="height:34px;display:flex;align-items:center;position:relative;">
+                    <div style="position:absolute;height:14px;border-radius:3px;cursor:pointer;overflow:hidden;white-space:nowrap;background:rgba(255,255,255,0.06);color:var(--dim);left:540px;width:50px;" title="Anki 同步接口设计"></div>
                   </div>
                   </div>
                   <!-- 未关联目标甘特区 -->
@@ -1966,7 +2043,7 @@
                   <div style="display:flex;align-items:center;gap:6px;padding:6px 8px;border-radius:var(--radius);cursor:pointer;font-size:13px;font-weight:500;">
                     <span style="font-size:10px;color:var(--dim);width:14px;text-align:center;transform:rotate(90deg);flex-shrink:0;">▶</span>
                     <span style="font-size:12px;flex-shrink:0;">📌</span>
-                    <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">Q2 — FocusPilot 0.0.1 发布</span>
+                    <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">FocusPilot 0.0.1 发布</span>
                     <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
                       <span style="font-size:10px;padding:1px 6px;border-radius:10px;font-weight:500;background:rgba(74,222,128,0.15);color:var(--green);">active</span>
                       <div style="width:48px;height:4px;background:rgba(255,255,255,0.06);border-radius:2px;overflow:hidden;flex-shrink:0;"><div style="height:100%;width:38%;background:var(--accent);border-radius:2px;"></div></div>
@@ -2100,11 +2177,11 @@
                   <div style="position:absolute;top:0;bottom:0;width:1px;background:var(--red);z-index:3;opacity:0.6;left:510px;">
                     <span style="position:absolute;top:8px;left:-14px;font-size:9px;color:var(--red);font-weight:500;">今天</span>
                   </div>
-                  <!-- Q2 Goal bar spanning full width -->
+                  <!-- Goal bar spanning full width -->
                   <div style="height:34px;display:flex;align-items:center;position:relative;">
                     <div style="position:absolute;height:20px;border-radius:4px;display:flex;align-items:center;padding:0 8px;font-size:10px;font-weight:500;cursor:pointer;overflow:hidden;white-space:nowrap;background:rgba(82,156,202,0.2);border:1px solid rgba(82,156,202,0.3);color:var(--accent);left:8px;right:8px;">
                       <div style="position:absolute;left:0;top:0;bottom:0;width:85%;background:rgba(82,156,202,0.15);border-radius:4px;"></div>
-                      Q2 — FocusPilot 0.0.1 发布
+                      FocusPilot 0.0.1 发布
                     </div>
                   </div>
                   <!-- W22 task bars (5th column, left starts at 480px) -->
@@ -2422,7 +2499,7 @@
                   <div class="task-meta" style="flex-wrap:wrap;gap:4px">
                     <span class="pill" style="font-size:9px;padding:1px 5px;border-color:rgba(112,120,135,.3);color:var(--dim)">P2</span>
                     <span class="pill" style="font-size:9px;padding:1px 5px;border-color:rgba(82,156,202,.3);color:var(--accent)">auto</span>
-                    <span style="font-size:10px;color:var(--dim)">→ 6月/测试</span>
+                    <span style="font-size:10px;color:var(--dim)">→ 6月/FP 0.0.1</span>
                   </div>
                   <div style="display:flex;align-items:center;justify-content:space-between;margin-top:6px;padding-top:6px;border-top:1px solid var(--line-soft);font-size:10px;color:var(--dim)">
                     <span>🧑‍💻 代码工程师</span><span style="font-family:var(--mono)">—</span>
@@ -2434,7 +2511,7 @@
                   <div class="task-meta" style="flex-wrap:wrap;gap:4px">
                     <span class="pill" style="font-size:9px;padding:1px 5px;border-color:rgba(112,120,135,.3);color:var(--dim)">P2</span>
                     <span class="pill" style="font-size:9px;padding:1px 5px;border-color:rgba(82,156,202,.3);color:var(--accent)">auto</span>
-                    <span style="font-size:10px;color:var(--dim)">→ 6月/测试</span>
+                    <span style="font-size:10px;color:var(--dim)">→ 6月/FP 0.0.1</span>
                   </div>
                   <div style="display:flex;align-items:center;justify-content:space-between;margin-top:6px;padding-top:6px;border-top:1px solid var(--line-soft);font-size:10px;color:var(--dim)">
                     <span>🧑‍💻 代码工程师</span><span style="font-family:var(--mono)">—</span>
@@ -2571,8 +2648,8 @@
           <div class="work panel" id="focus-list" style="overflow:auto;padding:0 18px 18px">
             <!-- Group 1 -->
             <div style="display:flex;align-items:center;gap:8px;padding:12px 0 6px;font-size:12px;font-weight:700;color:var(--muted);border-bottom:1px solid var(--line-soft);position:sticky;top:0;background:var(--bg);z-index:2">
-              📌 Q2 / 4月 — Workspace + Engine 原型
-              <span style="font-weight:400;color:var(--dim);font-family:var(--mono);font-size:11px" class="fp-list-group-count">1 项</span>
+              📌 4月 · FocusPilot 0.0.1 发布
+              <span style="font-weight:400;color:var(--dim);font-family:var(--mono);font-size:11px" class="fp-list-group-count">2 项</span>
             </div>
             <table style="width:100%;border-collapse:collapse" class="fp-list-table" data-fp-month-group="4">
               <thead>
@@ -2598,11 +2675,21 @@
                   <td style="padding:8px 10px;font-size:11px;color:var(--dim)">area</td>
                   <td style="padding:8px 10px;font-size:11px;font-family:var(--mono);color:var(--green)">✓ 04-15</td>
                 </tr>
+                <tr class="fp-list-row" style="cursor:pointer" data-fp-schedule="" data-fp-mode="manual">
+                  <td style="padding:8px 10px"><span class="pill green" style="font-size:10px;padding:1px 6px">✓ 完成</span></td>
+                  <td style="padding:8px 10px;text-decoration:line-through;color:var(--dim)"><strong style="color:var(--dim)">PRD 文档整合</strong></td>
+                  <td style="padding:8px 10px;font-size:12px;color:var(--dim)">—</td>
+                  <td style="padding:8px 10px"><span class="pill" style="font-size:9px;padding:1px 5px;border-color:rgba(242,196,15,.3);color:var(--amber)">P1</span></td>
+                  <td style="padding:8px 10px;font-size:12px">🖐</td>
+                  <td style="padding:8px 10px;font-size:11px;color:var(--muted)">手动完成</td>
+                  <td style="padding:8px 10px;font-size:11px;color:var(--dim)">area</td>
+                  <td style="padding:8px 10px;font-size:11px;font-family:var(--mono);color:var(--green)">✓ 04-16</td>
+                </tr>
               </tbody>
             </table>
-            <!-- Group 2: Q2/5月 -->
+            <!-- Group 2: 5月 -->
             <div style="display:flex;align-items:center;gap:8px;padding:12px 0 6px;font-size:12px;font-weight:700;color:var(--muted);border-bottom:1px solid var(--line-soft);margin-top:8px">
-              📆 Q2 / 5月 — AI + Crew 集成
+              📆 5月 · FocusPilot 0.0.1 发布
               <span style="font-weight:400;color:var(--dim);font-family:var(--mono);font-size:11px" class="fp-list-group-count">4 项</span>
             </div>
             <table style="width:100%;border-collapse:collapse" class="fp-list-table" data-fp-month-group="5">
@@ -2661,9 +2748,9 @@
                 </tr>
               </tbody>
             </table>
-            <!-- Group 2b: Q2/6月 -->
+            <!-- Group 2b: 6月 -->
             <div style="display:flex;align-items:center;gap:8px;padding:12px 0 6px;font-size:12px;font-weight:700;color:var(--muted);border-bottom:1px solid var(--line-soft);margin-top:8px">
-              📆 Q2 / 6月 — 集成测试 + 首版发布
+              📆 6月 · FocusPilot 0.0.1 发布
               <span style="font-weight:400;color:var(--dim);font-family:var(--mono);font-size:11px" class="fp-list-group-count">2 项</span>
             </div>
             <table style="width:100%;border-collapse:collapse" class="fp-list-table" data-fp-month-group="6">
@@ -2705,7 +2792,7 @@
             <!-- Group 3: 未关联目标 -->
             <div style="display:flex;align-items:center;gap:8px;padding:12px 0 6px;font-size:12px;font-weight:700;color:var(--muted);border-bottom:1px solid var(--line-soft);margin-top:8px">
               ✏️ 未关联目标
-              <span style="font-weight:400;color:var(--dim);font-family:var(--mono);font-size:11px" class="fp-list-group-count">4 项</span>
+              <span style="font-weight:400;color:var(--dim);font-family:var(--mono);font-size:11px" class="fp-list-group-count">3 项</span>
             </div>
             <table style="width:100%;border-collapse:collapse" class="fp-list-table">
               <thead>
@@ -2721,16 +2808,6 @@
                 </tr>
               </thead>
               <tbody>
-                <tr class="fp-list-row" style="cursor:pointer" data-fp-schedule="" data-fp-mode="manual">
-                  <td style="padding:8px 10px"><span class="pill green" style="font-size:10px;padding:1px 6px">✓ 完成</span></td>
-                  <td style="padding:8px 10px;text-decoration:line-through;color:var(--dim)"><strong style="color:var(--dim)">PRD 文档整合</strong></td>
-                  <td style="padding:8px 10px;font-size:12px;color:var(--dim)">本周</td>
-                  <td style="padding:8px 10px"><span class="pill" style="font-size:9px;padding:1px 5px;border-color:rgba(242,196,15,.3);color:var(--amber)">P1</span></td>
-                  <td style="padding:8px 10px;font-size:12px">🖐</td>
-                  <td style="padding:8px 10px;font-size:11px;color:var(--muted)">手动完成</td>
-                  <td style="padding:8px 10px;font-size:11px;color:var(--dim)">area</td>
-                  <td style="padding:8px 10px;font-size:11px;font-family:var(--mono);color:var(--green)">✓ 04-16</td>
-                </tr>
                 <tr class="fp-list-row" style="cursor:pointer;opacity:.5" data-fp-schedule="" data-fp-mode="auto">
                   <td style="padding:8px 10px"><span class="pill" style="font-size:10px;padding:1px 6px;border-color:rgba(249,115,22,.3);color:rgba(249,115,22,1)">⊘ 阻塞</span></td>
                   <td style="padding:8px 10px"><strong>配置迁移脚本</strong></td>
@@ -2831,7 +2908,7 @@
                 <div style="margin-bottom:12px"><div style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);margin-bottom:3px">优先级</div><span class="pill" style="background:rgba(248,113,113,.15);color:var(--red)">P0</span></div>
                 <div style="margin-bottom:12px"><div style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);margin-bottom:3px">安排</div>本周</div>
                 <div style="height:1px;background:var(--line-soft);margin:10px 0"></div>
-                <div style="margin-bottom:12px"><div style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);margin-bottom:3px">归属目标</div><span style="color:var(--dim)">Q2 / 4月</span><br>Workspace 原型</div>
+                <div style="margin-bottom:12px"><div style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);margin-bottom:3px">归属目标</div><span style="color:var(--dim)">5月</span><br>FocusPilot 0.0.1</div>
                 <div style="margin-bottom:12px"><div style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);margin-bottom:3px">来源</div>📁 AreaProject</div>
                 <div style="height:1px;background:var(--line-soft);margin:10px 0"></div>
                 <div style="margin-bottom:12px"><div style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);margin-bottom:3px">执行模式</div>全自动</div>
@@ -2851,7 +2928,7 @@
                 <div style="background:var(--bg);border:1px solid var(--line-soft);border-radius:var(--radius);padding:10px;margin-top:8px">
                   <div style="font-size:10px;color:var(--dim);margin-bottom:8px">执行模式</div>
                   <div style="display:flex;gap:0;border:1px solid var(--line);border-radius:var(--radius);overflow:hidden"><label style="flex:1;text-align:center;padding:5px 0;cursor:pointer;font-size:11px;background:var(--elevated);color:var(--text);border-right:1px solid var(--line)"><input type="radio" name="fp-exec" checked style="display:none"> 普通</label><label style="flex:1;text-align:center;padding:5px 0;cursor:pointer;font-size:11px;color:var(--muted);border-right:1px solid var(--line)"><input type="radio" name="fp-exec" style="display:none"> 对话</label><label style="flex:1;text-align:center;padding:5px 0;cursor:pointer;font-size:11px;color:var(--muted);border-right:1px solid var(--line)"><input type="radio" name="fp-exec" style="display:none"> 半自动</label><label style="flex:1;text-align:center;padding:5px 0;cursor:pointer;font-size:11px;color:var(--muted)"><input type="radio" name="fp-exec" style="display:none"> 全自动</label></div>
-                  <div style="display:flex;gap:10px;margin-top:8px"><div style="flex:1"><label style="display:block;font-size:10px;color:var(--dim);margin-bottom:3px">Agent</label><select style="width:100%;background:var(--surface);border:1px solid var(--line-soft);border-radius:var(--radius);padding:5px 6px;color:var(--text);font-size:10px;font-family:var(--sans)"><option selected>代码工程师</option><option>数据分析师</option></select></div><div style="flex:1"><label style="display:block;font-size:10px;color:var(--dim);margin-bottom:3px">归属</label><select style="width:100%;background:var(--surface);border:1px solid var(--line-soft);border-radius:var(--radius);padding:5px 6px;color:var(--text);font-size:10px;font-family:var(--sans)"><option>无（临时任务）</option><option>Q2/4月/WS原型</option><option>Q2/5月/AI Crew</option></select></div></div>
+                  <div style="display:flex;gap:10px;margin-top:8px"><div style="flex:1"><label style="display:block;font-size:10px;color:var(--dim);margin-bottom:3px">Agent</label><select style="width:100%;background:var(--surface);border:1px solid var(--line-soft);border-radius:var(--radius);padding:5px 6px;color:var(--text);font-size:10px;font-family:var(--sans)"><option selected>代码工程师</option><option>数据分析师</option></select></div><div style="flex:1"><label style="display:block;font-size:10px;color:var(--dim);margin-bottom:3px">归属</label><select style="width:100%;background:var(--surface);border:1px solid var(--line-soft);border-radius:var(--radius);padding:5px 6px;color:var(--text);font-size:10px;font-family:var(--sans)"><option>无（临时任务）</option><option>4月/FP 0.0.1</option><option>5月/FP 0.0.1</option><option>6月/FP 0.0.1</option></select></div></div>
                   <label style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted);cursor:pointer;margin-top:8px"><input type="checkbox" style="accent-color:var(--accent)"> 启用评估</label>
                 </div>
               </div>
@@ -3056,36 +3133,295 @@
             <h1>AreaProjects</h1>
             <span class="meta">项目资产沉淀区</span>
             <div class="top-actions">
-              <button class="btn">预览</button><button class="btn">编辑</button>
+              <div class="seg" data-scope="areasView">
+                <button class="active" data-target="areas-editor">编辑器</button
+                ><button data-target="areas-kb">KB 卡片</button>
+              </div>
             </div>
           </header>
-          <div class="work">
-            <div class="studio-layout">
-              <div class="card">
-                <div class="card-head">
-                  <h3>架构设计.md</h3>
-                  <span class="pill">FocusPilot / docs</span>
+
+          <!-- ═══ 编辑器视图 ═══ -->
+          <div class="work panel active" id="areas-editor" style="padding:0">
+            <div style="display:flex;flex:1;min-height:0">
+              <!-- 左：编辑器主区 -->
+              <div style="flex:1;display:flex;flex-direction:column;min-width:0">
+                <!-- Tab 条 -->
+                <div id="areas-tab-bar" style="display:flex;align-items:center;gap:0;border-bottom:1px solid var(--line-soft);background:var(--surface);padding:0 12px;height:36px;flex-shrink:0">
+                  <div class="areas-tab active" data-area-file="arch" style="display:flex;align-items:center;gap:6px;padding:6px 14px;font-size:12px;cursor:pointer;border-bottom:2px solid var(--accent);color:var(--text);margin-bottom:-1px">📄 架构设计.md</div>
+                  <div class="areas-tab" data-area-file="tech" style="display:flex;align-items:center;gap:6px;padding:6px 14px;font-size:12px;cursor:pointer;border-bottom:2px solid transparent;color:var(--dim);margin-bottom:-1px">📄 技术选型.md</div>
                 </div>
-                <div class="card-body">
-                  <h2 style="margin-top: 0">项目产出结构</h2>
-                  <p style="color: var(--muted); line-height: 1.7">
-                    所有项目都交付产物，同时积累知识沉淀。每个层级包含
-                    task、materials、kb 和 reports。
-                  </p>
-                  <div class="code">
-                    FocusPilot/ task-*.md _materials/ _kb/ _reports/
+                <!-- 面包屑 + 模式 seg -->
+                <div style="display:flex;align-items:center;padding:8px 16px;gap:8px;border-bottom:1px solid var(--line-soft);flex-shrink:0">
+                  <span id="areas-breadcrumb" style="font-size:11px;color:var(--dim);font-family:var(--mono)">📂 FocusPilot / docs / 架构设计.md</span>
+                  <span style="flex:1"></span>
+                  <div class="seg" id="areas-mode-seg" style="font-size:11px">
+                    <button class="active" data-areas-mode="preview">预览</button
+                    ><button data-areas-mode="edit">编辑</button>
+                  </div>
+                </div>
+                <!-- 内容区 -->
+                <div style="flex:1;min-height:0;overflow:auto;position:relative">
+                  <!-- 预览面板 -->
+                  <div class="panel active" id="areas-preview" style="padding:20px 24px;line-height:1.8;font-size:13px">
+                    <details style="background:var(--surface-2);border:1px solid var(--line-soft);border-radius:var(--radius);padding:10px 14px;margin-bottom:16px;cursor:pointer">
+                      <summary style="font-size:11px;color:var(--dim);font-weight:600;list-style:none;display:flex;align-items:center;gap:6px"><span style="font-size:9px">▸</span> Frontmatter</summary>
+                      <div style="margin-top:8px;font-family:var(--mono);font-size:11px;color:var(--muted);line-height:1.6">
+                        title: 项目产出结构<br>
+                        author: Bruce<br>
+                        date: 2026-05-20<br>
+                        tags: [architecture, knowledge-pipeline]
+                      </div>
+                    </details>
+                    <h1 style="font-size:22px;font-weight:700;margin:0 0 12px;letter-spacing:-0.02em">项目产出结构</h1>
+                    <p style="color:var(--muted);margin:0 0 16px">所有项目都交付产物，同时积累知识沉淀。FocusPilot 采用分层存储模型，每个 Project 下统一包含 task、_materials、_kb 和 _reports 四个标准目录，确保产出可追溯、知识可复用。</p>
+                    <div class="code" style="margin-bottom:18px">FocusPilot/
+├── task-001-重构架构.md
+├── task-002-性能优化.md
+├── _materials/
+│   ├── RAG工程化实践.md
+│   ├── 向量数据库对比.md
+│   └── 分布式共识论文.pdf
+├── _kb/
+│   ├── CAP 定理.md
+│   ├── Raft 选举机制.md
+│   └── CRDT 数据结构.md
+└── _reports/
+    ├── 周报-W22.md
+    └── 月报-05.md</div>
+                    <h2 style="font-size:17px;font-weight:600;margin:24px 0 12px;padding-bottom:6px;border-bottom:1px solid var(--line-soft)">知识管道（Knowledge Pipeline）</h2>
+                    <p style="color:var(--muted);margin:0 0 12px">知识管道将原始素材逐步加工为结构化知识卡片，分五个阶段推进：</p>
+                    <table style="width:100%;border-collapse:collapse;font-size:12px;margin-bottom:16px">
+                      <thead>
+                        <tr style="border-bottom:2px solid var(--line)">
+                          <th style="text-align:left;padding:8px 10px;color:var(--muted);font-weight:600">阶段</th>
+                          <th style="text-align:left;padding:8px 10px;color:var(--muted);font-weight:600">目录</th>
+                          <th style="text-align:left;padding:8px 10px;color:var(--muted);font-weight:600">说明</th>
+                          <th style="text-align:left;padding:8px 10px;color:var(--muted);font-weight:600">产出</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr style="border-bottom:1px solid var(--line-soft)">
+                          <td style="padding:8px 10px"><span class="pill" style="font-size:10px">采集</span></td>
+                          <td style="padding:8px 10px;font-family:var(--mono);font-size:11px">_materials/</td>
+                          <td style="padding:8px 10px;color:var(--muted)">收集原始论文、文章、笔记</td>
+                          <td style="padding:8px 10px;color:var(--muted)">.md / .pdf</td>
+                        </tr>
+                        <tr style="border-bottom:1px solid var(--line-soft)">
+                          <td style="padding:8px 10px"><span class="pill" style="font-size:10px">加工</span></td>
+                          <td style="padding:8px 10px;font-family:var(--mono);font-size:11px">_materials/</td>
+                          <td style="padding:8px 10px;color:var(--muted)">AI 辅助提取要点、摘要、标注</td>
+                          <td style="padding:8px 10px;color:var(--muted)">annotated .md</td>
+                        </tr>
+                        <tr style="border-bottom:1px solid var(--line-soft)">
+                          <td style="padding:8px 10px"><span class="pill" style="font-size:10px">结构化</span></td>
+                          <td style="padding:8px 10px;font-family:var(--mono);font-size:11px">_kb/</td>
+                          <td style="padding:8px 10px;color:var(--muted)">转为知识卡片，含口诀/类比/分法</td>
+                          <td style="padding:8px 10px;color:var(--muted)">KB card .md</td>
+                        </tr>
+                        <tr style="border-bottom:1px solid var(--line-soft)">
+                          <td style="padding:8px 10px"><span class="pill" style="font-size:10px">内化</span></td>
+                          <td style="padding:8px 10px;font-family:var(--mono);font-size:11px">_kb/</td>
+                          <td style="padding:8px 10px;color:var(--muted)">同步到 Anki，间隔复习强化</td>
+                          <td style="padding:8px 10px;color:var(--muted)">Anki deck</td>
+                        </tr>
+                        <tr>
+                          <td style="padding:8px 10px"><span class="pill" style="font-size:10px">应用</span></td>
+                          <td style="padding:8px 10px;font-family:var(--mono);font-size:11px">_reports/</td>
+                          <td style="padding:8px 10px;color:var(--muted)">在实际项目中应用，输出报告</td>
+                          <td style="padding:8px 10px;color:var(--muted)">report .md</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                  <!-- 编辑面板（左右分栏） -->
+                  <div class="panel" id="areas-edit" style="display:none;height:100%">
+                    <div style="display:flex;height:100%">
+                      <textarea id="areas-edit-source" style="flex:1;background:#0d0f12;color:#cbd5e1;font-family:var(--mono);font-size:12px;line-height:1.7;padding:16px;border:none;border-right:1px solid var(--line-soft);outline:none;resize:none">---
+title: 项目产出结构
+author: Bruce
+date: 2026-05-20
+tags: [architecture, knowledge-pipeline]
+---
+
+# 项目产出结构
+
+所有项目都交付产物，同时积累知识沉淀。FocusPilot 采用分层存储模型...
+
+```
+FocusPilot/
+├── task-001-重构架构.md
+├── _materials/
+├── _kb/
+└── _reports/
+```
+
+## 知识管道（Knowledge Pipeline）
+
+知识管道将原始素材逐步加工为结构化知识卡片...</textarea>
+                      <div id="areas-edit-preview" style="flex:1;padding:20px 24px;overflow:auto;font-size:13px;line-height:1.8">
+                        <details style="background:var(--surface-2);border:1px solid var(--line-soft);border-radius:var(--radius);padding:10px 14px;margin-bottom:16px;cursor:pointer">
+                          <summary style="font-size:11px;color:var(--dim);font-weight:600;list-style:none;display:flex;align-items:center;gap:6px"><span style="font-size:9px">▸</span> Frontmatter</summary>
+                          <div style="margin-top:8px;font-family:var(--mono);font-size:11px;color:var(--muted);line-height:1.6">
+                            title: 项目产出结构<br>
+                            author: Bruce<br>
+                            date: 2026-05-20<br>
+                            tags: [architecture, knowledge-pipeline]
+                          </div>
+                        </details>
+                        <h1 style="font-size:22px;font-weight:700;margin:0 0 12px">项目产出结构</h1>
+                        <p style="color:var(--muted);margin:0 0 16px">所有项目都交付产物，同时积累知识沉淀。FocusPilot 采用分层存储模型...</p>
+                        <div class="code" style="margin-bottom:18px">FocusPilot/
+├── task-001-重构架构.md
+├── _materials/
+├── _kb/
+└── _reports/</div>
+                        <h2 style="font-size:17px;font-weight:600;margin:24px 0 12px;padding-bottom:6px;border-bottom:1px solid var(--line-soft)">知识管道（Knowledge Pipeline）</h2>
+                        <p style="color:var(--muted);margin:0 0 12px">知识管道将原始素材逐步加工为结构化知识卡片...</p>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
-              <div class="card">
-                <div class="card-head">
-                  <h3>辅助栏</h3>
-                  <button class="btn icon">+</button>
+              <!-- 右：辅助栏 -->
+              <div style="width:300px;flex-shrink:0;background:var(--surface);border-left:1px solid var(--line-soft);display:flex;flex-direction:column">
+                <!-- 辅助栏顶部 seg -->
+                <div style="display:flex;align-items:center;padding:8px 10px;border-bottom:1px solid var(--line-soft);gap:6px">
+                  <div class="seg" id="areas-aux-seg" style="font-size:11px;flex:1">
+                    <button class="active" data-areas-aux="terminal">终端</button
+                    ><button data-areas-aux="agent">Agent</button>
+                  </div>
+                  <button class="btn icon" style="font-size:12px">+</button>
+                  <button class="btn icon" style="font-size:12px">×</button>
                 </div>
-                <div class="card-body">
-                  <div class="row active">🖥 终端</div>
-                  <div class="row">🤖 Agent 对话</div>
-                  <div class="terminal">$ rg Knowledge Pipeline docs</div>
+                <!-- 终端面板 -->
+                <div class="panel active" id="areas-aux-terminal" style="flex:1;min-height:0;overflow:auto;padding:12px;background:#0d0f12;font-family:var(--mono);font-size:11px;line-height:1.7;color:var(--green)">
+<span style="color:var(--dim)">$</span> rg "Knowledge Pipeline" docs/<br>
+<br>
+<span style="color:var(--accent)">docs/Architecture.md</span><br>
+<span style="color:var(--amber)">42:</span> ## 知识管道（Knowledge Pipeline）<br>
+<span style="color:var(--amber)">58:</span> Knowledge Pipeline 将原始素材逐步加工为结构化知识卡片<br>
+<br>
+<span style="color:var(--accent)">docs/PRD.md</span><br>
+<span style="color:var(--amber)">127:</span> 知识管道是 FocusPilot 的核心差异化能力<br>
+<span style="color:var(--amber)">134:</span> Pipeline: materials → annotation → kb → anki → report<br>
+<br>
+<span style="color:var(--dim)">3 matches in 2 files (0.8ms)</span><br>
+<br>
+<span style="color:var(--dim)">$</span> <span style="display:inline-block;width:6px;height:13px;background:var(--green);animation:blink 1s step-end infinite;vertical-align:text-bottom"></span>
+                </div>
+                <!-- Agent 面板 -->
+                <div class="panel" id="areas-aux-agent" style="flex:1;min-height:0;overflow:auto;display:none;flex-direction:column">
+                  <!-- 上下文绑定 -->
+                  <div style="padding:10px 12px;border-bottom:1px solid var(--line-soft);font-size:11px;display:flex;align-items:center;gap:6px">
+                    <span style="color:var(--dim)">📎 上下文：</span>
+                    <span id="areas-agent-context" class="pill blue" style="font-size:10px">架构设计.md</span>
+                  </div>
+                  <!-- 对话气泡 -->
+                  <div style="flex:1;overflow:auto;padding:12px;display:flex;flex-direction:column;gap:10px">
+                    <div style="align-self:flex-end;background:rgba(82,156,202,0.15);border:1px solid rgba(82,156,202,0.25);border-radius:var(--radius);padding:8px 12px;max-width:85%;font-size:12px;line-height:1.6">
+                      这个架构中 _kb 和 _materials 的区别是什么？
+                    </div>
+                    <div style="align-self:flex-start;background:var(--surface-2);border:1px solid var(--line-soft);border-radius:var(--radius);padding:8px 12px;max-width:85%;font-size:12px;line-height:1.6;color:var(--muted)">
+                      <strong style="color:var(--text)">_materials</strong> 是原始素材收集区（论文、文章、外部笔记），<strong style="color:var(--text)">_kb</strong> 是经过加工后的结构化知识卡片。知识管道的流转方向是 materials → kb → Anki。
+                    </div>
+                  </div>
+                  <!-- 输入框 -->
+                  <div style="padding:8px 10px;border-top:1px solid var(--line-soft)">
+                    <div style="display:flex;gap:6px;align-items:center">
+                      <input class="search" placeholder="向 Agent 提问..." style="flex:1;height:30px;font-size:11px" />
+                      <button class="btn primary" style="height:30px;font-size:11px;padding:0 10px">发送</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ═══ KB 卡片视图 ═══ -->
+          <div class="work panel" id="areas-kb" style="padding:18px">
+            <!-- 顶部信息条 -->
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+              <span style="font-size:13px;font-weight:600">🧠 FocusPilot / _kb/</span>
+              <span style="font-size:12px;color:var(--dim)">5 张卡片</span>
+              <span style="flex:1"></span>
+              <button class="btn" style="font-size:11px">筛选</button>
+              <button class="btn primary" style="font-size:11px">同步 Anki</button>
+            </div>
+            <!-- 卡片列表 -->
+            <div style="display:flex;flex-direction:column;gap:10px">
+              <!-- 卡片 1: CAP 定理 -->
+              <div class="card area-kb-card" data-area-file="kb-cap" style="cursor:pointer" onmouseover="this.style.borderColor='rgba(82,156,202,0.5)'" onmouseout="this.style.borderColor='var(--line)'">
+                <div style="padding:14px 16px">
+                  <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+                    <span>🧠</span><strong style="font-size:13px">CAP 定理</strong>
+                  </div>
+                  <div style="font-size:12px;color:var(--muted);margin-bottom:10px">口诀：一致可用分区，三选二</div>
+                  <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+                    <span class="pill" style="font-size:10px">分布式</span>
+                    <span class="pill" style="font-size:10px">CAP</span>
+                    <span class="pill amber" style="font-size:10px">know</span>
+                    <span style="font-size:10px;color:var(--green)">✅ 已同步</span>
+                  </div>
+                </div>
+              </div>
+              <!-- 卡片 2: Raft 选举机制 -->
+              <div class="card area-kb-card" data-area-file="kb-raft" style="cursor:pointer" onmouseover="this.style.borderColor='rgba(82,156,202,0.5)'" onmouseout="this.style.borderColor='var(--line)'">
+                <div style="padding:14px 16px">
+                  <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+                    <span>🧠</span><strong style="font-size:13px">Raft 选举机制</strong>
+                  </div>
+                  <div style="font-size:12px;color:var(--muted);margin-bottom:10px">类比：班长选举，任期+多数票</div>
+                  <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+                    <span class="pill" style="font-size:10px">分布式</span>
+                    <span class="pill" style="font-size:10px">共识</span>
+                    <span class="pill green" style="font-size:10px">understand</span>
+                    <span style="font-size:10px;color:var(--amber)">⏳ 待同步</span>
+                  </div>
+                </div>
+              </div>
+              <!-- 卡片 3: 向量数据库选型对比 -->
+              <div class="card area-kb-card" data-area-file="kb-vec" style="cursor:pointer" onmouseover="this.style.borderColor='rgba(82,156,202,0.5)'" onmouseout="this.style.borderColor='var(--line)'">
+                <div style="padding:14px 16px">
+                  <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+                    <span>🧠</span><strong style="font-size:13px">向量数据库选型对比</strong>
+                  </div>
+                  <div style="font-size:12px;color:var(--muted);margin-bottom:10px">Pinecone vs Milvus vs Weaviate</div>
+                  <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+                    <span class="pill" style="font-size:10px">AI</span>
+                    <span class="pill" style="font-size:10px">向量数据库</span>
+                    <span class="pill amber" style="font-size:10px">know</span>
+                    <span style="font-size:10px;color:var(--amber)">⏳ 待同步</span>
+                  </div>
+                </div>
+              </div>
+              <!-- 卡片 4: Paxos vs Raft -->
+              <div class="card area-kb-card" data-area-file="kb-paxos" style="cursor:pointer" onmouseover="this.style.borderColor='rgba(82,156,202,0.5)'" onmouseout="this.style.borderColor='var(--line)'">
+                <div style="padding:14px 16px">
+                  <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+                    <span>🧠</span><strong style="font-size:13px">Paxos vs Raft</strong>
+                  </div>
+                  <div style="font-size:12px;color:var(--muted);margin-bottom:10px">Paxos 理论严谨但难实现，Raft 等价但工程友好</div>
+                  <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+                    <span class="pill" style="font-size:10px">分布式</span>
+                    <span class="pill" style="font-size:10px">共识</span>
+                    <span class="pill blue" style="font-size:10px">master</span>
+                    <span style="font-size:10px;color:var(--green)">✅ 已同步</span>
+                  </div>
+                </div>
+              </div>
+              <!-- 卡片 5: CRDT 数据结构 -->
+              <div class="card area-kb-card" data-area-file="kb-crdt" style="cursor:pointer" onmouseover="this.style.borderColor='rgba(82,156,202,0.5)'" onmouseout="this.style.borderColor='var(--line)'">
+                <div style="padding:14px 16px">
+                  <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+                    <span>🧠</span><strong style="font-size:13px">CRDT 数据结构</strong>
+                  </div>
+                  <div style="font-size:12px;color:var(--muted);margin-bottom:10px">无冲突复制数据类型，最终一致性的工程解</div>
+                  <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+                    <span class="pill" style="font-size:10px">分布式</span>
+                    <span class="pill" style="font-size:10px">CRDT</span>
+                    <span class="pill amber" style="font-size:10px">know</span>
+                    <span style="font-size:10px;color:var(--amber)">⏳ 待同步</span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -4425,6 +4761,365 @@
           return;
         }
       }
+      function toggleGroup(headerEl) {
+        var arrow = headerEl.querySelector('span[style*="rotate"]');
+        var content = headerEl.nextElementSibling;
+        if (!content || content.tagName !== 'DIV') return;
+        var collapsed = content.style.display === 'none';
+        content.style.display = collapsed ? '' : 'none';
+        if (arrow) arrow.style.transform = collapsed ? 'rotate(90deg)' : 'rotate(0deg)';
+        syncGantt(headerEl, !collapsed);
+      }
+
+      function syncGantt(headerEl, hide) {
+        var container = headerEl.parentElement;
+        var attr = container.getAttribute('data-fp-plan-month') || container.getAttribute('data-fp-plan-week') || container.getAttribute('data-fp-week-day');
+        if (!attr) return;
+        var grid = container.closest('.fp-sub');
+        if (!grid) return;
+        var right = grid.children[1];
+        if (!right) return;
+        var g = right.querySelector('[data-fp-plan-month="'+attr+'"],[data-fp-plan-week="'+attr+'"],[data-fp-week-day="'+attr+'"]');
+        if (!g) return;
+        for (var i = 1; i < g.children.length; i++) g.children[i].style.display = hide ? 'none' : '';
+      }
+
+      document.addEventListener('DOMContentLoaded', function() {
+        var attrs = ['data-fp-plan-month','data-fp-plan-week','data-fp-week-day'];
+        attrs.forEach(function(a) {
+          document.querySelectorAll('['+a+']').forEach(function(container) {
+            var header = container.querySelector(':scope > div[style*="display:flex"][style*="cursor:pointer"]');
+            if (header) header.addEventListener('click', function(e) {
+              if (e.target.closest('a,[onclick]')) return;
+              toggleGroup(this);
+            });
+          });
+        });
+        document.querySelectorAll('#fp-month > div:first-child > div:nth-child(2) > div:first-child').forEach(function(goalHeader) {
+          if (goalHeader.style.cssText.indexOf('cursor:pointer') > -1) {
+            goalHeader.addEventListener('click', function() { toggleGroup(this); });
+          }
+        });
+      });
+
+      /* ═══ AreaProjects 交互 ═══ */
+      (function initAreaProjects() {
+
+        // ── Mock 数据 ──
+        var areaFiles = {
+          'arch': {
+            name: '架构设计.md',
+            path: 'FocusPilot / docs',
+            content: document.getElementById('areas-preview') ? document.getElementById('areas-preview').innerHTML : ''
+          },
+          'tech': {
+            name: '技术选型.md',
+            path: 'FocusPilot / docs',
+            content: '<h1 style="font-size:22px;font-weight:700;margin:0 0 12px">技术选型</h1><p style="color:var(--muted);margin:0 0 16px">FocusPilot V1 技术栈选型记录：Swift 5 + AppKit/SwiftUI 混合架构，无第三方依赖，构建工具使用 Makefile + swiftc 直接编译。</p><div class="code">Language:  Swift 5\nUI:        AppKit + SwiftUI\nBuild:     Makefile + swiftc\nSign:      Self-signed cert\nMin macOS: 14.0 (arm64)</div><h2 style="font-size:17px;font-weight:600;margin:24px 0 12px;padding-bottom:6px;border-bottom:1px solid var(--line-soft)">备选方案对比</h2><table style="width:100%;border-collapse:collapse;font-size:12px"><thead><tr style="border-bottom:2px solid var(--line)"><th style="text-align:left;padding:8px 10px;color:var(--muted)">方案</th><th style="text-align:left;padding:8px 10px;color:var(--muted)">优势</th><th style="text-align:left;padding:8px 10px;color:var(--muted)">劣势</th></tr></thead><tbody><tr style="border-bottom:1px solid var(--line-soft)"><td style="padding:8px 10px">SwiftUI 纯</td><td style="padding:8px 10px;color:var(--muted)">声明式、代码简洁</td><td style="padding:8px 10px;color:var(--muted)">macOS 控件缺失</td></tr><tr style="border-bottom:1px solid var(--line-soft)"><td style="padding:8px 10px">AppKit 纯</td><td style="padding:8px 10px;color:var(--muted)">完整 API 覆盖</td><td style="padding:8px 10px;color:var(--muted)">冗长、维护成本高</td></tr><tr><td style="padding:8px 10px;font-weight:600;color:var(--accent)">混合（当前）</td><td style="padding:8px 10px;color:var(--muted)">两者优势兼得</td><td style="padding:8px 10px;color:var(--muted)">需桥接层</td></tr></tbody></table>'
+          },
+          'mat1': {
+            name: 'RAG工程化实践.md',
+            path: 'FocusPilot / _materials',
+            content: '<h1 style="font-size:22px;font-weight:700;margin:0 0 12px">RAG 工程化实践</h1><p style="color:var(--muted);margin:0 0 16px">Retrieval-Augmented Generation 在实际项目中的工程落地经验总结。涵盖向量化策略、检索优化、上下文窗口管理等关键环节。</p><div class="code">Pipeline: Document → Chunk → Embed → Index → Retrieve → Generate</div>'
+          },
+          'mat2': { name: '向量数据库对比.md', path: 'FocusPilot / _materials', content: '<h1 style="font-size:22px;font-weight:700;margin:0 0 12px">向量数据库对比</h1><p style="color:var(--muted)">Pinecone / Milvus / Weaviate / Qdrant 四大向量数据库横向对比。</p>' },
+          'mat3': { name: '分布式共识论文.pdf', path: 'FocusPilot / _materials', content: '<h1 style="font-size:22px;font-weight:700;margin:0 0 12px">分布式共识论文</h1><p style="color:var(--muted)">PDF 预览暂不可用。</p>' },
+          'rpt1': { name: '周报-W22.md', path: 'FocusPilot / _reports', content: '<h1 style="font-size:22px;font-weight:700;margin:0 0 12px">周报 W22</h1><p style="color:var(--muted)">本周完成：架构设计文档定稿、知识管道 MVP 搭建。</p>' },
+          'rpt2': { name: '月报-05.md', path: 'FocusPilot / _reports', content: '<h1 style="font-size:22px;font-weight:700;margin:0 0 12px">月报 05</h1><p style="color:var(--muted)">5 月总结：V1 界面设计完成度 80%，核心交互原型就绪。</p>' },
+          'kb-cap': { name: 'CAP 定理.md', path: 'FocusPilot / _kb', content: '<h1 style="font-size:22px;font-weight:700;margin:0 0 12px">🧠 CAP 定理</h1><p style="color:var(--muted)">口诀：一致可用分区，三选二。分布式系统中 Consistency、Availability、Partition Tolerance 不可兼得。</p>' },
+          'kb-raft': { name: 'Raft 选举机制.md', path: 'FocusPilot / _kb', content: '<h1 style="font-size:22px;font-weight:700;margin:0 0 12px">🧠 Raft 选举机制</h1><p style="color:var(--muted)">类比：班长选举，任期+多数票。Leader Election → Log Replication → Safety。</p>' },
+          'kb-vec': { name: '向量数据库选型对比.md', path: 'FocusPilot / _kb', content: '<h1 style="font-size:22px;font-weight:700;margin:0 0 12px">🧠 向量数据库选型对比</h1><p style="color:var(--muted)">Pinecone：托管服务，开箱即用；Milvus：开源，可自建；Weaviate：GraphQL 接口，模块化。</p>' },
+          'kb-paxos': { name: 'Paxos vs Raft.md', path: 'FocusPilot / _kb', content: '<h1 style="font-size:22px;font-weight:700;margin:0 0 12px">🧠 Paxos vs Raft</h1><p style="color:var(--muted)">Paxos 理论严谨但难实现（Multi-Paxos 无标准描述），Raft 等价但工程友好（明确的 Leader 选举 + 日志复制）。</p>' },
+          'kb-crdt': { name: 'CRDT 数据结构.md', path: 'FocusPilot / _kb', content: '<h1 style="font-size:22px;font-weight:700;margin:0 0 12px">🧠 CRDT 数据结构</h1><p style="color:var(--muted)">无冲突复制数据类型（Conflict-free Replicated Data Type），最终一致性的工程解。G-Counter、PN-Counter、LWW-Register、OR-Set。</p>' },
+          'dist-consensus': { name: '共识算法总结.md', path: '分布式系统笔记', content: '<h1 style="font-size:22px;font-weight:700;margin:0 0 12px">共识算法总结</h1><p style="color:var(--muted)">Paxos、Raft、Zab、Viewstamped Replication 四大共识算法对比。</p>' },
+          'dist-cap': { name: 'CAP 与 BASE.md', path: '分布式系统笔记', content: '<h1 style="font-size:22px;font-weight:700;margin:0 0 12px">CAP 与 BASE</h1><p style="color:var(--muted)">CAP 定理的工程化解读：BASE（Basically Available, Soft state, Eventually consistent）。</p>' },
+          'dist-mat1': { name: 'Raft 论文笔记.md', path: '分布式系统笔记 / _materials', content: '<h1 style="font-size:22px;font-weight:700;margin:0 0 12px">Raft 论文笔记</h1><p style="color:var(--muted)">In Search of an Understandable Consensus Algorithm 精读笔记。</p>' },
+          'dist-mat2': { name: 'CRDT 实战.md', path: '分布式系统笔记 / _materials', content: '<h1 style="font-size:22px;font-weight:700;margin:0 0 12px">CRDT 实战</h1><p style="color:var(--muted)">在协作编辑场景中应用 CRDT 的实践记录。</p>' },
+          'dist-kb1': { name: 'Paxos 核心思想.md', path: '分布式系统笔记 / _kb', content: '<h1 style="font-size:22px;font-weight:700;margin:0 0 12px">🧠 Paxos 核心思想</h1><p style="color:var(--muted)">Proposer-Acceptor-Learner 三角色，两阶段提案。</p>' },
+          'dist-kb2': { name: '一致性模型分类.md', path: '分布式系统笔记 / _kb', content: '<h1 style="font-size:22px;font-weight:700;margin:0 0 12px">🧠 一致性模型分类</h1><p style="color:var(--muted)">强一致 → 线性一致 → 顺序一致 → 因果一致 → 最终一致。</p>' },
+          'dist-kb3': { name: '分布式事务模式.md', path: '分布式系统笔记 / _kb', content: '<h1 style="font-size:22px;font-weight:700;margin:0 0 12px">🧠 分布式事务模式</h1><p style="color:var(--muted)">2PC、3PC、TCC、Saga 四种分布式事务模式对比。</p>' },
+          'client-profile': { name: '客户画像.md', path: '大客户跟踪', content: '<h1 style="font-size:22px;font-weight:700;margin:0 0 12px">客户画像</h1><p style="color:var(--muted)">核心客户群：独立开发者、小型技术团队负责人（1-5 人），日均编码 4h+，对效率工具付费意愿强。</p>' },
+          'client-comp': { name: '竞品分析.md', path: '大客户跟踪', content: '<h1 style="font-size:22px;font-weight:700;margin:0 0 12px">竞品分析</h1><p style="color:var(--muted)">主要竞品：Raycast、Arc、Linear。FocusPilot 差异化：知识管道 + AI Agent 深度集成。</p>' },
+          'client-rpt1': { name: 'Q2 跟进报告.md', path: '大客户跟踪 / _reports', content: '<h1 style="font-size:22px;font-weight:700;margin:0 0 12px">Q2 跟进报告</h1><p style="color:var(--muted)">Q2 客户跟进情况汇总，新增试用用户 15 人。</p>' }
+        };
+
+        var currentFile = 'arch';
+
+        // ── helper: 获取元素 ──
+        function $(id) { return document.getElementById(id); }
+
+        // ── (b) 文件树点击 → 打开文件 ──
+        function openFile(fileKey) {
+          var file = areaFiles[fileKey];
+          if (!file) return;
+          currentFile = fileKey;
+
+          // 高亮侧边栏
+          document.querySelectorAll('#areas-sidebar .area-file').forEach(function(el) {
+            el.classList.toggle('active', el.dataset.areaFile === fileKey);
+          });
+
+          // 如果当前在 KB 视图且点击的不是 _kb 文件，切回编辑器
+          var kbPanel = $('areas-kb');
+          var editorPanel = $('areas-editor');
+          if (kbPanel && kbPanel.classList.contains('active') && fileKey.indexOf('kb-') !== 0 && fileKey.indexOf('dist-kb') !== 0) {
+            switchToEditor();
+          }
+
+          // 更新 Tab 条
+          var tabBar = $('areas-tab-bar');
+          if (tabBar) {
+            var tabs = tabBar.querySelectorAll('.areas-tab');
+            var found = false;
+            tabs.forEach(function(t) {
+              var isActive = t.dataset.areaFile === fileKey;
+              t.classList.toggle('active', isActive);
+              t.style.borderBottomColor = isActive ? 'var(--accent)' : 'transparent';
+              t.style.color = isActive ? 'var(--text)' : 'var(--dim)';
+              if (isActive) found = true;
+            });
+            if (!found) {
+              // 替换第二个 tab 或添加
+              if (tabs.length >= 2) {
+                tabs[1].dataset.areaFile = fileKey;
+                tabs[1].innerHTML = '📄 ' + file.name;
+                tabs[1].classList.add('active');
+                tabs[1].style.borderBottomColor = 'var(--accent)';
+                tabs[1].style.color = 'var(--text)';
+                tabs[0].classList.remove('active');
+                tabs[0].style.borderBottomColor = 'transparent';
+                tabs[0].style.color = 'var(--dim)';
+              }
+            }
+          }
+
+          // 面包屑
+          var bc = $('areas-breadcrumb');
+          if (bc) bc.textContent = '📂 ' + file.path + ' / ' + file.name;
+
+          // 正文
+          var preview = $('areas-preview');
+          if (preview) preview.innerHTML = file.content;
+
+          // 编辑模式预览同步
+          var editPreview = $('areas-edit-preview');
+          if (editPreview) editPreview.innerHTML = file.content;
+
+          // Agent 上下文
+          var ctx = $('areas-agent-context');
+          if (ctx) ctx.textContent = file.name;
+        }
+
+        document.querySelectorAll('#areas-sidebar .area-file').forEach(function(el) {
+          el.addEventListener('click', function(e) {
+            e.stopPropagation();
+            openFile(this.dataset.areaFile);
+          });
+        });
+
+        // ── (b) _kb 文件点击 → 切回编辑器并打开 ──
+        document.querySelectorAll('#areas-sidebar .area-kb-file').forEach(function(el) {
+          el.addEventListener('click', function(e) {
+            e.stopPropagation();
+            switchToEditor();
+            openFile(this.dataset.areaFile);
+          });
+        });
+
+        // ── (b) Tab 条点击 ──
+        document.querySelectorAll('.areas-tab').forEach(function(tab) {
+          tab.addEventListener('click', function() {
+            if (this.dataset.areaFile) openFile(this.dataset.areaFile);
+          });
+        });
+
+        // ── KB 卡片点击 → 切回编辑器并打开 ──
+        document.querySelectorAll('.area-kb-card').forEach(function(card) {
+          card.addEventListener('click', function() {
+            switchToEditor();
+            openFile(this.dataset.areaFile);
+          });
+        });
+
+        // ── (c) 文件夹展开/折叠 ──
+        function toggleFolder(el) {
+          var areaId = el.dataset.areaId;
+          if (!areaId) return;
+          var children = document.querySelector('.area-children[data-area-parent="' + areaId + '"]');
+          if (!children) return;
+          children.classList.toggle('collapsed');
+          var arrow = el.querySelector('.area-arrow');
+          if (arrow) arrow.textContent = children.classList.contains('collapsed') ? '▸' : '▾';
+        }
+
+        document.querySelectorAll('#areas-sidebar .area-folder, #areas-sidebar .area-project').forEach(function(el) {
+          el.addEventListener('click', function(e) {
+            // 不拦截子元素的文件点击
+            if (e.target.closest('.area-file')) return;
+            e.stopPropagation();
+            toggleFolder(this);
+          });
+        });
+
+        // ── (d) _kb 文件夹点击特殊处理 → 自动切到 KB 卡片视图 ──
+        document.querySelectorAll('#areas-sidebar .area-kb-folder').forEach(function(el) {
+          el.addEventListener('click', function() {
+            // 展开/折叠已由上面的 handler 处理，这里切视图
+            switchToKB();
+          });
+        });
+
+        // ── (e) 辅助栏 Tab 切换 ──
+        var auxSeg = $('areas-aux-seg');
+        if (auxSeg) {
+          auxSeg.querySelectorAll('button').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+              auxSeg.querySelectorAll('button').forEach(function(b) { b.classList.remove('active'); });
+              this.classList.add('active');
+              var target = this.dataset.areasAux;
+              var termPanel = $('areas-aux-terminal');
+              var agentPanel = $('areas-aux-agent');
+              if (termPanel) {
+                termPanel.classList.toggle('active', target === 'terminal');
+                termPanel.style.display = target === 'terminal' ? '' : 'none';
+              }
+              if (agentPanel) {
+                agentPanel.classList.toggle('active', target === 'agent');
+                agentPanel.style.display = target === 'agent' ? 'flex' : 'none';
+              }
+            });
+          });
+        }
+
+        // ── (f) 预览/编辑模式切换 ──
+        var modeSeg = $('areas-mode-seg');
+        if (modeSeg) {
+          modeSeg.querySelectorAll('button').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+              modeSeg.querySelectorAll('button').forEach(function(b) { b.classList.remove('active'); });
+              this.classList.add('active');
+              var mode = this.dataset.areasMode;
+              var previewPanel = $('areas-preview');
+              var editPanel = $('areas-edit');
+              if (previewPanel) {
+                previewPanel.classList.toggle('active', mode === 'preview');
+                previewPanel.style.display = mode === 'preview' ? '' : 'none';
+              }
+              if (editPanel) {
+                editPanel.classList.toggle('active', mode === 'edit');
+                editPanel.style.display = mode === 'edit' ? 'flex' : 'none';
+              }
+            });
+          });
+        }
+
+        // ── (g) 搜索过滤 ──
+        var searchInput = $('areas-search');
+        if (searchInput) {
+          searchInput.addEventListener('input', function() {
+            var q = this.value.trim().toLowerCase();
+            // 先处理所有文件
+            document.querySelectorAll('#areas-sidebar .area-file').forEach(function(el) {
+              var text = el.textContent.toLowerCase();
+              el.style.display = (!q || text.indexOf(q) !== -1) ? '' : 'none';
+            });
+            // 处理项目节点
+            document.querySelectorAll('#areas-sidebar .area-project').forEach(function(el) {
+              var text = el.textContent.toLowerCase();
+              var areaId = el.dataset.areaId;
+              var children = document.querySelector('.area-children[data-area-parent="' + areaId + '"]');
+              if (!q) {
+                el.style.display = '';
+                return;
+              }
+              // 如果项目名匹配或者子文件有匹配的
+              var hasVisibleChild = false;
+              if (children) {
+                children.querySelectorAll('.area-file').forEach(function(f) {
+                  if (f.style.display !== 'none') hasVisibleChild = true;
+                });
+              }
+              if (text.indexOf(q) !== -1 || hasVisibleChild) {
+                el.style.display = '';
+                // 确保父级展开
+                if (children && hasVisibleChild) children.classList.remove('collapsed');
+                var arrow = el.querySelector('.area-arrow');
+                if (arrow && children && !children.classList.contains('collapsed')) arrow.textContent = '▾';
+              } else {
+                el.style.display = 'none';
+              }
+            });
+            // 处理文件夹
+            document.querySelectorAll('#areas-sidebar .area-folder').forEach(function(el) {
+              var areaId = el.dataset.areaId;
+              var children = document.querySelector('.area-children[data-area-parent="' + areaId + '"]');
+              if (!q) {
+                el.style.display = '';
+                return;
+              }
+              var hasVisibleChild = false;
+              if (children) {
+                children.querySelectorAll('.area-file').forEach(function(f) {
+                  if (f.style.display !== 'none') hasVisibleChild = true;
+                });
+              }
+              if (hasVisibleChild || el.textContent.toLowerCase().indexOf(q) !== -1) {
+                el.style.display = '';
+                if (children && hasVisibleChild) children.classList.remove('collapsed');
+                var arrow = el.querySelector('.area-arrow');
+                if (arrow && children && !children.classList.contains('collapsed')) arrow.textContent = '▾';
+              } else {
+                el.style.display = 'none';
+              }
+            });
+          });
+        }
+
+        // ── (h) 展开/折叠全部 ──
+        var toggleAll = $('areas-toggle-all');
+        if (toggleAll) {
+          var allExpanded = false;
+          toggleAll.addEventListener('click', function(e) {
+            e.stopPropagation();
+            allExpanded = !allExpanded;
+            document.querySelectorAll('#areas-sidebar .area-children').forEach(function(c) {
+              c.classList.toggle('collapsed', !allExpanded);
+            });
+            document.querySelectorAll('#areas-sidebar .area-arrow').forEach(function(a) {
+              a.textContent = allExpanded ? '▾' : '▸';
+            });
+            // 第一级已展开的项目保持展开
+            var fpArrow = document.querySelector('.area-project[data-area-id="fp"] .area-arrow');
+            var fpChildren = document.querySelector('.area-children[data-area-parent="fp"]');
+            if (fpArrow && fpChildren && !fpChildren.classList.contains('collapsed')) {
+              fpArrow.textContent = '▾';
+            }
+          });
+        }
+
+        // ── helper: 切换到编辑器视图 ──
+        function switchToEditor() {
+          var seg = document.querySelector('.seg[data-scope="areasView"]');
+          if (seg) {
+            seg.querySelectorAll('button').forEach(function(b) {
+              b.classList.toggle('active', b.dataset.target === 'areas-editor');
+            });
+          }
+          showPanel('areas-editor');
+        }
+
+        // ── helper: 切换到 KB 视图 ──
+        function switchToKB() {
+          var seg = document.querySelector('.seg[data-scope="areasView"]');
+          if (seg) {
+            seg.querySelectorAll('button').forEach(function(b) {
+              b.classList.toggle('active', b.dataset.target === 'areas-kb');
+            });
+          }
+          showPanel('areas-kb');
+        }
+
+      })();
     </script>
 
     <!-- ═══ Studio: Workspace 菜单 popover ═══ -->
