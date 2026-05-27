@@ -223,7 +223,7 @@ Task 的 frontmatter 通过 `status` + `scheduled_date` / `due_date` 形成**双
 
 `schedule`（today / week / month / backlog）是 UI 派生字段（不持久化），由 `scheduled_date` / `due_date` 相对当前日期自动计算。过滤关系：`全局规划 ⊃ 本月计划 ⊃ 本周计划 ⊃ 今日聚焦`。
 
-两者独立：一个 Task 可以 `status: ready` + `schedule: week`（本周要做，已规划好，等待执行）。
+两者独立：一个 Task 可以 `status: ready` + `scheduled_date` 落在本周（UI 派生 `schedule: week`，本周要做，已规划好，等待执行）。
 
 | schedule 值 | 含义 | Dashboard 区域 |
 |------------|------|---------------|

@@ -2156,12 +2156,11 @@
                 </div>
                 <!-- Day-grouped tasks -->
                 <div style="padding:6px 0 0;">
-                  <!-- 周一 (5/25) — 当天高亮 -->
+                  <!-- 周一 (5/25) -->
                   <div data-fp-week-day="1" style="margin-bottom:2px;">
-                    <div style="display:flex;align-items:center;gap:6px;padding:4px 12px;font-size:11px;font-weight:600;color:var(--accent);">
+                    <div style="display:flex;align-items:center;gap:6px;padding:4px 12px;font-size:11px;font-weight:600;color:var(--text);">
                       <span style="font-size:10px;color:var(--dim);width:10px;text-align:center;transform:rotate(90deg);flex-shrink:0;">▶</span>
                       周一 · 05-25
-                      <span style="font-size:9px;padding:1px 5px;border-radius:3px;background:var(--accent);color:#fff;font-weight:500;">今天</span>
                       <span style="font-size:10px;font-weight:400;color:var(--dim);font-family:var(--mono);margin-left:auto;">4 项</span>
                     </div>
                     <div style="padding-left:10px;">
@@ -2183,7 +2182,7 @@
                         <span style="font-size:10px;padding:2px 6px;border-radius:3px;font-weight:500;background:rgba(249,115,22,0.15);color:#f97316;">P1</span>
                         <span style="font-size:11px;flex-shrink:0;">🖐</span>
                       </div>
-                      <div class="fp-week-task" data-fp-schedule="week" style="height:34px;display:flex;align-items:center;gap:6px;padding:0 12px;cursor:pointer;border-radius:var(--radius);font-size:12px;opacity:.6;">
+                      <div class="fp-week-task" data-fp-schedule="" style="height:34px;display:flex;align-items:center;gap:6px;padding:0 12px;cursor:pointer;border-radius:var(--radius);font-size:12px;opacity:.6;">
                         <span style="width:7px;height:7px;border-radius:50%;flex-shrink:0;border:1.5px solid var(--green);background:var(--green);"></span>
                         <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-decoration:line-through;color:var(--dim);">数据模型设计</span>
                         <span style="font-size:10px;color:var(--green);">✓</span>
@@ -2206,11 +2205,12 @@
                       </div>
                     </div>
                   </div>
-                  <!-- 周三 (5/27) -->
+                  <!-- 周三 (5/27) — 当天高亮 -->
                   <div data-fp-week-day="3" style="margin-bottom:2px;">
-                    <div style="display:flex;align-items:center;gap:6px;padding:4px 12px;font-size:11px;font-weight:600;color:var(--text);">
+                    <div style="display:flex;align-items:center;gap:6px;padding:4px 12px;font-size:11px;font-weight:600;color:var(--accent);">
                       <span style="font-size:10px;color:var(--dim);width:10px;text-align:center;transform:rotate(90deg);flex-shrink:0;">▶</span>
                       周三 · 05-27
+                      <span style="font-size:9px;padding:1px 5px;border-radius:3px;background:var(--accent);color:#fff;font-weight:500;">今天</span>
                       <span style="font-size:10px;font-weight:400;color:var(--dim);font-family:var(--mono);margin-left:auto;">2 项</span>
                     </div>
                     <div style="padding-left:10px;">
@@ -2243,7 +2243,7 @@
                       <span style="font-size:10px;font-weight:400;color:var(--dim);font-family:var(--mono);margin-left:auto;">1 项</span>
                     </div>
                     <div style="padding-left:10px;">
-                      <div class="fp-week-task" data-fp-schedule="week" style="height:34px;display:flex;align-items:center;gap:6px;padding:0 12px;cursor:pointer;border-radius:var(--radius);font-size:12px;opacity:.6;">
+                      <div class="fp-week-task" data-fp-schedule="" style="height:34px;display:flex;align-items:center;gap:6px;padding:0 12px;cursor:pointer;border-radius:var(--radius);font-size:12px;opacity:.6;">
                         <span style="width:7px;height:7px;border-radius:50%;flex-shrink:0;border:1.5px solid var(--green);background:var(--green);"></span>
                         <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-decoration:line-through;color:var(--dim);">PRD 文档整合</span>
                         <span style="font-size:10px;color:var(--green);">✓</span>
@@ -2270,9 +2270,9 @@
               <div style="flex:1;overflow-x:auto;overflow-y:auto;position:relative;background:var(--bg);">
                 <!-- Gantt Header: Mon-Sun -->
                 <div style="position:sticky;top:0;z-index:5;display:flex;background:var(--surface);border-bottom:1px solid var(--line-soft);height:36px;">
-                  <div style="min-width:103px;flex:1;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;color:var(--accent);border-right:1px solid var(--line-soft);position:relative;"><span>周一</span><span style="margin-left:4px;font-family:var(--mono);font-size:9px;">25</span><span style="position:absolute;bottom:0;left:0;right:0;height:2px;background:var(--accent);"></span></div>
+                  <div style="min-width:103px;flex:1;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;color:var(--dim);border-right:1px solid var(--line-soft);position:relative;"><span>周一</span><span style="margin-left:4px;font-family:var(--mono);font-size:9px;opacity:0.6;">25</span></div>
                   <div style="min-width:103px;flex:1;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;color:var(--dim);border-right:1px solid var(--line-soft);position:relative;"><span>周二</span><span style="margin-left:4px;font-family:var(--mono);font-size:9px;opacity:0.6;">26</span></div>
-                  <div style="min-width:103px;flex:1;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;color:var(--dim);border-right:1px solid var(--line-soft);position:relative;"><span>周三</span><span style="margin-left:4px;font-family:var(--mono);font-size:9px;opacity:0.6;">27</span></div>
+                  <div style="min-width:103px;flex:1;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;color:var(--accent);border-right:1px solid var(--line-soft);position:relative;"><span>周三</span><span style="margin-left:4px;font-family:var(--mono);font-size:9px;">27</span><span style="position:absolute;bottom:0;left:0;right:0;height:2px;background:var(--accent);"></span></div>
                   <div style="min-width:103px;flex:1;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;color:var(--dim);border-right:1px solid var(--line-soft);position:relative;"><span>周四</span><span style="margin-left:4px;font-family:var(--mono);font-size:9px;opacity:0.6;">28</span></div>
                   <div style="min-width:103px;flex:1;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;color:var(--dim);border-right:1px solid var(--line-soft);position:relative;"><span>周五</span><span style="margin-left:4px;font-family:var(--mono);font-size:9px;opacity:0.6;">29</span></div>
                   <div style="min-width:103px;flex:1;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;color:var(--dim);border-right:1px solid var(--line-soft);position:relative;background:rgba(255,255,255,0.02);"><span>周六</span><span style="margin-left:4px;font-family:var(--mono);font-size:9px;opacity:0.6;">30</span></div>
@@ -2280,8 +2280,8 @@
                 </div>
                 <!-- Gantt Body -->
                 <div style="min-height:100%;position:relative;min-width:721px;">
-                  <!-- Today line (Mon = col 1, early) -->
-                  <div style="position:absolute;top:0;bottom:0;width:1px;background:var(--red);z-index:3;opacity:0.6;left:15px;"><span style="position:absolute;top:4px;left:-14px;font-size:9px;color:var(--red);font-weight:500;">今天</span></div>
+                  <!-- Today line (Wed = col 3, early) -->
+                  <div style="position:absolute;top:0;bottom:0;width:1px;background:var(--red);z-index:3;opacity:0.6;left:221px;"><span style="position:absolute;top:4px;left:-14px;font-size:9px;color:var(--red);font-weight:500;">今天</span></div>
                   <!-- Weekend bg (Sat+Sun = col 6-7) -->
                   <div style="position:absolute;top:0;bottom:0;left:515px;width:206px;background:rgba(255,255,255,0.015);z-index:0;"></div>
                   <!-- Legend (mirrors left panel structure for natural alignment) -->
@@ -2318,11 +2318,11 @@
                       <div style="position:absolute;height:14px;border-radius:3px;cursor:pointer;overflow:hidden;white-space:nowrap;display:flex;align-items:center;padding:0 6px;font-size:9px;color:rgba(255,255,255,0.8);background:rgba(91,138,245,0.4);border:1px solid rgba(91,138,245,0.5);left:4px;width:99px;" title="研究 Multica 执行模型">Multica 研究</div>
                     </div>
                     <!-- Row 7: FP-001 数据模型设计 Mon (done) -->
-                    <div class="fp-week-task" data-fp-schedule="week" style="height:34px;display:flex;align-items:center;position:relative;opacity:0.5;">
+                    <div class="fp-week-task" data-fp-schedule="" style="height:34px;display:flex;align-items:center;position:relative;opacity:0.5;">
                       <div style="position:absolute;height:14px;border-radius:3px;cursor:pointer;overflow:hidden;white-space:nowrap;display:flex;align-items:center;padding:0 6px;font-size:9px;color:rgba(255,255,255,0.5);background:rgba(74,222,128,0.3);border:1px solid rgba(74,222,128,0.4);left:4px;width:99px;" title="数据模型设计 ✓">数据模型设计 ✓</div>
                     </div>
                     <!-- Row 8: FP-007 PRD 文档整合 Mon (done) -->
-                    <div class="fp-week-task" data-fp-schedule="week" style="height:34px;display:flex;align-items:center;position:relative;opacity:0.5;">
+                    <div class="fp-week-task" data-fp-schedule="" style="height:34px;display:flex;align-items:center;position:relative;opacity:0.5;">
                       <div style="position:absolute;height:14px;border-radius:3px;cursor:pointer;overflow:hidden;white-space:nowrap;display:flex;align-items:center;padding:0 6px;font-size:9px;color:rgba(255,255,255,0.5);background:rgba(74,222,128,0.3);border:1px solid rgba(74,222,128,0.4);left:4px;width:80px;" title="PRD 文档整合 ✓">PRD 文档整合 ✓</div>
                     </div>
                   </div>
@@ -2336,7 +2336,7 @@
                 <!-- Day Title -->
                 <div style="height:36px;display:flex;align-items:center;padding:0 12px;gap:6px;font-size:12px;font-weight:600;border-bottom:1px solid var(--line-soft);background:var(--surface);">
                   🔥 今日聚焦 · 小时视图
-                  <span style="font-size:10px;font-weight:400;color:var(--dim);font-family:var(--mono);">05-25 · 周一</span>
+                  <span style="font-size:10px;font-weight:400;color:var(--dim);font-family:var(--mono);">05-27 · 周三</span>
                 </div>
                 <!-- Legend -->
                 <div style="display:flex;align-items:center;gap:10px;padding:4px 12px;font-size:9px;color:var(--dim);border-bottom:1px solid var(--line-soft);">
