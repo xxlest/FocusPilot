@@ -733,9 +733,23 @@
       }
 
       .review-card {
-        min-height: 360px;
+        min-height: 420px;
         display: grid;
         grid-template-rows: auto 1fr auto;
+      }
+      .review-layout {
+        display: grid;
+        grid-template-columns: minmax(0, 1.35fr) minmax(320px, 0.65fr);
+        gap: 14px;
+        margin-top: 14px;
+      }
+      .review-kicker {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: var(--dim);
+        font-size: 11px;
+        margin-bottom: 12px;
       }
       .prompt {
         font-size: 24px;
@@ -751,6 +765,80 @@
         color: var(--muted);
         padding: 12px;
         line-height: 1.7;
+      }
+      .review-answer {
+        border: 1px solid var(--line-soft);
+        border-radius: var(--radius);
+        background: #14161b;
+        color: var(--muted);
+        padding: 12px;
+        line-height: 1.7;
+        margin-top: 14px;
+      }
+      .feedback-bar {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 8px;
+      }
+      .feedback-bar .btn {
+        min-height: 38px;
+      }
+      .queue-stack {
+        display: grid;
+        gap: 8px;
+      }
+      .queue-item {
+        border: 1px solid var(--line-soft);
+        border-radius: var(--radius);
+        padding: 10px;
+        background: rgba(255, 255, 255, 0.02);
+      }
+      .queue-item.active {
+        border-color: rgba(82, 156, 202, 0.45);
+        background: rgba(82, 156, 202, 0.1);
+      }
+      .queue-item strong {
+        display: block;
+        margin-bottom: 4px;
+      }
+      .progress-rail {
+        height: 8px;
+        border-radius: 999px;
+        background: #111318;
+        border: 1px solid var(--line-soft);
+        overflow: hidden;
+      }
+      .progress-fill {
+        height: 100%;
+        border-radius: inherit;
+        background: linear-gradient(90deg, var(--accent), var(--green));
+      }
+      .mini-bars {
+        display: grid;
+        gap: 10px;
+      }
+      .bar-row {
+        display: grid;
+        grid-template-columns: 58px minmax(0, 1fr) 34px;
+        gap: 10px;
+        align-items: center;
+        color: var(--muted);
+        font-size: 12px;
+      }
+      .review-note {
+        border-left: 2px solid var(--accent);
+        padding: 10px 12px;
+        color: var(--muted);
+        background: rgba(82, 156, 202, 0.08);
+        border-radius: 0 var(--radius) var(--radius) 0;
+        line-height: 1.6;
+      }
+      .library-toolbar {
+        display: grid;
+        grid-template-columns: minmax(220px, 1fr) auto auto auto;
+        gap: 8px;
+        align-items: center;
+        margin-bottom: 12px;
       }
 
       .form {
@@ -3513,11 +3601,10 @@ FocusPilot/
         <section class="page" data-page="review">
           <header class="topbar">
             <h1>Review</h1>
-            <span class="meta">记忆 -> 内化 -> 应用</span>
+            <span class="meta">今日复习 -> 内化挑战 -> 卡片库 -> 统计</span>
             <div class="top-actions">
               <div class="seg" data-scope="reviewView">
-                <button class="active" data-target="review-today">
-                  今日复习</button
+                <button class="active" data-target="review-today">今日复习</button
                 ><button data-target="review-challenge">内化挑战</button
                 ><button data-target="review-library">卡片库</button
                 ><button data-target="review-stats">统计</button>
@@ -3525,73 +3612,134 @@ FocusPilot/
             </div>
           </header>
           <div class="work panel active" id="review-today">
-            <div class="grid cols-4">
+            <div class="grid cols-4 summary-strip">
               <div class="metric">
                 <div class="value">24</div>
-                <div class="name">今日应复习</div>
+                <div class="name">今日总队列</div>
+                <div class="hint">到期 9 / 新卡 8 / 弱项 7</div>
               </div>
               <div class="metric">
-                <div class="value">18</div>
-                <div class="name">新卡</div>
+                <div class="value">11</div>
+                <div class="name">已完成</div>
+                <div class="hint">预计剩余 9 min</div>
               </div>
               <div class="metric">
-                <div class="value">6</div>
-                <div class="name">复习卡</div>
+                <div class="value">5</div>
+                <div class="name">弱项强化</div>
+                <div class="hint">模糊和忘了会回池</div>
               </div>
               <div class="metric">
-                <div class="value">7</div>
-                <div class="name">连续天数</div>
+                <div class="value">5</div>
+                <div class="name">可内化挑战</div>
+                <div class="hint">新卡 / 弱项 / 关键卡</div>
               </div>
             </div>
-            <div class="grid cols-2" style="margin-top: 14px">
+            <div class="review-layout">
               <div class="card review-card">
                 <div class="card-head">
                   <h3>当前卡片</h3>
-                  <span class="pill blue">know -> understand</span>
+                  <span class="pill amber">关键卡待确认</span>
                 </div>
                 <div class="card-body">
+                  <div class="review-kicker">
+                    <span class="pill blue">概念类</span>
+                    <span>AI 推荐关键卡 · 来源：_reports/chapter-1.md</span>
+                  </div>
                   <p class="prompt">CAP 定理为什么不是“三选二”的静态选择？</p>
                   <p style="color: var(--muted); line-height: 1.7">
-                    用自己的话解释，并给出一个工程场景。
+                    先回忆，再显示答案。记忆反馈只更新记忆强度，不直接更新内化程度。
                   </p>
-                  <div class="answer">
-                    点击“显示答案”后展开标准解释，用户选择 Easy / Good / Hard
-                    反馈记忆阶段。
+                  <div class="review-answer">
+                    <strong style="color: var(--text)">提示</strong><br />
+                    CAP 是分布式系统在网络分区下的取舍问题，不是任意时刻静态选两个标签。
+                    真实设计里通常要说明分区发生时牺牲一致性还是可用性，以及恢复后的补偿机制。
                   </div>
                 </div>
                 <div class="card-body">
-                  <button class="btn">显示答案</button>
-                  <button class="btn primary">Good</button>
-                  <button class="btn">Hard</button>
+                  <div class="feedback-bar">
+                    <button class="btn">忘了</button>
+                    <button class="btn">模糊</button>
+                    <button class="btn primary">记得</button>
+                    <button class="btn">熟练</button>
+                  </div>
                 </div>
               </div>
-              <div class="card">
-                <div class="card-head">
-                  <h3>队列</h3>
-                  <span class="pill green">预计 12min</span>
+              <div class="grid">
+                <div class="card">
+                  <div class="card-head">
+                    <h3>今日队列</h3>
+                    <span class="pill green">11 / 24</span>
+                  </div>
+                  <div class="card-body queue-stack">
+                    <div class="progress-rail">
+                      <div class="progress-fill" style="width: 46%"></div>
+                    </div>
+                    <div class="queue-item active">
+                      <strong>CAP 定理</strong>
+                      <span class="subline">关键卡 · 到期卡 · 需确认是否进入挑战</span>
+                    </div>
+                    <div class="queue-item">
+                      <strong>状态机回退规则</strong>
+                      <span class="subline">弱项强化 · 上次反馈：模糊</span>
+                    </div>
+                    <div class="queue-item">
+                      <strong>MCP Host 职责边界</strong>
+                      <span class="subline">新卡 · AI 推荐题型：费曼复述</span>
+                    </div>
+                  </div>
                 </div>
-                <div class="card-body">
-                  <div class="row active">
-                    CAP 定理 <span class="right">关键卡</span>
+                <div class="card">
+                  <div class="card-head">
+                    <h3>完成后动作</h3>
+                    <span class="pill">强提示</span>
                   </div>
-                  <div class="row">
-                    状态机回退规则 <span class="right">复习</span>
-                  </div>
-                  <div class="row">
-                    MCP Host 职责 <span class="right">新卡</span>
+                  <div class="card-body">
+                    <div class="row"><span>今日完成张数</span><span class="right">24</span></div>
+                    <div class="row"><span>新增弱项卡</span><span class="right">3</span></div>
+                    <div class="row"><span>可进入内化挑战</span><span class="right">5</span></div>
+                    <div style="display:flex;gap:8px;margin-top:10px">
+                      <button class="btn primary">进入内化挑战</button>
+                      <button class="btn">稍后再做</button>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
           </div>
           <div class="work panel" id="review-challenge">
-            <div class="grid cols-2">
+            <div class="grid cols-4 summary-strip">
+              <div class="metric">
+                <div class="value">5</div>
+                <div class="name">今日待挑战</div>
+                <div class="hint">关键卡 2 / 弱项 2 / 新卡 1</div>
+              </div>
+              <div class="metric">
+                <div class="value">2</div>
+                <div class="name">费曼复述</div>
+                <div class="hint">概念和框架卡</div>
+              </div>
+              <div class="metric">
+                <div class="value">3</div>
+                <div class="name">场景应用</div>
+                <div class="hint">方法和决策卡</div>
+              </div>
+              <div class="metric">
+                <div class="value">0</div>
+                <div class="name">自动跳转</div>
+                <div class="hint">用户确认后开始</div>
+              </div>
+            </div>
+            <div class="review-layout">
               <div class="card review-card">
                 <div class="card-head">
                   <h3>费曼复述</h3>
-                  <span class="pill amber">关键卡</span>
+                  <span class="pill amber">第 1 / 5 张</span>
                 </div>
                 <div class="card-body">
+                  <div class="review-kicker">
+                    <span class="pill blue">AI 推荐题型</span>
+                    <span>适用于概念类、框架类卡片</span>
+                  </div>
                   <p class="prompt">
                     向一个非技术产品经理解释“状态机为什么要记录
                     blocked_from_status”。
@@ -3604,19 +3752,46 @@ FocusPilot/
                 <div class="card-body">
                   <button class="btn">保存草稿</button>
                   <button class="btn primary">提交挑战</button>
+                  <button class="btn">改为场景应用</button>
                 </div>
               </div>
-              <div class="card">
-                <div class="card-head">
-                  <h3>挑战结果</h3>
-                  <span class="pill">待提交</span>
-                </div>
-                <div class="card-body">
-                  <div class="row">
-                    理解完整度 <span class="right">--</span>
+              <div class="grid">
+                <div class="card">
+                  <div class="card-head">
+                    <h3>原卡片摘要</h3>
+                    <span class="pill">状态机</span>
                   </div>
-                  <div class="row">场景迁移 <span class="right">--</span></div>
-                  <div class="row">可行动性 <span class="right">--</span></div>
+                  <div class="card-body">
+                    <p style="color:var(--muted);line-height:1.7;margin:0">
+                      blocked_from_status 用于记录阻塞前状态，解除阻塞时才能回到正确阶段，
+                      避免所有路径都回到待办或进行中。
+                    </p>
+                    <div class="review-note" style="margin-top:12px">
+                      提交后不做简单对错判断，而是更新内化程度：未内化 / 能解释 / 能应用 / 已融会。
+                    </div>
+                  </div>
+                </div>
+                <div class="card">
+                  <div class="card-head">
+                    <h3>场景应用候选</h3>
+                    <span class="pill green">方法类</span>
+                  </div>
+                  <div class="card-body">
+                    <div class="row"><strong>快捷键冲突检测</strong><span class="right">决策卡</span></div>
+                    <div class="row"><strong>Review 弱项回池</strong><span class="right">方法卡</span></div>
+                    <div class="row"><strong>AI Crew 常驻职责</strong><span class="right">经验卡</span></div>
+                  </div>
+                </div>
+                <div class="card">
+                  <div class="card-head">
+                    <h3>挑战结果</h3>
+                    <span class="pill">待提交</span>
+                  </div>
+                  <div class="card-body mini-bars">
+                    <div class="bar-row"><span>理解</span><div class="progress-rail"></div><span>--</span></div>
+                    <div class="bar-row"><span>迁移</span><div class="progress-rail"></div><span>--</span></div>
+                    <div class="bar-row"><span>行动</span><div class="progress-rail"></div><span>--</span></div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -3628,24 +3803,57 @@ FocusPilot/
                 <span class="pill">248 张</span>
               </div>
               <div class="card-body">
+                <div class="library-toolbar">
+                  <input class="search" placeholder="搜索标题、Area、来源或标签" />
+                  <div class="seg">
+                    <button class="active">按 Area</button><button>按来源</button>
+                  </div>
+                  <button class="btn">筛选</button>
+                  <button class="btn primary">新建卡片</button>
+                </div>
                 <table>
                   <thead>
                     <tr>
                       <th>卡片</th>
-                      <th>来源</th>
-                      <th>掌握</th>
+                      <th>Area / 来源</th>
+                      <th>记忆强度</th>
+                      <th>内化程度</th>
+                      <th>状态</th>
+                      <th>下次复习</th>
                     </tr>
                   </thead>
                   <tbody>
                     <tr>
-                      <td><strong>CAP 定理</strong></td>
-                      <td>_reports/chapter-1.md</td>
-                      <td>understand</td>
+                      <td><strong>CAP 定理</strong><span class="subline">概念类 · AI 推荐关键卡</span></td>
+                      <td>分布式系统<span class="subline">_reports/chapter-1.md</span></td>
+                      <td><span class="pill blue">记得</span></td>
+                      <td><span class="pill amber">能解释</span></td>
+                      <td><span class="pill green">active</span></td>
+                      <td>明天 09:00</td>
                     </tr>
                     <tr>
-                      <td><strong>状态机回退</strong></td>
-                      <td>Architecture.md</td>
-                      <td>know</td>
+                      <td><strong>状态机回退</strong><span class="subline">方法类 · 弱项强化</span></td>
+                      <td>产品工程<span class="subline">Architecture.md</span></td>
+                      <td><span class="pill amber">模糊</span></td>
+                      <td><span class="pill">未内化</span></td>
+                      <td><span class="pill green">active</span></td>
+                      <td>今天 21:30</td>
+                    </tr>
+                    <tr>
+                      <td><strong>关键卡确认机制</strong><span class="subline">决策类 · 用户待确认</span></td>
+                      <td>学习系统<span class="subline">manual/review-notes.md</span></td>
+                      <td><span class="pill">新卡</span></td>
+                      <td><span class="pill">未内化</span></td>
+                      <td><span class="pill amber">pending_confirm</span></td>
+                      <td>今天</td>
+                    </tr>
+                    <tr>
+                      <td><strong>Anki 同步边界</strong><span class="subline">经验类 · 可追溯</span></td>
+                      <td>知识管道<span class="subline">AreaProjects/_kb</span></td>
+                      <td><span class="pill green">熟练</span></td>
+                      <td><span class="pill blue">能应用</span></td>
+                      <td><span class="pill">suspended</span></td>
+                      <td>暂停</td>
                     </tr>
                   </tbody>
                 </table>
@@ -3653,18 +3861,74 @@ FocusPilot/
             </div>
           </div>
           <div class="work panel" id="review-stats">
-            <div class="grid cols-3">
+            <div class="grid cols-4 summary-strip">
               <div class="metric">
-                <div class="value">86%</div>
-                <div class="name">本周完成率</div>
+                <div class="value">7</div>
+                <div class="name">连续复习天数</div>
+                <div class="hint">本周完成率 86%</div>
+              </div>
+              <div class="metric">
+                <div class="value">32m</div>
+                <div class="name">每周复习时长</div>
+                <div class="hint">比上周 +9m</div>
+              </div>
+              <div class="metric">
+                <div class="value">12</div>
+                <div class="name">到期积压量</div>
+                <div class="hint">弱项卡 5 张</div>
               </div>
               <div class="metric">
                 <div class="value">41</div>
                 <div class="name">已内化</div>
+                <div class="hint">真实实践证据 18 条</div>
               </div>
-              <div class="metric">
-                <div class="value">12</div>
-                <div class="name">弱项卡</div>
+            </div>
+            <div class="grid cols-2" style="margin-top:14px">
+              <div class="card">
+                <div class="card-head">
+                  <h3>记忆状态</h3>
+                  <span class="pill">四档反馈</span>
+                </div>
+                <div class="card-body mini-bars">
+                  <div class="bar-row"><span>忘了</span><div class="progress-rail"><div class="progress-fill" style="width:12%;background:var(--red)"></div></div><span>12%</span></div>
+                  <div class="bar-row"><span>模糊</span><div class="progress-rail"><div class="progress-fill" style="width:28%;background:var(--amber)"></div></div><span>28%</span></div>
+                  <div class="bar-row"><span>记得</span><div class="progress-rail"><div class="progress-fill" style="width:42%"></div></div><span>42%</span></div>
+                  <div class="bar-row"><span>熟练</span><div class="progress-rail"><div class="progress-fill" style="width:18%;background:var(--green)"></div></div><span>18%</span></div>
+                </div>
+              </div>
+              <div class="card">
+                <div class="card-head">
+                  <h3>内化状态</h3>
+                  <span class="pill">双维度</span>
+                </div>
+                <div class="card-body mini-bars">
+                  <div class="bar-row"><span>未内化</span><div class="progress-rail"><div class="progress-fill" style="width:36%;background:var(--dim)"></div></div><span>36%</span></div>
+                  <div class="bar-row"><span>能解释</span><div class="progress-rail"><div class="progress-fill" style="width:30%;background:var(--accent)"></div></div><span>30%</span></div>
+                  <div class="bar-row"><span>能应用</span><div class="progress-rail"><div class="progress-fill" style="width:22%;background:var(--purple)"></div></div><span>22%</span></div>
+                  <div class="bar-row"><span>已融会</span><div class="progress-rail"><div class="progress-fill" style="width:12%;background:var(--green)"></div></div><span>12%</span></div>
+                </div>
+              </div>
+              <div class="card">
+                <div class="card-head">
+                  <h3>Area 视角</h3>
+                  <span class="pill">薄弱点诊断</span>
+                </div>
+                <div class="card-body">
+                  <div class="row"><strong>分布式系统</strong><span class="right">掌握高 · 实践少</span></div>
+                  <div class="row"><strong>产品工程</strong><span class="right">弱项多 · 需强化</span></div>
+                  <div class="row"><strong>AI 编码</strong><span class="right">复习多 · 应用多</span></div>
+                </div>
+              </div>
+              <div class="card">
+                <div class="card-head">
+                  <h3>最近变化</h3>
+                  <span class="pill green">诊断</span>
+                </div>
+                <div class="card-body">
+                  <div class="row"><strong>最近提升</strong><span class="right">MCP Host 职责</span></div>
+                  <div class="row"><strong>长期卡住</strong><span class="right">状态机回退规则</span></div>
+                  <div class="row"><strong>实践证据</strong><span class="right">18 条待回写</span></div>
+                </div>
               </div>
             </div>
           </div>
@@ -3880,20 +4144,28 @@ FocusPilot/
     </div>
 
     <script>
-      const pageOrder = [
-        "home",
-        "inbox",
-        "focus",
-        "studio",
+	      const pageOrder = [
+	        "home",
+	        "inbox",
+	        "focus",
+	        "studio",
         "areas",
         "review",
         "crew",
-        "settings",
-      ]
-
-      function showPage(page) {
-        document
-          .querySelectorAll(".nav-btn")
+	        "settings",
+	      ]
+	
+	      function normalizePageMounts() {
+	        const main = document.querySelector("main.main")
+	        if (!main) return
+	        document.querySelectorAll("body > .page").forEach((page) => {
+	          main.appendChild(page)
+	        })
+	      }
+	
+	      function showPage(page) {
+	        document
+	          .querySelectorAll(".nav-btn")
           .forEach((btn) =>
             btn.classList.toggle("active", btn.dataset.page === page),
           )
@@ -3905,11 +4177,13 @@ FocusPilot/
         document
           .querySelectorAll(".page")
           .forEach((view) =>
-            view.classList.toggle("active", view.dataset.page === page),
-          )
-      }
-
-      function showPanel(target) {
+	            view.classList.toggle("active", view.dataset.page === page),
+	          )
+	      }
+	
+	      normalizePageMounts()
+	
+	      function showPanel(target) {
         const panel = document.getElementById(target)
         if (!panel) return
         const parent = panel.parentElement
@@ -3943,19 +4217,27 @@ FocusPilot/
             .querySelectorAll("button")
             .forEach((item) => item.classList.toggle("active", item === btn))
           showPanel(btn.dataset.target)
-          if (seg.dataset.scope === "homeMode") {
-            document
-              .getElementById("home-overview-side")
-              .classList.toggle(
+	          if (seg.dataset.scope === "homeMode") {
+	            document
+	              .getElementById("home-overview-side")
+	              .classList.toggle(
                 "active",
                 btn.dataset.target === "home-overview",
               )
-            document
-              .getElementById("home-chat-side")
-              .classList.toggle("active", btn.dataset.target === "home-chat")
-          }
-        })
-      })
+	            document
+	              .getElementById("home-chat-side")
+	              .classList.toggle("active", btn.dataset.target === "home-chat")
+	          }
+	          if (seg.dataset.scope === "reviewView") {
+	            const reviewKey = btn.dataset.target.replace("review-", "")
+	            document
+	              .querySelectorAll("[data-review]")
+	              .forEach((item) =>
+	                item.classList.toggle("active", item.dataset.review === reviewKey),
+	              )
+	          }
+	        })
+	      })
 
       document.querySelectorAll("[data-open-chat]").forEach((el) => {
         el.addEventListener("click", () => {

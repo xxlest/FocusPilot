@@ -1,8 +1,8 @@
 # Review 页面设计
 
-> **状态**：设计中
-> **更新**：2026-05-04
-> **原型**：[06-review-today-prototype.html](06-review-today-prototype.html)、[06-review-challenge-prototype.html](06-review-challenge-prototype.html)
+> **状态**：可开发
+> **更新**：2026-05-28
+> **原型**：[00-layout-prototype.html](00-layout-prototype.html)、[06-review-today-prototype.html](06-review-today-prototype.html)、[06-review-challenge-prototype.html](06-review-challenge-prototype.html)
 
 ---
 

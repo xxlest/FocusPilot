@@ -319,12 +319,12 @@ Crew 是 FocusPilot 的核心交互概念——**用户不直接面对 Agent/MCP
 知识管道定义了从原始素材到内化智慧的完整加工链路：
 
 ```
-收集           加工             提炼            记忆           内化
-─────         ─────           ─────          ─────         ─────
-_materials/  →  _reports/    →  _kb/        →  Anki       →  智慧
-原始素材         增量整合报告      知识卡片        间隔重复        费曼验证
-Crew 自动抓取    对话+Task        极简要点        遗忘曲线        理解→应用
-人手动放入       持续融入         框架记忆法       手机端复习
+收集           加工             提炼            记忆              内化
+─────         ─────           ─────          ─────            ─────
+_materials/  →  _reports/    →  _kb/        →  Review         →  智慧
+原始素材         增量整合报告      知识卡片        间隔重复           费曼验证/场景应用
+Crew 自动抓取    对话+Task        极简要点        今日复习队列       理解→应用
+人手动放入       持续融入         框架记忆法       可选同步 Anki
 ```
 
 **五个阶段**：
@@ -333,9 +333,9 @@ Crew 自动抓取    对话+Task        极简要点        遗忘曲线        
 |------|------|
 | **收集**（_materials/） | 人手动放入 + Crew 自动抓取 + 对话产生。新素材标记"待整合" |
 | **加工**（_reports/） | 增量整合，每次新增素材 AI 融入现有报告。每层级各有章节报告 |
-| **提炼**（_kb/ → Anki） | 从 reports 提炼原子化知识卡片，同步到 Anki（AnkiConnect API） |
-| **记忆**（Anki 手机端） | 遵循遗忘曲线，间隔重复，碎片时间复习 |
-| **内化**（费曼验证，预留） | FocusPilot 定期提问评估理解程度，标记掌握层次（know→understand→master） |
+| **提炼**（_kb/） | 从 reports 提炼原子化知识卡片，可选同步到 Anki（AnkiConnect API） |
+| **记忆**（Review 今日复习） | 遵循遗忘曲线形成今日复习队列，用“忘了 / 模糊 / 记得 / 熟练”四档反馈更新记忆强度 |
+| **内化**（Review 内化挑战） | 通过费曼复述和场景应用评估理解迁移，标记内化程度（未内化→能解释→能应用→已融会） |
 
 **KB 卡片格式**：
 
@@ -345,13 +345,16 @@ type: kb-card
 source: _reports/chapter-1.md
 tags: [分布式, CAP]
 anki_deck: "分布式系统"
-anki_synced: false
-mastery: know              # know → understand → master
+anki_synced: false         # 可选外部同步，不是主复习流程
+memory_strength: fuzzy     # forgot → fuzzy → remembered → fluent
+internalization_level: none # none → explain → apply → internalized
+is_key: false              # 关键卡由 AI 推荐，用户确认或覆盖
 ---
 ## CAP 定理
 **口诀**：一致可用分区，三选二
 **类比**：像三个人传话，要么慢(C)，要么可能传错(A)，但电话线断了(P)总会发生
 **费曼检验**：能否用一句话给外行解释 CAP？
+**场景应用**：在一个真实系统设计里说明分区发生时牺牲哪一侧，以及如何恢复。
 ```
 
 #### 3.5.3 自动收集 + 一键同步

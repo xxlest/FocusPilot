@@ -75,7 +75,7 @@ FocusPilot 定位为 macOS 上的个人自迭代系统（Personal AIOS）—— 
 | 03-focus | 5/5 | 可开发 | — |
 | 04-studio | 5/5 | 可开发 | — |
 | 05-area-projects | 5/5 | 可开发 | — |
-| 06-review | 4/5 | 设计中 | 卡片库与统计原型 |
+| 06-review | 5/5 | 可开发 | — |
 | 07-ai-crew | 3/5 | 草稿（已补齐模板） | P1 MCP 配置 UI、常驻职责编辑器 |
 | 08-settings | 3/5 | 草稿（已补齐模板） | 各分区完整配置项、快捷键冲突检测 |
 
