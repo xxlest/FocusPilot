@@ -2626,7 +2626,7 @@
               <!-- In Evaluation -->
               <div class="lane fp-col" data-fp-col="evaluation">
                 <h3><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--purple);margin-right:4px;vertical-align:middle"></span> Evaluation <span class="fp-col-count">1</span></h3>
-                <div class="task fp-card" onclick="openTaskDetail()" data-fp-schedule="week" data-fp-month="5" data-fp-mode="auto" data-fp-decision="yes" style="border-color:rgba(167,139,250,.3)">
+                <div class="task fp-card" onclick="openTaskDetailTab('fp-t-eval')" data-fp-schedule="week" data-fp-month="5" data-fp-mode="auto" data-fp-decision="yes" style="border-color:rgba(167,139,250,.3)">
                   <div style="font-size:10px;font-family:var(--mono);color:var(--dim);margin-bottom:2px">FP-005</div>
                   <div class="task-title">规划引擎接口设计</div>
                   <div class="task-meta" style="flex-wrap:wrap;gap:4px">
@@ -2771,7 +2771,7 @@
                   <td style="padding:8px 10px;font-size:11px;color:var(--dim)">area</td>
                   <td style="padding:8px 10px;font-size:11px;font-family:var(--mono);color:var(--muted)">05-29</td>
                 </tr>
-                <tr class="fp-list-row" onclick="openTaskDetail()" style="cursor:pointer" data-fp-schedule="week" data-fp-mode="auto" data-fp-decision="yes">
+                <tr class="fp-list-row" onclick="openTaskDetailTab('fp-t-eval')" style="cursor:pointer" data-fp-schedule="week" data-fp-mode="auto" data-fp-decision="yes">
                   <td style="padding:8px 10px"><span class="pill" style="font-size:10px;padding:1px 6px;border-color:rgba(167,139,250,.3);color:var(--purple)">◈ 评估</span></td>
                   <td style="padding:8px 10px"><strong>规划引擎接口设计</strong></td>
                   <td style="padding:8px 10px;font-size:12px;color:var(--muted)">本周</td>
@@ -2930,12 +2930,12 @@
                   <div style="padding:7px 10px;background:rgba(248,113,113,.08);border-left:3px solid var(--red);border-radius:0 4px 4px 0;margin-bottom:5px;font-size:11px"><strong style="color:var(--red)">Critical</strong> 状态转换缺少 blocked→todo 路径</div>
                   <div style="padding:7px 10px;background:rgba(242,196,15,.08);border-left:3px solid var(--amber);border-radius:0 4px 4px 0;margin-bottom:5px;font-size:11px"><strong style="color:var(--amber)">Important</strong> 拖拽动画帧率偏低</div>
                   <div style="padding:7px 10px;background:var(--elevated);border-left:3px solid var(--dim);border-radius:0 4px 4px 0;font-size:11px"><strong>Nit</strong> 变量命名风格不一致</div>
-                  <div style="display:flex;gap:8px;margin-top:14px"><button class="btn primary" style="font-size:11px;min-height:28px">按建议处理</button><button class="btn" style="font-size:11px;min-height:28px">忽略并完成</button><button class="btn" style="font-size:11px;min-height:28px">手动接管</button></div>
+                  <div style="display:flex;gap:8px;margin-top:14px"><button class="btn primary" style="font-size:11px;min-height:28px" onclick="handleEvalAction('apply')">按建议处理</button><button class="btn" style="font-size:11px;min-height:28px" onclick="handleEvalAction('ignore')">忽略并完成</button><button class="btn" style="font-size:11px;min-height:28px" onclick="handleEvalAction('manual')">手动接管</button></div>
                 </div>
                 <div id="fp-t-accept" style="display:none;flex:1;overflow-y:auto;padding:14px 18px">
                   <div style="font-size:12px;font-weight:600;margin-bottom:10px">最终验收</div>
                   <div style="background:var(--bg);border-radius:var(--radius);padding:12px;font-family:var(--mono);font-size:11px;line-height:1.8;color:var(--muted);margin-bottom:14px">Models.swift — TaskStatus 枚举<br>KanbanDataSource.swift — 拖拽跨列<br>plan.md — 实现方案<br>execution.log — 执行日志</div>
-                  <div style="display:flex;gap:8px"><button class="btn" style="font-size:11px;min-height:28px;background:rgba(46,204,113,.15);color:var(--green);border-color:rgba(46,204,113,.3)">验收通过 → Done</button><button class="btn" style="font-size:11px;min-height:28px">退回修改</button></div>
+                  <div style="display:flex;gap:8px"><button class="btn" style="font-size:11px;min-height:28px;background:rgba(46,204,113,.15);color:var(--green);border-color:rgba(46,204,113,.3)" onclick="handleAcceptAction('pass')">验收通过 → Done</button><button class="btn" style="font-size:11px;min-height:28px" onclick="handleAcceptAction('reject')">退回修改</button></div>
                 </div>
               </div>
               <div style="width:200px;border-left:1px solid var(--line-soft);padding:14px;overflow-y:auto;font-size:11px">
@@ -4223,7 +4223,59 @@ FocusPilot/
       }
 
       /* ── Focus: Task Detail ── */
+      function handleEvalAction(action) {
+        var evalDiv = document.getElementById('fp-t-eval');
+        evalDiv.querySelectorAll('.btn').forEach(function(b) { b.style.opacity = '0.4'; b.style.pointerEvents = 'none'; });
+        var feedback = document.createElement('div');
+        feedback.style.cssText = 'margin-top:14px;padding:10px 12px;border-radius:var(--radius);font-size:12px;font-weight:500;';
+        if (action === 'apply') {
+          feedback.style.background = 'rgba(74,222,128,0.1)'; feedback.style.color = 'var(--green)';
+          feedback.textContent = '✓ 已按建议处理，Agent 正在修复中...';
+        } else if (action === 'ignore') {
+          feedback.style.background = 'rgba(251,191,36,0.1)'; feedback.style.color = 'var(--amber)';
+          feedback.textContent = '⚠ 已忽略评估建议，任务标记为待验收';
+        } else {
+          feedback.style.background = 'rgba(82,156,202,0.1)'; feedback.style.color = 'var(--accent)';
+          feedback.textContent = '🖐 已切换为手动接管模式';
+        }
+        feedback.className = 'eval-feedback';
+        var old = evalDiv.querySelector('.eval-feedback'); if (old) old.remove();
+        evalDiv.appendChild(feedback);
+      }
+
+      function handleAcceptAction(action) {
+        var div = document.getElementById('fp-t-accept');
+        div.querySelectorAll('.btn').forEach(function(b) { b.style.opacity = '0.4'; b.style.pointerEvents = 'none'; });
+        var feedback = document.createElement('div');
+        feedback.style.cssText = 'margin-top:14px;padding:10px 12px;border-radius:var(--radius);font-size:12px;font-weight:500;';
+        if (action === 'pass') {
+          feedback.style.background = 'rgba(74,222,128,0.1)'; feedback.style.color = 'var(--green)';
+          feedback.textContent = '✓ 验收通过！任务已标记为 Done';
+        } else {
+          feedback.style.background = 'rgba(248,113,113,0.1)'; feedback.style.color = 'var(--red)';
+          feedback.textContent = '↩ 已退回修改，Agent 将重新执行';
+        }
+        feedback.className = 'accept-feedback';
+        var old = div.querySelector('.accept-feedback'); if (old) old.remove();
+        div.appendChild(feedback);
+      }
+
+      function resetTaskDetailActions() {
+        document.querySelectorAll('#fp-t-eval .btn, #fp-t-accept .btn').forEach(function(b) {
+          b.style.opacity = ''; b.style.pointerEvents = '';
+        });
+        var ef = document.querySelector('.eval-feedback'); if (ef) ef.remove();
+        var af = document.querySelector('.accept-feedback'); if (af) af.remove();
+      }
+
+      function openTaskDetailTab(tabId) {
+        openTaskDetail();
+        var tab = document.querySelector('.fp-dtab[data-t="' + tabId + '"]');
+        if (tab) tab.click();
+      }
+
       function openTaskDetail() {
+        resetTaskDetailActions();
         document.getElementById('fpDetailOverlay').style.opacity = '1';
         document.getElementById('fpDetailOverlay').style.pointerEvents = 'all';
         document.getElementById('fpDetailPanel').style.transform = 'translateX(0)';
