@@ -3188,11 +3188,16 @@
               <div style="flex:1;display:flex;flex-direction:column;min-width:0">
                 <!-- Tab 条 -->
                 <div id="areas-tab-bar" style="display:flex;align-items:center;gap:0;border-bottom:1px solid var(--line-soft);background:var(--surface);padding:0 12px;height:36px;flex-shrink:0">
-                  <div class="areas-tab active" data-area-file="arch" style="display:flex;align-items:center;gap:6px;padding:6px 14px;font-size:12px;cursor:pointer;border-bottom:2px solid var(--accent);color:var(--text);margin-bottom:-1px">📄 架构设计.md</div>
-                  <div class="areas-tab" data-area-file="tech" style="display:flex;align-items:center;gap:6px;padding:6px 14px;font-size:12px;cursor:pointer;border-bottom:2px solid transparent;color:var(--dim);margin-bottom:-1px">📄 技术选型.md</div>
+                  <div class="areas-tab active" data-area-file="arch" style="display:flex;align-items:center;gap:6px;padding:6px 14px;font-size:12px;cursor:pointer;border-bottom:2px solid var(--accent);color:var(--text);margin-bottom:-1px"><span class="tab-name">📄 架构设计.md</span><span class="tab-close" style="font-size:10px;color:var(--dim);margin-left:4px;cursor:pointer;padding:0 2px;border-radius:2px" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='var(--dim)'" onclick="event.stopPropagation();closeTab(this.parentElement)">✕</span></div>
+                  <div class="areas-tab" data-area-file="tech" style="display:flex;align-items:center;gap:6px;padding:6px 14px;font-size:12px;cursor:pointer;border-bottom:2px solid transparent;color:var(--dim);margin-bottom:-1px"><span class="tab-name">📄 技术选型.md</span><span class="tab-close" style="font-size:10px;color:var(--dim);margin-left:4px;cursor:pointer;padding:0 2px;border-radius:2px" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='var(--dim)'" onclick="event.stopPropagation();closeTab(this.parentElement)">✕</span></div>
+                </div>
+                <div id="areas-empty-state" style="display:none;flex:1;flex-direction:column;align-items:center;justify-content:center;gap:12px;color:var(--dim);min-height:0">
+                  <span style="font-size:36px">📄</span>
+                  <span style="font-size:14px;font-weight:500">没有打开的文件</span>
+                  <span style="font-size:12px">从侧边栏选择文件打开</span>
                 </div>
                 <!-- 面包屑 + 模式 seg -->
-                <div style="display:flex;align-items:center;padding:8px 16px;gap:8px;border-bottom:1px solid var(--line-soft);flex-shrink:0">
+                <div id="areas-breadcrumb-row" style="display:flex;align-items:center;padding:8px 16px;gap:8px;border-bottom:1px solid var(--line-soft);flex-shrink:0">
                   <span id="areas-breadcrumb" style="font-size:11px;color:var(--dim);font-family:var(--mono)">📂 FocusPilot / docs / 架构设计.md</span>
                   <span style="flex:1"></span>
                   <div class="seg" id="areas-mode-seg" style="font-size:11px">
@@ -3201,7 +3206,7 @@
                   </div>
                 </div>
                 <!-- 内容区 -->
-                <div style="flex:1;min-height:0;overflow:auto;position:relative">
+                <div id="areas-content" style="flex:1;min-height:0;overflow:auto;position:relative">
                   <!-- 预览面板 -->
                   <div class="panel active" id="areas-preview" style="padding:20px 24px;line-height:1.8;font-size:13px">
                     <details style="background:var(--surface-2);border:1px solid var(--line-soft);border-radius:var(--radius);padding:10px 14px;margin-bottom:16px;cursor:pointer">
@@ -5333,6 +5338,13 @@ FocusPilot/
           // 更新 Tab 条
           var tabBar = $('areas-tab-bar');
           if (tabBar) {
+            var emptyState = $('areas-empty-state');
+            if (emptyState) emptyState.style.display = 'none';
+            var breadcrumbRow = $('areas-breadcrumb-row');
+            if (breadcrumbRow) breadcrumbRow.classList.remove('area-hidden');
+            var contentArea = $('areas-content');
+            if (contentArea) contentArea.classList.remove('area-hidden');
+
             var tabs = tabBar.querySelectorAll('.areas-tab');
             var found = false;
             tabs.forEach(function(t) {
@@ -5343,17 +5355,29 @@ FocusPilot/
               if (isActive) found = true;
             });
             if (!found) {
-              // 替换第二个 tab 或添加
-              if (tabs.length >= 2) {
-                tabs[1].dataset.areaFile = fileKey;
-                tabs[1].innerHTML = '📄 ' + file.name;
-                tabs[1].classList.add('active');
-                tabs[1].style.borderBottomColor = 'var(--accent)';
-                tabs[1].style.color = 'var(--text)';
-                tabs[0].classList.remove('active');
-                tabs[0].style.borderBottomColor = 'transparent';
-                tabs[0].style.color = 'var(--dim)';
-              }
+              var newTab = document.createElement('div');
+              newTab.className = 'areas-tab active';
+              newTab.dataset.areaFile = fileKey;
+              newTab.style.cssText = 'display:flex;align-items:center;gap:6px;padding:6px 14px;font-size:12px;cursor:pointer;border-bottom:2px solid var(--accent);color:var(--text);margin-bottom:-1px';
+              var tabName = document.createElement('span');
+              tabName.className = 'tab-name';
+              tabName.textContent = '📄 ' + file.name;
+              newTab.appendChild(tabName);
+              var tabClose = document.createElement('span');
+              tabClose.className = 'tab-close';
+              tabClose.style.cssText = 'font-size:10px;color:var(--dim);margin-left:4px;cursor:pointer;padding:0 2px;border-radius:2px';
+              tabClose.textContent = '✕';
+              tabClose.onmouseover = function() { this.style.color = 'var(--red)'; };
+              tabClose.onmouseout = function() { this.style.color = 'var(--dim)'; };
+              tabClose.onclick = function(ev) { ev.stopPropagation(); closeTab(newTab); };
+              newTab.appendChild(tabClose);
+              newTab.addEventListener('click', function() { if (this.dataset.areaFile) openFile(this.dataset.areaFile); });
+              tabs.forEach(function(t) {
+                t.classList.remove('active');
+                t.style.borderBottomColor = 'transparent';
+                t.style.color = 'var(--dim)';
+              });
+              tabBar.appendChild(newTab);
             }
           }
 
@@ -5584,6 +5608,31 @@ FocusPilot/
         }
 
       })();
+
+      function closeTab(tabEl) {
+        var tabBar = document.getElementById('areas-tab-bar');
+        if (!tabBar) return;
+        var wasActive = tabEl.classList.contains('active');
+        tabEl.remove();
+        var remaining = tabBar.querySelectorAll('.areas-tab');
+        if (remaining.length === 0) {
+          var emptyState = document.getElementById('areas-empty-state');
+          if (emptyState) emptyState.style.display = 'flex';
+          var breadcrumbRow = document.getElementById('areas-breadcrumb-row');
+          if (breadcrumbRow) breadcrumbRow.classList.add('area-hidden');
+          var contentArea = document.getElementById('areas-content');
+          if (contentArea) contentArea.classList.add('area-hidden');
+        } else if (wasActive) {
+          var last = remaining[remaining.length - 1];
+          last.classList.add('active');
+          last.style.borderBottomColor = 'var(--accent)';
+          last.style.color = 'var(--text)';
+          if (last.dataset.areaFile) {
+            var openFileFn = document.querySelector('#areas-sidebar .area-file[data-area-file="' + last.dataset.areaFile + '"]');
+            if (openFileFn) openFileFn.click();
+          }
+        }
+      }
     </script>
 
     <!-- ═══ Studio: Workspace 菜单 popover ═══ -->
