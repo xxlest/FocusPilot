@@ -958,6 +958,108 @@
         gap: 8px;
         margin-bottom: 6px;
       }
+      .runtime-picker {
+        display: grid;
+        gap: 8px;
+      }
+      .runtime-filter {
+        width: max-content;
+      }
+      .runtime-option {
+        display: grid;
+        grid-template-columns: 34px minmax(0, 1fr) auto;
+        gap: 10px;
+        align-items: center;
+        border: 1px solid var(--line-soft);
+        border-radius: var(--radius);
+        padding: 10px;
+        background: rgba(255,255,255,0.02);
+      }
+      .runtime-option.active {
+        border-color: rgba(82,156,202,0.48);
+        background: rgba(82,156,202,0.1);
+      }
+      .runtime-logo {
+        width: 34px;
+        height: 34px;
+        display: grid;
+        place-items: center;
+        border: 1px solid var(--line-soft);
+        border-radius: var(--radius);
+        background: #111318;
+        font-size: 15px;
+      }
+      .runtime-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-top: 4px;
+      }
+      .config-tabs {
+        display: flex;
+        gap: 4px;
+        padding: 4px;
+        border: 1px solid var(--line-soft);
+        border-radius: var(--radius);
+        background: #111318;
+        overflow-x: auto;
+      }
+      .config-tabs button {
+        white-space: nowrap;
+        height: 28px;
+        border: 0;
+        border-radius: calc(var(--radius) - 2px);
+        padding: 0 9px;
+        background: transparent;
+        color: var(--muted);
+        font-size: 12px;
+      }
+      .config-tabs button.active {
+        color: var(--text);
+        background: var(--surface-2);
+      }
+      .config-panel {
+        margin-top: 10px;
+        border: 1px solid var(--line-soft);
+        border-radius: var(--radius);
+        background: rgba(255,255,255,0.02);
+        padding: 11px;
+      }
+      .config-panel textarea {
+        width: 100%;
+        min-height: 128px;
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        background: #111318;
+        color: var(--muted);
+        padding: 10px;
+        resize: vertical;
+        outline: 0;
+        font-family: var(--mono);
+        font-size: 12px;
+        line-height: 1.6;
+      }
+      .secret-row {
+        display: grid;
+        grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr) auto;
+        gap: 8px;
+        align-items: center;
+        margin-top: 8px;
+      }
+      .secret-row input {
+        height: 30px;
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        background: #111318;
+        color: var(--muted);
+        padding: 0 9px;
+        font-family: var(--mono);
+        font-size: 12px;
+      }
+      .runtime-list {
+        display: grid;
+        gap: 8px;
+      }
       .duty-list {
         display: grid;
         gap: 8px;
@@ -4130,7 +4232,7 @@ FocusPilot/
         <section class="page" data-page="crew">
           <header class="topbar">
             <h1>AICrew</h1>
-            <span class="meta">成员配置 / MCP 授权 / 常驻职责</span>
+            <span class="meta">成员配置 / Runtime 绑定 / MCP 授权 / 常驻职责</span>
             <div class="top-actions">
               <div class="seg" data-scope="crewMode">
                 <button class="active" data-target="crew-detail">成员详情</button
@@ -4155,9 +4257,9 @@ FocusPilot/
                   </div>
                   <div class="crew-status-grid">
                     <div class="crew-stat"><strong>2</strong><span class="subline">并发上限</span></div>
-                    <div class="crew-stat"><strong>4</strong><span class="subline">已启用 MCP</span></div>
+                    <div class="crew-stat"><strong>在线</strong><span class="subline">Runtime 健康</span></div>
                     <div class="crew-stat"><strong>3</strong><span class="subline">常驻职责</span></div>
-                    <div class="crew-stat"><strong>18</strong><span class="subline">本周执行</span></div>
+                    <div class="crew-stat"><strong>18</strong><span class="subline">本周运行</span></div>
                   </div>
                   <div class="crew-section">
                     <div class="crew-section-title">
@@ -4167,13 +4269,65 @@ FocusPilot/
                     <div class="crew-field-grid">
                       <div class="crew-field"><label>角色名</label><input value="代码工程师" /></div>
                       <div class="crew-field"><label>头像</label><select><option>💻 代码</option><option>🏗️ 架构</option><option>📊 数据</option></select></div>
-                      <div class="crew-field"><label>Runtime</label><select><option>claude-code</option><option>codex-cli</option><option>custom runtime</option></select></div>
-                      <div class="crew-field"><label>部署位置</label><select><option>本地</option><option>云端（预留）</option></select></div>
+                      <div class="crew-field"><label>可见性</label><select><option>仅自己</option><option selected>当前工作区</option></select></div>
+                      <div class="crew-field"><label>Owner</label><input value="Bruce" /></div>
+                      <div class="crew-field"><label>Runtime</label><select><option>Claude Code · MacBook</option><option>Codex CLI · MacBook</option><option>Cloud Runtime（预留）</option></select></div>
+                      <div class="crew-field"><label>模型</label><select><option>跟随 CLI 默认</option><option selected>claude-sonnet-4.5</option><option>gpt-5.1-codex</option></select></div>
+                      <div class="crew-field"><label>推理强度</label><select><option>跟随 CLI 配置</option><option selected>medium</option><option>high</option><option>xhigh</option></select></div>
                       <div class="crew-field"><label>并发数</label><select><option>1</option><option selected>2</option><option>3</option></select></div>
                       <div class="crew-field"><label>默认 Skill</label><select><option>dev-story</option><option>quick-dev</option><option>code-review</option></select></div>
                       <div class="crew-field" style="grid-column:1 / -1">
                         <label>擅长领域</label>
                         <textarea>Swift/AppKit、前端原型、测试修复、架构小改。适合从 Focus Task 或 Studio 会话中接手明确实现任务。</textarea>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="crew-section">
+                    <div class="crew-section-title">
+                      <h3>Runtime 绑定</h3>
+                      <div class="seg runtime-filter"><button class="active">我的</button><button>全部</button></div>
+                    </div>
+                    <div class="runtime-picker">
+                      <div class="runtime-option active">
+                        <div class="runtime-logo">C</div>
+                        <div>
+                          <strong>Claude Code · MacBook</strong>
+                          <div class="runtime-meta">
+                            <span class="pill green">online</span>
+                            <span class="pill">local</span>
+                            <span class="pill">private</span>
+                            <span class="pill blue">CLI 2.1.121</span>
+                          </div>
+                          <span class="subline">daemon fp-local-01 · 最近心跳 12s 前 · 仅 Owner/Admin 可绑定</span>
+                        </div>
+                        <span class="pill green">已绑定</span>
+                      </div>
+                      <div class="runtime-option">
+                        <div class="runtime-logo">O</div>
+                        <div>
+                          <strong>Codex CLI · MacBook</strong>
+                          <div class="runtime-meta">
+                            <span class="pill green">online</span>
+                            <span class="pill">local</span>
+                            <span class="pill green">public</span>
+                            <span class="pill blue">models 可发现</span>
+                          </div>
+                          <span class="subline">支持 model / thinking override；可给任意工作区成员创建 Crew 成员</span>
+                        </div>
+                        <button class="btn">切换</button>
+                      </div>
+                      <div class="runtime-option">
+                        <div class="runtime-logo">☁</div>
+                        <div>
+                          <strong>Cloud Runtime · Research</strong>
+                          <div class="runtime-meta">
+                            <span class="pill amber">recently lost</span>
+                            <span class="pill blue">cloud</span>
+                            <span class="pill">private</span>
+                          </div>
+                          <span class="subline">云端执行预留；离线 3 分钟内显示 amber，超过阈值转 offline</span>
+                        </div>
+                        <span class="pill amber">不可选</span>
                       </div>
                     </div>
                   </div>
@@ -4226,6 +4380,32 @@ FocusPilot/
                   </div>
                 </div>
                 <div class="grid">
+                  <div class="card">
+                    <div class="card-head"><h3>Agent 配置</h3><span class="pill amber">未保存保护</span></div>
+                    <div class="card-body">
+                      <div class="config-tabs">
+                        <button class="active">Instructions</button>
+                        <button>Skills</button>
+                        <button>Env</button>
+                        <button>Args</button>
+                        <button>MCP JSON</button>
+                      </div>
+                      <div class="config-panel">
+                        <textarea>你是 FocusPilot 的代码工程师。优先读取当前 Project 上下文、PRD、Architecture 和任务验收标准；先给出最小可行实现，再执行构建验证；遇到权限、网络、破坏性命令必须等待用户确认。</textarea>
+                        <div class="runtime-meta" style="margin-top:8px">
+                          <span class="pill blue">dev-story</span>
+                          <span class="pill blue">code-review</span>
+                          <span class="pill">custom_args: 2</span>
+                          <span class="pill amber">env: 2 keys hidden</span>
+                        </div>
+                        <div class="secret-row">
+                          <input value="ANTHROPIC_API_KEY" />
+                          <input type="password" value="********" />
+                          <button class="btn">Reveal</button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                   <div class="card">
                     <div class="card-head"><h3>职责编辑器</h3><span class="pill">当前职责</span></div>
                     <div class="card-body">
@@ -4330,16 +4510,71 @@ FocusPilot/
             <div class="grid cols-4 summary-strip">
               <div class="metric"><div class="value">3</div><div class="name">团队成员</div><div class="hint">1 个 V1 默认成员</div></div>
               <div class="metric"><div class="value">1</div><div class="name">执行中</div><div class="hint">架构师占用 1 token</div></div>
-              <div class="metric"><div class="value">4/6</div><div class="name">MCP 可用</div><div class="hint">2 项待授权</div></div>
+              <div class="metric"><div class="value">2/3</div><div class="name">Runtime 在线</div><div class="hint">1 个 recently lost</div></div>
               <div class="metric"><div class="value">5</div><div class="name">常驻职责</div><div class="hint">3 启用 / 2 草稿</div></div>
             </div>
             <div class="grid cols-2" style="margin-top:14px">
+              <div class="card">
+                <div class="card-head"><h3>Runtime Pool</h3><button class="btn">刷新心跳</button></div>
+                <div class="card-body runtime-list">
+                  <div class="runtime-option active">
+                    <div class="runtime-logo">C</div>
+                    <div>
+                      <strong>Claude Code · MacBook</strong>
+                      <div class="runtime-meta">
+                        <span class="pill green">online</span>
+                        <span class="pill">local</span>
+                        <span class="pill">private</span>
+                        <span class="pill blue">2 agents</span>
+                      </div>
+                      <span class="subline">Owner Bruce · daemon fp-local-01 · CLI 2.1.121 · last seen 12s</span>
+                    </div>
+                    <span class="pill green">healthy</span>
+                  </div>
+                  <div class="runtime-option">
+                    <div class="runtime-logo">O</div>
+                    <div>
+                      <strong>Codex CLI · MacBook</strong>
+                      <div class="runtime-meta">
+                        <span class="pill green">online</span>
+                        <span class="pill">local</span>
+                        <span class="pill green">public</span>
+                        <span class="pill blue">0 agents</span>
+                      </div>
+                      <span class="subline">可绑定任意成员；model / thinking 由 daemon 发现</span>
+                    </div>
+                    <button class="btn">创建成员</button>
+                  </div>
+                  <div class="runtime-option">
+                    <div class="runtime-logo">☁</div>
+                    <div>
+                      <strong>Research Cloud</strong>
+                      <div class="runtime-meta">
+                        <span class="pill amber">recently lost</span>
+                        <span class="pill blue">cloud</span>
+                        <span class="pill">private</span>
+                        <span class="pill">1 draft agent</span>
+                      </div>
+                      <span class="subline">最后心跳 3m 前；超过 5m 后转 offline，7d 进入 GC 预警</span>
+                    </div>
+                    <span class="pill amber">watch</span>
+                  </div>
+                </div>
+              </div>
               <div class="card">
                 <div class="card-head"><h3>运行队列</h3><span class="pill amber">1 running</span></div>
                 <div class="card-body">
                   <div class="row"><strong>MCP Host 设计</strong><span class="right">架构师 · running</span></div>
                   <div class="row"><strong>PR #18 review</strong><span class="right">代码工程师 · done</span></div>
                   <div class="row"><strong>素材整合扫描</strong><span class="right">代码工程师 · scheduled</span></div>
+                </div>
+              </div>
+              <div class="card">
+                <div class="card-head"><h3>Agent 负载</h3><span class="pill">availability × workload</span></div>
+                <div class="card-body">
+                  <div class="row"><strong>代码工程师</strong><span class="right">online · idle · 0/2</span></div>
+                  <div class="row"><strong>架构师</strong><span class="right">online · working · 1/1</span></div>
+                  <div class="row"><strong>数据分析师</strong><span class="right">offline · queued · 0/1</span></div>
                 </div>
               </div>
               <div class="card">
