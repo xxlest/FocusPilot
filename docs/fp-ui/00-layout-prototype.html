@@ -1796,7 +1796,7 @@
                         </div>
                         <!-- May -->
                         <div data-fp-plan-month="5" style="margin-bottom:2px;">
-                          <div style="display:flex;align-items:center;gap:6px;padding:6px 8px;border-radius:var(--radius);cursor:pointer;font-size:13px;font-weight:500;">
+                          <div data-drill-scope="month" data-drill-event="dblclick" style="display:flex;align-items:center;gap:6px;padding:6px 8px;border-radius:var(--radius);cursor:pointer;font-size:13px;font-weight:500;">
                             <span style="font-size:10px;color:var(--dim);width:14px;text-align:center;transform:rotate(90deg);flex-shrink:0;">▶</span>
                             <span style="font-size:12px;flex-shrink:0;">📆</span>
                             <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">5月</span>
@@ -1997,7 +1997,7 @@
                   </div>
                   <div data-fp-plan-month="5">
                   <!-- May Goal bar -->
-                  <div style="height:34px;display:flex;align-items:center;position:relative;">
+                  <div data-drill-scope="month" data-drill-event="click" style="height:34px;display:flex;align-items:center;position:relative;">
                     <div style="position:absolute;height:20px;border-radius:4px;display:flex;align-items:center;padding:0 8px;font-size:9px;font-weight:500;cursor:pointer;overflow:hidden;white-space:nowrap;background:rgba(82,156,202,0.2);border:1px solid rgba(82,156,202,0.3);color:var(--accent);left:360px;width:150px;">
                       <div style="position:absolute;left:0;top:0;bottom:0;width:0%;background:rgba(82,156,202,0.15);border-radius:4px;"></div>
                       5月
@@ -2088,7 +2088,7 @@
                   <div style="padding-left:22px;">
                     <!-- W22 week group -->
                     <div data-fp-plan-week="22" style="margin-bottom:2px;">
-                      <div style="display:flex;align-items:center;gap:6px;padding:6px 8px;border-radius:var(--radius);cursor:pointer;font-size:13px;font-weight:500;">
+                      <div data-drill-scope="week" data-drill-event="dblclick" style="display:flex;align-items:center;gap:6px;padding:6px 8px;border-radius:var(--radius);cursor:pointer;font-size:13px;font-weight:500;">
                         <span style="font-size:10px;color:var(--dim);width:14px;text-align:center;transform:rotate(90deg);flex-shrink:0;">▶</span>
                         <span style="font-size:11px;flex-shrink:0;">📅</span>
                         <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">W22 · 05-25 ~ 05-31</span>
@@ -2221,7 +2221,7 @@
                   </div>
                   <!-- W22 task bars (5th column, left starts at 480px) -->
                   <div data-fp-plan-week="22" style="margin-bottom:4px;">
-                    <div style="height:28px;display:flex;align-items:center;padding:0 8px;font-size:10px;font-weight:500;color:var(--dim);">W22 · 05-25 ~ 05-31</div>
+                    <div data-drill-scope="week" data-drill-event="click" style="height:28px;display:flex;align-items:center;padding:0 8px;font-size:10px;font-weight:500;color:var(--dim);cursor:pointer;">W22 · 05-25 ~ 05-31</div>
                     <!-- FP-002: 看板状态模型实现 (in_progress) -->
                     <div class="fp-month-task" data-fp-schedule="week" style="height:34px;display:flex;align-items:center;position:relative;">
                       <div style="position:absolute;height:14px;border-radius:3px;cursor:pointer;overflow:hidden;white-space:nowrap;background:rgba(91,138,245,0.4);border:1px solid rgba(91,138,245,0.5);left:484px;width:100px;" title="看板状态模型实现 (进行中)"></div>
@@ -2319,7 +2319,7 @@
                   </div>
                   <!-- 周三 (5/27) — 当天高亮 -->
                   <div data-fp-week-day="3" style="margin-bottom:2px;">
-                    <div style="display:flex;align-items:center;gap:6px;padding:4px 12px;font-size:11px;font-weight:600;color:var(--accent);">
+                    <div data-drill-scope="today" data-drill-event="dblclick" style="display:flex;align-items:center;gap:6px;padding:4px 12px;font-size:11px;font-weight:600;color:var(--accent);">
                       <span style="font-size:10px;color:var(--dim);width:10px;text-align:center;transform:rotate(90deg);flex-shrink:0;">▶</span>
                       周三 · 05-27
                       <span style="font-size:9px;padding:1px 5px;border-radius:3px;background:var(--accent);color:#fff;font-weight:500;">今天</span>
@@ -4833,6 +4833,22 @@ FocusPilot/
         document.querySelectorAll('#fp-month > div:first-child > div:nth-child(2) > div:first-child').forEach(function(goalHeader) {
           if (goalHeader.style.cssText.indexOf('cursor:pointer') > -1) {
             goalHeader.addEventListener('click', function() { toggleGroup(this); });
+          }
+        });
+
+        function drillDown(scope) {
+          var item = document.querySelector('[data-focus-filter="' + scope + '"]');
+          if (item) applyFocusFilter(item);
+        }
+
+        document.querySelectorAll('[data-drill-scope]').forEach(function(el) {
+          var scope = el.dataset.drillScope;
+          var eventType = el.dataset.drillEvent || 'click';
+          if (eventType === 'dblclick') {
+            el.addEventListener('dblclick', function(e) { e.stopPropagation(); drillDown(scope); });
+          } else {
+            el.style.cursor = 'pointer';
+            el.addEventListener('click', function() { drillDown(scope); });
           }
         });
       });
