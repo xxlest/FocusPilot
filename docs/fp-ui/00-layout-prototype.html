@@ -5688,6 +5688,53 @@ FocusPilot/
           });
         }
 
+        // ── KB 筛选 ──
+        var kbFilterBtn = document.querySelector('#areas-kb .btn:not(.primary)');
+        if (kbFilterBtn) {
+          kbFilterBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            showContextMenu(e, [
+              { icon: '🟡', label: 'know', action: function() { filterKBCards('know'); } },
+              { icon: '🟢', label: 'understand', action: function() { filterKBCards('understand'); } },
+              { icon: '🔵', label: 'master', action: function() { filterKBCards('master'); } },
+              '---',
+              { icon: '✅', label: '已同步', action: function() { filterKBCards('synced'); } },
+              { icon: '⏳', label: '待同步', action: function() { filterKBCards('pending'); } },
+              '---',
+              { icon: '✕', label: '清除筛选', action: function() { filterKBCards(''); } }
+            ]);
+          });
+        }
+
+        function filterKBCards(filter) {
+          document.querySelectorAll('.area-kb-card').forEach(function(card) {
+            if (!filter) { card.style.display = ''; return; }
+            var text = card.textContent.toLowerCase();
+            if (filter === 'synced') { card.style.display = text.indexOf('已同步') !== -1 ? '' : 'none'; }
+            else if (filter === 'pending') { card.style.display = text.indexOf('待同步') !== -1 ? '' : 'none'; }
+            else { card.style.display = text.indexOf(filter) !== -1 ? '' : 'none'; }
+          });
+          showAreaToast(filter ? '已筛选: ' + filter : '已清除筛选');
+        }
+
+        // ── Anki 同步反馈 ──
+        var ankiBtn = document.querySelector('#areas-kb .btn.primary');
+        if (ankiBtn) {
+          ankiBtn.addEventListener('click', function() {
+            var pending = document.querySelectorAll('.area-kb-card');
+            var count = 0;
+            pending.forEach(function(card) {
+              var syncSpan = card.querySelector('span[style*="color:var(--amber)"]');
+              if (syncSpan && syncSpan.textContent.indexOf('待同步') !== -1) {
+                syncSpan.style.color = 'var(--green)';
+                syncSpan.textContent = '✅ 已同步';
+                count++;
+              }
+            });
+            showAreaToast(count > 0 ? '已同步 ' + count + ' 张卡片到 Anki' : '没有待同步的卡片');
+          });
+        }
+
         // ── helper: 切换到编辑器视图 ──
         function switchToEditor() {
           var seg = document.querySelector('.seg[data-scope="areasView"]');
