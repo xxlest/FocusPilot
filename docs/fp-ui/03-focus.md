@@ -1,7 +1,7 @@
 # Focus 页面设计
 
-> **状态**：设计中（规格可开发，母版待补齐验收/评估流程）
-> **更新**：2026-05-25
+> **状态**：可开发
+> **更新**：2026-05-28
 > **原型**：[03-focus-prototype.html](03-focus-prototype.html)、[03-focus-session-prototype.html](03-focus-session-prototype.html)（历史参考，Session 已归入 Task 详情）
 > **关联**：[PRD §3.1 两阶段模型](../PRD.md)、[PRD §3.3 Task 双轴管理](../PRD.md)
 
@@ -581,6 +581,18 @@ ExecutionRun:
 - Task 节点显示 status dot
 - 甘特条颜色映射 status，Goal 条 = 子节点时间范围自动聚合
 - 时间缩放随选中层级自动调整
+
+#### 甘特下钻导航
+
+| 视图 | 可下钻元素 | 触发方式 | 目标视图 | 约束 |
+|------|-----------|---------|---------|------|
+| fp-year | 当前月左侧月份头 | 双击 | fp-month | 仅当前月 |
+| fp-year | 当前月右侧 Goal bar | 单击 | fp-month | 同上 |
+| fp-month | 当前周左侧周分组头 | 双击 | fp-week | 仅当前周 |
+| fp-month | 当前周右侧周标签行 | 单击 | fp-week | 同上 |
+| fp-week | 当天左侧天分组头 | 双击 | fp-day | 仅当天 |
+
+非当前时间段不添加下钻属性，避免跳转到无对应数据的视图。实现方式：`data-drill-scope` 标记目标 scope，`data-drill-event` 标记触发事件类型（click/dblclick），DOMContentLoaded 统一绑定。
 
 #### 模式 B：月规划（周级甘特）
 
