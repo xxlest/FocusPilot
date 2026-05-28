@@ -1109,15 +1109,16 @@
           <div class="side-head">
             <div class="side-title">
               <h2>AreaProjects</h2>
-              <button class="btn icon">📄</button>
+              <div style="display:flex;gap:2px;margin-left:auto">
+                <button class="btn icon" title="新建文件夹" style="width:26px;height:26px;min-height:26px;font-size:12px;border:0;background:transparent;color:var(--dim)">📁</button>
+                <button class="btn icon" title="新建文件" style="width:26px;height:26px;min-height:26px;font-size:12px;border:0;background:transparent;color:var(--dim)">📄</button>
+                <button class="btn icon" title="收藏筛选" style="width:26px;height:26px;min-height:26px;font-size:12px;border:0;background:transparent;color:var(--dim)">⭐</button>
+                <button class="btn icon" id="areas-toggle-all" title="展开/折叠全部" style="width:26px;height:26px;min-height:26px;font-size:12px;border:0;background:transparent;color:var(--dim)">⤡</button>
+              </div>
             </div>
             <input class="search" id="areas-search" placeholder="搜索文件和项目..." />
           </div>
           <div class="side-scroll">
-            <div class="seg" style="margin: 0 8px 10px">
-              <button>📁</button><button>📄</button><button>⭐</button
-              ><button id="areas-toggle-all">⤡</button>
-            </div>
 
             <!-- 📂 FocusPilot（执行类） -->
             <div class="side-item area-project active" data-area-id="fp" style="cursor:pointer">
@@ -1140,7 +1141,6 @@
               <!-- _reports 知识管道 -->
               <div class="side-item indent area-folder" data-area-id="fp-rpt" style="cursor:pointer">
                 <span><span class="area-arrow">▸</span> 📊 _reports</span>
-                <span class="count">2</span>
               </div>
               <div class="area-children collapsed" data-area-parent="fp-rpt">
                 <div class="side-item indent area-file" data-area-file="rpt1" style="padding-left:36px"><span>📄 周报-W22.md</span></div>
@@ -1197,7 +1197,6 @@
               <div class="side-item indent area-file" data-area-file="client-comp"><span>📄 竞品分析.md</span></div>
               <div class="side-item indent area-folder" data-area-id="client-rpt" style="cursor:pointer">
                 <span><span class="area-arrow">▸</span> 📊 _reports</span>
-                <span class="count">1</span>
               </div>
               <div class="area-children collapsed" data-area-parent="client-rpt">
                 <div class="side-item indent area-file" data-area-file="client-rpt1" style="padding-left:36px"><span>📄 Q2 跟进报告.md</span></div>
@@ -3343,6 +3342,7 @@ FocusPilot/
 <span style="color:var(--dim)">3 matches in 2 files (0.8ms)</span><br>
 <br>
 <span style="color:var(--dim)">$</span> <span style="display:inline-block;width:6px;height:13px;background:var(--green);animation:blink 1s step-end infinite;vertical-align:text-bottom"></span>
+<br><br><span style="color:var(--dim);font-size:10px;font-style:italic">💡 终端预览（开发时接入真实 PTY）</span>
                 </div>
                 <!-- Agent 面板 -->
                 <div class="panel" id="areas-aux-agent" style="flex:1;min-height:0;overflow:auto;display:none;flex-direction:column">
@@ -4952,6 +4952,26 @@ FocusPilot/
 
         // ── helper: 获取元素 ──
         function $(id) { return document.getElementById(id); }
+
+        // ── 通用 toast 提示 ──
+        function showAreaToast(msg) {
+          var old = document.getElementById('areas-toast');
+          if (old) old.remove();
+          var toast = document.createElement('div');
+          toast.id = 'areas-toast';
+          toast.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--surface-2);border:1px solid var(--line);border-radius:var(--radius);padding:8px 16px;font-size:12px;color:var(--text);z-index:999;box-shadow:0 4px 12px rgba(0,0,0,.3);transition:opacity .3s';
+          toast.textContent = msg;
+          document.body.appendChild(toast);
+          setTimeout(function() { toast.style.opacity = '0'; setTimeout(function() { toast.remove(); }, 300); }, 3000);
+        }
+
+        // ── Agent 发送按钮占位提示 ──
+        var agentSendBtn = document.querySelector('#areas-aux-agent .btn.primary');
+        if (agentSendBtn) {
+          agentSendBtn.addEventListener('click', function() {
+            showAreaToast('Agent 对话为预览占位，开发时接入真实 Agent');
+          });
+        }
 
         // ── (b) 文件树点击 → 打开文件 ──
         function openFile(fileKey) {
