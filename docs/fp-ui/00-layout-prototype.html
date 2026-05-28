@@ -1212,7 +1212,7 @@
 
             <!-- 添加项目按钮 -->
             <div style="padding:10px 12px;margin-top:8px">
-              <button class="btn" style="width:100%;border-style:dashed;color:var(--dim)">+ 添加项目</button>
+              <button class="btn" id="areas-btn-add-project" style="width:100%;border-style:dashed;color:var(--dim)">+ 添加项目</button>
             </div>
           </div>
         </section>
@@ -3473,6 +3473,41 @@ FocusPilot/
               </div>
             </div>
           </div>
+
+          <!-- ═══ AreaProjects: 添加项目弹窗 ═══ -->
+          <div id="areas-add-project-modal" style="position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:60;display:none;align-items:center;justify-content:center;backdrop-filter:blur(4px)">
+            <div style="width:440px;max-width:90vw;background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,.5);padding:24px" onclick="event.stopPropagation()">
+              <h3 style="font-size:16px;font-weight:600;margin:0 0 16px">添加项目</h3>
+              <div style="margin-bottom:14px">
+                <div style="font-size:12px;font-weight:500;margin-bottom:6px;color:var(--muted)">项目类型</div>
+                <label style="font-size:12px;cursor:pointer;margin-right:16px"><input type="radio" name="areas-proj-type" value="local" checked style="margin-right:4px">指向本地目录</label>
+                <label style="font-size:12px;cursor:pointer"><input type="radio" name="areas-proj-type" value="new" style="margin-right:4px">新建空项目</label>
+              </div>
+              <div id="areas-proj-path-row" style="margin-bottom:14px">
+                <div style="font-size:12px;font-weight:500;margin-bottom:6px;color:var(--muted)">项目路径</div>
+                <div style="display:flex;gap:6px">
+                  <input id="areas-proj-path" class="search" placeholder="/Users/bruce/Workspace/..." style="flex:1;height:32px;font-size:12px" />
+                  <button class="btn" style="font-size:12px;height:32px;padding:0 10px" onclick="document.getElementById('areas-proj-path').value='/Users/bruce/Workspace/新项目';document.getElementById('areas-proj-name').value='新项目'">📂 选择</button>
+                </div>
+              </div>
+              <div style="margin-bottom:14px">
+                <div style="font-size:12px;font-weight:500;margin-bottom:6px;color:var(--muted)">项目名称</div>
+                <input id="areas-proj-name" class="search" placeholder="项目名称" style="width:100%;height:32px;font-size:12px" />
+              </div>
+              <div style="margin-bottom:20px">
+                <div style="font-size:12px;font-weight:500;margin-bottom:6px;color:var(--muted)">项目类型标签</div>
+                <select id="areas-proj-tag" style="background:var(--bg);border:1px solid var(--line);border-radius:var(--radius);color:var(--text);font-size:12px;padding:4px 8px;height:32px">
+                  <option value="执行">执行类</option>
+                  <option value="知识">知识类</option>
+                </select>
+              </div>
+              <div style="display:flex;justify-content:flex-end;gap:8px">
+                <button class="btn" onclick="document.getElementById('areas-add-project-modal').style.display='none'">取消</button>
+                <button class="btn primary" id="areas-proj-confirm">添加</button>
+              </div>
+            </div>
+          </div>
+
         </section>
 
         <section class="page" data-page="review">
@@ -5316,6 +5351,74 @@ FocusPilot/
           });
           showAreaToast(favMode ? '仅显示收藏项目' : '显示全部项目');
         });
+
+        // ── 添加项目弹窗 ──
+        var addProjBtn = $('areas-btn-add-project');
+        if (addProjBtn) {
+          addProjBtn.addEventListener('click', function() {
+            $('areas-add-project-modal').style.display = 'flex';
+            $('areas-proj-path').value = '';
+            $('areas-proj-name').value = '';
+            $('areas-proj-path-row').style.display = '';
+            var localRadio = document.querySelector('input[name="areas-proj-type"][value="local"]');
+            if (localRadio) localRadio.checked = true;
+          });
+        }
+        $('areas-add-project-modal').addEventListener('click', function() { this.style.display = 'none'; });
+
+        // Radio 切换路径字段可见性
+        document.querySelectorAll('input[name="areas-proj-type"]').forEach(function(radio) {
+          radio.addEventListener('change', function() {
+            var pathRow = $('areas-proj-path-row');
+            if (pathRow) pathRow.style.display = this.value === 'local' ? '' : 'none';
+          });
+        });
+
+        var projConfirm = $('areas-proj-confirm');
+        if (projConfirm) {
+          projConfirm.addEventListener('click', function() {
+            var name = $('areas-proj-name').value.trim();
+            if (!name) { showAreaToast('请输入项目名称'); return; }
+            var projType = document.querySelector('input[name="areas-proj-type"]:checked').value;
+            var path = $('areas-proj-path').value.trim();
+            if (projType === 'local' && !path) { showAreaToast('请选择项目路径'); return; }
+            var tag = $('areas-proj-tag').value;
+            mockCounter++;
+            var projId = 'mock-proj-' + mockCounter;
+            var sidebar = document.querySelector('#areas-sidebar .side-scroll');
+            var addBtn = sidebar.querySelector('div:last-child');
+            var projEl = document.createElement('div');
+            projEl.className = 'side-item area-project';
+            projEl.dataset.areaId = projId;
+            projEl.dataset.projType = projType;
+            if (path) projEl.dataset.projPath = path;
+            projEl.style.cursor = 'pointer';
+            var pSpan = document.createElement('span');
+            var pArrow = document.createElement('span');
+            pArrow.className = 'area-arrow';
+            pArrow.textContent = '▸';
+            pSpan.appendChild(pArrow);
+            pSpan.appendChild(document.createTextNode(' 📂 '));
+            var pName = document.createElement('span');
+            pName.className = 'area-name';
+            pName.textContent = name;
+            pSpan.appendChild(pName);
+            projEl.appendChild(pSpan);
+            var pPill = document.createElement('span');
+            pPill.className = 'pill';
+            pPill.style.cssText = 'font-size:9px;padding:1px 5px;margin-left:auto';
+            pPill.textContent = tag;
+            projEl.appendChild(pPill);
+            var childrenEl = document.createElement('div');
+            childrenEl.className = 'area-children collapsed';
+            childrenEl.dataset.areaParent = projId;
+            sidebar.insertBefore(projEl, addBtn);
+            sidebar.insertBefore(childrenEl, addBtn);
+            projEl.addEventListener('click', function(e) { if (e.target.closest('.area-file')) return; e.stopPropagation(); toggleFolder(this); });
+            $('areas-add-project-modal').style.display = 'none';
+            showAreaToast('已添加项目: ' + name + (projType === 'local' ? ' → ' + path : ' (空项目)'));
+          });
+        }
 
         // ── (b) 文件树点击 → 打开文件 ──
         function openFile(fileKey) {
