@@ -1,7 +1,7 @@
 # AreaProjects 页面设计
 
-> **状态**：设计中
-> **更新**：2026-05-27
+> **状态**：可开发（UI 母版原型可开发，非 Swift 已实现）
+> **更新**：2026-05-28
 > **原型**：[00-layout-prototype.html](00-layout-prototype.html)
 > **参考**：Obsidian 文件树、VS Code Explorer
 > **关联**：[PRD §3.5 项目产出模型与知识管道](../PRD.md)、[PRD §4.1 项目数据目录](../PRD.md)
