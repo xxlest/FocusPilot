@@ -131,7 +131,7 @@
 | 💻 | **Studio** | 项目级 AI 编程指挥台：六区布局（置顶+Triage+Workspace对话列表+Automations 侧边栏/顶栏/对话/输入/Diff审查+Git右面板/终端面板） | **可开发** | [04-studio.md](fp-ui/04-studio.md) | [00-layout-prototype.html](fp-ui/00-layout-prototype.html) |
 | 📁 | **AreaProjects** | 项目资产沉淀（执行类+知识类），文件树+Markdown 编辑器+知识管道+KB 卡片+Anki 同步 | **可开发（UI 母版）** | [05-area-projects.md](fp-ui/05-area-projects.md) | [00-layout-prototype.html](fp-ui/00-layout-prototype.html) |
 | 🧠 | **Review** | 复习与内化中心：今日复习 / 内化挑战 / 卡片库 / 统计 | **可开发** | [06-review.md](fp-ui/06-review.md) | [00-layout-prototype.html](fp-ui/00-layout-prototype.html)、[06-review-today-prototype.html](fp-ui/06-review-today-prototype.html)、[06-review-challenge-prototype.html](fp-ui/06-review-challenge-prototype.html) |
-| 🤖 | AICrew | Agent 团队管理（角色/头像/擅长/MCP/并发数） | 草稿 | [07-ai-crew.md](fp-ui/07-ai-crew.md) | [00-layout-prototype.html](fp-ui/00-layout-prototype.html) |
+| 🤖 | AICrew | Agent 团队管理（成员详情 / MCP 状态 / 常驻职责 / 运行状态） | **可开发** | [07-ai-crew.md](fp-ui/07-ai-crew.md) | [00-layout-prototype.html](fp-ui/00-layout-prototype.html) |
 | ⚙️ | Settings | 全局配置：Focus/Studio/AICrew/Projects/通用 | 草稿 | [08-settings.md](fp-ui/08-settings.md) | [00-layout-prototype.html](fp-ui/00-layout-prototype.html) |
 
 ### 原型策略
@@ -142,7 +142,7 @@
 |:------:|------|--------|
 | P0 | 00-layout（全局壳层，含全部页面工作区） | 高保真，可点击切换，已建母版 |
 | P1 | 02-inbox / 05-area-projects | 中保真 |
-| P2 | 07-ai-crew / 08-settings | 暂保留规格，后补 |
+| P2 | 08-settings | 暂保留规格，后补 |
 
 ### 原型命名规则
 

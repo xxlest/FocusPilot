@@ -841,6 +841,173 @@
         margin-bottom: 12px;
       }
 
+      .crew-layout {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 340px;
+        gap: 14px;
+      }
+      .crew-hero {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding: 16px 18px;
+        border-bottom: 1px solid var(--line-soft);
+      }
+      .crew-avatar {
+        width: 46px;
+        height: 46px;
+        display: grid;
+        place-items: center;
+        border-radius: var(--radius);
+        border: 1px solid var(--line);
+        background: #111318;
+        font-size: 22px;
+      }
+      .crew-title {
+        min-width: 0;
+      }
+      .crew-title h2 {
+        margin: 0 0 4px;
+        font-size: 18px;
+      }
+      .crew-status-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 10px;
+        padding: 13px;
+        border-bottom: 1px solid var(--line-soft);
+      }
+      .crew-stat {
+        border: 1px solid var(--line-soft);
+        border-radius: var(--radius);
+        padding: 10px;
+        background: rgba(255,255,255,0.02);
+      }
+      .crew-stat strong {
+        display: block;
+        font-size: 18px;
+        margin-bottom: 3px;
+      }
+      .crew-section {
+        padding: 13px;
+        border-bottom: 1px solid var(--line-soft);
+      }
+      .crew-section:last-child {
+        border-bottom: 0;
+      }
+      .crew-section-title {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        margin-bottom: 10px;
+      }
+      .crew-section-title h3 {
+        margin: 0;
+        font-size: 13px;
+      }
+      .crew-field-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+      }
+      .crew-field {
+        display: grid;
+        gap: 5px;
+      }
+      .crew-field label {
+        color: var(--dim);
+        font-size: 11px;
+      }
+      .crew-field input,
+      .crew-field select,
+      .crew-field textarea {
+        min-height: 32px;
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        background: #14161b;
+        color: var(--text);
+        padding: 0 10px;
+        outline: 0;
+      }
+      .crew-field textarea {
+        min-height: 76px;
+        padding: 9px 10px;
+        resize: vertical;
+        line-height: 1.6;
+      }
+      .mcp-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+      }
+      .mcp-item {
+        border: 1px solid var(--line-soft);
+        border-radius: var(--radius);
+        padding: 10px;
+        background: rgba(255,255,255,0.02);
+      }
+      .mcp-item.enabled {
+        border-color: rgba(82,156,202,0.38);
+        background: rgba(82,156,202,0.09);
+      }
+      .mcp-item header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        margin-bottom: 6px;
+      }
+      .duty-list {
+        display: grid;
+        gap: 8px;
+      }
+      .duty-item {
+        display: grid;
+        grid-template-columns: 72px minmax(0, 1fr) auto;
+        gap: 10px;
+        align-items: center;
+        border: 1px solid var(--line-soft);
+        border-radius: var(--radius);
+        padding: 10px;
+        background: rgba(255,255,255,0.02);
+      }
+      .crew-panel {
+        display: none;
+      }
+      .crew-panel.active {
+        display: block;
+      }
+      .crew-log {
+        display: grid;
+        gap: 8px;
+      }
+      .crew-log-item {
+        border-left: 2px solid var(--line);
+        padding: 3px 0 3px 10px;
+        color: var(--muted);
+      }
+      .crew-member-line {
+        align-items: flex-start;
+      }
+      .crew-member-line .member-main {
+        min-width: 0;
+      }
+      .crew-member-line .status-dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        margin-top: 6px;
+        background: var(--green);
+        flex: 0 0 auto;
+      }
+      .crew-member-line .status-dot.busy {
+        background: var(--amber);
+      }
+      .crew-member-line .status-dot.offline {
+        background: var(--red);
+      }
+
       .form {
         display: grid;
         gap: 12px;
@@ -950,10 +1117,18 @@
         .cols-3 {
           grid-template-columns: repeat(2, minmax(0, 1fr));
         }
-        .studio-layout {
-          grid-template-columns: 1fr;
-        }
-      }
+	        .studio-layout {
+	          grid-template-columns: 1fr;
+	        }
+	        .crew-layout {
+	          grid-template-columns: 1fr;
+	        }
+	        .crew-status-grid,
+	        .crew-field-grid,
+	        .mcp-grid {
+	          grid-template-columns: repeat(2, minmax(0, 1fr));
+	        }
+	      }
     .area-ctx-menu { position:fixed;z-index:200;background:var(--surface-2);border:1px solid var(--line);border-radius:8px;padding:4px 0;min-width:180px;box-shadow:0 8px 24px rgba(0,0,0,.4);font-size:12px; }
     .area-ctx-item { display:flex;align-items:center;gap:8px;padding:6px 14px;cursor:pointer;color:var(--text); }
     .area-ctx-item:hover { background:rgba(82,156,202,0.12); }
@@ -1346,26 +1521,44 @@
           <div class="side-head">
             <div class="side-title">
               <h2>AICrew</h2>
-              <button class="btn icon">+</button>
+              <button class="btn icon" data-crew-new>+</button>
             </div>
             <input class="search" placeholder="搜索成员..." />
           </div>
           <div class="side-scroll">
             <div class="label">团队成员</div>
-            <div class="side-item active">
-              <span
-                >🧑‍💻 代码工程师<span class="subline"
-                  >claude-code · 本地</span
-                ></span
-              >
+            <div class="side-item crew-member-line active" data-crew-member="engineer">
+              <span class="status-dot"></span>
+              <span class="member-main">
+                <strong>代码工程师</strong>
+                <span class="subline">claude-code · 本地 · 空闲</span>
+              </span>
+              <span class="count">2</span>
             </div>
-            <div class="side-item">
-              <span
-                >📊 数据分析师<span class="subline">claude · 云端</span></span
-              >
+            <div class="side-item crew-member-line" data-crew-member="architect">
+              <span class="status-dot busy"></span>
+              <span class="member-main">
+                <strong>架构师</strong>
+                <span class="subline">claude-code · 本地 · 执行中</span>
+              </span>
+              <span class="count">1</span>
             </div>
-            <div class="side-item">
-              <span>📝 文档撰写<span class="subline">claude · 云端</span></span>
+            <div class="side-item crew-member-line" data-crew-member="analyst">
+              <span class="status-dot offline"></span>
+              <span class="member-main">
+                <strong>数据分析师</strong>
+                <span class="subline">research-agent · 云端 · 未连接</span>
+              </span>
+              <span class="count">0</span>
+            </div>
+            <div class="label">运行概况</div>
+            <div
+              class="card-body"
+              style="padding:10px;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface-2)"
+            >
+              <div class="row" style="padding:4px 0"><span>执行中</span><span class="right">1</span></div>
+              <div class="row" style="padding:4px 0"><span>可用 MCP</span><span class="right">4 / 6</span></div>
+              <div class="row" style="padding:4px 0"><span>待授权</span><span class="right">2</span></div>
             </div>
           </div>
         </section>
@@ -3937,46 +4130,225 @@ FocusPilot/
         <section class="page" data-page="crew">
           <header class="topbar">
             <h1>AICrew</h1>
-            <span class="meta">数字团队管理</span>
+            <span class="meta">成员配置 / MCP 授权 / 常驻职责</span>
             <div class="top-actions">
-              <button class="btn primary">新建成员</button>
+              <div class="seg" data-scope="crewMode">
+                <button class="active" data-target="crew-detail">成员详情</button
+                ><button data-target="crew-runtime">运行状态</button>
+              </div>
+              <button class="btn primary" data-crew-new>新建成员</button>
             </div>
           </header>
-          <div class="work">
-            <div class="card">
-              <div class="card-head">
-                <h3>代码工程师</h3>
-                <button class="btn">删除</button>
+          <div class="work panel active" id="crew-detail">
+            <div class="crew-panel active" data-crew-panel="engineer">
+              <div class="crew-layout">
+                <div class="card">
+                  <div class="crew-hero">
+                    <div class="crew-avatar">💻</div>
+                    <div class="crew-title">
+                      <h2>代码工程师</h2>
+                      <span class="subline">负责代码实现、调试、架构小改和测试修复</span>
+                    </div>
+                    <span class="pill green" style="margin-left:auto">本地 · 空闲</span>
+                    <button class="btn">复制成员</button>
+                    <button class="btn">删除</button>
+                  </div>
+                  <div class="crew-status-grid">
+                    <div class="crew-stat"><strong>2</strong><span class="subline">并发上限</span></div>
+                    <div class="crew-stat"><strong>4</strong><span class="subline">已启用 MCP</span></div>
+                    <div class="crew-stat"><strong>3</strong><span class="subline">常驻职责</span></div>
+                    <div class="crew-stat"><strong>18</strong><span class="subline">本周执行</span></div>
+                  </div>
+                  <div class="crew-section">
+                    <div class="crew-section-title">
+                      <h3>基本信息</h3>
+                      <span class="pill">自动保存</span>
+                    </div>
+                    <div class="crew-field-grid">
+                      <div class="crew-field"><label>角色名</label><input value="代码工程师" /></div>
+                      <div class="crew-field"><label>头像</label><select><option>💻 代码</option><option>🏗️ 架构</option><option>📊 数据</option></select></div>
+                      <div class="crew-field"><label>Runtime</label><select><option>claude-code</option><option>codex-cli</option><option>custom runtime</option></select></div>
+                      <div class="crew-field"><label>部署位置</label><select><option>本地</option><option>云端（预留）</option></select></div>
+                      <div class="crew-field"><label>并发数</label><select><option>1</option><option selected>2</option><option>3</option></select></div>
+                      <div class="crew-field"><label>默认 Skill</label><select><option>dev-story</option><option>quick-dev</option><option>code-review</option></select></div>
+                      <div class="crew-field" style="grid-column:1 / -1">
+                        <label>擅长领域</label>
+                        <textarea>Swift/AppKit、前端原型、测试修复、架构小改。适合从 Focus Task 或 Studio 会话中接手明确实现任务。</textarea>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="crew-section">
+                    <div class="crew-section-title">
+                      <h3>MCP Server</h3>
+                      <button class="btn">检测连接</button>
+                    </div>
+                    <div class="mcp-grid">
+                      <div class="mcp-item enabled">
+                        <header><strong>filesystem</strong><span class="pill green">已连接</span></header>
+                        <span class="subline">读写项目目录、生成产物、更新文档</span>
+                      </div>
+                      <div class="mcp-item enabled">
+                        <header><strong>github</strong><span class="pill green">已授权</span></header>
+                        <span class="subline">读取 PR、提交状态、Issue 上下文</span>
+                      </div>
+                      <div class="mcp-item enabled">
+                        <header><strong>terminal</strong><span class="pill blue">本地</span></header>
+                        <span class="subline">构建、测试、脚本执行</span>
+                      </div>
+                      <div class="mcp-item">
+                        <header><strong>browser</strong><span class="pill amber">待授权</span></header>
+                        <span class="subline">网页验收、截图、表单测试</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="crew-section">
+                    <div class="crew-section-title">
+                      <h3>常驻职责</h3>
+                      <button class="btn primary">新增职责</button>
+                    </div>
+                    <div class="duty-list">
+                      <div class="duty-item">
+                        <span class="pill blue">event</span>
+                        <div><strong>新 PR 创建时自动 review</strong><span class="subline">触发：github.pull_request.opened · 输出到 Studio 审查流</span></div>
+                        <span class="pill green">启用</span>
+                      </div>
+                      <div class="duty-item">
+                        <span class="pill amber">cron</span>
+                        <div><strong>每日同步待整合素材</strong><span class="subline">09:30 · 扫描 _materials，生成待整合清单</span></div>
+                        <span class="pill">草稿</span>
+                      </div>
+                      <div class="duty-item">
+                        <span class="pill">manual</span>
+                        <div><strong>Focus 任务阻塞诊断</strong><span class="subline">从 blocked 任务读取上下文，给出最小修复建议</span></div>
+                        <span class="pill green">启用</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="grid">
+                  <div class="card">
+                    <div class="card-head"><h3>职责编辑器</h3><span class="pill">当前职责</span></div>
+                    <div class="card-body">
+                      <div class="crew-field" style="margin-bottom:10px"><label>触发方式</label><select><option>event</option><option>cron</option><option>manual</option></select></div>
+                      <div class="crew-field" style="margin-bottom:10px"><label>触发条件</label><input value="github.pull_request.opened" /></div>
+                      <div class="crew-field" style="margin-bottom:10px"><label>执行范围</label><select><option>当前 Project</option><option>全部 Projects</option></select></div>
+                      <div class="crew-field"><label>输出位置</label><input value="Studio / Review stream" /></div>
+                    </div>
+                  </div>
+                  <div class="card">
+                    <div class="card-head"><h3>执行历史</h3><span class="pill green">最近 24h</span></div>
+                    <div class="card-body crew-log">
+                      <div class="crew-log-item"><strong>PR #18 review 完成</strong><span class="subline">12:44 · 发现 2 个 Important</span></div>
+                      <div class="crew-log-item"><strong>FocusPilot 构建验证</strong><span class="subline">10:21 · make install succeeded</span></div>
+                      <div class="crew-log-item"><strong>Review 原型补齐</strong><span class="subline">09:58 · 已提交到 main</span></div>
+                    </div>
+                  </div>
+                  <div class="card">
+                    <div class="card-head"><h3>调用边界</h3><span class="pill amber">本地优先</span></div>
+                    <div class="card-body">
+                      <div class="row"><strong>可写目录</strong><span class="right">当前项目</span></div>
+                      <div class="row"><strong>网络访问</strong><span class="right">按 MCP 授权</span></div>
+                      <div class="row"><strong>自动执行</strong><span class="right">需 Task ready</span></div>
+                    </div>
+                  </div>
+                </div>
               </div>
-              <div class="card-body">
-                <div class="form">
-                  <div class="field">
-                    <label>角色名</label><input value="代码工程师" />
+            </div>
+            <div class="crew-panel" data-crew-panel="architect">
+              <div class="crew-layout">
+                <div class="card">
+                  <div class="crew-hero">
+                    <div class="crew-avatar">🏗️</div>
+                    <div class="crew-title">
+                      <h2>架构师</h2>
+                      <span class="subline">负责方案设计、技术权衡、接口边界和评审</span>
+                    </div>
+                    <span class="pill amber" style="margin-left:auto">本地 · 执行中</span>
                   </div>
-                  <div class="field">
-                    <label>Runtime</label
-                    ><select>
-                      <option>claude-code</option>
-                    </select>
+                  <div class="crew-status-grid">
+                    <div class="crew-stat"><strong>1</strong><span class="subline">并发上限</span></div>
+                    <div class="crew-stat"><strong>3</strong><span class="subline">已启用 MCP</span></div>
+                    <div class="crew-stat"><strong>2</strong><span class="subline">常驻职责</span></div>
+                    <div class="crew-stat"><strong>1</strong><span class="subline">执行中</span></div>
                   </div>
-                  <div class="field">
-                    <label>部署位置</label
-                    ><select>
-                      <option>本地</option>
-                      <option>云端</option>
-                    </select>
+                  <div class="crew-section">
+                    <div class="crew-section-title"><h3>当前任务</h3><span class="pill blue">Studio</span></div>
+                    <div class="review-note">FocusPilot / MCP Host 设计：正在补充 Agent Registry 与 Scheduler 的边界。</div>
                   </div>
-                  <div class="field">
-                    <label>并发数</label><input value="2" />
+                  <div class="crew-section">
+                    <div class="crew-section-title"><h3>MCP Server</h3><button class="btn">检测连接</button></div>
+                    <div class="mcp-grid">
+                      <div class="mcp-item enabled"><header><strong>filesystem</strong><span class="pill green">已连接</span></header><span class="subline">读架构文档和 PRD</span></div>
+                      <div class="mcp-item enabled"><header><strong>github</strong><span class="pill green">已授权</span></header><span class="subline">读取 PR 与 issue</span></div>
+                      <div class="mcp-item enabled"><header><strong>browser</strong><span class="pill blue">可用</span></header><span class="subline">竞品页面核对</span></div>
+                      <div class="mcp-item"><header><strong>database</strong><span class="pill">未启用</span></header><span class="subline">后续用于执行记录分析</span></div>
+                    </div>
                   </div>
-                  <div class="field">
-                    <label>MCP Server</label
-                    ><input value="filesystem, github" />
+                </div>
+                <div class="card">
+                  <div class="card-head"><h3>常驻职责</h3><button class="btn primary">新增职责</button></div>
+                  <div class="card-body duty-list">
+                    <div class="duty-item"><span class="pill blue">event</span><div><strong>重大 PR 自动架构复核</strong><span class="subline">路径包含 Architecture / Services / Models 时触发</span></div><span class="pill green">启用</span></div>
+                    <div class="duty-item"><span class="pill amber">cron</span><div><strong>周末技术债扫描</strong><span class="subline">每周五 17:30 生成风险列表</span></div><span class="pill">草稿</span></div>
                   </div>
-                  <div class="field">
-                    <label>常驻职责</label
-                    ><input value="新 PR 创建时自动 review" />
+                </div>
+              </div>
+            </div>
+            <div class="crew-panel" data-crew-panel="analyst">
+              <div class="crew-layout">
+                <div class="card">
+                  <div class="crew-hero">
+                    <div class="crew-avatar">📊</div>
+                    <div class="crew-title">
+                      <h2>数据分析师</h2>
+                      <span class="subline">云端成员预留，用于市场数据、用户访谈和指标分析</span>
+                    </div>
+                    <span class="pill red" style="margin-left:auto">未连接</span>
                   </div>
+                  <div class="crew-section">
+                    <div class="crew-section-title"><h3>连接状态</h3><button class="btn primary">配置云端 Runtime</button></div>
+                    <div class="review-note">该成员展示为规划占位：V1 可保存配置草稿，实际云端执行和自动调度后续接入。</div>
+                  </div>
+                  <div class="crew-section">
+                    <div class="crew-section-title"><h3>MCP Server</h3><span class="pill red">2 项待授权</span></div>
+                    <div class="mcp-grid">
+                      <div class="mcp-item"><header><strong>market-data</strong><span class="pill amber">待授权</span></header><span class="subline">市场和竞品数据源</span></div>
+                      <div class="mcp-item"><header><strong>sheets</strong><span class="pill amber">待授权</span></header><span class="subline">表格读写和图表生成</span></div>
+                    </div>
+                  </div>
+                </div>
+                <div class="card">
+                  <div class="card-head"><h3>预设职责</h3><span class="pill">草稿</span></div>
+                  <div class="card-body duty-list">
+                    <div class="duty-item"><span class="pill amber">cron</span><div><strong>每周竞品动态摘要</strong><span class="subline">输出到 _reports/market-weekly.md</span></div><span class="pill">未启用</span></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="work panel" id="crew-runtime">
+            <div class="grid cols-4 summary-strip">
+              <div class="metric"><div class="value">3</div><div class="name">团队成员</div><div class="hint">1 个 V1 默认成员</div></div>
+              <div class="metric"><div class="value">1</div><div class="name">执行中</div><div class="hint">架构师占用 1 token</div></div>
+              <div class="metric"><div class="value">4/6</div><div class="name">MCP 可用</div><div class="hint">2 项待授权</div></div>
+              <div class="metric"><div class="value">5</div><div class="name">常驻职责</div><div class="hint">3 启用 / 2 草稿</div></div>
+            </div>
+            <div class="grid cols-2" style="margin-top:14px">
+              <div class="card">
+                <div class="card-head"><h3>运行队列</h3><span class="pill amber">1 running</span></div>
+                <div class="card-body">
+                  <div class="row"><strong>MCP Host 设计</strong><span class="right">架构师 · running</span></div>
+                  <div class="row"><strong>PR #18 review</strong><span class="right">代码工程师 · done</span></div>
+                  <div class="row"><strong>素材整合扫描</strong><span class="right">代码工程师 · scheduled</span></div>
+                </div>
+              </div>
+              <div class="card">
+                <div class="card-head"><h3>MCP 健康</h3><button class="btn">刷新</button></div>
+                <div class="card-body mini-bars">
+                  <div class="bar-row"><span>filesystem</span><div class="progress-rail"><div class="progress-fill" style="width:100%;background:var(--green)"></div></div><span>ok</span></div>
+                  <div class="bar-row"><span>github</span><div class="progress-rail"><div class="progress-fill" style="width:100%;background:var(--green)"></div></div><span>ok</span></div>
+                  <div class="bar-row"><span>browser</span><div class="progress-rail"><div class="progress-fill" style="width:66%;background:var(--amber)"></div></div><span>auth</span></div>
+                  <div class="bar-row"><span>market</span><div class="progress-rail"><div class="progress-fill" style="width:24%;background:var(--red)"></div></div><span>off</span></div>
                 </div>
               </div>
             </div>
@@ -4263,20 +4635,45 @@ FocusPilot/
         })
       })
 
-      document.querySelectorAll("[data-review]").forEach((el) => {
-        el.addEventListener("click", () => {
-          document
-            .querySelectorAll("[data-review]")
+	      document.querySelectorAll("[data-review]").forEach((el) => {
+	        el.addEventListener("click", () => {
+	          document
+	            .querySelectorAll("[data-review]")
             .forEach((item) => item.classList.toggle("active", item === el))
           const target = "review-" + el.dataset.review
           const btn = document.querySelector(
             `[data-scope="reviewView"] [data-target="${target}"]`,
           )
-          if (btn) btn.click()
-        })
-      })
-
-      document.querySelectorAll("[data-modal]").forEach((btn) => {
+	          if (btn) btn.click()
+	        })
+	      })
+	
+	      function selectCrewMember(key) {
+	        document
+	          .querySelectorAll("[data-crew-member]")
+	          .forEach((item) =>
+	            item.classList.toggle("active", item.dataset.crewMember === key),
+	          )
+	        document
+	          .querySelectorAll("[data-crew-panel]")
+	          .forEach((panel) =>
+	            panel.classList.toggle("active", panel.dataset.crewPanel === key),
+	          )
+	        const detailBtn = document.querySelector(
+	          '[data-scope="crewMode"] [data-target="crew-detail"]',
+	        )
+	        if (detailBtn && !detailBtn.classList.contains("active")) detailBtn.click()
+	      }
+	
+	      document.querySelectorAll("[data-crew-member]").forEach((el) => {
+	        el.addEventListener("click", () => selectCrewMember(el.dataset.crewMember))
+	      })
+	
+	      document.querySelectorAll("[data-crew-new]").forEach((el) => {
+	        el.addEventListener("click", () => selectCrewMember("analyst"))
+	      })
+	
+	      document.querySelectorAll("[data-modal]").forEach((btn) => {
         btn.addEventListener("click", () => {
           document
             .getElementById(btn.dataset.modal + "-modal")

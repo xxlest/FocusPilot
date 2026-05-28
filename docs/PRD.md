@@ -270,6 +270,8 @@ Crew 是 FocusPilot 的核心交互概念——**用户不直接面对 Agent/MCP
 | 绑定 MCP Server | 底层实际调用的 AI 工具 |
 | 部署位置 | 本地 / 云端 |
 | 常驻职责 | 周期性任务（cron / event 触发） |
+| 并发上限 | 单成员最大同时执行任务数 |
+| 运行状态 | idle / running / offline / draft |
 
 **V1 预置 Crew 成员**：
 ```
@@ -290,6 +292,15 @@ Crew 是 FocusPilot 的核心交互概念——**用户不直接面对 Agent/MCP
 |---------|------|---------|
 | 项目 Task（一次性） | 用户在对话面板中派遣，或从 Kanban 拖拽分配 | 手动 / auto_execute |
 | 常驻职责（周期性） | 用户在 Crew 成员详情页配置 | cron 定时 / 事件触发 |
+
+**AICrew 管理界面**：
+
+- 成员详情：角色、头像、擅长领域、Runtime、部署位置、并发上限、默认 Skill
+- MCP Server：展示 connected / authorized / local / pending_auth / disabled 状态
+- 常驻职责：支持 event / cron / manual 三类触发规则的配置 UI
+- 运行状态：展示执行队列、MCP 健康、最近执行历史
+
+V1 中常驻职责先完成配置与展示，后台定时/事件调度由 Scheduler 后续接入。
 
 **用户始终面对"团队管理"这个隐喻，不需要理解底层技术。**
 
@@ -878,7 +889,7 @@ FocusPilot.app
 | **两阶段模型** | planning → ready → executing → done 状态流转 | 容器级递归自动执行 |
 | **四模式** | Agile / Flow / Lite / Free 创建 + 展示 + 规划引导 | 模式切换迁移 |
 | **MCP Host** | 单 Agent 调度（claude-code） | 多 Agent 并行、自动选择 |
-| **Crew 数字团队** | 预置"代码工程师"1 个成员 + Crew 面板 | 自定义成员、常驻职责、云端成员 |
+| **Crew 数字团队** | 预置"代码工程师"1 个成员 + Crew 面板 + MCP 状态 + 常驻职责配置 UI | 云端成员执行、多 Agent 自动选择、后台常驻调度 |
 | **任务调度** | 即时执行 + 执行记录（SQLite） | 定时/事件触发 |
 | **知识管道** | _materials/ + _reports/ 增量整合 + _kb/ 提炼 + 一键同步 | auto_sync 自动加工 |
 | **Anki 同步** | KB 卡片 → AnkiConnect API 推送 | AnkiWeb 云端同步 |
