@@ -2319,7 +2319,7 @@
                   </div>
                   <!-- 周三 (5/27) — 当天高亮 -->
                   <div data-fp-week-day="3" style="margin-bottom:2px;">
-                    <div data-drill-scope="today" data-drill-event="dblclick" style="display:flex;align-items:center;gap:6px;padding:4px 12px;font-size:11px;font-weight:600;color:var(--accent);">
+                    <div data-drill-scope="today" data-drill-event="dblclick" style="display:flex;align-items:center;gap:6px;padding:4px 12px;font-size:11px;font-weight:600;color:var(--accent);cursor:pointer;">
                       <span style="font-size:10px;color:var(--dim);width:10px;text-align:center;transform:rotate(90deg);flex-shrink:0;">▶</span>
                       周三 · 05-27
                       <span style="font-size:9px;padding:1px 5px;border-radius:3px;background:var(--accent);color:#fff;font-weight:500;">今天</span>
@@ -4276,6 +4276,8 @@ FocusPilot/
 
       function openTaskDetail() {
         resetTaskDetailActions();
+        var defaultTab = document.querySelector('.fp-dtab[data-t="fp-t-plan"]');
+        if (defaultTab) defaultTab.click();
         document.getElementById('fpDetailOverlay').style.opacity = '1';
         document.getElementById('fpDetailOverlay').style.pointerEvents = 'all';
         document.getElementById('fpDetailPanel').style.transform = 'translateX(0)';
