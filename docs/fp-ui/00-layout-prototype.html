@@ -5604,35 +5604,49 @@ FocusPilot/
           });
         }
 
-        // ── (g) 搜索过滤 ──
+        // ── (g) 搜索过滤（改进版） ──
         var searchInput = $('areas-search');
+        var savedFolderStates = null;
+
         if (searchInput) {
           searchInput.addEventListener('input', function() {
             var q = this.value.trim().toLowerCase();
-            // 先处理所有文件
+
+            if (q && !savedFolderStates) {
+              savedFolderStates = {};
+              document.querySelectorAll('#areas-sidebar .area-children').forEach(function(c) {
+                savedFolderStates[c.dataset.areaParent] = c.classList.contains('collapsed');
+              });
+            }
+
+            if (!q && savedFolderStates) {
+              document.querySelectorAll('#areas-sidebar .area-children').forEach(function(c) {
+                var wasCollapsed = savedFolderStates[c.dataset.areaParent];
+                c.classList.toggle('collapsed', wasCollapsed !== undefined ? wasCollapsed : true);
+                var parentEl = document.querySelector('[data-area-id="' + c.dataset.areaParent + '"]');
+                if (parentEl) {
+                  var arrow = parentEl.querySelector('.area-arrow');
+                  if (arrow) arrow.textContent = c.classList.contains('collapsed') ? '▸' : '▾';
+                }
+              });
+              savedFolderStates = null;
+            }
+
             document.querySelectorAll('#areas-sidebar .area-file').forEach(function(el) {
               var text = el.textContent.toLowerCase();
               el.style.display = (!q || text.indexOf(q) !== -1) ? '' : 'none';
             });
-            // 处理项目节点
             document.querySelectorAll('#areas-sidebar .area-project').forEach(function(el) {
               var text = el.textContent.toLowerCase();
               var areaId = el.dataset.areaId;
               var children = document.querySelector('.area-children[data-area-parent="' + areaId + '"]');
-              if (!q) {
-                el.style.display = '';
-                return;
-              }
-              // 如果项目名匹配或者子文件有匹配的
+              if (!q) { el.style.display = ''; return; }
               var hasVisibleChild = false;
               if (children) {
-                children.querySelectorAll('.area-file').forEach(function(f) {
-                  if (f.style.display !== 'none') hasVisibleChild = true;
-                });
+                children.querySelectorAll('.area-file').forEach(function(f) { if (f.style.display !== 'none') hasVisibleChild = true; });
               }
               if (text.indexOf(q) !== -1 || hasVisibleChild) {
                 el.style.display = '';
-                // 确保父级展开
                 if (children && hasVisibleChild) children.classList.remove('collapsed');
                 var arrow = el.querySelector('.area-arrow');
                 if (arrow && children && !children.classList.contains('collapsed')) arrow.textContent = '▾';
@@ -5640,19 +5654,13 @@ FocusPilot/
                 el.style.display = 'none';
               }
             });
-            // 处理文件夹
             document.querySelectorAll('#areas-sidebar .area-folder').forEach(function(el) {
               var areaId = el.dataset.areaId;
               var children = document.querySelector('.area-children[data-area-parent="' + areaId + '"]');
-              if (!q) {
-                el.style.display = '';
-                return;
-              }
+              if (!q) { el.style.display = ''; return; }
               var hasVisibleChild = false;
               if (children) {
-                children.querySelectorAll('.area-file').forEach(function(f) {
-                  if (f.style.display !== 'none') hasVisibleChild = true;
-                });
+                children.querySelectorAll('.area-file').forEach(function(f) { if (f.style.display !== 'none') hasVisibleChild = true; });
               }
               if (hasVisibleChild || el.textContent.toLowerCase().indexOf(q) !== -1) {
                 el.style.display = '';
@@ -5663,6 +5671,10 @@ FocusPilot/
                 el.style.display = 'none';
               }
             });
+          });
+
+          searchInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') { this.value = ''; this.dispatchEvent(new Event('input')); this.blur(); }
           });
         }
 
@@ -5685,6 +5697,29 @@ FocusPilot/
             if (fpArrow && fpChildren && !fpChildren.classList.contains('collapsed')) {
               fpArrow.textContent = '▾';
             }
+          });
+        }
+
+        // ── 面包屑点击 ──
+        var breadcrumb = $('areas-breadcrumb');
+        if (breadcrumb) {
+          breadcrumb.style.cursor = 'pointer';
+          breadcrumb.addEventListener('click', function() {
+            var parts = this.textContent.replace(/^📂\s*/, '').split(' / ');
+            if (parts.length < 2) return;
+            var projName = parts[0].trim();
+            document.querySelectorAll('#areas-sidebar .area-project').forEach(function(p) {
+              var nameSpan = p.querySelector('.area-name');
+              var name = nameSpan ? nameSpan.textContent.trim() : p.textContent.replace(/[▾▸📂]\s*/g, '').replace(/执行|知识/g, '').trim();
+              if (name === projName) {
+                var areaId = p.dataset.areaId;
+                var children = document.querySelector('.area-children[data-area-parent="' + areaId + '"]');
+                if (children) children.classList.remove('collapsed');
+                var arrow = p.querySelector('.area-arrow');
+                if (arrow) arrow.textContent = '▾';
+                p.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+              }
+            });
           });
         }
 
