@@ -866,6 +866,13 @@
           grid-template-columns: 1fr;
         }
       }
+    .area-ctx-menu { position:fixed;z-index:200;background:var(--surface-2);border:1px solid var(--line);border-radius:8px;padding:4px 0;min-width:180px;box-shadow:0 8px 24px rgba(0,0,0,.4);font-size:12px; }
+    .area-ctx-item { display:flex;align-items:center;gap:8px;padding:6px 14px;cursor:pointer;color:var(--text); }
+    .area-ctx-item:hover { background:rgba(82,156,202,0.12); }
+    .area-ctx-item.danger { color:var(--red); }
+    .area-ctx-item.danger:hover { background:rgba(248,113,113,0.12); }
+    .area-ctx-sep { height:1px;background:var(--line-soft);margin:4px 0; }
+    .area-hidden { display:none !important; }
     </style>
   </head>
   <body>
@@ -1110,9 +1117,9 @@
             <div class="side-title">
               <h2>AreaProjects</h2>
               <div style="display:flex;gap:2px;margin-left:auto">
-                <button class="btn icon" title="新建文件夹" style="width:26px;height:26px;min-height:26px;font-size:12px;border:0;background:transparent;color:var(--dim)">📁</button>
-                <button class="btn icon" title="新建文件" style="width:26px;height:26px;min-height:26px;font-size:12px;border:0;background:transparent;color:var(--dim)">📄</button>
-                <button class="btn icon" title="收藏筛选" style="width:26px;height:26px;min-height:26px;font-size:12px;border:0;background:transparent;color:var(--dim)">⭐</button>
+                <button class="btn icon" id="areas-btn-newfolder" title="新建文件夹" style="width:26px;height:26px;min-height:26px;font-size:12px;border:0;background:transparent;color:var(--dim)">📁</button>
+                <button class="btn icon" id="areas-btn-newfile" title="新建文件" style="width:26px;height:26px;min-height:26px;font-size:12px;border:0;background:transparent;color:var(--dim)">📄</button>
+                <button class="btn icon" id="areas-btn-fav" title="收藏筛选" style="width:26px;height:26px;min-height:26px;font-size:12px;border:0;background:transparent;color:var(--dim)">⭐</button>
                 <button class="btn icon" id="areas-toggle-all" title="展开/折叠全部" style="width:26px;height:26px;min-height:26px;font-size:12px;border:0;background:transparent;color:var(--dim)">⤡</button>
               </div>
             </div>
@@ -4972,6 +4979,338 @@ FocusPilot/
             showAreaToast('Agent 对话为预览占位，开发时接入真实 Agent');
           });
         }
+
+        // ── 右键菜单系统 ──
+        var ctxMenu = null;
+
+        function showContextMenu(e, items) {
+          e.preventDefault();
+          e.stopPropagation();
+          hideContextMenu();
+          ctxMenu = document.createElement('div');
+          ctxMenu.className = 'area-ctx-menu';
+          items.forEach(function(item) {
+            if (item === '---') {
+              var sep = document.createElement('div');
+              sep.className = 'area-ctx-sep';
+              ctxMenu.appendChild(sep);
+              return;
+            }
+            var row = document.createElement('div');
+            row.className = 'area-ctx-item' + (item.danger ? ' danger' : '');
+            row.innerHTML = '<span style="width:16px;text-align:center;flex-shrink:0">' + item.icon + '</span><span>' + item.label + '</span>';
+            row.addEventListener('click', function() { hideContextMenu(); if (item.action) item.action(); });
+            ctxMenu.appendChild(row);
+          });
+          ctxMenu.style.left = Math.min(e.clientX, window.innerWidth - 200) + 'px';
+          ctxMenu.style.top = Math.min(e.clientY, window.innerHeight - items.length * 32) + 'px';
+          document.body.appendChild(ctxMenu);
+        }
+
+        function hideContextMenu() {
+          if (ctxMenu) { ctxMenu.remove(); ctxMenu = null; }
+        }
+
+        document.addEventListener('click', hideContextMenu);
+        document.addEventListener('contextmenu', function(e) {
+          if (!e.target.closest('#areas-sidebar')) hideContextMenu();
+        });
+
+        // ── 侧边栏名称标记（供重命名精确定位）──
+        document.querySelectorAll('#areas-sidebar .area-file > span').forEach(function(span) {
+          if (span.querySelector('.area-name')) return;
+          var html = span.innerHTML.trim();
+          var idx = html.indexOf(' ');
+          if (idx > 0) {
+            span.innerHTML = html.substring(0, idx + 1) + '<span class="area-name">' + html.substring(idx + 1) + '</span>';
+          }
+        });
+        document.querySelectorAll('#areas-sidebar .area-folder > span, #areas-sidebar .area-project > span').forEach(function(span) {
+          if (span.querySelector('.area-name') || !span.querySelector('.area-arrow')) return;
+          var arrow = span.querySelector('.area-arrow');
+          var textNode = arrow.nextSibling;
+          if (textNode && textNode.nodeType === 3) {
+            var match = textNode.textContent.match(/^(\s*.+?\s)(\S.*)$/);
+            if (match) {
+              textNode.textContent = match[1];
+              var nameSpan = document.createElement('span');
+              nameSpan.className = 'area-name';
+              nameSpan.textContent = match[2];
+              span.insertBefore(nameSpan, textNode.nextSibling);
+            }
+          }
+        });
+
+        // ── Mock CRUD 操作 ──
+        var mockCounter = 0;
+
+        function createMockFile(parentEl) {
+          mockCounter++;
+          var areaId = parentEl.dataset.areaId;
+          var children = document.querySelector('.area-children[data-area-parent="' + areaId + '"]');
+          if (!children) return;
+          children.classList.remove('collapsed');
+          var arrow = parentEl.querySelector('.area-arrow');
+          if (arrow) arrow.textContent = '▾';
+          var fileKey = 'mock-file-' + mockCounter;
+          var isKb = parentEl.classList.contains('area-kb-folder');
+          var fileName = isKb ? '新卡片 ' + mockCounter + '.md' : '新文件 ' + mockCounter + '.md';
+          var icon = isKb ? '🧠' : '📄';
+          areaFiles[fileKey] = { name: fileName, path: parentEl.textContent.trim().replace(/^[▾▸]\s*/, ''), content: '<h1 style="font-size:22px;font-weight:700;margin:0 0 12px">' + fileName + '</h1><p style="color:var(--muted)">新建文件，等待编辑...</p>' };
+          var newEl = document.createElement('div');
+          newEl.className = 'side-item indent area-file' + (isKb ? ' area-kb-file' : '');
+          newEl.dataset.areaFile = fileKey;
+          newEl.style.paddingLeft = '36px';
+          var span = document.createElement('span');
+          span.textContent = icon + ' ';
+          var nameSpan = document.createElement('span');
+          nameSpan.className = 'area-name';
+          nameSpan.textContent = fileName;
+          span.appendChild(nameSpan);
+          newEl.appendChild(span);
+          newEl.addEventListener('click', function(e) { e.stopPropagation(); openFile(fileKey); });
+          children.appendChild(newEl);
+          openFile(fileKey);
+          showAreaToast('已创建 ' + fileName);
+        }
+
+        function createMockFolder(parentEl) {
+          mockCounter++;
+          var areaId = parentEl.dataset.areaId;
+          var children = document.querySelector('.area-children[data-area-parent="' + areaId + '"]');
+          if (!children) return;
+          children.classList.remove('collapsed');
+          var arrow = parentEl.querySelector('.area-arrow');
+          if (arrow) arrow.textContent = '▾';
+          var folderId = 'mock-folder-' + mockCounter;
+          var folderName = '新文件夹 ' + mockCounter;
+          var folderEl = document.createElement('div');
+          folderEl.className = 'side-item indent area-folder';
+          folderEl.dataset.areaId = folderId;
+          folderEl.style.cssText = 'cursor:pointer;padding-left:36px';
+          var fSpan = document.createElement('span');
+          var fArrow = document.createElement('span');
+          fArrow.className = 'area-arrow';
+          fArrow.textContent = '▸';
+          fSpan.appendChild(fArrow);
+          fSpan.appendChild(document.createTextNode(' 📂 '));
+          var fName = document.createElement('span');
+          fName.className = 'area-name';
+          fName.textContent = folderName;
+          fSpan.appendChild(fName);
+          folderEl.appendChild(fSpan);
+          var folderChildren = document.createElement('div');
+          folderChildren.className = 'area-children collapsed';
+          folderChildren.dataset.areaParent = folderId;
+          children.appendChild(folderEl);
+          children.appendChild(folderChildren);
+          folderEl.addEventListener('click', function(e) { if (e.target.closest('.area-file')) return; e.stopPropagation(); toggleFolder(this); });
+          showAreaToast('已创建文件夹 ' + folderName);
+        }
+
+        function deleteFileNode(el, fileKey) {
+          var openTab = document.querySelector('.areas-tab[data-area-file="' + fileKey + '"]');
+          if (openTab && typeof closeTab === 'function') closeTab(openTab);
+          else if (openTab) openTab.remove();
+          el.style.transition = 'opacity .2s';
+          el.style.opacity = '0';
+          setTimeout(function() { el.remove(); }, 200);
+          if (areaFiles[fileKey]) delete areaFiles[fileKey];
+          showAreaToast('已删除');
+        }
+
+        function deleteFolderNode(el) {
+          var areaId = el.dataset.areaId;
+          var children = document.querySelector('.area-children[data-area-parent="' + areaId + '"]');
+          var count = children ? children.querySelectorAll('.area-file').length : 0;
+          if (count > 0 && !confirm('文件夹内有 ' + count + ' 个文件，确定删除？')) return;
+          if (children) children.remove();
+          el.style.transition = 'opacity .2s';
+          el.style.opacity = '0';
+          setTimeout(function() { el.remove(); }, 200);
+          showAreaToast('已删除文件夹');
+        }
+
+        function removeProject(el) {
+          var areaId = el.dataset.areaId;
+          if (!confirm('移除项目后文件仍保留在磁盘，确定移除？')) return;
+          var children = document.querySelector('.area-children[data-area-parent="' + areaId + '"]');
+          if (children) children.remove();
+          el.style.transition = 'opacity .2s';
+          el.style.opacity = '0';
+          setTimeout(function() { el.remove(); }, 200);
+          showAreaToast('已移除项目');
+        }
+
+        function startRename(el) {
+          var nameSpan = el.querySelector('.area-name');
+          if (!nameSpan) return;
+          var isPipeline = /_(materials|reports|kb)/.test(el.textContent);
+          if (isPipeline) { showAreaToast('知识管道文件夹不允许重命名'); return; }
+          var oldName = nameSpan.textContent.trim();
+          var cancelled = false;
+          var input = document.createElement('input');
+          input.type = 'text';
+          input.value = oldName;
+          input.style.cssText = 'background:var(--bg);border:1px solid var(--accent);border-radius:3px;color:var(--text);font-size:12px;padding:1px 4px;width:120px;outline:none;';
+          nameSpan.textContent = '';
+          nameSpan.appendChild(input);
+          input.focus();
+          input.select();
+          function finish() {
+            if (cancelled) return;
+            var newName = input.value.trim() || oldName;
+            nameSpan.textContent = newName;
+            var fileKey = el.dataset.areaFile;
+            if (fileKey && areaFiles[fileKey]) areaFiles[fileKey].name = newName;
+          }
+          input.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') { e.preventDefault(); finish(); }
+            if (e.key === 'Escape') { cancelled = true; nameSpan.textContent = oldName; input.blur(); }
+          });
+          input.addEventListener('blur', finish);
+        }
+
+        // ── 右键菜单事件委托 ──
+        document.querySelector('#areas-sidebar').addEventListener('contextmenu', function(e) {
+          var el;
+
+          // ── 文件右键（优先匹配最内层） ──
+          el = e.target.closest('.area-file');
+          if (el) {
+            var isKb = el.classList.contains('area-kb-file');
+            var fileKey = el.dataset.areaFile;
+            var file = areaFiles[fileKey];
+            if (isKb) {
+              showContextMenu(e, [
+                { icon: '✏️', label: '重命名', action: function() { startRename(el); } },
+                { icon: '📋', label: '复制路径', action: function() { showAreaToast('已复制: ' + (file ? file.path + '/' + file.name : fileKey)); } }
+              ]);
+            } else {
+              showContextMenu(e, [
+                { icon: '✏️', label: '重命名', action: function() { startRename(el); } },
+                { icon: '📁', label: '移动到...', action: function() { showAreaToast('移动到... (开发时实现)'); } },
+                { icon: '📋', label: '复制路径', action: function() { showAreaToast('已复制: ' + (file ? file.path + '/' + file.name : fileKey)); } },
+                { icon: '📂', label: '在 Finder 中显示', action: function() { showAreaToast('在 Finder 中显示 (开发时实现)'); } },
+                '---',
+                { icon: '🗑', label: '删除', danger: true, action: function() { deleteFileNode(el, fileKey); } }
+              ]);
+            }
+            return;
+          }
+
+          // ── 文件夹右键 ──
+          el = e.target.closest('.area-folder');
+          if (el) {
+            var isKb = el.classList.contains('area-kb-folder');
+            var text = el.textContent;
+            var isReports = text.indexOf('_reports') !== -1;
+            var isMaterials = text.indexOf('_materials') !== -1;
+
+            if (isKb) {
+              showContextMenu(e, [
+                { icon: '📄', label: '新建卡片', action: function() { createMockFile(el); } },
+                { icon: '📂', label: '在 Finder 中显示', action: function() { showAreaToast('在 Finder 中显示 (开发时实现)'); } }
+              ]);
+            } else if (isMaterials) {
+              showContextMenu(e, [
+                { icon: '📄', label: '新建文件', action: function() { createMockFile(el); } },
+                { icon: '📂', label: '在 Finder 中显示', action: function() { showAreaToast('在 Finder 中显示 (开发时实现)'); } },
+                '---',
+                { icon: '🔄', label: '同步整合', action: function() { showAreaToast('正在整合素材... (Pipeline 开发时实现)'); } }
+              ]);
+            } else if (isReports) {
+              showContextMenu(e, [
+                { icon: '📄', label: '新建文件', action: function() { createMockFile(el); } },
+                { icon: '📂', label: '在 Finder 中显示', action: function() { showAreaToast('在 Finder 中显示 (开发时实现)'); } }
+              ]);
+            } else {
+              showContextMenu(e, [
+                { icon: '📄', label: '新建文件', action: function() { createMockFile(el); } },
+                { icon: '📁', label: '新建文件夹', action: function() { createMockFolder(el); } },
+                '---',
+                { icon: '✏️', label: '重命名', action: function() { startRename(el); } },
+                { icon: '📁', label: '移动到...', action: function() { showAreaToast('移动到... (开发时实现)'); } },
+                { icon: '📋', label: '复制路径', action: function() { showAreaToast('已复制路径'); } },
+                { icon: '📂', label: '在 Finder 中显示', action: function() { showAreaToast('在 Finder 中显示 (开发时实现)'); } },
+                '---',
+                { icon: '🗑', label: '删除', danger: true, action: function() { deleteFolderNode(el); } }
+              ]);
+            }
+            return;
+          }
+
+          // ── 项目右键 ──
+          el = e.target.closest('.area-project');
+          if (el) {
+            var isFav = el.dataset.areaFav === 'true';
+            showContextMenu(e, [
+              { icon: '📄', label: '新建文件', action: function() { createMockFile(el); } },
+              { icon: '📁', label: '新建文件夹', action: function() { createMockFolder(el); } },
+              '---',
+              { icon: '📌', label: '置顶项目', action: function() { showAreaToast('已置顶'); } },
+              { icon: '✏️', label: '重命名项目', action: function() { startRename(el); } },
+              { icon: '⭐', label: isFav ? '取消收藏' : '收藏', action: function() { el.dataset.areaFav = isFav ? '' : 'true'; showAreaToast(isFav ? '已取消收藏' : '已收藏'); } },
+              { icon: '📂', label: '在 Finder 中显示', action: function() { showAreaToast('在 Finder 中显示 (开发时实现)'); } },
+              { icon: '💻', label: '在 Studio 中打开', action: function() { showAreaToast('在 Studio 中打开 (开发时实现)'); } },
+              '---',
+              { icon: '🗑', label: '移除项目', danger: true, action: function() { removeProject(el); } }
+            ]);
+            return;
+          }
+        });
+
+        // ── 工具栏按钮 ──
+        var btnNewFolder = $('areas-btn-newfolder');
+        var btnNewFile = $('areas-btn-newfile');
+        var btnFav = $('areas-btn-fav');
+
+        function getSelectedProject() {
+          var active = document.querySelector('#areas-sidebar .area-file.active');
+          if (active) {
+            var parent = active.closest('.area-children');
+            if (parent) {
+              var projId = parent.dataset.areaParent;
+              return document.querySelector('#areas-sidebar .area-project[data-area-id="' + projId + '"]') ||
+                     document.querySelector('#areas-sidebar [data-area-id="' + projId + '"]');
+            }
+          }
+          return document.querySelector('#areas-sidebar .area-project.active') ||
+                 document.querySelector('#areas-sidebar .area-project');
+        }
+
+        if (btnNewFolder) btnNewFolder.addEventListener('click', function(e) {
+          e.stopPropagation();
+          var proj = getSelectedProject();
+          if (proj) createMockFolder(proj);
+          else showAreaToast('请先选择一个项目');
+        });
+
+        if (btnNewFile) btnNewFile.addEventListener('click', function(e) {
+          e.stopPropagation();
+          var proj = getSelectedProject();
+          if (proj) createMockFile(proj);
+          else showAreaToast('请先选择一个项目');
+        });
+
+        var favMode = false;
+        if (btnFav) btnFav.addEventListener('click', function(e) {
+          e.stopPropagation();
+          favMode = !favMode;
+          this.style.color = favMode ? 'var(--amber)' : 'var(--dim)';
+          document.querySelectorAll('#areas-sidebar .area-project').forEach(function(p) {
+            if (favMode && p.dataset.areaFav !== 'true') {
+              p.style.display = 'none';
+              var ch = document.querySelector('.area-children[data-area-parent="' + p.dataset.areaId + '"]');
+              if (ch) ch.style.display = 'none';
+            } else {
+              p.style.display = '';
+              var ch = document.querySelector('.area-children[data-area-parent="' + p.dataset.areaId + '"]');
+              if (ch) ch.style.display = '';
+            }
+          });
+          showAreaToast(favMode ? '仅显示收藏项目' : '显示全部项目');
+        });
 
         // ── (b) 文件树点击 → 打开文件 ──
         function openFile(fileKey) {
