@@ -264,6 +264,7 @@ Crew 是 FocusPilot 的核心交互概念——**用户不直接面对 Agent/MCP
 
 - **CrewMember**：面向用户的数字成员，定义角色、职责、技能、授权、并发和长期指令。
 - **CrewRuntime**：成员背后的执行环境，定义本地/云端、Provider、CLI/daemon、心跳、模型发现和可见性。
+- **CrewRun**：一次执行记录，连接动态 Task、Skill、Runtime、配置快照、执行日志和 Focus 项目定位。
 
 一个 Crew 成员必须绑定一个 Runtime；一个 Runtime 可以服务多个成员。用户主要管理“团队成员”，但 AICrew 必须展示 Runtime 健康和绑定关系，避免把执行环境隐藏成不可诊断的字符串。
 
@@ -284,6 +285,8 @@ Crew 是 FocusPilot 的核心交互概念——**用户不直接面对 Agent/MCP
 | 常驻职责 | 周期性任务（cron / event 触发） |
 | 并发上限 | 单成员最大同时执行任务数 |
 | 运行状态 | availability: online / unstable / offline；workload: idle / queued / working |
+| 运行统计 | 最近 30 天运行次数、成功次数、失败次数、成功率、平均耗时 |
+| 最近工作 | 最近执行的 CrewRun 列表，可跳转 Focus Task 或查看记录 |
 
 每个 CrewRuntime 至少包含：
 
@@ -298,6 +301,21 @@ Crew 是 FocusPilot 的核心交互概念——**用户不直接面对 Agent/MCP
 | last seen / heartbeat | 用于判断 Runtime 健康 |
 | health | online / recently_lost / offline / about_to_gc |
 | supported models / thinking | Runtime 可发现的模型和推理强度能力 |
+
+每个 CrewRun 至少包含：
+
+| 属性 | 说明 |
+|------|------|
+| Crew 成员 | 哪个数字成员执行 |
+| Runtime / Host | 由哪台本机或远程电脑上的哪个执行器执行 |
+| Focus Project / Task | 对应项目和 Task，支持回跳定位 |
+| Skill | 本次实际使用或主要关联的 Skill |
+| status | running / success / failed / cancelled |
+| started_at / ended_at / duration | 开始、结束、耗时 |
+| tool_call_count / event_count | 工具调用数和事件数 |
+| config_snapshot | 运行开始时的实际配置快照 |
+| log_path | 详细执行日志位置 |
+| output_refs | 产物、评论、文件或报告引用 |
 
 **V1 预置 Crew 成员**：
 ```
@@ -326,11 +344,32 @@ Crew 是 FocusPilot 的核心交互概念——**用户不直接面对 Agent/MCP
 - Agent 配置：Instructions、Skills、Env、Args、MCP JSON；Env secret 必须显式 Reveal 后才可编辑
 - MCP Server：展示 connected / authorized / local / pending_auth / disabled 状态
 - 常驻职责：支持 event / cron / manual 三类触发规则的配置 UI
+- 动态：展示当前工作、近 30 天运行次数、成功次数、成功率、失败数、平均耗时和最近工作
+- Skills：展示成员可用 Skill、默认 Skill、Skill 最近运行次数和成功率
+- 环境变化：展示本机可检测的 Env key、Args、MCP JSON、CLI 版本、Runtime 绑定等变化摘要
+- 运行配置：按本机 / 远程电脑 / 云端分组展示 Runtime Host 和执行器，V1 仅自动检测本机配置
+- 运行记录：展示 CrewRun 详情、事件时间线、工具调用、配置快照、日志复制和筛选
 - 运行状态：展示执行队列、Runtime 健康、Agent 负载、MCP 健康、最近执行历史
+
+**AICrew 定位跳转规则**：
+
+- 点击 Task 标题或 Focus 编号，切换到 Focus 页面并选中对应项目节点。
+- 点击最近工作整行，打开 CrewRun 详情。
+- 点击最近工作中的外跳图标，定位到对应 Focus Task。
+- 点击“查看记录”，打开完整运行记录列表或当前 CrewRun 详情。
+- 点击成功次数或成功率，打开运行记录列表并过滤 `status=success`。
+- 点击 Skill 或 Skill 成功次数，切换到 Skills 详情或过滤该 Skill 的运行记录；记录中的 Task 仍可回跳 Focus。
+
+**运行配置边界**：
+
+- 本机配置：V1 自动检测本机所有可见 Runtime、CLI 版本、daemon 心跳、执行器、Env key、Args、MCP 配置摘要和工作目录摘要。
+- 远程电脑：不从本机扫描远程磁盘，只展示远程 daemon 主动上报、用户手动添加或历史连接留下的 Runtime 信息。
+- 云端 Runtime：V1 只保留分组和空状态，不提供真实执行。
+- secret value 不在列表、记录和远程上报中明文展示；只展示 key、key count、redacted 状态和授权状态。
 
 V1 中常驻职责先完成配置与展示，后台定时/事件调度由 Scheduler 后续接入。
 
-V1 中 Runtime Pool 和 Agent 配置先完成 UI 壳与本地静态配置；daemon 自动发现、模型实时同步、Runtime CLI 升级、Runtime GC 和云端执行后续接入。
+V1 中 Runtime Pool、Agent 配置、运行配置和运行记录先完成 UI 壳、本机静态配置与历史记录结构；daemon 自动发现、模型实时同步、Runtime CLI 升级、Runtime GC、远程磁盘扫描和云端执行后续接入。
 
 **用户始终面对"团队管理"这个隐喻，不需要理解底层技术。**
 
@@ -600,6 +639,8 @@ Engine 后台自动记录每次状态变更，每日归档为 Markdown 文件：
 {projects_dir}/_logs/
 ├── 2026-04-01.md
 ├── 2026-04-02.md
+├── runs/
+│   └── run_tes12_20260529_1913.jsonl
 └── weekly/
     └── 2026-W14.md     # 自动周报（预留）
 ```
@@ -621,13 +662,14 @@ agent_runs: 4
 
 ## Agent 执行摘要
 - claude-code #session-42: 实现了 frontmatter.py，新增 3 个文件
+- crew_code_engineer run_tes12_20260529_1913: TES-12 成功，耗时 7m18s，69 次工具调用
 
 ## 知识管道
 - 3 条新素材已收集
 - 2 张 KB 卡片已同步到 Anki
 ```
 
-**设计要点**：完全自动生成，Markdown 格式 Git 可追踪，跨项目汇总，为 AI 提供"项目记忆"。
+**设计要点**：完全自动生成，Markdown 格式 Git 可追踪，跨项目汇总，为 AI 提供"项目记忆"。每日 Markdown 记录摘要，`_logs/runs/` 保留 CrewRun 事件流，供 AICrew 的“查看记录”打开完整执行日志。
 
 ### 3.10 现有桌面功能（保留）
 

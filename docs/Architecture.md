@@ -212,6 +212,124 @@ enum HostAppMapping {
 }
 ```
 
+### 2.3 Crew 运行模型（规划）
+
+Crew V1 新界面将成员配置、运行时和执行记录拆成三层。Swift 侧可先用本地静态数据和日志索引驱动 UI，后续再接 Engine / daemon。
+
+```swift
+enum CrewRunStatus: String, Codable {
+    case running, success, failed, cancelled
+}
+
+enum RuntimeHostKind: String, Codable {
+    case local, remote, cloud
+}
+
+enum CrewRunEventType: String, Codable {
+    case agent, toolCall, toolResult, read, grep, bash, mcp, error, status
+}
+
+struct CrewRuntimeHost: Identifiable, Codable, Equatable {
+    let id: String
+    var name: String                         // MacBook-Pro-10.local
+    var hostKind: RuntimeHostKind            // local / remote / cloud
+    var isThisMachine: Bool
+    var health: String                       // online / recently_lost / offline
+    var daemonID: String?
+    var daemonVersion: String?
+    var lastSeenAt: Date?
+    var executorIDs: [String]                // CrewRuntime.id 列表
+}
+
+struct CrewRuntime: Identifiable, Codable, Equatable {
+    let id: String
+    var hostID: String
+    var provider: String                     // claude-code / codex / cursor / gemini
+    var displayName: String
+    var runtimeMode: RuntimeHostKind
+    var visibility: String                   // private / public
+    var ownerID: String
+    var daemonID: String?
+    var cliVersion: String?
+    var launchHeader: String?
+    var health: String
+    var lastSeenAt: Date?
+    var supportedModels: [String]
+    var supportsThinking: Bool
+}
+
+struct CrewMember: Identifiable, Codable, Equatable {
+    let id: String
+    var name: String
+    var avatar: String
+    var visibility: String
+    var ownerID: String
+    var runtimeID: String
+    var availability: String                 // online / unstable / offline
+    var workload: String                     // idle / queued / working
+    var status: String                       // active / draft / archived
+    var concurrencyLimit: Int
+    var model: String?
+    var thinkingLevel: String?
+    var defaultSkill: String?
+    var skillIDs: [String]
+    var instructions: String
+}
+
+struct CrewRun: Identifiable, Codable, Equatable {
+    let id: String
+    var crewMemberID: String
+    var runtimeID: String
+    var runtimeHostID: String
+    var focusProjectID: String?
+    var focusTaskID: String?
+    var focusTaskTitle: String?
+    var skillID: String?
+    var status: CrewRunStatus
+    var startedAt: Date
+    var endedAt: Date?
+    var durationSeconds: Int?
+    var toolCallCount: Int
+    var eventCount: Int
+    var configSnapshotID: String
+    var logPath: String
+    var outputRefs: [String]
+}
+
+struct CrewRunConfigSnapshot: Identifiable, Codable, Equatable {
+    let id: String
+    var runID: String
+    var dynamicTask: String
+    var instructions: [String: String]        // member / project / task / runtime
+    var skillIDs: [String]
+    var envKeys: [String]
+    var envChanges: [String: String]          // key -> added / changed / removed
+    var runtimeSummary: [String: String]
+    var mcpServers: [String: String]          // id -> state
+    var cwd: String?
+    var model: String?
+    var thinkingLevel: String?
+}
+
+struct CrewRunEvent: Identifiable, Codable, Equatable {
+    let id: String
+    var runID: String
+    var seq: Int
+    var timestamp: Date
+    var type: CrewRunEventType
+    var title: String
+    var summary: String
+    var payloadRef: String?
+}
+```
+
+运行统计由 `CrewRun` 派生，不单独作为事实源持久化：
+
+- 近 30 天运行次数：`startedAt` 在窗口内的 run 数。
+- 成功次数：`status == success`。
+- 成功率：`success / (success + failed + cancelled)`，`running` 不进入分母。
+- 最近工作：按 `startedAt` 或 `endedAt` 倒序取最近 5 条，完整记录列表从同一索引读取。
+
 ---
 
 ## 3. 接口契约
@@ -406,7 +524,67 @@ class CoderBridgeService: NSObject {
 }
 ```
 
-### 3.8 Constants
+### 3.8 CrewRunLogService（规划）
+
+`CrewRunLogService` 为 AICrew 的动态页、运行记录详情、Focus 跳转和自动日志提供统一数据源。V1 可先读取本地 JSONL / 静态索引，后续替换为 Engine API。
+
+```swift
+final class CrewRunLogService: ObservableObject {
+    static let shared = CrewRunLogService()
+
+    @Published private(set) var members: [CrewMember]
+    @Published private(set) var runtimes: [CrewRuntime]
+    @Published private(set) var runtimeHosts: [CrewRuntimeHost]
+    @Published private(set) var recentRuns: [CrewRun]
+
+    // 成员详情
+    func runs(for memberID: String, limit: Int?) -> [CrewRun]
+    func activeRun(for memberID: String) -> CrewRun?
+    func stats(for memberID: String, windowDays: Int) -> CrewRunStats
+
+    // 记录详情
+    func run(id: String) -> CrewRun?
+    func configSnapshot(id: String) -> CrewRunConfigSnapshot?
+    func events(for runID: String, filter: Set<CrewRunEventType>) -> [CrewRunEvent]
+    func payload(for event: CrewRunEvent) -> Data?
+
+    // 过滤入口
+    func successfulRuns(for memberID: String, windowDays: Int) -> [CrewRun]
+    func runs(for memberID: String, skillID: String, status: CrewRunStatus?) -> [CrewRun]
+
+    // Focus 定位
+    func focusTarget(for run: CrewRun) -> FocusTarget?
+
+    // Runtime 配置
+    func localRuntimeHosts() -> [CrewRuntimeHost]
+    func remoteRuntimeHosts() -> [CrewRuntimeHost]
+    func cloudRuntimeHosts() -> [CrewRuntimeHost]
+}
+
+struct CrewRunStats: Equatable {
+    var totalRuns: Int
+    var successRuns: Int
+    var failedRuns: Int
+    var cancelledRuns: Int
+    var successRate: Double
+    var averageDurationSeconds: Int?
+}
+
+struct FocusTarget: Equatable {
+    var projectID: String
+    var taskID: String
+}
+```
+
+职责边界：
+
+- AICrew 只读取 `CrewRunLogService` 的索引和事件，不直接扫描日志目录。
+- Focus 页面负责解释 `FocusTarget` 并展开项目、选中节点；若 Task 已删除，AICrew 保留记录但展示“原 Task 已不存在”。
+- 本机 Runtime 配置可以从本机 daemon、CLI、配置目录和历史记录索引汇总；远程 Runtime 只读取远程 daemon 上报或历史连接信息。
+- secret value 不进入 `CrewRunEvent` 列表摘要；如原始 payload 含敏感字段，写入前必须 redacted。
+- 每次 `CrewRun` 开始时先写入 `CrewRunConfigSnapshot`，运行结束只追加事件和结果，不回写覆盖快照。
+
+### 3.9 Constants
 
 ```swift
 enum Constants {
@@ -422,7 +600,8 @@ enum Constants {
         static let appConfigs, preferences, ballPosition, onboardingCompleted,
                    windowRenames, panelSize, lastPanelTab,
                    focusTimerSettings, focusRestIntensity,
-                   sessionPreferences: String
+                   sessionPreferences, crewRuntimeHosts,
+                   crewMembers, crewRunIndex: String
     }
 
     enum Notifications {
@@ -432,7 +611,7 @@ enum Constants {
         // 面板：panelPinStateChanged, panelDragMoved
         // 主题：themeChanged
         // 番茄钟：focusTimerChanged, focusWorkCompleted, focusRestCompleted, focusGuidedStepChanged
-        // AI：coderBridgeSessionChanged
+        // AI：coderBridgeSessionChanged, crewRunChanged, crewRuntimeHostChanged
         // 偏好：showPreferencesMultiBind
     }
 }
