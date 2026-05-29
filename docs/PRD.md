@@ -345,9 +345,8 @@ Crew 是 FocusPilot 的核心交互概念——**用户不直接面对 Agent/MCP
 - MCP Server：展示 connected / authorized / local / pending_auth / disabled 状态
 - 常驻职责：支持 event / cron / manual 三类触发规则的配置 UI
 - 动态：展示当前工作、近 30 天运行次数、成功次数、成功率、失败数、平均耗时和最近工作
-- Skills：展示成员可用 Skill、默认 Skill、Skill 最近运行次数和成功率
-- 环境变化：展示本机可检测的 Env key、Args、MCP JSON、CLI 版本、Runtime 绑定等变化摘要
-- 运行配置：按本机 / 远程电脑 / 云端分组展示 Runtime Host 和执行器，V1 仅自动检测本机配置
+- 配置：只默认展示角色名、Runtime、默认 Skill、并发数、Instructions；Skills / MCP、Env / Args、MCP JSON、环境变化默认折叠到高级配置
+- 运行时：按本机 / 远程电脑 / 云端分组展示 Runtime Host、执行器、最近运行和最近日志，V1 仅自动检测本机配置
 - 运行记录：展示 CrewRun 详情、事件时间线、工具调用、配置快照、日志复制和筛选
 - 运行状态：展示执行队列、Runtime 健康、Agent 负载、MCP 健康、最近执行历史
 
@@ -369,7 +368,7 @@ Crew 是 FocusPilot 的核心交互概念——**用户不直接面对 Agent/MCP
 
 V1 中常驻职责先完成配置与展示，后台定时/事件调度由 Scheduler 后续接入。
 
-V1 中 Runtime Pool、Agent 配置、运行配置和运行记录先完成 UI 壳、本机静态配置与历史记录结构；daemon 自动发现、模型实时同步、Runtime CLI 升级、Runtime GC、远程磁盘扫描和云端执行后续接入。
+V1 默认只展示预置 `代码工程师` 一个真实成员；架构师、数据库工程师、数据分析师作为“新建成员”模板出现。Runtime Pool、Agent 配置、运行时和运行记录先完成 UI 壳、本机静态配置与历史记录结构；daemon 自动发现、模型实时同步、Runtime CLI 升级、Runtime GC、远程磁盘扫描和云端执行后续接入。
 
 **用户始终面对"团队管理"这个隐喻，不需要理解底层技术。**
 
