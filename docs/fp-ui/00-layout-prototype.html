@@ -1060,6 +1060,44 @@
         display: grid;
         gap: 8px;
       }
+      .runtime-shell {
+        display: grid;
+        grid-template-columns: 300px minmax(0, 1fr);
+        min-height: 640px;
+      }
+      .runtime-sidebar {
+        border-right: 1px solid var(--line-soft);
+        padding: 14px;
+        background: rgba(255,255,255,0.015);
+      }
+      .runtime-main {
+        min-width: 0;
+        padding: 18px 20px;
+      }
+      .runtime-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13px;
+      }
+      .runtime-table th,
+      .runtime-table td {
+        padding: 12px 10px;
+        border-bottom: 1px solid var(--line-soft);
+        text-align: left;
+        white-space: nowrap;
+      }
+      .runtime-table th {
+        color: var(--dim);
+        font-weight: 650;
+        font-size: 11px;
+      }
+      .runtime-name {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        color: var(--text);
+        font-weight: 700;
+      }
       .duty-list {
         display: grid;
         gap: 8px;
@@ -4314,41 +4352,134 @@ FocusPilot/
             </div>
           </div>
           <div class="work panel" id="crew-runtime">
-            <div class="card">
-              <div class="crew-hero">
-                <div class="crew-avatar">🖥</div>
-                <div class="crew-title">
-                  <h2>MacBook-Pro-10.local</h2>
-                  <span class="subline">本机 · 5 个执行器 · 全部空闲 · daemon 019e6da2</span>
-                </div>
-                <span class="pill green" style="margin-left:auto">在线</span>
-                <button class="btn">View logs</button>
-                <button class="btn">Restart</button>
-              </div>
-              <div class="crew-section">
-                <div class="crew-section-title"><h3>执行器</h3><span class="pill">本机</span></div>
-                <div class="runtime-list">
-                  <div class="runtime-option active"><div class="runtime-logo">✳</div><div><strong>Claude</strong><span class="subline">在线 · 绑定代码工程师 · CLI 0.3.11</span></div><span class="pill">空闲</span></div>
-                  <div class="runtime-option"><div class="runtime-logo">◎</div><div><strong>Codex</strong><span class="subline">在线 · 未绑定 · CLI 0.3.11</span></div><span class="pill">$0.13 / 7天</span></div>
-                  <div class="runtime-option"><div class="runtime-logo">◆</div><div><strong>Cursor</strong><span class="subline">在线 · 未绑定 · CLI 0.3.11</span></div><span class="pill">空闲</span></div>
-                  <div class="runtime-option"><div class="runtime-logo">✦</div><div><strong>Gemini</strong><span class="subline">在线 · 未绑定 · CLI 0.3.11</span></div><span class="pill">空闲</span></div>
-                </div>
-              </div>
-              <div class="grid cols-2" style="padding:0 13px 13px">
-                <div class="card" style="box-shadow:none">
-                  <div class="card-head"><h3>最近运行</h3><button class="btn">查看全部</button></div>
-                  <div class="card-body crew-log">
-                    <div class="crew-log-item"><strong>TES-12 任务执行间隔</strong><span class="subline">Claude · 7m18s · 成功</span></div>
-                    <div class="crew-log-item"><strong>TES-11 调研核心功能以及竞品</strong><span class="subline">Claude · 5m51s · 成功</span></div>
-                    <div class="crew-log-item"><strong>TES-9 二级测试 issue</strong><span class="subline">Claude · 1m01s · 成功</span></div>
+            <div class="card" style="overflow:hidden">
+              <div class="runtime-shell">
+                <aside class="runtime-sidebar">
+                  <input class="search" placeholder="搜索机器..." style="width:100%;margin-bottom:10px" />
+                  <div class="runtime-meta" style="margin-bottom:16px">
+                    <span class="pill">全部 1</span>
+                    <span class="pill green">在线 1</span>
+                    <span class="pill amber">异常 0</span>
                   </div>
-                </div>
-                <div class="card" style="box-shadow:none">
-                  <div class="card-head"><h3>最近日志</h3><button class="btn">View logs</button></div>
-                  <div class="card-body crew-log">
-                    <div class="crew-log-item"><strong>daemon heartbeat</strong><span class="subline">12s 前 · all executors idle</span></div>
-                    <div class="crew-log-item"><strong>Claude config loaded</strong><span class="subline">2m 前 · 2 env keys redacted</span></div>
-                    <div class="crew-log-item"><strong>Codex registered</strong><span class="subline">18m 前 · CLI 0.3.11</span></div>
+                  <div class="label">本机</div>
+                  <div class="runtime-option active" style="grid-template-columns:34px minmax(0,1fr) auto">
+                    <div class="runtime-logo">🖥</div>
+                    <div>
+                      <strong>MacBook-Pro-10.local</strong>
+                      <div class="runtime-meta">
+                        <span class="pill green">在线</span>
+                        <span class="pill">本机</span>
+                      </div>
+                    </div>
+                    <span class="subline">5 个</span>
+                  </div>
+                  <div class="label" style="margin-top:18px">远程电脑</div>
+                  <div class="runtime-option" style="opacity:.65">
+                    <div class="runtime-logo">↗</div>
+                    <div><strong>remote-dev-01</strong><span class="subline">未连接 · 手动添加</span></div>
+                    <span class="pill">预留</span>
+                  </div>
+                </aside>
+                <div class="runtime-main">
+                  <div class="crew-hero" style="padding:0 0 16px;border-bottom:1px solid var(--line-soft)">
+                    <div class="crew-title">
+                      <h2>MacBook-Pro-10.local</h2>
+                      <span class="subline">5 个运行时 · 5 个在线 · 全部空闲 · 0.3.11 · daemon 019e6da2</span>
+                    </div>
+                    <span class="pill green" style="margin-left:auto">本地 · 这台机器</span>
+                    <button class="btn">View logs</button>
+                    <button class="btn">Restart</button>
+                    <button class="btn" style="color:var(--red)">Stop</button>
+                  </div>
+                  <div style="overflow-x:auto;margin-top:12px">
+                    <table class="runtime-table">
+                      <thead>
+                        <tr>
+                          <th>运行时</th>
+                          <th>健康度</th>
+                          <th>智能体</th>
+                          <th>工作负载</th>
+                          <th>费用 · 7 天</th>
+                          <th>CLI</th>
+                          <th>配置</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr>
+                          <td><span class="runtime-name"><span>✳</span> Claude</span></td>
+                          <td><span class="pill green">在线</span></td>
+                          <td>代码工程师</td>
+                          <td>空闲</td>
+                          <td>$0.20</td>
+                          <td><span style="font-family:var(--mono)">0.3.11</span></td>
+                          <td><button class="btn">配置</button></td>
+                        </tr>
+                        <tr>
+                          <td><span class="runtime-name"><span>◎</span> Codex</span></td>
+                          <td><span class="pill green">在线</span></td>
+                          <td>-</td>
+                          <td>空闲</td>
+                          <td>$0.13</td>
+                          <td><span style="font-family:var(--mono)">0.3.11</span></td>
+                          <td><button class="btn">配置</button></td>
+                        </tr>
+                        <tr>
+                          <td><span class="runtime-name"><span>◆</span> Cursor</span></td>
+                          <td><span class="pill green">在线</span></td>
+                          <td>-</td>
+                          <td>空闲</td>
+                          <td>-</td>
+                          <td><span style="font-family:var(--mono)">0.3.11</span></td>
+                          <td><button class="btn">配置</button></td>
+                        </tr>
+                        <tr>
+                          <td><span class="runtime-name"><span>✦</span> Gemini</span></td>
+                          <td><span class="pill green">在线</span></td>
+                          <td>-</td>
+                          <td>空闲</td>
+                          <td>-</td>
+                          <td><span style="font-family:var(--mono)">0.3.11</span></td>
+                          <td><button class="btn">配置</button></td>
+                        </tr>
+                        <tr>
+                          <td><span class="runtime-name"><span>◉</span> Hermes</span></td>
+                          <td><span class="pill green">在线</span></td>
+                          <td>-</td>
+                          <td>空闲</td>
+                          <td>-</td>
+                          <td><span style="font-family:var(--mono)">0.3.11</span></td>
+                          <td><button class="btn">配置</button></td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                  <div class="grid cols-3" style="margin-top:16px">
+                    <div class="card" style="box-shadow:none">
+                      <div class="card-head"><h3>Claude 配置</h3><span class="pill green">已绑定</span></div>
+                      <div class="card-body">
+                        <div class="row"><strong>启动命令</strong><span class="right" style="font-family:var(--mono)">claude</span></div>
+                        <div class="row"><strong>工作目录</strong><span class="right">当前 Project</span></div>
+                        <div class="row"><strong>模型</strong><span class="right">跟随 CLI</span></div>
+                        <div class="row"><strong>Env</strong><span class="right">2 keys hidden</span></div>
+                        <div class="row"><strong>MCP</strong><span class="right">filesystem, github</span></div>
+                      </div>
+                    </div>
+                    <div class="card" style="box-shadow:none">
+                      <div class="card-head"><h3>最近运行</h3><button class="btn">查看全部</button></div>
+                      <div class="card-body crew-log">
+                        <div class="crew-log-item"><strong>TES-12 任务执行间隔</strong><span class="subline">Claude · 7m18s · 成功</span></div>
+                        <div class="crew-log-item"><strong>TES-11 调研核心功能以及竞品</strong><span class="subline">Claude · 5m51s · 成功</span></div>
+                        <div class="crew-log-item"><strong>TES-9 二级测试 issue</strong><span class="subline">Claude · 1m01s · 成功</span></div>
+                      </div>
+                    </div>
+                    <div class="card" style="box-shadow:none">
+                      <div class="card-head"><h3>最近日志</h3><button class="btn">View logs</button></div>
+                      <div class="card-body crew-log">
+                        <div class="crew-log-item"><strong>daemon heartbeat</strong><span class="subline">12s 前 · all executors idle</span></div>
+                        <div class="crew-log-item"><strong>Claude config loaded</strong><span class="subline">2m 前 · 2 env keys redacted</span></div>
+                        <div class="crew-log-item"><strong>Codex registered</strong><span class="subline">18m 前 · CLI 0.3.11</span></div>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>

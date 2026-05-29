@@ -149,6 +149,7 @@ AICrew 是 AI Agent 团队的**管理中心**。用户面对的不是 Agent、MC
 - 最近运行：最近 3-5 条 CrewRun，显示成员、Task、耗时、状态。
 - 最近日志：daemon / executor 摘要日志，`View logs` 打开完整记录。
 - 执行器列表：Claude / Codex / Cursor / Gemini / Hermes，显示健康度、绑定成员、CLI 版本和负载。
+- 执行器配置：选中执行器后显示启动命令、工作目录、模型策略、Env key count、MCP 摘要和绑定成员。配置明细保持紧凑，secret 仍然 redacted。
 
 ### 3.4 运行记录详情
 

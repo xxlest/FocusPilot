@@ -346,7 +346,7 @@ Crew 是 FocusPilot 的核心交互概念——**用户不直接面对 Agent/MCP
 - 常驻职责：支持 event / cron / manual 三类触发规则的配置 UI
 - 动态：展示当前工作、近 30 天运行次数、成功次数、成功率、失败数、平均耗时和最近工作
 - 配置：只默认展示角色名、Runtime、默认 Skill、并发数、Instructions；Skills / MCP、Env / Args、MCP JSON、环境变化默认折叠到高级配置
-- 运行时：按本机 / 远程电脑 / 云端分组展示 Runtime Host、执行器、最近运行和最近日志，V1 仅自动检测本机配置
+- 运行时：按本机 / 远程电脑 / 云端分组展示 Runtime Host、执行器表格、选中执行器配置、最近运行和最近日志，V1 仅自动检测本机配置
 - 运行记录：展示 CrewRun 详情、事件时间线、工具调用、配置快照、日志复制和筛选
 - 运行状态：展示执行队列、Runtime 健康、Agent 负载、MCP 健康、最近执行历史
 
