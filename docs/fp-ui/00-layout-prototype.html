@@ -1680,6 +1680,23 @@
             <div class="side-item" data-modal="crew-new"><span>架构师</span><span class="right">模板</span></div>
             <div class="side-item" data-modal="crew-new"><span>数据库工程师</span><span class="right">模板</span></div>
             <div class="side-item" data-modal="crew-new"><span>数据分析师</span><span class="right">模板</span></div>
+            <div class="label">Runtime</div>
+            <div class="side-item crew-member-line" data-crew-runtime-open>
+              <span class="status-dot"></span>
+              <span class="member-main">
+                <strong>MacBook-Pro-10.local</strong>
+                <span class="subline">本机 · 5 个执行器 · 空闲</span>
+              </span>
+              <span class="count">5</span>
+            </div>
+            <div class="side-item crew-member-line" data-crew-runtime-open style="opacity:.65">
+              <span class="status-dot offline"></span>
+              <span class="member-main">
+                <strong>remote-dev-01</strong>
+                <span class="subline">远程电脑 · 未连接</span>
+              </span>
+              <span class="count">0</span>
+            </div>
             <div class="label">运行概况</div>
             <div
               class="card-body"
@@ -4259,12 +4276,11 @@ FocusPilot/
         <section class="page" data-page="crew">
           <header class="topbar">
             <h1>AICrew</h1>
-            <span class="meta">动态 / 配置 / 运行时</span>
+            <span class="meta">成员动态 / 配置 · Runtime 在侧边栏</span>
             <div class="top-actions">
               <div class="seg" data-scope="crewMode">
                 <button class="active" data-target="crew-activity">动态</button
-                ><button data-target="crew-config">配置</button
-                ><button data-target="crew-runtime">运行时</button>
+                ><button data-target="crew-config">配置</button>
               </div>
               <button class="btn primary" data-modal="crew-new">新建成员</button>
             </div>
@@ -4826,6 +4842,9 @@ FocusPilot/
 	          .forEach((item) =>
 	            item.classList.toggle("active", item.dataset.crewMember === key),
 	          )
+	        document
+	          .querySelectorAll("[data-crew-runtime-open]")
+	          .forEach((item) => item.classList.remove("active"))
 	        const activityBtn = document.querySelector(
 	          '[data-scope="crewMode"] [data-target="crew-activity"]',
 	        )
@@ -4834,6 +4853,15 @@ FocusPilot/
 	
 	      document.querySelectorAll("[data-crew-member]").forEach((el) => {
 	        el.addEventListener("click", () => selectCrewMember(el.dataset.crewMember))
+	      })
+
+	      document.querySelectorAll("[data-crew-runtime-open]").forEach((el) => {
+	        el.addEventListener("click", () => {
+	          document
+	            .querySelectorAll("[data-crew-member], [data-crew-runtime-open]")
+	            .forEach((item) => item.classList.toggle("active", item === el))
+	          showPanel("crew-runtime")
+	        })
 	      })
 	
 	      document.querySelectorAll("[data-modal]").forEach((btn) => {
