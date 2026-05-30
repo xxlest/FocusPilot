@@ -5075,7 +5075,7 @@ FocusPilot/
       document.querySelectorAll(".seg[data-scope] button").forEach((btn) => {
         btn.addEventListener("click", () => {
           const seg = btn.closest(".seg")
-          if (seg.dataset.scope === "crewMode") return
+          if (seg.dataset.scope === "crewMode" || seg.dataset.scope === "crewConfigSub" || seg.dataset.scope === "crewRtConfigSub") return
           seg
             .querySelectorAll("button")
             .forEach((item) => item.classList.toggle("active", item === btn))
@@ -5271,7 +5271,9 @@ FocusPilot/
         });
       });
 	
-	      // ===== Agent config sub-tab switching =====
+	      renderCrewView();
+
+      // ===== Agent config sub-tab switching =====
       document.querySelectorAll("[data-crew-config-sub]").forEach(function(btn) {
         btn.addEventListener("click", function() {
           crewState.agentConfigTab = btn.dataset.crewConfigSub;
