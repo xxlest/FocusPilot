@@ -349,7 +349,7 @@ Crew 是 FocusPilot 的核心交互概念——**用户不直接面对 Agent/MCP
 **智能体成员工作区**（三个 Tab）：
 
 - **动态**（默认）：展示当前工作、近 30 天运行次数、成功次数、成功率、失败数、平均耗时和最近工作
-- **Tasks**：展示该成员关联的 Focus Task，与 Focus 一一对应，按状态分组（进行中 / 待办 / 待规划 / 已完成），点击可跳转 Focus 定位
+- **Tasks**：展示该成员关联的 Focus Task，Multica 紧凑列表风格，按状态分组（进行中 / 待办 / 待规划 / 已完成），点击行直接跳转 Focus 看板并打开对应 Task 详情面板（切看板 → 定位卡片 → 高亮 → 同步详情标题 → 打开详情）
 - **配置**：采用子 Tab 切换（基础信息 / 指令 / Skill / MCP / 环境变量 / 自定义参数），各子 Tab 展示对应配置项。Env secret 必须显式 Reveal 后才可编辑；MCP Server 展示 connected / authorized / local / pending_auth / disabled 状态；常驻职责支持 event / cron / manual 三类触发规则
 
 **Runtime 工作区**（三个 Tab）：

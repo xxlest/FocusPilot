@@ -4728,6 +4728,8 @@ FocusPilot/
 
           <!-- ===== Runtime：配置 ===== -->
           <div class="work panel" id="crew-runtime-config">
+            <div id="crew-rt-config-empty" style="display:none;text-align:center;padding:48px 24px"><div class="card" style="padding:48px 24px"><div style="font-size:36px;margin-bottom:12px;opacity:.4">⚙️</div><p style="color:var(--dim);font-size:13px">远程节点尚未连接，暂无配置信息</p></div></div>
+            <div id="crew-rt-config-local">
             <div class="seg" id="crew-rt-config-sub-tabs" data-scope="crewRtConfigSub" style="margin-bottom:12px;justify-content:flex-start">
               <button class="active" data-crew-rt-config-sub="rt-basic">基础信息</button><button data-crew-rt-config-sub="rt-executors">执行器</button><button data-crew-rt-config-sub="rt-env">环境变量</button><button data-crew-rt-config-sub="rt-args">自定义参数</button>
             </div>
@@ -4780,10 +4782,13 @@ FocusPilot/
                 </div>
               </div>
             </div>
+            </div>
           </div>
 
           <!-- ===== Runtime：日志 ===== -->
           <div class="work panel" id="crew-runtime-logs">
+            <div id="crew-rt-logs-empty" style="display:none;text-align:center;padding:48px 24px"><div class="card" style="padding:48px 24px"><div style="font-size:36px;margin-bottom:12px;opacity:.4">📋</div><p style="color:var(--dim);font-size:13px">远程节点尚未连接，暂无日志</p></div></div>
+            <div id="crew-rt-logs-local">
             <div class="card">
               <div class="card-head"><h3>Daemon 日志</h3><button class="btn">刷新</button></div>
               <div class="card-body crew-log">
@@ -4795,6 +4800,7 @@ FocusPilot/
                 <div class="crew-log-item"><strong>Cursor Agent detected</strong><span class="subline">21m 前 · via cursor extension</span></div>
                 <div class="crew-log-item"><strong>daemon started</strong><span class="subline">22m 前 · pid 41882 · macOS 15.2</span></div>
               </div>
+            </div>
             </div>
           </div>
         </section>
@@ -5200,13 +5206,17 @@ FocusPilot/
             detailEl.style.display = isLocal ? '' : 'none';
             emptyEl.style.display = isLocal ? 'none' : '';
           }
-          if (rtConfig) {
-            rtConfig.innerHTML = isLocal ? rtConfig.getAttribute('data-local-html') || rtConfig.innerHTML : '<div class="card" style="text-align:center;padding:48px 24px"><div style="font-size:36px;margin-bottom:12px;opacity:.4">⚙️</div><p style="color:var(--dim);font-size:13px">远程节点尚未连接，暂无配置信息</p></div>';
-            if (isLocal && !rtConfig.getAttribute('data-local-html')) rtConfig.setAttribute('data-local-html', rtConfig.innerHTML);
+          var rtConfigLocal = document.getElementById('crew-rt-config-local');
+          var rtConfigEmpty = document.getElementById('crew-rt-config-empty');
+          if (rtConfigLocal && rtConfigEmpty) {
+            rtConfigLocal.style.display = isLocal ? '' : 'none';
+            rtConfigEmpty.style.display = isLocal ? 'none' : '';
           }
-          if (rtLogs) {
-            rtLogs.innerHTML = isLocal ? rtLogs.getAttribute('data-local-html') || rtLogs.innerHTML : '<div class="card" style="text-align:center;padding:48px 24px"><div style="font-size:36px;margin-bottom:12px;opacity:.4">📋</div><p style="color:var(--dim);font-size:13px">远程节点尚未连接，暂无日志</p></div>';
-            if (isLocal && !rtLogs.getAttribute('data-local-html')) rtLogs.setAttribute('data-local-html', rtLogs.innerHTML);
+          var rtLogsLocal = document.getElementById('crew-rt-logs-local');
+          var rtLogsEmpty = document.getElementById('crew-rt-logs-empty');
+          if (rtLogsLocal && rtLogsEmpty) {
+            rtLogsLocal.style.display = isLocal ? '' : 'none';
+            rtLogsEmpty.style.display = isLocal ? 'none' : '';
           }
         }
       }
@@ -5286,6 +5296,30 @@ FocusPilot/
       // ===== Tasks: click row to jump to Focus =====
       function openCrewTaskInFocus(taskId) {
         showPage('focus');
+        var boardBtn = document.querySelector('.seg[data-scope="focusView"] button[data-target="focus-board"]');
+        if (boardBtn) {
+          boardBtn.closest('.seg').querySelectorAll('button').forEach(function(b) { b.classList.remove('active'); });
+          boardBtn.classList.add('active');
+          showPanel('focus-board');
+        }
+        var card = document.querySelector('.fp-card[data-task-id="' + taskId + '"]');
+        if (card) {
+          card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          card.style.outline = '2px solid var(--accent)';
+          card.style.outlineOffset = '2px';
+          setTimeout(function() { card.style.outline = ''; card.style.outlineOffset = ''; }, 2000);
+          var cardId = card.querySelector('[style*="font-family:var(--mono)"]');
+          var cardTitle = card.querySelector('.task-title');
+          if (cardId && cardTitle) {
+            var header = document.getElementById('fpDetailPanel');
+            if (header) {
+              var idEl = header.querySelector('div[style*="font-family:var(--mono)"]');
+              var titleEl = idEl ? idEl.nextElementSibling : null;
+              if (idEl) idEl.textContent = cardId.textContent.trim();
+              if (titleEl) titleEl.textContent = cardTitle.textContent.trim();
+            }
+          }
+        }
         openTaskDetail();
       }
       document.querySelectorAll(".crew-task-row[data-focus-task-id]").forEach(function(row) {
