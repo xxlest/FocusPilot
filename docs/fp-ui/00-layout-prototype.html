@@ -4627,7 +4627,7 @@ FocusPilot/
                       <span class="subline">5 个运行时 · 5 个在线 · 全部空闲 · 0.3.11 · daemon 019e6da2</span>
                     </div>
                     <span class="pill green" style="margin-left:auto">本地 · 这台机器</span>
-                    <button class="btn">View logs</button>
+                    <button class="btn" onclick="crewState.runtimeTab='crew-runtime-logs';renderCrewView()">View logs</button>
                     <button class="btn">Restart</button>
                     <button class="btn" style="color:var(--red)">Stop</button>
                   </div>
@@ -4713,7 +4713,7 @@ FocusPilot/
                       </div>
                     </div>
                     <div class="card" style="box-shadow:none">
-                      <div class="card-head"><h3>最近日志</h3><button class="btn">View logs</button></div>
+                      <div class="card-head"><h3>最近日志</h3><button class="btn" onclick="crewState.runtimeTab='crew-runtime-logs';renderCrewView()">View logs</button></div>
                       <div class="card-body crew-log">
                         <div class="crew-log-item"><strong>daemon heartbeat</strong><span class="subline">12s 前 · all executors idle</span></div>
                         <div class="crew-log-item"><strong>Claude config loaded</strong><span class="subline">2m 前 · 2 env keys redacted</span></div>
