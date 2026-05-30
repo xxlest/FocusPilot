@@ -337,18 +337,30 @@ Crew 是 FocusPilot 的核心交互概念——**用户不直接面对 Agent/MCP
 | 项目 Task（一次性） | 用户在对话面板中派遣，或从 Kanban 拖拽分配 | 手动 / auto_execute |
 | 常驻职责（周期性） | 用户在 Crew 成员详情页配置 | cron 定时 / 事件触发 |
 
-**AICrew 管理界面**：
+**AICrew 侧边栏**：
 
-- 成员详情：角色、头像、Owner、可见性、擅长领域、Runtime 绑定、部署位置、模型、推理强度、并发上限、默认 Skill
-- Runtime Pool：展示本机、远程和云端 Runtime 的健康状态、Owner、可见性、心跳、CLI 版本和已绑定成员数
-- Agent 配置：Instructions、Skills、Env、Args、MCP JSON；Env secret 必须显式 Reveal 后才可编辑
-- MCP Server：展示 connected / authorized / local / pending_auth / disabled 状态
-- 常驻职责：支持 event / cron / manual 三类触发规则的配置 UI
-- 动态：展示当前工作、近 30 天运行次数、成功次数、成功率、失败数、平均耗时和最近工作
-- 配置：只默认展示角色名、Runtime、默认 Skill、并发数、Instructions；Skills / MCP、Env / Args、MCP JSON、环境变化默认折叠到高级配置
-- 运行时：作为 AICrew 侧边栏 `成员 / Runtime` 分段中的 Runtime 视图展示本机 / 远程电脑 / 云端 Runtime Host；点击机器后显示执行器表格、选中执行器配置、最近运行和最近日志，V1 仅自动检测本机配置
-- 运行记录：展示 CrewRun 详情、事件时间线、工具调用、配置快照、日志复制和筛选
-- 运行状态：展示执行队列、Runtime 健康、Agent 负载、MCP 健康、最近执行历史
+侧边栏分"智能体成员"和"Runtime"两个 Tab 切换。操作按钮放在各 Tab 列表下方：
+
+- 智能体成员 Tab：展示团队成员列表（状态点、角色名、Runtime 绑定、部署位置）；列表下方"+ 新建智能体"按钮和模板入口
+- Runtime Tab：按本机 / 远程电脑 / 云端分组展示执行节点；列表下方"+ 添加执行节点"按钮
+
+点击智能体成员时，工作区切到该成员详情；点击 Runtime 中的机器时，工作区切到该执行节点详情。
+
+**智能体成员工作区**（三个 Tab）：
+
+- **动态**（默认）：展示当前工作、近 30 天运行次数、成功次数、成功率、失败数、平均耗时和最近工作
+- **Tasks**：展示该成员关联的 Focus Task，与 Focus 一一对应，按状态分组（进行中 / 待办 / 待规划 / 已完成），点击可跳转 Focus 定位
+- **配置**：采用子 Tab 切换（基础信息 / 指令 / Skill / MCP / 环境变量 / 自定义参数），各子 Tab 展示对应配置项。Env secret 必须显式 Reveal 后才可编辑；MCP Server 展示 connected / authorized / local / pending_auth / disabled 状态；常驻职责支持 event / cron / manual 三类触发规则
+
+**Runtime 工作区**（三个 Tab）：
+
+- **执行器**（默认）：展示该执行节点上的全部执行器（如 Claude / Codex / Cursor / Gemini / Hermes），每行显示健康度、绑定智能体成员、工作负载、最近 7 天费用、CLI 版本和配置入口。远程节点支持"未连接"空状态，引导用户安装 Agent 并配置连接
+- **配置**：采用子 Tab 切换（基础信息 / 执行器 / 环境变量 / 自定义参数），展示机器信息、检测配置、环境变量和节点级参数
+- **日志**：Daemon 日志和执行器摘要日志，支持刷新和完整日志查看
+
+**运行记录**：展示 CrewRun 详情、事件时间线、工具调用、配置快照、日志复制和筛选
+
+**crewState 统一状态管理**：AICrew 页面通过统一的 `crewState` 驱动侧边栏选中、工作区面板切换和面包屑路径同步。`crewState` 记录当前对象类型（智能体成员 / Runtime）、选中的成员或执行节点、当前活跃的工作区 Tab，确保侧边栏切换与工作区联动一致
 
 **AICrew 定位跳转规则**：
 
@@ -368,7 +380,7 @@ Crew 是 FocusPilot 的核心交互概念——**用户不直接面对 Agent/MCP
 
 V1 中常驻职责先完成配置与展示，后台定时/事件调度由 Scheduler 后续接入。
 
-V1 默认只展示预置 `代码工程师` 一个真实成员；架构师、数据库工程师、数据分析师作为“新建成员”模板出现。Runtime Pool、Agent 配置、运行时和运行记录先完成 UI 壳、本机静态配置与历史记录结构；daemon 自动发现、模型实时同步、Runtime CLI 升级、Runtime GC、远程磁盘扫描和云端执行后续接入。
+V1 默认只展示预置 `代码工程师` 一个真实智能体成员；架构师、数据库工程师、数据分析师作为”新建智能体”模板出现。侧边栏智能体成员/Runtime 双 Tab、成员工作区三 Tab（动态/Tasks/配置）、Runtime 工作区三 Tab（执行器/配置/日志）、crewState 统一状态管理和运行记录先完成 UI 壳、本机静态配置与历史记录结构；daemon 自动发现、模型实时同步、Runtime CLI 升级、Runtime GC、远程磁盘扫描和云端执行后续接入。
 
 **用户始终面对"团队管理"这个隐喻，不需要理解底层技术。**
 
@@ -521,7 +533,7 @@ Crew 常驻职责（定时收集）           用户（每日 Review）
 |------|------|-----------|
 | 📁 | 项目 | 项目树（四模式展示）+ Today Dashboard 入口 |
 | 📋 | Kanban | 按状态分列的全局看板（跨项目） |
-| 👥 | Crew | 数字团队成员列表 + 状态 + 常驻职责 |
+| 👥 | Crew | 智能体成员 / Runtime 双 Tab + 成员状态 + 执行节点 |
 | 💬 | 对话 | 历史对话记录列表 |
 | ⚙️ | 设置 | 偏好 / 数据目录 / 主题 / Crew 管理 |
 
@@ -569,24 +581,39 @@ Crew 常驻职责（定时收集）           用户（每日 Review）
 
 #### 3.7.2 Crew 侧边栏
 
+侧边栏使用"智能体成员 / Runtime"两个 Tab 切换，避免把"人"和"机器"平铺在同一列表里。
+
+智能体成员 Tab：
 ```
-┌─ 👥 我的 Crew ──────────────────┐
+┌─ 👥 AICrew ─────────────────────┐
+│ [智能体成员] [Runtime]            │
 │                                  │
 │ 🟢 代码工程师        本地         │
-│    claude-code | 空闲            │
+│    claude-code · 空闲            │
 │                                  │
-│ 🟢 架构师           本地         │
-│    claude-code | 执行中 🔄       │
-│    └─ FocusPilot / MCP Host 设计   │
+│ [+ 新建智能体]                   │
 │                                  │
-│ 🔴 数据分析师        云端         │
-│    未连接                        │
-│                                  │
-│ [+ 添加成员]                     │
+│ 模板                             │
+│ 架构师 / 数据库工程师 / 数据分析师 │
 └──────────────────────────────────┘
 ```
 
-选中 Crew 成员时主内容区展示：常驻职责表 + 执行历史 + 对话。
+Runtime Tab：
+```
+┌─ 👥 AICrew ─────────────────────┐
+│ [智能体成员] [Runtime]            │
+│                                  │
+│ 本机                             │
+│ 🟢 MacBook-Pro-10.local     5   │
+│                                  │
+│ 远程电脑                         │
+│ 🔴 remote-dev-01            0   │
+│                                  │
+│ [+ 添加执行节点]                 │
+└──────────────────────────────────┘
+```
+
+选中智能体成员时，工作区切到该成员详情（动态 / Tasks / 配置三 Tab）；选中 Runtime 执行节点时，工作区切到该节点详情（执行器 / 配置 / 日志三 Tab）。
 
 ### 3.8 Quick Panel（升级）
 
@@ -960,7 +987,7 @@ FocusPilot.app
 | **两阶段模型** | planning → ready → executing → done 状态流转 | 容器级递归自动执行 |
 | **四模式** | Agile / Flow / Lite / Free 创建 + 展示 + 规划引导 | 模式切换迁移 |
 | **MCP Host** | 单 Agent 调度（claude-code） | 多 Agent 并行、自动选择 |
-| **Crew 数字团队** | 预置"代码工程师"1 个成员 + Crew 面板 + MCP 状态 + 常驻职责配置 UI | 云端成员执行、多 Agent 自动选择、后台常驻调度 |
+| **Crew 数字团队** | 预置"代码工程师"1 个成员 + 侧边栏智能体成员/Runtime 双 Tab + 成员工作区三 Tab（动态/Tasks/配置）+ Runtime 工作区三 Tab（执行器/配置/日志）+ crewState 统一状态管理 + MCP 状态 + 常驻职责配置 UI | 云端成员执行、多 Agent 自动选择、后台常驻调度 |
 | **任务调度** | 即时执行 + 执行记录（SQLite） | 定时/事件触发 |
 | **知识管道** | _materials/ + _reports/ 增量整合 + _kb/ 提炼 + 一键同步 | auto_sync 自动加工 |
 | **Anki 同步** | KB 卡片 → AnkiConnect API 推送 | AnkiWeb 云端同步 |
@@ -1088,7 +1115,9 @@ make full-install   # Swift App + Engine 一起安装
 | VaultOne | 知识管理系统（Obsidian），与 FocusPilot 互补 |
 | Engine | Python Agent Engine，后台服务进程 |
 | Crew | 数字团队，用户管理的 Agent 角色集合 |
-| Crew 成员 | 一个配置好的 Agent 角色（如"代码工程师"） |
+| 智能体成员 | 一个配置好的 Agent 角色（如"代码工程师"），面向用户的数字团队成员 |
+| 执行节点 | Runtime Host，承载执行器的本机、远程电脑或云端机器 |
+| crewState | AICrew 页面统一状态对象，驱动侧边栏选中、工作区 Tab 切换和面包屑同步 |
 | MCP Host | Agent 编排器，通过 MCP 协议调度 AI 工具 |
 | Skill | 任务执行模板，定义如何将 Task 转化为 Agent 指令 |
 | Pipeline | 知识管道编排链（collect→integrate→distill→sync） |
