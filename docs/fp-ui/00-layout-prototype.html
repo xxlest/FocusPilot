@@ -5153,6 +5153,22 @@ FocusPilot/
       var crewAgentPanels = ['crew-activity', 'crew-tasks', 'crew-config'];
       var crewRuntimePanels = ['crew-runtime', 'crew-runtime-config', 'crew-runtime-logs'];
 
+      function setRuntimeHostAvailability(isLocal) {
+        var pairs = [
+          ['crew-runtime-detail', 'crew-runtime-empty'],
+          ['crew-rt-config-local', 'crew-rt-config-empty'],
+          ['crew-rt-logs-local', 'crew-rt-logs-empty']
+        ];
+        pairs.forEach(function(pair) {
+          var localEl = document.getElementById(pair[0]);
+          var emptyEl = document.getElementById(pair[1]);
+          if (localEl && emptyEl) {
+            localEl.style.display = isLocal ? '' : 'none';
+            emptyEl.style.display = isLocal ? 'none' : '';
+          }
+        });
+      }
+
       function renderCrewView() {
         var bc = document.getElementById('crew-breadcrumb');
         var title = document.getElementById('crew-page-title');
@@ -5197,27 +5213,7 @@ FocusPilot/
           document.querySelectorAll("[data-crew-rt-config-sub]").forEach(function(b) { b.classList.toggle("active", b.dataset.crewRtConfigSub === crewState.runtimeConfigTab); });
           document.querySelectorAll("[data-crew-rt-config-panel]").forEach(function(p) { p.classList.toggle("active", p.dataset.crewRtConfigPanel === crewState.runtimeConfigTab); });
           // runtime detail vs empty state (all 3 tabs)
-          var detailEl = document.getElementById('crew-runtime-detail');
-          var emptyEl = document.getElementById('crew-runtime-empty');
-          var rtConfig = document.getElementById('crew-runtime-config');
-          var rtLogs = document.getElementById('crew-runtime-logs');
-          var isLocal = crewState.selectedRuntimeHostId === 'macbook';
-          if (detailEl && emptyEl) {
-            detailEl.style.display = isLocal ? '' : 'none';
-            emptyEl.style.display = isLocal ? 'none' : '';
-          }
-          var rtConfigLocal = document.getElementById('crew-rt-config-local');
-          var rtConfigEmpty = document.getElementById('crew-rt-config-empty');
-          if (rtConfigLocal && rtConfigEmpty) {
-            rtConfigLocal.style.display = isLocal ? '' : 'none';
-            rtConfigEmpty.style.display = isLocal ? 'none' : '';
-          }
-          var rtLogsLocal = document.getElementById('crew-rt-logs-local');
-          var rtLogsEmpty = document.getElementById('crew-rt-logs-empty');
-          if (rtLogsLocal && rtLogsEmpty) {
-            rtLogsLocal.style.display = isLocal ? '' : 'none';
-            rtLogsEmpty.style.display = isLocal ? 'none' : '';
-          }
+          setRuntimeHostAvailability(crewState.selectedRuntimeHostId === 'macbook');
         }
       }
 
@@ -5293,33 +5289,166 @@ FocusPilot/
         });
       });
 
+      // ===== Focus Task Demo Data =====
+      var focusTaskDemoData = {
+        'FP-001': {
+          id: 'FP-001', title: '数据模型设计', status: 'done', statusLabel: '● Done', statusClass: 'green',
+          priority: 'P0', mode: 'auto', agent: '代码工程师', schedule: '—', goal: 'FocusPilot 0.0.1',
+          desc: '设计 FocusPilot 核心数据模型，包括 Workspace、Task、CrewMember、CrewRuntime 等实体的字段定义、关系映射和持久化方案。',
+          plan: '<strong>实现步骤</strong><ol style="padding-left:18px;margin:6px 0"><li>梳理实体关系图（ER Diagram）</li><li>定义 Swift Codable 结构体</li><li>实现 UserDefaults 序列化</li><li>编写单元测试</li></ol>',
+          exec: null
+        },
+        'FP-002': {
+          id: 'FP-002', title: '看板状态模型实现', status: 'in_progress', statusLabel: '● In Progress', statusClass: 'blue',
+          priority: 'P0', mode: 'auto', agent: '代码工程师', schedule: '本周', goal: 'FocusPilot 0.0.1',
+          desc: '实现 Workspace 看板视图的状态模型，采用 Multica 7 态流转：backlog → todo → in_progress → in_evaluation → done，旁路状态 blocked / cancelled。需要实现拖拽跨列变更状态，状态变更持久化，以及与规划视图的数据同步。',
+          plan: '<strong>实现步骤</strong><ol style="padding-left:18px;margin:6px 0"><li>定义 TaskStatus 枚举（7 态 + 转换矩阵）</li><li>创建 KanbanDataSource（分组、排序）</li><li>实现 NSTableView drag & drop</li><li>持久化到 ConfigStore</li><li>添加拖拽动画 0.25s ease-out</li><li>同步规划视图状态标记</li></ol>',
+          exec: { agent: '代码工程师', status: '执行中', time: '00:03:42', step: '步骤 3/5', logs: '> 正在修改 Models.swift...<br>> 添加 blocked→todo 状态转换<br>> 运行测试套件...' }
+        },
+        'FP-003': {
+          id: 'FP-003', title: 'Agent Pull 执行管道', status: 'todo', statusLabel: '● Todo', statusClass: 'amber',
+          priority: 'P1', mode: 'auto', agent: '代码工程师', schedule: '本周', goal: 'AI',
+          desc: '实现 Agent Pull 模式的执行管道，支持任务队列消费、执行状态上报、失败重试和结果回写。对接 CrewRuntime daemon 心跳。',
+          plan: '<strong>实现步骤</strong><ol style="padding-left:18px;margin:6px 0"><li>定义 TaskQueue 协议</li><li>实现 Pull Consumer</li><li>状态上报 + 心跳</li><li>失败重试策略</li></ol>',
+          exec: null
+        },
+        'FP-004': {
+          id: 'FP-004', title: 'Terminal 手动执行模式', status: 'todo', statusLabel: '● Todo', statusClass: 'amber',
+          priority: 'P1', mode: 'manual', agent: '手动执行', schedule: '本周', goal: 'AI',
+          desc: '支持用户通过终端手动执行 Task，记录执行过程、时间和结果。提供 CLI 交互界面和状态同步。',
+          plan: '<strong>实现步骤</strong><ol style="padding-left:18px;margin:6px 0"><li>CLI 参数解析</li><li>执行状态跟踪</li><li>结果回写到 Task</li></ol>',
+          exec: null
+        },
+        'FP-005': {
+          id: 'FP-005', title: '规划引擎接口设计', status: 'in_evaluation', statusLabel: '● Evaluation', statusClass: 'purple',
+          priority: 'P0', mode: 'auto', agent: '代码工程师', schedule: '本周', goal: 'AI',
+          desc: '设计规划引擎的接口层，定义 Skill 调用协议、规划产物格式和审批流程。支持多 Skill 策略切换。',
+          plan: '<strong>实现步骤</strong><ol style="padding-left:18px;margin:6px 0"><li>定义 PlanningEngine 协议</li><li>Skill 注册与发现</li><li>规划产物 Schema</li><li>审批状态机</li></ol>',
+          exec: { agent: '代码工程师', status: '已完成', time: '00:12:05', step: '5/5', logs: '> 接口设计完成<br>> 等待评估审核...' }
+        },
+        'FP-006': {
+          id: 'FP-006', title: '主题系统适配', status: 'backlog', statusLabel: '● Backlog', statusClass: 'dim',
+          priority: 'P2', mode: 'auto', agent: '代码工程师', schedule: '6月', goal: 'FocusPilot 0.0.1',
+          desc: '将现有 8 种 Notion 风格预设主题适配到新 UI 架构，确保 AppKit 和 SwiftUI 双套色值同步。',
+          plan: '<strong>实现步骤</strong><ol style="padding-left:18px;margin:6px 0"><li>迁移 ThemeColors 到新架构</li><li>适配 SwiftUI 组件</li><li>测试 8 种主题切换</li></ol>',
+          exec: null
+        },
+        'FP-007': {
+          id: 'FP-007', title: 'PRD 文档整合', status: 'done', statusLabel: '● Done', statusClass: 'green',
+          priority: 'P1', mode: 'manual', agent: '手动完成', schedule: '—', goal: 'FocusPilot 0.0.1',
+          desc: '将分散的产品需求文档整合为统一的 PRD.md，建立文档体系和版本规划。',
+          plan: '<strong>实现步骤</strong><ol style="padding-left:18px;margin:6px 0"><li>收集各文档</li><li>统一格式</li><li>建立索引</li></ol>',
+          exec: null
+        },
+        'FP-008': {
+          id: 'FP-008', title: '配置迁移脚本', status: 'blocked', statusLabel: '● Blocked', statusClass: 'orange',
+          priority: 'P1', mode: 'auto', agent: '代码工程师', schedule: '—', goal: 'FocusPilot 0.0.1',
+          desc: '编写配置数据迁移脚本，支持从 V4.x UserDefaults 格式迁移到 V1 新数据结构。',
+          plan: null,
+          exec: null
+        },
+        'FP-009': {
+          id: 'FP-009', title: 'Anki 同步接口设计', status: 'backlog', statusLabel: '● Backlog', statusClass: 'dim',
+          priority: 'P2', mode: 'auto', agent: '代码工程师', schedule: '6月', goal: 'FocusPilot 0.0.1',
+          desc: '设计 Anki 同步接口，定义卡片数据格式转换、双向同步策略和冲突解决机制。',
+          plan: null,
+          exec: null
+        },
+        'FP-010': {
+          id: 'FP-010', title: '整理本周会议记录', status: 'todo', statusLabel: '● Todo', statusClass: 'amber',
+          priority: 'P2', mode: 'manual', agent: '手动执行', schedule: '今天', goal: '—',
+          desc: '整理本周团队会议的讨论要点、决策事项和行动项，归档到项目文档。',
+          plan: null,
+          exec: null
+        },
+        'FP-011': {
+          id: 'FP-011', title: '研究 Multica 执行模型', status: 'in_progress', statusLabel: '● In Progress', statusClass: 'blue',
+          priority: 'P1', mode: 'manual', agent: '手动执行', schedule: '今天', goal: '—',
+          desc: '深入研究 Multica 的 Agent Runtime 执行模式、Workspace 数据模型和 Task Queue 实现，为 FocusPilot 提供设计参考。',
+          plan: null,
+          exec: null
+        }
+      };
+
+      function renderFocusTaskDetail(taskId) {
+        var task = focusTaskDemoData[taskId];
+        if (!task) return;
+        var panel = document.getElementById('fpDetailPanel');
+        if (!panel) return;
+        // header: id + title + status pill
+        var idEl = panel.querySelector('div[style*="font-family:var(--mono)"]');
+        var titleEl = idEl ? idEl.nextElementSibling : null;
+        if (idEl) idEl.textContent = task.id;
+        if (titleEl) titleEl.textContent = task.title;
+        var pillEl = panel.querySelector('.pill.blue, .pill.green, .pill.amber, .pill.purple, .pill.orange, .pill.dim');
+        if (!pillEl) pillEl = panel.querySelector('span.pill[style*="font-size:11px"]');
+        if (pillEl) { pillEl.className = 'pill ' + task.statusClass; pillEl.style.fontSize = '11px'; pillEl.textContent = task.statusLabel; }
+        // agent live card
+        var liveCard = panel.children[1];
+        if (liveCard && liveCard.style.background && liveCard.style.background.indexOf('elevated') !== -1) {
+          if (task.exec) {
+            liveCard.style.display = '';
+            liveCard.innerHTML = '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><span style="width:7px;height:7px;border-radius:50%;background:var(--green);animation:pulse 2s infinite"></span><strong>' + task.exec.agent + '</strong><span style="color:var(--dim)">· ' + task.exec.status + ' · ' + task.exec.time + ' · ' + task.exec.step + '</span></div>' +
+              '<div style="font-family:var(--mono);font-size:10px;line-height:1.7;color:var(--muted);background:var(--bg);padding:6px 8px;border-radius:4px;max-height:60px;overflow-y:auto">' + task.exec.logs + '</div>' +
+              '<div style="display:flex;gap:6px;margin-top:8px"><button class="btn" style="font-size:10px;min-height:24px;padding:0 8px;color:var(--red)">停止</button><button class="btn" style="font-size:10px;min-height:24px;padding:0 8px">手动接管</button><button class="btn" style="font-size:10px;min-height:24px;padding:0 8px">Transcript</button><button class="btn" style="font-size:10px;min-height:24px;padding:0 8px">产物</button></div>';
+          } else {
+            liveCard.style.display = 'none';
+          }
+        }
+        // plan tab: description + plan
+        var planTab = document.getElementById('fp-t-plan');
+        if (planTab) {
+          var descHtml = '<div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);margin-bottom:6px">📝 任务描述</div>' +
+            '<div style="background:var(--bg);border:1px solid var(--line-soft);border-radius:var(--radius);padding:10px;font-size:12px;line-height:1.6;color:var(--muted);margin-bottom:16px">' + task.desc + '</div>';
+          if (task.plan) {
+            descHtml += '<div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);margin-bottom:6px">📋 规划文档 <span style="color:var(--green);margin-left:4px">● READY</span></div>' +
+              '<div style="background:var(--bg);border:1px solid var(--line-soft);border-radius:var(--radius);overflow:hidden">' +
+              '<div style="display:flex;justify-content:space-between;padding:6px 10px;background:var(--elevated);border-bottom:1px solid var(--line-soft);font-size:10px;color:var(--dim)"><span style="color:var(--green)">✓ plan.md</span><span><button class="btn" style="font-size:9px;min-height:20px;padding:0 6px">重新规划</button></span></div>' +
+              '<div style="padding:12px;font-size:12px;line-height:1.7;color:var(--muted)">' + task.plan + '</div></div>';
+          } else {
+            descHtml += '<div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);margin-bottom:6px">📋 规划文档 <span style="color:var(--dim);margin-left:4px">○ 未规划</span></div>' +
+              '<div style="background:var(--bg);border:1px solid var(--line-soft);border-radius:var(--radius);padding:24px;text-align:center;font-size:12px;color:var(--dim)">尚无规划文档<br><button class="btn" style="font-size:10px;min-height:24px;margin-top:8px">开始规划</button></div>';
+          }
+          planTab.innerHTML = descHtml;
+        }
+        // sidebar metadata
+        var sidebar = panel.querySelector('div[style*="width:200px"]');
+        if (sidebar) {
+          sidebar.innerHTML =
+            '<div style="margin-bottom:12px"><div style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);margin-bottom:3px">状态</div><span class="pill ' + task.statusClass + '">' + task.status.replace(/_/g, ' ') + '</span></div>' +
+            '<div style="margin-bottom:12px"><div style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);margin-bottom:3px">优先级</div><span class="pill">' + task.priority + '</span></div>' +
+            '<div style="margin-bottom:12px"><div style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);margin-bottom:3px">安排</div>' + task.schedule + '</div>' +
+            '<div style="height:1px;background:var(--line-soft);margin:10px 0"></div>' +
+            '<div style="margin-bottom:12px"><div style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);margin-bottom:3px">归属目标</div>' + task.goal + '</div>' +
+            '<div style="height:1px;background:var(--line-soft);margin:10px 0"></div>' +
+            '<div style="margin-bottom:12px"><div style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);margin-bottom:3px">执行模式</div>' + (task.mode === 'auto' ? '全自动' : '手动') + '</div>' +
+            '<div style="margin-bottom:12px"><div style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);margin-bottom:3px">Agent</div>' + task.agent + '</div>';
+        }
+      }
+
       // ===== Tasks: click row to jump to Focus =====
       function openCrewTaskInFocus(taskId) {
         showPage('focus');
+        // reset filter to 'all' so target card is visible
+        var allFilter = document.querySelector('[data-focus-filter="all"]');
+        if (allFilter) applyFocusFilter(allFilter);
+        // switch to kanban view
         var boardBtn = document.querySelector('.seg[data-scope="focusView"] button[data-target="focus-board"]');
         if (boardBtn) {
           boardBtn.closest('.seg').querySelectorAll('button').forEach(function(b) { b.classList.remove('active'); });
           boardBtn.classList.add('active');
           showPanel('focus-board');
         }
+        // find and highlight the target card
         var card = document.querySelector('.fp-card[data-task-id="' + taskId + '"]');
         if (card) {
           card.scrollIntoView({ behavior: 'smooth', block: 'center' });
           card.style.outline = '2px solid var(--accent)';
           card.style.outlineOffset = '2px';
           setTimeout(function() { card.style.outline = ''; card.style.outlineOffset = ''; }, 2000);
-          var cardId = card.querySelector('[style*="font-family:var(--mono)"]');
-          var cardTitle = card.querySelector('.task-title');
-          if (cardId && cardTitle) {
-            var header = document.getElementById('fpDetailPanel');
-            if (header) {
-              var idEl = header.querySelector('div[style*="font-family:var(--mono)"]');
-              var titleEl = idEl ? idEl.nextElementSibling : null;
-              if (idEl) idEl.textContent = cardId.textContent.trim();
-              if (titleEl) titleEl.textContent = cardTitle.textContent.trim();
-            }
-          }
         }
+        // render detail panel with task-specific data
+        renderFocusTaskDetail(taskId);
         openTaskDetail();
       }
       document.querySelectorAll(".crew-task-row[data-focus-task-id]").forEach(function(row) {

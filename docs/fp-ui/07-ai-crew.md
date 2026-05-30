@@ -154,7 +154,7 @@ AICrew 是 AI Agent 团队的**管理中心**。用户面对的不是 Agent、MC
 
 Tasks 展示与该成员关联的 Focus 任务，按状态分组（Multica 紧凑列表风格）。每行有 `data-focus-task-id`，点击行标题直接跳转到 Focus 看板并打开对应 Task 详情面板。
 
-跳转行为：`openCrewTaskInFocus(taskId)` → 切换到 Focus 页 → 激活看板视图 → 定位 `[data-task-id]` 卡片 → 高亮闪烁 2s → 同步详情面板标题/编号 → 打开详情。
+跳转行为：`openCrewTaskInFocus(taskId)` → 切换到 Focus 页 → 重置筛选为"全部"（确保卡片可见）→ 激活看板视图 → 定位 `[data-task-id]` 卡片 → 高亮闪烁 2s → 调用 `renderFocusTaskDetail(taskId)` 渲染完整详情（编号、标题、状态、描述、规划、Agent 执行卡、侧边栏元数据）→ 打开详情面板。详情数据来源于 `focusTaskDemoData` 对象（11 个 FP-* 任务的 mock 数据）。
 
 ```
 ┌─ 关联任务                     点击跳转 Focus Task 详情     ─┐
@@ -223,7 +223,7 @@ Runtime 工作区顶部三个 Tab：`执行器 / 配置 / 日志`。
 
 执行器是 Runtime 详情的默认页。远程未连接节点显示空状态，本机节点显示完整详情。
 
-**空状态实现**：三个 Tab（执行器 / 配置 / 日志）各自采用双 DOM 面板（`*-local` + `*-empty`），通过 `display` 切换，不使用 `innerHTML` 替换，避免破坏子 Tab 事件绑定。
+**空状态实现**：三个 Tab（执行器 / 配置 / 日志）各自采用双 DOM 面板（`*-local` + `*-empty`），通过 `display` 切换，不使用 `innerHTML` 替换，避免破坏子 Tab 事件绑定。统一由 `setRuntimeHostAvailability(isLocal)` 函数管理三组面板的显示/隐藏。
 
 **远程未连接空状态**：
 
