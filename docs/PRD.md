@@ -307,7 +307,7 @@ Crew 是 FocusPilot 的核心交互概念——**用户不直接面对 Agent/MCP
 | 属性 | 说明 |
 |------|------|
 | Crew 成员 | 哪个数字成员执行 |
-| Runtime / Host | 由哪台本机或远程电脑上的哪个执行器执行 |
+| Runtime / Host | 由哪台本机或远程节点上的哪个执行器执行 |
 | Focus Project / Task | 对应项目和 Task，支持回跳定位 |
 | Skill | 本次实际使用或主要关联的 Skill |
 | status | running / success / failed / cancelled |
@@ -342,7 +342,7 @@ Crew 是 FocusPilot 的核心交互概念——**用户不直接面对 Agent/MCP
 侧边栏分"智能体成员"和"Runtime"两个 Tab 切换。操作按钮放在各 Tab 列表下方：
 
 - 智能体成员 Tab：展示团队成员列表（状态点、角色名、Runtime 绑定、部署位置）；列表下方"+ 新建智能体"按钮和模板入口
-- Runtime Tab：按本机 / 远程电脑 / 云端分组展示执行节点；列表下方"+ 添加执行节点"按钮
+- Runtime Tab：按本机 / 远程节点 / 云端分组展示执行节点；列表下方"+ 添加执行节点"按钮
 
 点击智能体成员时，工作区切到该成员详情；点击 Runtime 中的机器时，工作区切到该执行节点详情。
 
@@ -376,7 +376,7 @@ Runtime 背后由 daemon 进程负责自动扫描本机 CLI、读取环境配置
 **运行配置边界**：
 
 - 本机配置：V1 自动检测本机所有可见 Runtime、CLI 版本、daemon 心跳、执行器、Env key、Args、MCP 配置摘要和工作目录摘要。
-- 远程电脑：不从本机扫描远程磁盘，只展示远程 daemon 主动上报、用户手动添加或历史连接留下的 Runtime 信息。
+- 远程节点：不从本机扫描远程磁盘，只展示远程 daemon 主动上报、用户手动添加或历史连接留下的 Runtime 信息。
 - 云端 Runtime：V1 只保留分组和空状态，不提供真实执行。
 - secret value 不在列表、记录和远程上报中明文展示；只展示 key、key count、redacted 状态和授权状态。
 
@@ -608,7 +608,7 @@ Runtime Tab：
 │ 本机                             │
 │ 🟢 MacBook-Pro-10.local     5   │
 │                                  │
-│ 远程电脑                         │
+│ 远程节点                         │
 │ 🔴 remote-dev-01            0   │
 │                                  │
 │ [+ 添加执行节点]                 │
@@ -1118,7 +1118,7 @@ make full-install   # Swift App + Engine 一起安装
 | Engine | Python Agent Engine，后台服务进程 |
 | Crew | 数字团队，用户管理的 Agent 角色集合 |
 | 智能体成员 | 一个配置好的 Agent 角色（如"代码工程师"），面向用户的数字团队成员 |
-| 执行节点 | Runtime Host，承载执行器的本机、远程电脑或云端机器 |
+| 执行节点 | Runtime Host，承载执行器的本机、远程节点或云端机器 |
 | crewState | AICrew 页面统一状态对象，驱动侧边栏选中、工作区 Tab 切换和面包屑同步 |
 | MCP Host | Agent 编排器，通过 MCP 协议调度 AI 工具 |
 | Skill | 任务执行模板，定义如何将 Task 转化为 Agent 指令 |
