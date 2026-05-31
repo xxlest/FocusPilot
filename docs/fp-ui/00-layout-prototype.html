@@ -860,6 +860,51 @@
         padding: 16px 18px;
         border-bottom: 1px solid var(--line-soft);
       }
+      .crew-bar {
+        background: var(--accent); border-radius: 3px 3px 0 0; position: relative; cursor: default; transition: opacity .15s;
+      }
+      .crew-bar:hover { opacity: 1 !important; }
+      .crew-bar.weekend { opacity: .45; }
+      .crew-bar:not(.weekend) { opacity: .75; }
+      .crew-bar-val {
+        position: absolute; top: -14px; left: 50%; transform: translateX(-50%);
+        font-size: 9px; color: var(--dim); opacity: 0; transition: opacity .15s;
+      }
+      .crew-bar:hover .crew-bar-val { opacity: 1; }
+
+      .modal-overlay {
+        position: fixed; inset: 0; background: rgba(0,0,0,.55); z-index: 9999;
+        display: flex; align-items: center; justify-content: center;
+      }
+      .modal-overlay[hidden] { display: none; }
+      .modal-box {
+        background: var(--card); border-radius: 10px; width: 780px; max-height: 80vh;
+        display: flex; flex-direction: column; box-shadow: 0 16px 48px rgba(0,0,0,.4);
+      }
+      .modal-head {
+        display: flex; align-items: center; gap: 10px; padding: 14px 18px;
+        border-bottom: 1px solid var(--line-soft); flex-shrink: 0;
+      }
+      .modal-head h3 { margin: 0; font-size: 14px; }
+      .modal-head .close { margin-left: auto; cursor: pointer; font-size: 18px; color: var(--dim); background: none; border: none; }
+      .modal-toolbar {
+        display: flex; align-items: center; gap: 8px; padding: 10px 18px;
+        border-bottom: 1px solid var(--line-soft); flex-shrink: 0;
+      }
+      .modal-toolbar input { flex: 1; }
+      .modal-body { overflow-y: auto; padding: 0; flex: 1; }
+      .modal-foot { padding: 8px 18px; font-size: 11px; color: var(--dim); border-top: 1px solid var(--line-soft); flex-shrink: 0; }
+      .log-row { display: flex; gap: 10px; padding: 6px 18px; font-size: 12px; border-bottom: 1px solid var(--line-soft); }
+      .log-row:hover { background: var(--hover); }
+      .log-ts { color: var(--dim); font-family: var(--mono); font-size: 11px; flex-shrink: 0; width: 90px; }
+      .log-level { flex-shrink: 0; width: 36px; font-size: 10px; font-weight: 600; text-align: center; border-radius: 3px; padding: 1px 4px; }
+      .log-level.info { background: var(--accent); color: #fff; }
+      .log-level.warn { background: var(--amber); color: #000; }
+      .log-level.error { background: var(--red); color: #fff; }
+      .log-level.debug { background: var(--line); color: var(--dim); }
+      .log-msg { flex: 1; }
+      .log-param { color: var(--dim); font-size: 11px; }
+
       .crew-avatar {
         width: 46px;
         height: 46px;
@@ -4370,7 +4415,7 @@ FocusPilot/
             </div>
           </header>
 
-          <!-- ===== 智能体：动态 ===== -->
+          <!-- ===== 智能体：概览 ===== -->
           <div class="work panel active" id="crew-activity">
             <div class="card">
               <div class="crew-detail-header">
@@ -4390,16 +4435,21 @@ FocusPilot/
               </div>
               <div class="crew-section">
                 <div class="crew-section-title"><h3>7 天活动</h3><span class="pill">趋势</span></div>
-                <div style="display:flex;align-items:flex-end;gap:4px;height:48px;padding:0 4px">
-                  <div style="flex:1;background:var(--accent);border-radius:3px 3px 0 0;height:60%;opacity:.7"></div>
-                  <div style="flex:1;background:var(--accent);border-radius:3px 3px 0 0;height:40%;opacity:.7"></div>
-                  <div style="flex:1;background:var(--accent);border-radius:3px 3px 0 0;height:80%;opacity:.7"></div>
-                  <div style="flex:1;background:var(--accent);border-radius:3px 3px 0 0;height:30%;opacity:.7"></div>
-                  <div style="flex:1;background:var(--accent);border-radius:3px 3px 0 0;height:100%;opacity:.9"></div>
-                  <div style="flex:1;background:var(--accent);border-radius:3px 3px 0 0;height:70%;opacity:.7"></div>
-                  <div style="flex:1;background:var(--accent);border-radius:3px 3px 0 0;height:20%;opacity:.5"></div>
+                <div style="display:flex;align-items:flex-end;position:relative">
+                  <div style="position:absolute;left:0;top:0;bottom:20px;width:28px;display:flex;flex-direction:column;justify-content:space-between;font-size:9px;color:var(--dim);text-align:right;padding-right:6px">
+                    <span>6</span><span>3</span><span>0</span>
+                  </div>
+                  <div style="display:flex;align-items:flex-end;gap:6px;height:64px;padding:0 4px;margin-left:28px;flex:1">
+                    <div class="crew-bar" style="flex:1;height:50%" title="周一: 3 次"><span class="crew-bar-val">3</span></div>
+                    <div class="crew-bar" style="flex:1;height:33%" title="周二: 2 次"><span class="crew-bar-val">2</span></div>
+                    <div class="crew-bar" style="flex:1;height:67%" title="周三: 4 次"><span class="crew-bar-val">4</span></div>
+                    <div class="crew-bar" style="flex:1;height:17%" title="周四: 1 次"><span class="crew-bar-val">1</span></div>
+                    <div class="crew-bar" style="flex:1;height:100%" title="周五: 6 次"><span class="crew-bar-val">6</span></div>
+                    <div class="crew-bar weekend" style="flex:1;height:50%" title="周六: 3 次"><span class="crew-bar-val">3</span></div>
+                    <div class="crew-bar weekend" style="flex:1;height:17%" title="周日: 1 次"><span class="crew-bar-val">1</span></div>
+                  </div>
                 </div>
-                <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--dim);margin-top:4px;padding:0 4px">
+                <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--dim);margin-top:4px;padding:0 4px;margin-left:28px">
                   <span>周一</span><span>周二</span><span>周三</span><span>周四</span><span>周五</span><span>周六</span><span>周日</span>
                 </div>
               </div>
@@ -4413,17 +4463,17 @@ FocusPilot/
                   <div class="runtime-option">
                     <div class="runtime-logo">✓</div>
                     <div><strong>FP-001 数据模型设计</strong><span class="subline">49 分钟前 · 7m18s · dev-story</span></div>
-                    <button class="btn">查看记录</button>
+                    <button class="btn" onclick="openCrewRunModal('FP-001 数据模型设计')">查看记录</button>
                   </div>
                   <div class="runtime-option">
                     <div class="runtime-logo">✓</div>
                     <div><strong>FP-007 PRD 文档整合</strong><span class="subline">52 分钟前 · 5m51s · research</span></div>
-                    <button class="btn">查看记录</button>
+                    <button class="btn" onclick="openCrewRunModal('FP-007 PRD 文档整合')">查看记录</button>
                   </div>
                   <div class="runtime-option">
                     <div class="runtime-logo">✓</div>
                     <div><strong>FP-004 Terminal 手动执行模式</strong><span class="subline">1 小时前 · 1m01s · quick-dev</span></div>
-                    <button class="btn">查看记录</button>
+                    <button class="btn" onclick="openCrewRunModal('FP-004 Terminal 手动执行模式')">查看记录</button>
                   </div>
                 </div>
               </div>
@@ -4627,7 +4677,7 @@ FocusPilot/
                       <span class="subline" id="crew-rt-subline">5 个执行器 · 5 个在线 · 全部空闲 · daemon v0.3.11 · 最后心跳 12s 前</span>
                     </div>
                     <span class="pill green" id="crew-rt-status-pill" style="margin-left:auto">本地 · 这台机器</span>
-                    <button class="btn" onclick="document.getElementById('crew-rt-logs-section').scrollIntoView({behavior:'smooth'})">View logs</button>
+                    <button class="btn" onclick="openDaemonLogsModal()">View logs</button>
                     <button class="btn" id="crew-rt-restart-btn" onclick="crewRuntimeRestart()">Restart</button>
                     <button class="btn" id="crew-rt-stop-btn" style="color:var(--red)" onclick="crewRuntimeStop()">Stop</button>
                   </div>
@@ -4680,24 +4730,69 @@ FocusPilot/
             </div>
 
 
-            <!-- ===== Runtime：Daemon 日志 ===== -->
-            <div id="crew-rt-logs-section" style="margin-top:18px">
-            <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);margin-bottom:8px;padding-top:14px;border-top:1px solid var(--line-soft)">Daemon 日志</div>
-            <div class="card">
-              <div class="card-head"><h3>Daemon 日志</h3><button class="btn">刷新</button></div>
-              <div class="card-body crew-log">
-                <div class="crew-log-item"><strong>daemon heartbeat</strong><span class="subline">12s 前 · all executors idle</span></div>
-                <div class="crew-log-item"><strong>Claude config loaded</strong><span class="subline">2m 前 · 2 env keys redacted</span></div>
-                <div class="crew-log-item"><strong>Codex registered</strong><span class="subline">18m 前 · CLI 0.3.11</span></div>
-                <div class="crew-log-item"><strong>Gemini detected</strong><span class="subline">20m 前 · /usr/local/bin/gemini · 1.2.0</span></div>
-                <div class="crew-log-item"><strong>Hermes detected</strong><span class="subline">20m 前 · /usr/local/bin/hermes · 0.8.3</span></div>
-                <div class="crew-log-item"><strong>Cursor Agent detected</strong><span class="subline">21m 前 · via cursor extension</span></div>
-                <div class="crew-log-item"><strong>daemon started</strong><span class="subline">22m 前 · pid 41882 · macOS 15.2</span></div>
-              </div>
-            </div>
-            </div>
           </div>
         </section>
+
+        <!-- ===== Daemon Logs Modal ===== -->
+        <div class="modal-overlay" id="daemon-logs-modal" hidden onclick="if(event.target===this)closeDaemonLogsModal()">
+          <div class="modal-box">
+            <div class="modal-head">
+              <span style="font-size:16px">📋</span>
+              <h3>Local daemon logs</h3>
+              <span class="pill green">Running · 6s · 5 runtimes</span>
+              <button class="close" onclick="closeDaemonLogsModal()">&times;</button>
+            </div>
+            <div class="modal-toolbar">
+              <input class="search" placeholder="Search..." style="max-width:220px;height:28px;font-size:12px" />
+              <span class="log-level debug">DEBUG 190</span>
+              <span class="log-level info">INFO 14</span>
+              <span class="log-level warn">WARN 0</span>
+              <span class="log-level error">ERROR 0</span>
+              <span style="margin-left:auto;display:flex;gap:6px">
+                <button class="btn" style="font-size:11px">Copy</button>
+                <button class="btn" style="font-size:11px">Clear</button>
+              </span>
+            </div>
+            <div class="modal-body">
+              <div class="log-row"><span class="log-ts">10:59:49.445</span><span class="log-level info">INFO</span><span class="log-msg">poll loop stopping, waiting for in-flight tasks <span class="log-param">max_wait=30s</span></span></div>
+              <div class="log-row"><span class="log-ts">10:59:49.643</span><span class="log-level info">INFO</span><span class="log-msg">deregistered runtimes <span class="log-param">count=5</span></span></div>
+              <div class="log-row"><span class="log-ts">10:59:51.208</span><span class="log-level info">INFO</span><span class="log-msg">starting daemon <span class="log-param">profile=desktop-api agents=[claude codex hermes gemini curs…]</span></span></div>
+              <div class="log-row"><span class="log-ts">10:59:51.208</span><span class="log-level info">INFO</span><span class="log-msg">authenticated <span class="log-param">component=daemon</span></span></div>
+              <div class="log-row"><span class="log-ts">10:59:54.310</span><span class="log-level info">INFO</span><span class="log-msg">registered <span class="log-param">provider=cursor runtime_id=62aab753… workspace_id=4fcb1c58…</span></span></div>
+              <div class="log-row" style="text-align:center;color:var(--dim);font-size:11px;padding:8px 18px;cursor:pointer">··· 4 more "registered runtime" — click to expand ···</div>
+              <div class="log-row"><span class="log-ts">10:59:56.181</span><span class="log-level info">INFO</span><span class="log-msg">watching workspace <span class="log-param">repos=0 runtimes=5 name=test123</span></span></div>
+              <div class="log-row"><span class="log-ts">10:59:56.181</span><span class="log-level info">INFO</span><span class="log-msg">auto-update: skipped (managed by Desktop) <span class="log-param">component=daemon</span></span></div>
+              <div class="log-row"><span class="log-ts">10:59:56.181</span><span class="log-level info">INFO</span><span class="log-msg">gc: artifact_patterns=[node_modules .next .turbo] <span class="log-param">artifact_ttl=12h orphan_ttl=72h ttl=24h interval=…</span></span></div>
+              <div class="log-row"><span class="log-ts">10:59:56.181</span><span class="log-level info">INFO</span><span class="log-msg">health server listening <span class="log-param">addr=127.0.0.1:19681 component=daemon</span></span></div>
+              <div class="log-row"><span class="log-ts">10:59:57.934</span><span class="log-level info">INFO</span><span class="log-msg">task wakeup websocket connected <span class="log-param">runtimes=5 component=daemon</span></span></div>
+            </div>
+            <div class="modal-foot">Showing 14 of 204</div>
+          </div>
+        </div>
+
+        <!-- ===== CrewRun Record Modal ===== -->
+        <div class="modal-overlay" id="crew-run-modal" hidden onclick="if(event.target===this)closeCrewRunModal()">
+          <div class="modal-box">
+            <div class="modal-head">
+              <h3 id="crew-run-modal-title">FP-001 数据模型设计</h3>
+              <span class="pill green">已完成</span>
+              <button class="close" onclick="closeCrewRunModal()">&times;</button>
+            </div>
+            <div style="padding:10px 18px;font-size:12px;color:var(--dim);border-bottom:1px solid var(--line-soft)">
+              Claude Code · Claude (MacBook-Pro-10.local) · 7m18s · 69 次工具调用 / 145 个事件
+            </div>
+            <div class="modal-body">
+              <div class="log-row"><span class="log-ts">14:23:01</span><span class="log-level info">INFO</span><span class="log-msg">Task started <span class="log-param">skill=dev-story agent=代码工程师</span></span></div>
+              <div class="log-row"><span class="log-ts">14:23:05</span><span class="log-level debug">DEBUG</span><span class="log-msg">Read docs/PRD.md <span class="log-param">#1</span></span></div>
+              <div class="log-row"><span class="log-ts">14:24:12</span><span class="log-level debug">DEBUG</span><span class="log-msg">Read docs/Architecture.md <span class="log-param">#2</span></span></div>
+              <div class="log-row"><span class="log-ts">14:25:33</span><span class="log-level info">INFO</span><span class="log-msg">Agent: designing core data models <span class="log-param">#15</span></span></div>
+              <div class="log-row"><span class="log-ts">14:27:44</span><span class="log-level debug">DEBUG</span><span class="log-msg">Edit FocusPilot/Models/Models.swift <span class="log-param">#38</span></span></div>
+              <div class="log-row"><span class="log-ts">14:29:18</span><span class="log-level debug">DEBUG</span><span class="log-msg">Bash: swift build <span class="log-param">#52</span></span></div>
+              <div class="log-row"><span class="log-ts">14:30:19</span><span class="log-level info">INFO</span><span class="log-msg">Task completed successfully <span class="log-param">duration=7m18s tools=69</span></span></div>
+            </div>
+            <div class="modal-foot">7 events shown</div>
+          </div>
+        </div>
 
         <section class="page" data-page="settings">
           <header class="topbar">
@@ -5092,13 +5187,20 @@ FocusPilot/
         renderRuntimeControlState();
       }
 
+      function openDaemonLogsModal() { document.getElementById('daemon-logs-modal').hidden = false; }
+      function closeDaemonLogsModal() { document.getElementById('daemon-logs-modal').hidden = true; }
+      function openCrewRunModal(title) {
+        var t = document.getElementById('crew-run-modal-title');
+        if (t) t.textContent = title || '';
+        document.getElementById('crew-run-modal').hidden = false;
+      }
+      function closeCrewRunModal() { document.getElementById('crew-run-modal').hidden = true; }
+
       function setRuntimeHostAvailability(isLocal) {
         var detailEl = document.getElementById('crew-runtime-detail');
         var emptyEl = document.getElementById('crew-runtime-empty');
-        var logsEl = document.getElementById('crew-rt-logs-section');
         if (detailEl) detailEl.style.display = isLocal ? '' : 'none';
         if (emptyEl) emptyEl.style.display = isLocal ? 'none' : '';
-        if (logsEl) logsEl.style.display = isLocal ? '' : 'none';
       }
 
       function renderCrewView() {
@@ -5110,7 +5212,7 @@ FocusPilot/
         if (crewState.objectType === 'agent') {
           bc.textContent = 'AICrew / 智能体成员 / 代码工程师';
           title.textContent = '代码工程师';
-          seg.innerHTML = '<button data-target="crew-activity">动态</button>' +
+          seg.innerHTML = '<button data-target="crew-activity">概览</button>' +
             '<button data-target="crew-tasks">Tasks</button>' +
             '<button data-target="crew-config">配置</button>';
           seg.querySelectorAll('button').forEach(function(btn) {
