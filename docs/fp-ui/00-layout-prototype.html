@@ -4627,7 +4627,7 @@ FocusPilot/
                       <span class="subline">5 个运行时 · 5 个在线 · 全部空闲 · 0.3.11 · daemon 019e6da2</span>
                     </div>
                     <span class="pill green" style="margin-left:auto">本地 · 这台机器</span>
-                    <button class="btn" onclick="crewState.runtimeTab='crew-runtime-logs';renderCrewView()">View logs</button>
+                    <button class="btn" onclick="document.getElementById('crew-rt-logs-local').scrollIntoView({behavior:'smooth'})">View logs</button>
                     <button class="btn">Restart</button>
                     <button class="btn" style="color:var(--red)">Stop</button>
                   </div>
@@ -4713,7 +4713,7 @@ FocusPilot/
                       </div>
                     </div>
                     <div class="card" style="box-shadow:none">
-                      <div class="card-head"><h3>最近日志</h3><button class="btn" onclick="crewState.runtimeTab='crew-runtime-logs';renderCrewView()">View logs</button></div>
+                      <div class="card-head"><h3>最近日志</h3><button class="btn" onclick="document.getElementById('crew-rt-logs-local').scrollIntoView({behavior:'smooth'})">View logs</button></div>
                       <div class="card-body crew-log">
                         <div class="crew-log-item"><strong>daemon heartbeat</strong><span class="subline">12s 前 · all executors idle</span></div>
                         <div class="crew-log-item"><strong>Claude config loaded</strong><span class="subline">2m 前 · 2 env keys redacted</span></div>
@@ -4724,12 +4724,11 @@ FocusPilot/
                 </div>
               </div>
             </div>
-          </div>
 
-          <!-- ===== Runtime：配置 ===== -->
-          <div class="work panel" id="crew-runtime-config">
+            <!-- ===== Runtime：配置（内联） ===== -->
             <div id="crew-rt-config-empty" style="display:none;text-align:center;padding:48px 24px"><div class="card" style="padding:48px 24px"><div style="font-size:36px;margin-bottom:12px;opacity:.4">⚙️</div><p style="color:var(--dim);font-size:13px">远程节点尚未连接，暂无配置信息</p></div></div>
-            <div id="crew-rt-config-local">
+            <div id="crew-rt-config-local" style="margin-top:18px">
+            <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);margin-bottom:8px;padding-top:14px;border-top:1px solid var(--line-soft)">节点配置</div>
             <div class="seg" id="crew-rt-config-sub-tabs" data-scope="crewRtConfigSub" style="margin-bottom:12px;justify-content:flex-start">
               <button class="active" data-crew-rt-config-sub="rt-basic">基础信息</button><button data-crew-rt-config-sub="rt-executors">执行器</button><button data-crew-rt-config-sub="rt-env">环境变量</button><button data-crew-rt-config-sub="rt-args">自定义参数</button>
             </div>
@@ -4783,12 +4782,11 @@ FocusPilot/
               </div>
             </div>
             </div>
-          </div>
 
-          <!-- ===== Runtime：日志 ===== -->
-          <div class="work panel" id="crew-runtime-logs">
+            <!-- ===== Runtime：日志（内联） ===== -->
             <div id="crew-rt-logs-empty" style="display:none;text-align:center;padding:48px 24px"><div class="card" style="padding:48px 24px"><div style="font-size:36px;margin-bottom:12px;opacity:.4">📋</div><p style="color:var(--dim);font-size:13px">远程节点尚未连接，暂无日志</p></div></div>
-            <div id="crew-rt-logs-local">
+            <div id="crew-rt-logs-local" style="margin-top:18px">
+            <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);margin-bottom:8px;padding-top:14px;border-top:1px solid var(--line-soft)">Daemon 日志</div>
             <div class="card">
               <div class="card-head"><h3>Daemon 日志</h3><button class="btn">刷新</button></div>
               <div class="card-body crew-log">
@@ -5151,7 +5149,7 @@ FocusPilot/
       };
       var crewRuntimeNames = { macbook: 'MacBook-Pro-10.local', remote: 'remote-dev-01' };
       var crewAgentPanels = ['crew-activity', 'crew-tasks', 'crew-config'];
-      var crewRuntimePanels = ['crew-runtime', 'crew-runtime-config', 'crew-runtime-logs'];
+      var crewRuntimePanels = ['crew-runtime'];
 
       function setRuntimeHostAvailability(isLocal) {
         var pairs = [
@@ -5197,22 +5195,12 @@ FocusPilot/
           var hostName = crewRuntimeNames[crewState.selectedRuntimeHostId] || crewState.selectedRuntimeHostId;
           bc.textContent = 'AICrew / Runtime / ' + hostName;
           title.textContent = hostName;
-          seg.innerHTML = '<button data-target="crew-runtime">执行器</button>' +
-            '<button data-target="crew-runtime-config">配置</button>' +
-            '<button data-target="crew-runtime-logs">日志</button>';
-          seg.querySelectorAll('button').forEach(function(btn) {
-            btn.classList.toggle('active', btn.dataset.target === crewState.runtimeTab);
-            btn.addEventListener('click', function() {
-              crewState.runtimeTab = this.dataset.target;
-              seg.querySelectorAll('button').forEach(function(b) { b.classList.toggle('active', b.dataset.target === crewState.runtimeTab); });
-              allPanels.forEach(function(id) { var el = document.getElementById(id); if (el) el.classList.toggle('active', id === crewState.runtimeTab); });
-            });
-          });
-          allPanels.forEach(function(id) { var el = document.getElementById(id); if (el) el.classList.toggle('active', id === crewState.runtimeTab); });
+          seg.innerHTML = '';
+          allPanels.forEach(function(id) { var el = document.getElementById(id); if (el) el.classList.toggle('active', id === 'crew-runtime'); });
           // restore runtime config sub-tab
           document.querySelectorAll("[data-crew-rt-config-sub]").forEach(function(b) { b.classList.toggle("active", b.dataset.crewRtConfigSub === crewState.runtimeConfigTab); });
           document.querySelectorAll("[data-crew-rt-config-panel]").forEach(function(p) { p.classList.toggle("active", p.dataset.crewRtConfigPanel === crewState.runtimeConfigTab); });
-          // runtime detail vs empty state (all 3 tabs)
+          // runtime detail vs empty state
           setRuntimeHostAvailability(crewState.selectedRuntimeHostId === 'macbook');
         }
       }
