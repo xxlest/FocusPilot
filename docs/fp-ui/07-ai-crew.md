@@ -244,7 +244,7 @@ Runtime 页面顶部信息栏（CSS class `crew-detail-header`），展示节点
 ┌─ AICrew / Runtime / MacBook-Pro-10.local ──────────────┐
 ├─ Runtime Header ───────────────────────────────────────┤
 │ MacBook-Pro-10.local                                    │
-│ 5 个运行时 · 5 个在线 · 全部空闲                         │
+│ 5 个执行器 · 5 个在线 · 全部空闲                         │
 │ daemon v0.3.11 · 最后心跳 12s 前                        │
 │ [本地·这台机器]     [View logs] [Restart] [Stop]         │
 ├─ 执行器表格 ───────────────────────────────────────────┤
@@ -348,7 +348,7 @@ crewState = {
   selectedAgentId: 'engineer',        // 当前选中的成员 ID
   selectedRuntimeHostId: 'macbook',   // 当前选中的 Runtime Host ID
   agentTab: 'crew-activity',          // 成员工作区当前 Tab
-  runtimeTab: 'crew-runtime'          // Runtime 工作区当前 Tab
+  runtimeStopped: false               // Runtime daemon 是否已停止
 }
 ```
 
@@ -358,9 +358,9 @@ crewState = {
 |------|----------|----------|
 | 侧边栏点击成员 | `objectType='agent'`，`agentTab` 重置为 `crew-activity` | 面包屑更新、顶部 Tab 切为 `动态/Tasks/配置`、工作面板切换 |
 | 侧边栏 Tab 切到 `智能体成员` | `objectType='agent'`，恢复上次选中的成员 | 同上 |
-| 侧边栏点击 Runtime 机器 | `objectType='runtime'`，`runtimeTab` 重置为 `crew-runtime` | 面包屑更新、顶部 Tab 清空（单页无 Tab）、工作面板切换 |
+| 侧边栏点击 Runtime 机器 | `objectType='runtime'` | 面包屑更新、顶部 Tab 清空（单页无 Tab）、工作面板切换 |
 | 侧边栏 Tab 切到 `Runtime` | `objectType='runtime'`，自动选中列表第一台机器 | 同上 |
-| 工作区 Tab 切换 | 更新 `agentTab` 或 `runtimeTab` | 工作面板切换，其他不变 |
+| 工作区 Tab 切换（仅 Agent） | 更新 `agentTab` | 工作面板切换，其他不变 |
 
 面包屑格式：
 
@@ -635,7 +635,7 @@ CrewRunEvent:
 | Crew 成员 | 一个面向用户的 AI 角色配置 |
 | Runtime | 成员背后的执行环境，如本机 Claude Code daemon 或云端 Research runtime |
 | Runtime 绑定 | 把 Crew 成员连接到某个可用 Runtime 的配置关系 |
-| 执行器 | 一台机器上的具体 CLI 工具（Claude / Codex / Cursor / Gemini / Hermes），承载健康度、负载和费用 |
+| 执行器 | 一台机器上的具体 CLI 工具（Claude / Codex / Cursor / Gemini / Hermes），承载健康度、绑定成员和工作负载 |
 | Agent 配置 | Instructions、Skills、Env、Args、MCP 等影响成员执行行为的高级配置，通过配置 Tab 的子 Tab 管理 |
 | MCP Server | 成员可调用的工具能力 |
 | 常驻职责 | 按事件、时间或手动入口触发的自动任务 |

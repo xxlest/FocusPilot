@@ -615,7 +615,7 @@ Runtime Tab：
 └──────────────────────────────────┘
 ```
 
-选中智能体成员时，工作区切到该成员详情（动态 / Tasks / 配置三 Tab）；选中 Runtime 执行节点时，工作区切到该节点详情（执行器 / 配置 / 日志三 Tab）。
+选中智能体成员时，工作区切到该成员详情（动态 / Tasks / 配置三 Tab）；选中 Runtime 执行节点时，工作区切到该节点单页监控（Runtime Header / 执行器表格 / Daemon 日志）。
 
 ### 3.8 Quick Panel（升级）
 
@@ -989,7 +989,7 @@ FocusPilot.app
 | **两阶段模型** | planning → ready → executing → done 状态流转 | 容器级递归自动执行 |
 | **四模式** | Agile / Flow / Lite / Free 创建 + 展示 + 规划引导 | 模式切换迁移 |
 | **MCP Host** | 单 Agent 调度（claude-code） | 多 Agent 并行、自动选择 |
-| **Crew 数字团队** | 预置"代码工程师"1 个成员 + 侧边栏智能体成员/Runtime 双 Tab + 成员工作区三 Tab（动态/Tasks/配置）+ Runtime 工作区三 Tab（执行器/配置/日志）+ crewState 统一状态管理 + MCP 状态 + 常驻职责配置 UI | 云端成员执行、多 Agent 自动选择、后台常驻调度 |
+| **Crew 数字团队** | 预置"代码工程师"1 个成员 + 侧边栏智能体成员/Runtime 双 Tab + 成员工作区三 Tab（动态/Tasks/配置）+ Runtime 单页监控（Header/执行器表格/Daemon 日志）+ crewState 统一状态管理 + MCP 状态 + 常驻职责配置 UI | 云端成员执行、多 Agent 自动选择、后台常驻调度 |
 | **任务调度** | 即时执行 + 执行记录（SQLite） | 定时/事件触发 |
 | **知识管道** | _materials/ + _reports/ 增量整合 + _kb/ 提炼 + 一键同步 | auto_sync 自动加工 |
 | **Anki 同步** | KB 卡片 → AnkiConnect API 推送 | AnkiWeb 云端同步 |

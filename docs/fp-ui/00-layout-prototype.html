@@ -4624,7 +4624,7 @@ FocusPilot/
                   <div class="crew-detail-header" id="crew-rt-header" style="padding:0 0 16px;border-bottom:1px solid var(--line-soft)">
                     <div class="crew-title">
                       <h2 id="crew-runtime-host-title">MacBook-Pro-10.local</h2>
-                      <span class="subline">5 个运行时 · 5 个在线 · 全部空闲 · daemon v0.3.11 · 最后心跳 12s 前</span>
+                      <span class="subline" id="crew-rt-subline">5 个执行器 · 5 个在线 · 全部空闲 · daemon v0.3.11 · 最后心跳 12s 前</span>
                     </div>
                     <span class="pill green" id="crew-rt-status-pill" style="margin-left:auto">本地 · 这台机器</span>
                     <button class="btn" onclick="document.getElementById('crew-rt-logs-section').scrollIntoView({behavior:'smooth'})">View logs</button>
@@ -5039,13 +5039,27 @@ FocusPilot/
         selectedAgentId: 'engineer',
         selectedRuntimeHostId: 'macbook',
         agentTab: 'crew-activity',
-        runtimeTab: 'crew-runtime',
         agentConfigTab: 'agent-basic',
         runtimeStopped: false
       };
       var crewRuntimeNames = { macbook: 'MacBook-Pro-10.local', remote: 'remote-dev-01' };
       var crewAgentPanels = ['crew-activity', 'crew-tasks', 'crew-config'];
       var crewRuntimePanels = ['crew-runtime'];
+
+      function crewRuntimeSetTableState(online) {
+        var rows = document.querySelectorAll('#crew-runtime-detail .runtime-table tbody tr');
+        rows.forEach(function(row) {
+          var cells = row.querySelectorAll('td');
+          if (cells.length >= 4) {
+            cells[1].innerHTML = online ? '<span class="pill green">在线</span>' : '<span class="pill">已停止</span>';
+            cells[3].textContent = online ? '空闲' : '—';
+          }
+        });
+        var sub = document.getElementById('crew-rt-subline');
+        if (sub) sub.textContent = online
+          ? '5 个执行器 · 5 个在线 · 全部空闲 · daemon v0.3.11 · 最后心跳 12s 前'
+          : 'daemon 已停止 · 执行器不可用';
+      }
 
       function crewRuntimeRestart() {
         var pill = document.getElementById('crew-rt-status-pill');
@@ -5055,6 +5069,7 @@ FocusPilot/
           if (pill) { pill.textContent = '本地 · 这台机器'; pill.className = 'pill green'; }
           var btn = document.getElementById('crew-rt-stop-btn');
           if (btn) { btn.textContent = 'Stop'; btn.style.color = 'var(--red)'; btn.onclick = crewRuntimeStop; }
+          crewRuntimeSetTableState(true);
         }, 1500);
       }
 
@@ -5065,6 +5080,7 @@ FocusPilot/
         if (pill) { pill.textContent = '已停止'; pill.className = 'pill'; }
         var btn = document.getElementById('crew-rt-stop-btn');
         if (btn) { btn.textContent = 'Start'; btn.style.color = ''; btn.onclick = function() { crewRuntimeRestart(); }; }
+        crewRuntimeSetTableState(false);
       }
 
       function setRuntimeHostAvailability(isLocal) {
@@ -5143,7 +5159,6 @@ FocusPilot/
             renderCrewView();
           } else {
             crewState.objectType = 'runtime';
-            crewState.runtimeTab = 'crew-runtime';
             var first = document.querySelector("[data-crew-runtime-host]");
             if (first) {
               crewState.selectedRuntimeHostId = first.dataset.crewRuntimeHost;
@@ -5158,7 +5173,6 @@ FocusPilot/
         el.addEventListener("click", function() {
           crewState.objectType = 'runtime';
           crewState.selectedRuntimeHostId = el.dataset.crewRuntimeHost || 'macbook';
-          crewState.runtimeTab = 'crew-runtime';
           selectCrewSideTab("runtime");
           document.querySelectorAll("[data-crew-member], [data-crew-runtime-open]").forEach(function(item) { item.classList.toggle("active", item === el); });
           renderCrewView();
