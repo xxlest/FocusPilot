@@ -4458,7 +4458,7 @@ FocusPilot/
             </div>
             <div class="top-actions">
               <div class="seg" id="crew-top-seg" data-scope="crewMode">
-                <button class="active" data-target="crew-activity">动态</button
+                <button class="active" data-target="crew-activity">概览</button
                 ><button data-target="crew-tasks">Tasks</button
                 ><button data-target="crew-config">配置</button>
               </div>
@@ -4475,7 +4475,7 @@ FocusPilot/
                   <span class="subline">Claude · 本机 · 空闲</span>
                 </div>
                 <span class="pill green" style="margin-left:auto">在线</span>
-                <button class="btn">查看记录</button>
+                <button class="btn" onclick="openCrewAllRecords()">查看记录</button>
               </div>
               <div class="crew-status-grid">
                 <div class="crew-stat"><strong>20</strong><span class="subline">近 30 天运行</span></div>
@@ -4513,7 +4513,7 @@ FocusPilot/
                     <h3>最近工作</h3>
                     <span id="crew-day-filter-pill" class="pill" style="display:none;cursor:pointer;font-size:10px" onclick="crewFilterByDay(null)"></span>
                   </div>
-                  <button class="btn">全部记录</button>
+                  <button class="btn" onclick="openCrewAllRecords()">全部记录</button>
                 </div>
                 <div class="crew-log" id="crew-recent-log">
                   <div class="crew-run-row" data-day="fri" onclick="openCrewRunModal('FP-001 数据模型设计')">
@@ -4911,6 +4911,44 @@ FocusPilot/
           </div>
         </div>
 
+        <!-- ===== CrewRun All Records Modal ===== -->
+        <div class="modal-overlay" id="crew-all-records-modal" hidden onclick="if(event.target===this)closeCrewAllRecords()">
+          <div class="modal-box">
+            <div class="modal-head">
+              <h3>代码工程师 · 运行记录</h3>
+              <div style="display:flex;gap:6px;margin-left:auto">
+                <span class="pill green" style="cursor:pointer" onclick="crewRecordFilter('success')">成功</span>
+                <span class="pill" style="cursor:pointer;background:rgba(255,69,58,0.15);color:var(--red)" onclick="crewRecordFilter('failed')">失败</span>
+                <span class="pill" style="cursor:pointer" onclick="crewRecordFilter('all')">全部</span>
+              </div>
+              <button class="close" onclick="closeCrewAllRecords()">&times;</button>
+            </div>
+            <div class="modal-body" style="max-height:60vh" id="crew-all-records-body">
+              <div class="log-row" data-status="success" onclick="closeCrewAllRecords();openCrewRunModal('FP-001 数据模型设计')"><span class="log-ts">今天 14:30</span><span class="log-level info">成功</span><span class="log-msg">FP-001 数据模型设计 <span class="log-param">7m18s · dev-story</span></span></div>
+              <div class="log-row" data-status="success" onclick="closeCrewAllRecords();openCrewRunModal('FP-007 PRD 文档整合')"><span class="log-ts">今天 14:27</span><span class="log-level info">成功</span><span class="log-msg">FP-007 PRD 文档整合 <span class="log-param">5m51s · research</span></span></div>
+              <div class="log-row" data-status="success" onclick="closeCrewAllRecords();openCrewRunModal('FP-004 Terminal 手动执行模式')"><span class="log-ts">今天 14:18</span><span class="log-level info">成功</span><span class="log-msg">FP-004 Terminal 手动执行模式 <span class="log-param">1m01s · quick-dev</span></span></div>
+              <div class="log-row" data-status="success" onclick="closeCrewAllRecords();openCrewRunModal('FP-009 CI 流水线配置')"><span class="log-ts">今天 12:47</span><span class="log-level info">成功</span><span class="log-msg">FP-009 CI 流水线配置 <span class="log-param">3m42s · dev-story</span></span></div>
+              <div class="log-row" data-status="success" onclick="closeCrewAllRecords();openCrewRunModal('FP-010 单元测试补全')"><span class="log-ts">今天 11:34</span><span class="log-level info">成功</span><span class="log-msg">FP-010 单元测试补全 <span class="log-param">2m15s · quick-dev</span></span></div>
+              <div class="log-row" data-status="failed" onclick="closeCrewAllRecords();openCrewRunModal('FP-011 权限模块重构')"><span class="log-ts">今天 10:46</span><span class="log-level error">失败</span><span class="log-msg">FP-011 权限模块重构 <span class="log-param">8m33s · dev-story</span></span></div>
+              <div class="log-row" data-status="success" onclick="closeCrewAllRecords();openCrewRunModal('FP-005 快捷键冲突检测')"><span class="log-ts">昨天 16:22</span><span class="log-level info">成功</span><span class="log-msg">FP-005 快捷键冲突检测 <span class="log-param">4m22s · quick-dev</span></span></div>
+              <div class="log-row" data-status="success" onclick="closeCrewAllRecords();openCrewRunModal('FP-002 看板状态模型')"><span class="log-ts">周三 15:08</span><span class="log-level info">成功</span><span class="log-msg">FP-002 看板状态模型 <span class="log-param">12m05s · dev-story</span></span></div>
+              <div class="log-row" data-status="success" onclick="closeCrewAllRecords();openCrewRunModal('FP-008 AX API 兼容测试')"><span class="log-ts">周三 11:33</span><span class="log-level info">成功</span><span class="log-msg">FP-008 AX API 兼容测试 <span class="log-param">6m47s · research</span></span></div>
+              <div class="log-row" data-status="failed" onclick="closeCrewAllRecords();openCrewRunModal('FP-012 主题色迁移')"><span class="log-ts">周三 09:44</span><span class="log-level error">失败</span><span class="log-msg">FP-012 主题色迁移 <span class="log-param">5m11s · dev-story</span></span></div>
+              <div class="log-row" data-status="success" onclick="closeCrewAllRecords();openCrewRunModal('FP-013 侧边栏导航重构')"><span class="log-ts">周三 08:20</span><span class="log-level info">成功</span><span class="log-msg">FP-013 侧边栏导航重构 <span class="log-param">3m29s · quick-dev</span></span></div>
+              <div class="log-row" data-status="success" onclick="closeCrewAllRecords();openCrewRunModal('FP-003 Agent Pull 管道')"><span class="log-ts">周二 14:55</span><span class="log-level info">成功</span><span class="log-msg">FP-003 Agent Pull 管道 <span class="log-param">9m33s · dev-story</span></span></div>
+              <div class="log-row" data-status="success" onclick="closeCrewAllRecords();openCrewRunModal('FP-014 API 文档生成')"><span class="log-ts">周二 10:12</span><span class="log-level info">成功</span><span class="log-msg">FP-014 API 文档生成 <span class="log-param">2m48s · research</span></span></div>
+              <div class="log-row" data-status="success" onclick="closeCrewAllRecords();openCrewRunModal('FP-006 主题系统适配')"><span class="log-ts">周一 15:40</span><span class="log-level info">成功</span><span class="log-msg">FP-006 主题系统适配 <span class="log-param">5m18s · dev-story</span></span></div>
+              <div class="log-row" data-status="success" onclick="closeCrewAllRecords();openCrewRunModal('FP-015 错误日志分析')"><span class="log-ts">周一 11:38</span><span class="log-level info">成功</span><span class="log-msg">FP-015 错误日志分析 <span class="log-param">4m02s · research</span></span></div>
+              <div class="log-row" data-status="failed" onclick="closeCrewAllRecords();openCrewRunModal('FP-016 配置导入导出')"><span class="log-ts">周一 09:05</span><span class="log-level error">失败</span><span class="log-msg">FP-016 配置导入导出 <span class="log-param">6m55s · dev-story</span></span></div>
+              <div class="log-row" data-status="success" onclick="closeCrewAllRecords();openCrewRunModal('FP-017 文档结构梳理')"><span class="log-ts">周六 14:22</span><span class="log-level info">成功</span><span class="log-msg">FP-017 文档结构梳理 <span class="log-param">3m12s · research</span></span></div>
+              <div class="log-row" data-status="success" onclick="closeCrewAllRecords();openCrewRunModal('FP-018 性能基准测试')"><span class="log-ts">周六 10:08</span><span class="log-level info">成功</span><span class="log-msg">FP-018 性能基准测试 <span class="log-param">8m44s · quick-dev</span></span></div>
+              <div class="log-row" data-status="success" onclick="closeCrewAllRecords();openCrewRunModal('FP-019 缓存策略优化')"><span class="log-ts">周六 08:15</span><span class="log-level info">成功</span><span class="log-msg">FP-019 缓存策略优化 <span class="log-param">4m57s · dev-story</span></span></div>
+              <div class="log-row" data-status="success" onclick="closeCrewAllRecords();openCrewRunModal('FP-020 周报数据汇总')"><span class="log-ts">周日 11:30</span><span class="log-level info">成功</span><span class="log-msg">FP-020 周报数据汇总 <span class="log-param">2m31s · research</span></span></div>
+            </div>
+            <div class="modal-foot">共 20 条记录 · 成功 17 · 失败 3 · 成功率 85%</div>
+          </div>
+        </div>
+
         <!-- ===== CrewRun Record Modal ===== -->
         <div class="modal-overlay" id="crew-run-modal" hidden onclick="if(event.target===this)closeCrewRunModal()">
           <div class="modal-box">
@@ -5055,7 +5093,7 @@ FocusPilot/
         </div>
         <div class="card-body" style="border-top:1px solid var(--line-soft);padding:12px 20px;display:flex;justify-content:flex-end;gap:8px">
           <button class="btn" data-close>取消</button>
-          <button class="btn primary" data-close>创建</button>
+          <button class="btn primary" onclick="crewCreateDraftMember()">创建</button>
         </div>
       </div>
     </div>
@@ -5399,12 +5437,56 @@ FocusPilot/
         lbl.addEventListener('click', function() { crewFilterByDay(lbl.dataset.day); });
       });
 
+      function openCrewAllRecords() {
+        document.getElementById('crew-all-records-modal').hidden = false;
+        crewRecordFilter('all');
+      }
+      function closeCrewAllRecords() { document.getElementById('crew-all-records-modal').hidden = true; }
+      function crewRecordFilter(status) {
+        document.querySelectorAll('#crew-all-records-body .log-row').forEach(function(row) {
+          row.style.display = (status === 'all' || row.dataset.status === status) ? '' : 'none';
+        });
+      }
+
       function openCrewRunModal(title) {
         var t = document.getElementById('crew-run-modal-title');
         if (t) t.textContent = title || '';
         document.getElementById('crew-run-modal').hidden = false;
       }
       function closeCrewRunModal() { document.getElementById('crew-run-modal').hidden = true; }
+
+      var crewDraftCounter = 0;
+      function crewCreateDraftMember() {
+        var nameInput = document.querySelector('#crew-new-modal input[placeholder="例如：深度研究智能体"]');
+        var name = nameInput ? nameInput.value.trim() : '';
+        if (!name) {
+          nameInput.style.borderColor = 'var(--red)';
+          nameInput.focus();
+          nameInput.addEventListener('input', function handler() { nameInput.style.borderColor = ''; nameInput.removeEventListener('input', handler); });
+          return;
+        }
+        crewDraftCounter++;
+        var draftId = 'draft-' + crewDraftCounter;
+        var membersPanel = document.querySelector('[data-crew-side-panel="members"]');
+        var newBtn = membersPanel.querySelector('[data-modal="crew-new"]');
+        var row = document.createElement('div');
+        row.className = 'side-item crew-member-line';
+        row.setAttribute('data-crew-member', draftId);
+        row.innerHTML = '<span class="status-dot offline"></span>' +
+          '<span class="member-main"><strong>' + name + '</strong><span class="subline">草稿 · 未绑定</span></span>' +
+          '<span class="pill" style="font-size:9px">草稿</span>';
+        membersPanel.insertBefore(row, newBtn);
+        row.addEventListener('click', function() {
+          document.querySelectorAll('[data-crew-member]').forEach(function(el) { el.classList.remove('active'); });
+          row.classList.add('active');
+        });
+        document.getElementById('crew-new-modal').classList.remove('open');
+        nameInput.value = '';
+        var descInput = document.getElementById('crew-new-desc');
+        if (descInput) { descInput.value = ''; document.getElementById('crew-new-desc-count').textContent = '0 / 255'; }
+        var instrTa = document.getElementById('crew-new-instr');
+        if (instrTa) { instrTa.value = ''; instrTa.style.display = 'none'; }
+      }
 
       function setRuntimeHostAvailability(isLocal) {
         var detailEl = document.getElementById('crew-runtime-detail');
