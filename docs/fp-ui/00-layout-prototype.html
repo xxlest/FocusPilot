@@ -492,6 +492,219 @@
         background: var(--accent);
       }
 
+      /* ===== Settings ===== */
+      .settings-layout {
+        display: grid;
+        grid-template-columns: 200px minmax(0, 1fr);
+        height: 100%;
+        min-height: 0;
+      }
+      .settings-nav {
+        border-right: 1px solid var(--line-soft);
+        padding: 16px 10px;
+        overflow: auto;
+      }
+      .settings-nav .label:first-child { margin-top: 0; }
+      .settings-nav .side-item { font-size: 12px; min-height: 30px; padding: 5px 9px; }
+      .settings-content {
+        overflow: auto;
+        padding: 28px 32px;
+      }
+      .settings-content > .settings-section { display: none; }
+      .settings-content > .settings-section.active { display: block; }
+      .settings-section h2 { margin: 0 0 20px; font-size: 18px; font-weight: 700; }
+      .settings-section h4 { margin: 24px 0 10px; font-size: 13px; font-weight: 700; color: var(--muted); }
+      .settings-section h4:first-child { margin-top: 0; }
+      .settings-section .hint { color: var(--dim); font-size: 11px; margin-top: 2px; }
+      .settings-group {
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        background: rgba(25,27,32,0.92);
+        overflow: hidden;
+      }
+      .settings-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 12px 14px;
+        gap: 12px;
+        min-height: 48px;
+      }
+      .settings-row + .settings-row { border-top: 1px solid var(--line-soft); }
+      .settings-row .row-label { font-size: 13px; font-weight: 600; }
+      .settings-row .row-desc { font-size: 11px; color: var(--dim); margin-top: 2px; }
+      .settings-row .row-left { flex: 1; min-width: 0; }
+
+      .toggle {
+        position: relative;
+        width: 36px; height: 20px;
+        background: var(--surface-3);
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        cursor: pointer;
+        flex-shrink: 0;
+        transition: background .2s;
+      }
+      .toggle::after {
+        content: '';
+        position: absolute;
+        top: 2px; left: 2px;
+        width: 14px; height: 14px;
+        border-radius: 50%;
+        background: var(--muted);
+        transition: transform .2s, background .2s;
+      }
+      .toggle.on { background: rgba(82,156,202,0.3); border-color: rgba(82,156,202,0.5); }
+      .toggle.on::after { transform: translateX(16px); background: var(--accent); }
+
+      .settings-slider {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-shrink: 0;
+      }
+      .settings-slider input[type="range"] {
+        -webkit-appearance: none;
+        width: 140px;
+        height: 4px;
+        border-radius: 2px;
+        background: var(--line);
+        outline: none;
+      }
+      .settings-slider input[type="range"]::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        background: var(--accent);
+        cursor: pointer;
+        box-shadow: 0 0 0 2px rgba(82,156,202,0.25);
+      }
+      .settings-slider .slider-val {
+        font-family: var(--mono);
+        font-size: 11px;
+        color: var(--muted);
+        min-width: 40px;
+        text-align: right;
+      }
+
+      .theme-cards { display: flex; gap: 12px; margin-bottom: 20px; }
+      .theme-card {
+        width: 120px;
+        border: 2px solid var(--line);
+        border-radius: var(--radius);
+        overflow: hidden;
+        cursor: pointer;
+        transition: border-color .2s;
+      }
+      .theme-card:hover { border-color: var(--muted); }
+      .theme-card.selected { border-color: var(--accent); }
+      .theme-card-preview {
+        height: 64px;
+        display: flex;
+        flex-direction: column;
+        padding: 6px 8px;
+        gap: 4px;
+      }
+      .theme-card-preview.light { background: #f0f0f0; }
+      .theme-card-preview.dark { background: #1a1c22; }
+      .theme-card-preview.auto { background: linear-gradient(135deg, #f0f0f0 50%, #1a1c22 50%); }
+      .theme-card-preview .bar { height: 5px; border-radius: 2px; }
+      .theme-card-preview.light .bar { background: #d0d0d0; }
+      .theme-card-preview.dark .bar { background: #2a2d36; }
+      .theme-card-preview.auto .bar { background: rgba(128,128,128,0.4); }
+      .theme-card-label {
+        text-align: center;
+        font-size: 11px;
+        padding: 6px;
+        color: var(--muted);
+        border-top: 1px solid var(--line-soft);
+      }
+      .theme-card.selected .theme-card-label { color: var(--accent); }
+
+      .hotkey-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 3px;
+        padding: 4px 10px;
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        background: var(--surface-3);
+        font-family: var(--mono);
+        font-size: 12px;
+        color: var(--text);
+        cursor: pointer;
+        transition: border-color .2s;
+      }
+      .hotkey-pill:hover { border-color: var(--accent); }
+      .hotkey-pill.recording {
+        border-color: var(--accent);
+        color: var(--accent);
+        animation: hotkey-blink 1s infinite;
+      }
+      @keyframes hotkey-blink { 50% { opacity: .5; } }
+
+      .diag-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 12px;
+      }
+      .diag-table td {
+        padding: 6px 10px;
+        border-bottom: 1px solid var(--line-soft);
+      }
+      .diag-table td:first-child {
+        color: var(--dim);
+        width: 100px;
+        white-space: nowrap;
+      }
+
+      .profile-avatar {
+        width: 72px; height: 72px;
+        border-radius: 50%;
+        border: 2px dashed var(--line);
+        display: grid; place-items: center;
+        font-size: 32px;
+        cursor: pointer;
+        background: var(--surface-2);
+        transition: border-color .2s;
+      }
+      .profile-avatar:hover { border-color: var(--accent); }
+
+      .settings-field { margin-bottom: 16px; max-width: 480px; }
+      .settings-field label {
+        display: block;
+        font-size: 12px;
+        color: var(--dim);
+        margin-bottom: 5px;
+      }
+      .settings-field input,
+      .settings-field textarea,
+      .settings-field select {
+        width: 100%;
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        background: #14161b;
+        color: var(--text);
+        padding: 0 10px;
+        outline: 0;
+        font-size: 13px;
+      }
+      .settings-field input { height: 36px; }
+      .settings-field textarea {
+        min-height: 100px;
+        resize: vertical;
+        padding: 10px;
+        line-height: 1.6;
+      }
+      .settings-field select { height: 36px; appearance: none; cursor: pointer; }
+      .settings-field .char-count {
+        text-align: right;
+        font-size: 10px;
+        color: var(--dim);
+        margin-top: 4px;
+      }
+
       .panel {
         display: none;
       }
@@ -1888,18 +2101,21 @@
 
         <section class="side-view" data-page="settings">
           <div class="side-head">
-            <div class="side-title"><h2>Settings</h2></div>
+            <div class="side-title"><h2>设置</h2></div>
           </div>
           <div class="side-scroll">
-            <div class="label">模块</div>
-            <div class="side-item active"><span>🎯 Focus</span></div>
-            <div class="side-item"><span>💻 Studio</span></div>
-            <div class="side-item"><span>🤖 AICrew</span></div>
-            <div class="side-item"><span>📁 Projects</span></div>
-            <div class="label">通用</div>
-            <div class="side-item"><span>🎨 外观</span></div>
-            <div class="side-item"><span>⌨️ 快捷键</span></div>
-            <div class="side-item"><span>🔧 通用</span></div>
+            <div class="label">我的账号</div>
+            <div class="side-item active" data-settings-nav="profile"><span>👤 个人资料</span></div>
+            <div class="side-item" data-settings-nav="appearance"><span>🎨 偏好设置</span></div>
+            <div class="side-item" data-settings-nav="notifications"><span>🔔 通知</span></div>
+            <div class="side-item" data-settings-nav="hotkeys"><span>⌨️ 快捷键</span></div>
+            <div class="side-item" data-settings-nav="daemon"><span>🖥️ Daemon</span></div>
+            <div class="side-item" data-settings-nav="updates"><span>⬇️ 更新</span></div>
+            <div class="label">FocusPilot</div>
+            <div class="side-item" data-settings-nav="general"><span>⚙️ 通用</span></div>
+            <div class="side-item" data-settings-nav="s-focus"><span>🎯 Focus</span></div>
+            <div class="side-item" data-settings-nav="s-studio"><span>💻 Studio</span></div>
+            <div class="side-item" data-settings-nav="s-aicrew"><span>🤖 AICrew</span></div>
           </div>
         </section>
       </aside>
@@ -4975,55 +5191,404 @@ FocusPilot/
 
         <section class="page" data-page="settings">
           <header class="topbar">
-            <h1>Settings</h1>
-            <span class="meta">全局配置</span>
+            <h1 id="settings-page-title">个人资料</h1>
+            <span class="meta">设置</span>
           </header>
-          <div class="work">
-            <div class="card">
-              <div class="card-head">
-                <h3>Focus 配置</h3>
-                <span class="pill green">即时生效</span>
-              </div>
-              <div class="card-body">
-                <div class="form">
-                  <div class="field">
-                    <label>默认 Skill</label
-                    ><select>
-                      <option>brainstorming</option>
-                    </select>
+          <div class="work" style="padding:0">
+            <div class="settings-content">
+
+              <!-- ===== 3.1 个人资料 ===== -->
+              <div class="settings-section active" data-settings-panel="profile">
+                <h2>个人资料</h2>
+                <div class="settings-group" style="padding:20px;max-width:520px">
+                  <div style="display:flex;align-items:flex-start;gap:20px;margin-bottom:20px">
+                    <div class="profile-avatar" title="点击选择 emoji 头像">🧑‍💻</div>
+                    <div style="flex:1">
+                      <div class="settings-field" style="margin-bottom:12px">
+                        <label>姓名</label>
+                        <input value="Bruce" />
+                      </div>
+                    </div>
                   </div>
-                  <div class="field">
-                    <label>自动规划</label
-                    ><select>
-                      <option>开启</option>
-                      <option>关闭</option>
-                    </select>
+                  <div class="settings-field" style="max-width:100%">
+                    <label>关于你</label>
+                    <textarea id="settings-about" placeholder="例如：后端工程师（Swift + macOS）。喜欢简洁的 PR，改动同时附上测试。" maxlength="2000" oninput="document.getElementById('settings-about-count').textContent=this.value.length+' / 2000'">macOS 独立开发者，擅长 Swift + AppKit + SwiftUI。偏好精简架构，不用第三方依赖。</textarea>
+                    <div class="char-count" id="settings-about-count">42 / 2000</div>
                   </div>
-                  <div class="field">
-                    <label>默认模式</label
-                    ><select>
-                      <option>auto</option>
-                      <option>manual</option>
-                    </select>
-                  </div>
-                  <div class="field">
-                    <label>默认 Agent</label
-                    ><select>
-                      <option>代码工程师</option>
-                    </select>
-                  </div>
-                  <div class="field">
-                    <label>主题</label
-                    ><select>
-                      <option>跟随系统</option>
-                      <option>经典深色</option>
-                    </select>
-                  </div>
-                  <div class="field">
-                    <label>快捷键</label><input value="Cmd+Shift+B" />
+                  <p class="hint" style="margin:0 0 16px">会随任务一起发送给 Agent——角色、技术栈、偏好，任何你会在第一天告诉新同事的内容。</p>
+                  <div style="text-align:right">
+                    <button class="btn primary">📋 更新资料</button>
                   </div>
                 </div>
               </div>
+
+              <!-- ===== 3.2 偏好设置 ===== -->
+              <div class="settings-section" data-settings-panel="appearance">
+                <h2>偏好设置</h2>
+                <h4>主题</h4>
+                <div class="theme-cards">
+                  <div class="theme-card" data-theme="light" onclick="selectThemeCard(this)">
+                    <div class="theme-card-preview light">
+                      <div class="bar" style="width:80%"></div>
+                      <div class="bar" style="width:60%"></div>
+                      <div class="bar" style="width:70%"></div>
+                    </div>
+                    <div class="theme-card-label">浅色</div>
+                  </div>
+                  <div class="theme-card" data-theme="dark" onclick="selectThemeCard(this)">
+                    <div class="theme-card-preview dark">
+                      <div class="bar" style="width:80%"></div>
+                      <div class="bar" style="width:60%"></div>
+                      <div class="bar" style="width:70%"></div>
+                    </div>
+                    <div class="theme-card-label">深色</div>
+                  </div>
+                  <div class="theme-card selected" data-theme="system" onclick="selectThemeCard(this)">
+                    <div class="theme-card-preview auto">
+                      <div class="bar" style="width:80%"></div>
+                      <div class="bar" style="width:60%"></div>
+                      <div class="bar" style="width:70%"></div>
+                    </div>
+                    <div class="theme-card-label">跟随系统</div>
+                  </div>
+                </div>
+
+                <h4>悬浮球</h4>
+                <div class="settings-group" style="max-width:520px">
+                  <div class="settings-row">
+                    <div class="row-left">
+                      <div class="row-label">显示悬浮球</div>
+                    </div>
+                    <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+                  </div>
+                  <div class="settings-row">
+                    <div class="row-left">
+                      <div class="row-label">大小</div>
+                    </div>
+                    <div class="settings-slider">
+                      <input type="range" min="24" max="56" value="37" oninput="this.nextElementSibling.textContent=this.value+'px'" />
+                      <span class="slider-val">37px</span>
+                    </div>
+                  </div>
+                  <div class="settings-row">
+                    <div class="row-left">
+                      <div class="row-label">透明度</div>
+                    </div>
+                    <div class="settings-slider">
+                      <input type="range" min="20" max="100" value="100" oninput="this.nextElementSibling.textContent=this.value+'%'" />
+                      <span class="slider-val">100%</span>
+                    </div>
+                  </div>
+                </div>
+
+                <h4>快捷面板</h4>
+                <div class="settings-group" style="max-width:520px">
+                  <div class="settings-row">
+                    <div class="row-left">
+                      <div class="row-label">透明度</div>
+                    </div>
+                    <div class="settings-slider">
+                      <input type="range" min="20" max="100" value="100" oninput="this.nextElementSibling.textContent=this.value+'%'" />
+                      <span class="slider-val">100%</span>
+                    </div>
+                  </div>
+                  <div class="settings-row">
+                    <div class="row-left">
+                      <div class="row-label">弹出动画</div>
+                      <div class="row-desc">0ms = 关闭动画</div>
+                    </div>
+                    <div class="settings-slider">
+                      <input type="range" min="0" max="500" step="50" value="250" oninput="this.nextElementSibling.textContent=this.value+'ms'" />
+                      <span class="slider-val">250ms</span>
+                    </div>
+                  </div>
+                  <div class="settings-row">
+                    <div class="row-left">
+                      <div class="row-label">hover 离开后自动收起面板</div>
+                    </div>
+                    <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- ===== 3.3 通知 ===== -->
+              <div class="settings-section" data-settings-panel="notifications">
+                <h2>通知</h2>
+                <h4>收件箱通知</h4>
+                <p class="hint" style="margin:-6px 0 10px">控制哪些事件会产生收件箱通知。</p>
+                <div class="settings-group" style="max-width:520px">
+                  <div class="settings-row">
+                    <div class="row-left">
+                      <div class="row-label">任务分配</div>
+                      <div class="row-desc">有新 Task 分配给你时</div>
+                    </div>
+                    <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+                  </div>
+                  <div class="settings-row">
+                    <div class="row-left">
+                      <div class="row-label">状态变更</div>
+                      <div class="row-desc">关注的 Task 状态变化时</div>
+                    </div>
+                    <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+                  </div>
+                  <div class="settings-row">
+                    <div class="row-left">
+                      <div class="row-label">智能体活动</div>
+                      <div class="row-desc">Agent task 完成或失败时</div>
+                    </div>
+                    <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+                  </div>
+                  <div class="settings-row">
+                    <div class="row-left">
+                      <div class="row-label">专注计时</div>
+                      <div class="row-desc">番茄钟阶段完成提醒</div>
+                    </div>
+                    <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+                  </div>
+                </div>
+                <h4>系统通知</h4>
+                <p class="hint" style="margin:-6px 0 10px">控制 FocusPilot 在后台时是否弹出通知横幅。</p>
+                <div class="settings-group" style="max-width:520px">
+                  <div class="settings-row">
+                    <div class="row-left">
+                      <div class="row-label">显示系统通知</div>
+                      <div class="row-desc">App 未获焦点时弹出 macOS 通知横幅</div>
+                    </div>
+                    <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+                  </div>
+                  <div class="settings-row">
+                    <div class="row-left">
+                      <div class="row-label">通知声音</div>
+                      <div class="row-desc">搭配系统通知播放提示音</div>
+                    </div>
+                    <div class="toggle" onclick="this.classList.toggle('on')"></div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- ===== 3.4 快捷键 ===== -->
+              <div class="settings-section" data-settings-panel="hotkeys">
+                <h2>快捷键</h2>
+                <h4>全局快捷键</h4>
+                <p class="hint" style="margin:-6px 0 10px">点击快捷键区域，按下新组合键即可录入。</p>
+                <div class="settings-group" style="max-width:520px">
+                  <div class="settings-row">
+                    <div class="row-left">
+                      <div class="row-label">显示/隐藏面板</div>
+                    </div>
+                    <span class="hotkey-pill" onclick="toggleHotkeyRecording(this)" data-hotkey="show-panel">⌘⇧B</span>
+                  </div>
+                  <div class="settings-row">
+                    <div class="row-left">
+                      <div class="row-label">快速录入</div>
+                    </div>
+                    <span class="hotkey-pill" onclick="toggleHotkeyRecording(this)" data-hotkey="quick-capture">⌘⇧N</span>
+                  </div>
+                  <div class="settings-row">
+                    <div class="row-left">
+                      <div class="row-label">切换 Focus 模式</div>
+                    </div>
+                    <span class="hotkey-pill" onclick="toggleHotkeyRecording(this)" data-hotkey="toggle-focus">⌘⇧F</span>
+                  </div>
+                </div>
+                <p class="hint" style="margin-top:10px">录入时如果与已有快捷键冲突，会显示红色提示。</p>
+              </div>
+
+              <!-- ===== 3.5 Daemon ===== -->
+              <div class="settings-section" data-settings-panel="daemon">
+                <h2>Daemon</h2>
+                <p class="hint" style="margin:-12px 0 16px">配置本地 Agent daemon 与桌面应用的协作行为。</p>
+                <div class="settings-group" style="max-width:520px">
+                  <div class="settings-row">
+                    <div class="row-left">
+                      <div class="row-label">随 App 启动</div>
+                      <div class="row-desc">打开 FocusPilot 时自动启动 daemon</div>
+                    </div>
+                    <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+                  </div>
+                  <div class="settings-row">
+                    <div class="row-left">
+                      <div class="row-label">退出时停止</div>
+                      <div class="row-desc">关闭 App 时停止 daemon。关闭则后台常驻</div>
+                    </div>
+                    <div class="toggle" onclick="this.classList.toggle('on')"></div>
+                  </div>
+                </div>
+                <h4>CLI 状态</h4>
+                <p style="font-size:12px;color:var(--muted);margin:0 0 16px">coder-bridge CLI 已安装，路径 <code style="font-family:var(--mono);color:var(--text);background:var(--surface-3);padding:2px 6px;border-radius:4px">~/.coder-bridge</code></p>
+                <h4>诊断信息</h4>
+                <div class="settings-group" style="max-width:520px">
+                  <table class="diag-table">
+                    <tr><td>State</td><td><span class="pill green" style="font-size:10px;padding:2px 8px">● Running</span></td></tr>
+                    <tr><td>Uptime</td><td>6h 3m</td></tr>
+                    <tr><td>PID</td><td style="font-family:var(--mono)">85058</td></tr>
+                    <tr><td>Daemon ID</td><td style="font-family:var(--mono)">019e6da2</td></tr>
+                    <tr><td>设备名</td><td>MacBook-Pro-10.local</td></tr>
+                    <tr><td>执行器</td><td>5</td></tr>
+                  </table>
+                </div>
+              </div>
+
+              <!-- ===== 3.6 更新 ===== -->
+              <div class="settings-section" data-settings-panel="updates">
+                <h2>更新</h2>
+                <p class="hint" style="margin:-12px 0 16px">桌面端每小时自动检查新版本，并在后台下载。更新就绪后会提示你重启。</p>
+                <h4>当前版本</h4>
+                <p style="font-size:20px;font-weight:700;margin:0 0 20px;font-family:var(--mono)">v0.0.1</p>
+                <h4>检查更新</h4>
+                <p class="hint" style="margin:-6px 0 12px">立即检查更新，而不是等待下一次自动轮询。</p>
+                <button class="btn primary">立即检查</button>
+              </div>
+
+              <!-- ===== 3.7 通用（FocusPilot）===== -->
+              <div class="settings-section" data-settings-panel="general">
+                <h2>通用</h2>
+                <div class="settings-group" style="max-width:520px">
+                  <div class="settings-row">
+                    <div class="row-left">
+                      <div class="row-label">开机自启</div>
+                      <div class="row-desc">登录时自动启动 FocusPilot</div>
+                    </div>
+                    <div class="toggle" onclick="this.classList.toggle('on')"></div>
+                  </div>
+                  <div class="settings-row">
+                    <div class="row-left">
+                      <div class="row-label">数据存储目录</div>
+                      <div class="row-desc">项目数据根目录</div>
+                    </div>
+                    <div style="display:flex;align-items:center;gap:8px">
+                      <code style="font-family:var(--mono);font-size:11px;color:var(--muted);background:var(--surface-3);padding:4px 8px;border-radius:4px">~/FocusPilot</code>
+                      <button class="btn" style="font-size:11px;min-height:28px;padding:0 8px">修改</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- ===== 3.8 Focus ===== -->
+              <div class="settings-section" data-settings-panel="s-focus">
+                <h2>Focus</h2>
+                <h4>规划引擎</h4>
+                <div class="settings-group" style="max-width:520px">
+                  <div class="settings-row">
+                    <div class="row-left">
+                      <div class="row-label">默认 Skill</div>
+                      <div class="row-desc">新建 Task 时默认分配的 Skill</div>
+                    </div>
+                    <select style="height:32px;width:150px;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface-2);padding:0 10px;appearance:none;cursor:pointer;font-size:12px">
+                      <option selected>brainstorming</option>
+                      <option>dev-story</option>
+                      <option>quick-dev</option>
+                    </select>
+                  </div>
+                  <div class="settings-row">
+                    <div class="row-left">
+                      <div class="row-label">自动规划</div>
+                      <div class="row-desc">新 Task 自动生成执行计划</div>
+                    </div>
+                    <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+                  </div>
+                </div>
+                <h4>执行引擎</h4>
+                <div class="settings-group" style="max-width:520px">
+                  <div class="settings-row">
+                    <div class="row-left">
+                      <div class="row-label">默认模式</div>
+                      <div class="row-desc">Task 默认执行方式</div>
+                    </div>
+                    <div class="seg" style="font-size:11px">
+                      <button class="active">auto</button><button>manual</button>
+                    </div>
+                  </div>
+                  <div class="settings-row">
+                    <div class="row-left">
+                      <div class="row-label">默认 Agent</div>
+                      <div class="row-desc">未指定时派给谁</div>
+                    </div>
+                    <select style="height:32px;width:150px;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface-2);padding:0 10px;appearance:none;cursor:pointer;font-size:12px">
+                      <option selected>代码工程师</option>
+                      <option>深度研究</option>
+                    </select>
+                  </div>
+                  <div class="settings-row">
+                    <div class="row-left">
+                      <div class="row-label">并发上限</div>
+                      <div class="row-desc">全局最大并行 Task 数</div>
+                    </div>
+                    <select style="height:32px;width:80px;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface-2);padding:0 10px;appearance:none;cursor:pointer;font-size:12px">
+                      <option>1</option>
+                      <option selected>2</option>
+                      <option>3</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              <!-- ===== 3.9 Studio ===== -->
+              <div class="settings-section" data-settings-panel="s-studio">
+                <h2>Studio</h2>
+                <div class="settings-group" style="max-width:520px">
+                  <div class="settings-row">
+                    <div class="row-left">
+                      <div class="row-label">默认 Agent</div>
+                      <div class="row-desc">Studio 对话默认执行者</div>
+                    </div>
+                    <select style="height:32px;width:150px;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface-2);padding:0 10px;appearance:none;cursor:pointer;font-size:12px">
+                      <option selected>代码工程师</option>
+                      <option>深度研究</option>
+                    </select>
+                  </div>
+                  <div class="settings-row">
+                    <div class="row-left">
+                      <div class="row-label">代码字体大小</div>
+                      <div class="row-desc">代码块渲染字号</div>
+                    </div>
+                    <select style="height:32px;width:80px;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface-2);padding:0 10px;appearance:none;cursor:pointer;font-size:12px">
+                      <option>12</option>
+                      <option selected>13</option>
+                      <option>14</option>
+                      <option>15</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              <!-- ===== 3.10 AICrew ===== -->
+              <div class="settings-section" data-settings-panel="s-aicrew">
+                <h2>AICrew</h2>
+                <div class="settings-group" style="max-width:520px">
+                  <div class="settings-row">
+                    <div class="row-left">
+                      <div class="row-label">默认新建 Runtime</div>
+                      <div class="row-desc">新建智能体时预选的 Runtime</div>
+                    </div>
+                    <select style="height:32px;width:180px;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface-2);padding:0 10px;appearance:none;cursor:pointer;font-size:12px">
+                      <option selected>Claude · MacBook-Pro-10.local</option>
+                      <option>Codex · MacBook-Pro-10.local</option>
+                      <option>Cursor · MacBook-Pro-10.local</option>
+                    </select>
+                  </div>
+                  <div class="settings-row">
+                    <div class="row-left">
+                      <div class="row-label">Session 超时</div>
+                      <div class="row-desc">Agent 空闲多久自动释放执行槽</div>
+                    </div>
+                    <select style="height:32px;width:100px;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface-2);padding:0 10px;appearance:none;cursor:pointer;font-size:12px">
+                      <option>5 min</option>
+                      <option selected>15 min</option>
+                      <option>30 min</option>
+                      <option>1 h</option>
+                    </select>
+                  </div>
+                  <div class="settings-row">
+                    <div class="row-left">
+                      <div class="row-label">管理智能体成员</div>
+                      <div class="row-desc">前往 AICrew 页面配置具体 Agent</div>
+                    </div>
+                    <a href="#" style="color:var(--accent);font-size:12px;text-decoration:none;white-space:nowrap" data-go="crew">前往 AICrew →</a>
+                  </div>
+                </div>
+              </div>
+
             </div>
           </div>
         </section>
@@ -7587,6 +8152,85 @@ FocusPilot/
           }
         }
       }
+
+      // Settings seg (radio buttons without data-scope)
+      document.querySelectorAll('.settings-section .seg:not([data-scope]) button').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          btn.closest('.seg').querySelectorAll('button').forEach(function(b) {
+            b.classList.toggle('active', b === btn);
+          });
+        });
+      });
+
+      // ===== Settings: sidebar navigation =====
+      var settingsNavTitles = {
+        profile: '个人资料',
+        appearance: '偏好设置',
+        notifications: '通知',
+        hotkeys: '快捷键',
+        daemon: 'Daemon',
+        updates: '更新',
+        general: '通用',
+        's-focus': 'Focus',
+        's-studio': 'Studio',
+        's-aicrew': 'AICrew'
+      };
+
+      function showSettingsPanel(key) {
+        document.querySelectorAll('[data-settings-nav]').forEach(function(el) {
+          el.classList.toggle('active', el.dataset.settingsNav === key);
+        });
+        document.querySelectorAll('[data-settings-panel]').forEach(function(el) {
+          el.classList.toggle('active', el.dataset.settingsPanel === key);
+        });
+        var title = document.getElementById('settings-page-title');
+        if (title && settingsNavTitles[key]) title.textContent = settingsNavTitles[key];
+      }
+
+      document.querySelectorAll('[data-settings-nav]').forEach(function(el) {
+        el.addEventListener('click', function() {
+          showSettingsPanel(el.dataset.settingsNav);
+        });
+      });
+
+      // Theme card selection
+      function selectThemeCard(card) {
+        card.closest('.theme-cards').querySelectorAll('.theme-card').forEach(function(c) {
+          c.classList.toggle('selected', c === card);
+        });
+      }
+
+      // Hotkey recording
+      var activeHotkeyPill = null;
+      function toggleHotkeyRecording(pill) {
+        if (activeHotkeyPill && activeHotkeyPill !== pill) {
+          activeHotkeyPill.classList.remove('recording');
+        }
+        if (pill.classList.contains('recording')) {
+          pill.classList.remove('recording');
+          activeHotkeyPill = null;
+        } else {
+          pill.classList.add('recording');
+          pill.textContent = '按下快捷键…';
+          activeHotkeyPill = pill;
+        }
+      }
+      document.addEventListener('keydown', function(e) {
+        if (!activeHotkeyPill) return;
+        e.preventDefault();
+        var parts = [];
+        if (e.metaKey) parts.push('⌘');
+        if (e.ctrlKey) parts.push('⌃');
+        if (e.altKey) parts.push('⌥');
+        if (e.shiftKey) parts.push('⇧');
+        var key = e.key;
+        if (!['Meta','Control','Alt','Shift'].includes(key)) {
+          parts.push(key.length === 1 ? key.toUpperCase() : key);
+          activeHotkeyPill.textContent = parts.join('');
+          activeHotkeyPill.classList.remove('recording');
+          activeHotkeyPill = null;
+        }
+      });
     </script>
 
     <!-- ═══ Studio: Workspace 菜单 popover ═══ -->
