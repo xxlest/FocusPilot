@@ -861,11 +861,12 @@
         border-bottom: 1px solid var(--line-soft);
       }
       .crew-bar {
-        background: var(--accent); border-radius: 3px 3px 0 0; position: relative; cursor: default; transition: opacity .15s;
+        background: var(--accent); border-radius: 3px 3px 0 0; position: relative; cursor: pointer; transition: opacity .15s;
       }
       .crew-bar:hover { opacity: 1 !important; }
+      .crew-bar.active { opacity: 1 !important; box-shadow: 0 0 0 1.5px var(--accent); }
       .crew-bar.weekend { opacity: .45; }
-      .crew-bar:not(.weekend) { opacity: .75; }
+      .crew-bar:not(.weekend):not(.active) { opacity: .75; }
       .crew-bar-val {
         position: absolute; top: -14px; left: 50%; transform: translateX(-50%);
         font-size: 9px; color: var(--dim); opacity: 0; transition: opacity .15s;
@@ -4439,18 +4440,18 @@ FocusPilot/
                   <div style="position:absolute;left:0;top:0;bottom:20px;width:28px;display:flex;flex-direction:column;justify-content:space-between;font-size:9px;color:var(--dim);text-align:right;padding-right:6px">
                     <span>6</span><span>3</span><span>0</span>
                   </div>
-                  <div style="display:flex;align-items:flex-end;gap:6px;height:64px;padding:0 4px;margin-left:28px;flex:1">
-                    <div class="crew-bar" style="flex:1;height:50%" title="周一: 3 次"><span class="crew-bar-val">3</span></div>
-                    <div class="crew-bar" style="flex:1;height:33%" title="周二: 2 次"><span class="crew-bar-val">2</span></div>
-                    <div class="crew-bar" style="flex:1;height:67%" title="周三: 4 次"><span class="crew-bar-val">4</span></div>
-                    <div class="crew-bar" style="flex:1;height:17%" title="周四: 1 次"><span class="crew-bar-val">1</span></div>
-                    <div class="crew-bar" style="flex:1;height:100%" title="周五: 6 次"><span class="crew-bar-val">6</span></div>
-                    <div class="crew-bar weekend" style="flex:1;height:50%" title="周六: 3 次"><span class="crew-bar-val">3</span></div>
-                    <div class="crew-bar weekend" style="flex:1;height:17%" title="周日: 1 次"><span class="crew-bar-val">1</span></div>
+                  <div id="crew-chart-bars" style="display:flex;align-items:flex-end;gap:6px;height:64px;padding:0 4px;margin-left:28px;flex:1">
+                    <div class="crew-bar" data-day="mon" style="flex:1;height:50%" title="周一: 3 次"><span class="crew-bar-val">3</span></div>
+                    <div class="crew-bar" data-day="tue" style="flex:1;height:33%" title="周二: 2 次"><span class="crew-bar-val">2</span></div>
+                    <div class="crew-bar" data-day="wed" style="flex:1;height:67%" title="周三: 4 次"><span class="crew-bar-val">4</span></div>
+                    <div class="crew-bar" data-day="thu" style="flex:1;height:17%" title="周四: 1 次"><span class="crew-bar-val">1</span></div>
+                    <div class="crew-bar" data-day="fri" style="flex:1;height:100%" title="周五: 6 次"><span class="crew-bar-val">6</span></div>
+                    <div class="crew-bar weekend" data-day="sat" style="flex:1;height:50%" title="周六: 3 次"><span class="crew-bar-val">3</span></div>
+                    <div class="crew-bar weekend" data-day="sun" style="flex:1;height:17%" title="周日: 1 次"><span class="crew-bar-val">1</span></div>
                   </div>
                 </div>
-                <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--dim);margin-top:4px;padding:0 4px;margin-left:28px">
-                  <span>周一</span><span>周二</span><span>周三</span><span>周四</span><span>周五</span><span>周六</span><span>周日</span>
+                <div id="crew-chart-labels" style="display:flex;justify-content:space-between;font-size:10px;color:var(--dim);margin-top:4px;padding:0 4px;margin-left:28px">
+                  <span data-day="mon" style="cursor:pointer">周一</span><span data-day="tue" style="cursor:pointer">周二</span><span data-day="wed" style="cursor:pointer">周三</span><span data-day="thu" style="cursor:pointer">周四</span><span data-day="fri" style="cursor:pointer">周五</span><span data-day="sat" style="cursor:pointer">周六</span><span data-day="sun" style="cursor:pointer">周日</span>
                 </div>
               </div>
               <div class="crew-section">
@@ -4458,22 +4459,113 @@ FocusPilot/
                 <div class="review-note">这个智能体当前空闲。新的 Focus Task 可以直接派给它，或从 Studio 会话中选择它作为执行器。</div>
               </div>
               <div class="crew-section">
-                <div class="crew-section-title"><h3>最近工作</h3><button class="btn">全部记录</button></div>
-                <div class="crew-log">
-                  <div class="runtime-option">
+                <div class="crew-section-title">
+                  <div style="display:flex;align-items:center;gap:8px">
+                    <h3>最近工作</h3>
+                    <span id="crew-day-filter-pill" class="pill" style="display:none;cursor:pointer;font-size:10px" onclick="crewFilterByDay(null)"></span>
+                  </div>
+                  <button class="btn">全部记录</button>
+                </div>
+                <div class="crew-log" id="crew-recent-log">
+                  <div class="runtime-option" data-day="fri">
                     <div class="runtime-logo">✓</div>
                     <div><strong>FP-001 数据模型设计</strong><span class="subline">49 分钟前 · 7m18s · dev-story</span></div>
                     <button class="btn" onclick="openCrewRunModal('FP-001 数据模型设计')">查看记录</button>
                   </div>
-                  <div class="runtime-option">
+                  <div class="runtime-option" data-day="fri">
                     <div class="runtime-logo">✓</div>
                     <div><strong>FP-007 PRD 文档整合</strong><span class="subline">52 分钟前 · 5m51s · research</span></div>
                     <button class="btn" onclick="openCrewRunModal('FP-007 PRD 文档整合')">查看记录</button>
                   </div>
-                  <div class="runtime-option">
+                  <div class="runtime-option" data-day="fri">
                     <div class="runtime-logo">✓</div>
                     <div><strong>FP-004 Terminal 手动执行模式</strong><span class="subline">1 小时前 · 1m01s · quick-dev</span></div>
                     <button class="btn" onclick="openCrewRunModal('FP-004 Terminal 手动执行模式')">查看记录</button>
+                  </div>
+                  <div class="runtime-option" data-day="fri">
+                    <div class="runtime-logo">✓</div>
+                    <div><strong>FP-009 CI 流水线配置</strong><span class="subline">2 小时前 · 3m42s · dev-story</span></div>
+                    <button class="btn" onclick="openCrewRunModal('FP-009 CI 流水线配置')">查看记录</button>
+                  </div>
+                  <div class="runtime-option" data-day="fri">
+                    <div class="runtime-logo">✓</div>
+                    <div><strong>FP-010 单元测试补全</strong><span class="subline">3 小时前 · 2m15s · quick-dev</span></div>
+                    <button class="btn" onclick="openCrewRunModal('FP-010 单元测试补全')">查看记录</button>
+                  </div>
+                  <div class="runtime-option" data-day="fri">
+                    <div class="runtime-logo" style="color:var(--red)">✗</div>
+                    <div><strong>FP-011 权限模块重构</strong><span class="subline">4 小时前 · 8m33s · dev-story</span></div>
+                    <button class="btn" onclick="openCrewRunModal('FP-011 权限模块重构')">查看记录</button>
+                  </div>
+                  <div class="runtime-option" data-day="thu">
+                    <div class="runtime-logo">✓</div>
+                    <div><strong>FP-005 快捷键冲突检测</strong><span class="subline">昨天 · 4m22s · quick-dev</span></div>
+                    <button class="btn" onclick="openCrewRunModal('FP-005 快捷键冲突检测')">查看记录</button>
+                  </div>
+                  <div class="runtime-option" data-day="wed">
+                    <div class="runtime-logo">✓</div>
+                    <div><strong>FP-002 看板状态模型</strong><span class="subline">2 天前 · 12m05s · dev-story</span></div>
+                    <button class="btn" onclick="openCrewRunModal('FP-002 看板状态模型')">查看记录</button>
+                  </div>
+                  <div class="runtime-option" data-day="wed">
+                    <div class="runtime-logo">✓</div>
+                    <div><strong>FP-008 AX API 兼容测试</strong><span class="subline">2 天前 · 6m47s · research</span></div>
+                    <button class="btn" onclick="openCrewRunModal('FP-008 AX API 兼容测试')">查看记录</button>
+                  </div>
+                  <div class="runtime-option" data-day="wed">
+                    <div class="runtime-logo" style="color:var(--red)">✗</div>
+                    <div><strong>FP-012 主题色迁移</strong><span class="subline">2 天前 · 5m11s · dev-story</span></div>
+                    <button class="btn" onclick="openCrewRunModal('FP-012 主题色迁移')">查看记录</button>
+                  </div>
+                  <div class="runtime-option" data-day="wed">
+                    <div class="runtime-logo">✓</div>
+                    <div><strong>FP-013 侧边栏导航重构</strong><span class="subline">2 天前 · 3m29s · quick-dev</span></div>
+                    <button class="btn" onclick="openCrewRunModal('FP-013 侧边栏导航重构')">查看记录</button>
+                  </div>
+                  <div class="runtime-option" data-day="tue">
+                    <div class="runtime-logo">✓</div>
+                    <div><strong>FP-003 Agent Pull 管道</strong><span class="subline">3 天前 · 9m33s · dev-story</span></div>
+                    <button class="btn" onclick="openCrewRunModal('FP-003 Agent Pull 管道')">查看记录</button>
+                  </div>
+                  <div class="runtime-option" data-day="tue">
+                    <div class="runtime-logo">✓</div>
+                    <div><strong>FP-014 API 文档生成</strong><span class="subline">3 天前 · 2m48s · research</span></div>
+                    <button class="btn" onclick="openCrewRunModal('FP-014 API 文档生成')">查看记录</button>
+                  </div>
+                  <div class="runtime-option" data-day="mon">
+                    <div class="runtime-logo">✓</div>
+                    <div><strong>FP-006 主题系统适配</strong><span class="subline">4 天前 · 5m18s · dev-story</span></div>
+                    <button class="btn" onclick="openCrewRunModal('FP-006 主题系统适配')">查看记录</button>
+                  </div>
+                  <div class="runtime-option" data-day="mon">
+                    <div class="runtime-logo">✓</div>
+                    <div><strong>FP-015 错误日志分析</strong><span class="subline">4 天前 · 4m02s · research</span></div>
+                    <button class="btn" onclick="openCrewRunModal('FP-015 错误日志分析')">查看记录</button>
+                  </div>
+                  <div class="runtime-option" data-day="mon">
+                    <div class="runtime-logo" style="color:var(--red)">✗</div>
+                    <div><strong>FP-016 配置导入导出</strong><span class="subline">4 天前 · 6m55s · dev-story</span></div>
+                    <button class="btn" onclick="openCrewRunModal('FP-016 配置导入导出')">查看记录</button>
+                  </div>
+                  <div class="runtime-option" data-day="sat">
+                    <div class="runtime-logo">✓</div>
+                    <div><strong>FP-017 文档结构梳理</strong><span class="subline">5 天前 · 3m12s · research</span></div>
+                    <button class="btn" onclick="openCrewRunModal('FP-017 文档结构梳理')">查看记录</button>
+                  </div>
+                  <div class="runtime-option" data-day="sat">
+                    <div class="runtime-logo">✓</div>
+                    <div><strong>FP-018 性能基准测试</strong><span class="subline">5 天前 · 8m44s · quick-dev</span></div>
+                    <button class="btn" onclick="openCrewRunModal('FP-018 性能基准测试')">查看记录</button>
+                  </div>
+                  <div class="runtime-option" data-day="sat">
+                    <div class="runtime-logo">✓</div>
+                    <div><strong>FP-019 缓存策略优化</strong><span class="subline">5 天前 · 4m57s · dev-story</span></div>
+                    <button class="btn" onclick="openCrewRunModal('FP-019 缓存策略优化')">查看记录</button>
+                  </div>
+                  <div class="runtime-option" data-day="sun">
+                    <div class="runtime-logo">✓</div>
+                    <div><strong>FP-020 周报数据汇总</strong><span class="subline">6 天前 · 2m31s · research</span></div>
+                    <button class="btn" onclick="openCrewRunModal('FP-020 周报数据汇总')">查看记录</button>
                   </div>
                 </div>
               </div>
@@ -4852,41 +4944,69 @@ FocusPilot/
     </div>
 
     <div class="modal-backdrop" id="crew-new-modal">
-      <div class="modal" style="width:min(560px,calc(100vw - 48px))">
-        <div class="card-head">
-          <h3>新建智能体</h3>
-          <button class="btn icon" data-close>✕</button>
+      <div class="modal" style="width:min(520px,calc(100vw - 48px))">
+        <div class="card-head" style="padding:18px 20px 14px">
+          <div>
+            <h3 style="margin:0 0 4px;font-size:15px">创建智能体</h3>
+            <span style="color:var(--dim);font-size:12px">为你的数字团队添加一个新的 AI 智能体。</span>
+          </div>
+          <button class="btn icon" data-close style="margin-left:auto;align-self:flex-start">✕</button>
         </div>
-        <div class="card-body" style="padding:16px 18px">
-          <div class="form">
-            <div class="field">
-              <label>模板</label>
-              <select>
-                <option selected>代码工程师</option>
-                <option>架构师</option>
-                <option>数据库工程师</option>
-                <option>数据分析师</option>
-                <option>空白智能体</option>
-              </select>
+        <div class="card-body" style="padding:16px 20px 20px">
+          <div style="display:flex;align-items:flex-start;gap:14px;margin-bottom:16px">
+            <div style="width:52px;height:52px;border-radius:var(--radius);border:1.5px dashed var(--line);background:#111318;display:grid;place-items:center;flex-shrink:0;cursor:pointer" title="选择头像">
+              <span style="font-size:22px;color:var(--dim)">🤖</span>
             </div>
-            <div class="field">
-              <label>Runtime</label>
-              <select>
-                <option selected>Claude · MacBook-Pro-10.local</option>
-                <option>Codex · MacBook-Pro-10.local</option>
-                <option>Cursor · MacBook-Pro-10.local</option>
-                <option>Gemini · MacBook-Pro-10.local</option>
-              </select>
-            </div>
-            <div class="field">
-              <label>创建后</label>
-              <span style="color:var(--muted);font-size:12px">生成草稿成员，只显示基础配置，高级项默认收起。</span>
+            <div style="flex:1;display:flex;flex-direction:column;gap:10px">
+              <div>
+                <label style="display:block;font-size:11px;color:var(--dim);margin-bottom:4px">名称</label>
+                <input placeholder="例如：深度研究智能体" style="width:100%;height:34px;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface-2);color:var(--text);padding:0 10px;outline:0;font-size:13px" />
+              </div>
+              <div>
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+                  <label style="font-size:11px;color:var(--dim)">描述</label>
+                  <span style="font-size:10px;color:var(--dim)" id="crew-new-desc-count">0 / 255</span>
+                </div>
+                <input id="crew-new-desc" placeholder="这个智能体做什么？" maxlength="255" style="width:100%;height:34px;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface-2);color:var(--text);padding:0 10px;outline:0;font-size:13px" oninput="document.getElementById('crew-new-desc-count').textContent=this.value.length+' / 255'" />
+              </div>
             </div>
           </div>
+          <div style="display:flex;gap:12px;margin-bottom:14px">
+            <div style="flex:1">
+              <label style="display:block;font-size:11px;color:var(--dim);margin-bottom:4px">运行时</label>
+              <div style="position:relative">
+                <select style="width:100%;height:36px;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface-2);color:var(--text);padding:0 10px;appearance:none;font-size:12px;cursor:pointer">
+                  <option selected>Claude · MacBook-Pro-10.local</option>
+                  <option>Codex · MacBook-Pro-10.local</option>
+                  <option>Cursor · MacBook-Pro-10.local</option>
+                  <option>Gemini · MacBook-Pro-10.local</option>
+                </select>
+                <span style="position:absolute;right:10px;top:50%;transform:translateY(-50%);color:var(--dim);font-size:10px;pointer-events:none">▾</span>
+              </div>
+            </div>
+            <div style="flex:1">
+              <label style="display:block;font-size:11px;color:var(--dim);margin-bottom:4px">模型</label>
+              <div style="position:relative">
+                <select style="width:100%;height:36px;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface-2);color:var(--text);padding:0 10px;appearance:none;font-size:12px;cursor:pointer">
+                  <option selected>默认（跟随 Runtime）</option>
+                  <option>claude-opus-4.6</option>
+                  <option>claude-sonnet-4.5</option>
+                </select>
+                <span style="position:absolute;right:10px;top:50%;transform:translateY(-50%);color:var(--dim);font-size:10px;pointer-events:none">▾</span>
+              </div>
+            </div>
+          </div>
+          <div>
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+              <label style="font-size:11px;color:var(--dim)">指令</label>
+              <button class="btn" style="font-size:10px;padding:2px 6px;color:var(--dim)" onclick="var ta=document.getElementById('crew-new-instr');var w=this;if(ta.style.display==='none'){ta.style.display='block';w.textContent='✕ 收起'}else{ta.style.display='none';w.textContent='展开'}">展开</button>
+            </div>
+            <textarea id="crew-new-instr" placeholder="写下这个智能体该做什么、关注什么、要避开什么..." style="display:none;width:100%;min-height:80px;max-height:160px;resize:vertical;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface-2);color:var(--text);padding:10px;outline:0;font-size:12px;line-height:1.5"></textarea>
+          </div>
         </div>
-        <div class="card-body" style="border-top:1px solid var(--line-soft);text-align:right;display:flex;justify-content:flex-end;gap:8px">
+        <div class="card-body" style="border-top:1px solid var(--line-soft);padding:12px 20px;display:flex;justify-content:flex-end;gap:8px">
           <button class="btn" data-close>取消</button>
-          <button class="btn primary" data-close>创建草稿</button>
+          <button class="btn primary" data-close>创建</button>
         </div>
       </div>
     </div>
@@ -5189,6 +5309,47 @@ FocusPilot/
 
       function openDaemonLogsModal() { document.getElementById('daemon-logs-modal').hidden = false; }
       function closeDaemonLogsModal() { document.getElementById('daemon-logs-modal').hidden = true; }
+      // ── Crew: 7 天活动 ↔ 最近工作联动 ──
+      var crewDayNames = { mon: '周一', tue: '周二', wed: '周三', thu: '周四', fri: '周五', sat: '周六', sun: '周日' };
+      var crewActiveDay = null;
+
+      function crewFilterByDay(day) {
+        crewActiveDay = (crewActiveDay === day || day === null) ? null : day;
+        document.querySelectorAll('#crew-chart-bars .crew-bar').forEach(function(bar) {
+          bar.classList.toggle('active', bar.dataset.day === crewActiveDay);
+        });
+        document.querySelectorAll('#crew-chart-labels span[data-day]').forEach(function(lbl) {
+          lbl.style.color = (lbl.dataset.day === crewActiveDay) ? 'var(--text)' : '';
+          lbl.style.fontWeight = (lbl.dataset.day === crewActiveDay) ? '600' : '';
+        });
+        var pill = document.getElementById('crew-day-filter-pill');
+        if (crewActiveDay) {
+          pill.style.display = '';
+          pill.textContent = crewDayNames[crewActiveDay] + ' ✕';
+        } else {
+          pill.style.display = 'none';
+        }
+        var rows = document.querySelectorAll('#crew-recent-log .runtime-option[data-day]');
+        var shown = 0;
+        rows.forEach(function(row) {
+          if (crewActiveDay) {
+            row.style.display = (row.dataset.day === crewActiveDay) ? '' : 'none';
+          } else {
+            row.style.display = (shown < 3) ? '' : 'none';
+            shown++;
+          }
+        });
+      }
+
+      crewFilterByDay(null);
+
+      document.querySelectorAll('#crew-chart-bars .crew-bar').forEach(function(bar) {
+        bar.addEventListener('click', function() { crewFilterByDay(bar.dataset.day); });
+      });
+      document.querySelectorAll('#crew-chart-labels span[data-day]').forEach(function(lbl) {
+        lbl.addEventListener('click', function() { crewFilterByDay(lbl.dataset.day); });
+      });
+
       function openCrewRunModal(title) {
         var t = document.getElementById('crew-run-modal-title');
         if (t) t.textContent = title || '';
