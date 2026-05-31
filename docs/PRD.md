@@ -352,11 +352,13 @@ Crew 是 FocusPilot 的核心交互概念——**用户不直接面对 Agent/MCP
 - **Tasks**：展示该成员关联的 Focus Task，Multica 紧凑列表风格，按状态分组（进行中 / 待办 / 待规划 / 已完成），点击行直接跳转 Focus 看板并打开对应 Task 详情面板（重置筛选为"全部" → 切看板 → 定位卡片高亮 → `renderFocusTaskDetail` 渲染完整详情内容 → 打开详情）
 - **配置**：采用子 Tab 切换（基础信息 / 指令 / Skill / MCP / 环境变量 / 自定义参数），各子 Tab 展示对应配置项。Env secret 必须显式 Reveal 后才可编辑；MCP Server 展示 connected / authorized / local / pending_auth / disabled 状态；常驻职责支持 event / cron / manual 三类触发规则
 
-**Runtime 工作区**（三个 Tab）：
+**Runtime 工作区**（单页执行端监控，无顶部 Tab）：
 
-- **执行器**（默认）：展示该执行节点上的全部执行器（如 Claude / Codex / Cursor / Gemini / Hermes），每行显示健康度、绑定智能体成员、工作负载、最近 7 天费用、CLI 版本和配置入口。远程节点支持"未连接"空状态，引导用户安装 Agent 并配置连接
-- **配置**：采用子 Tab 切换（基础信息 / 执行器 / 环境变量 / 自定义参数），展示机器信息、检测配置、环境变量和节点级参数
-- **日志**：Daemon 日志和执行器摘要日志，支持刷新和完整日志查看
+Runtime 背后由 daemon 进程负责自动扫描本机 CLI、读取环境配置、维护健康度和日志，UI 只展示状态和操作控制，不暴露 Env / Args / MCP 等编辑配置（高级配置留给 Settings）。
+
+- **Runtime Header**：节点名 + 状态摘要 + daemon 版本 + 最后心跳 + 操作按钮（View logs / Restart / Stop）。Stop 为危险操作，需确认；停止后按钮变为 Start
+- **执行器表格**：4 列精简（执行器 / 健康度 / 智能体 / 工作负载）。远程节点未连接时整页显示单一空状态
+- **Daemon 日志区**：内联展示，支持刷新。View logs 按钮滚动到此区域
 
 **运行记录**：展示 CrewRun 详情、事件时间线、工具调用、配置快照、日志复制和筛选
 
@@ -380,7 +382,7 @@ Crew 是 FocusPilot 的核心交互概念——**用户不直接面对 Agent/MCP
 
 V1 中常驻职责先完成配置与展示，后台定时/事件调度由 Scheduler 后续接入。
 
-V1 默认只展示预置 `代码工程师` 一个真实智能体成员；架构师、数据库工程师、数据分析师作为”新建智能体”模板出现。侧边栏智能体成员/Runtime 双 Tab、成员工作区三 Tab（动态/Tasks/配置）、Runtime 工作区三 Tab（执行器/配置/日志）、crewState 统一状态管理和运行记录先完成 UI 壳、本机静态配置与历史记录结构；daemon 自动发现、模型实时同步、Runtime CLI 升级、Runtime GC、远程磁盘扫描和云端执行后续接入。
+V1 默认只展示预置 `代码工程师` 一个真实智能体成员；架构师、数据库工程师、数据分析师作为”新建智能体”模板出现。侧边栏智能体成员/Runtime 双 Tab、成员工作区三 Tab（动态/Tasks/配置）、Runtime 工作区单页监控（Header + 执行器表格 + Daemon 日志）、crewState 统一状态管理和运行记录先完成 UI 壳、本机静态配置与历史记录结构；daemon 自动发现、模型实时同步、Runtime CLI 升级、Runtime GC、远程磁盘扫描和云端执行后续接入。
 
 **用户始终面对"团队管理"这个隐喻，不需要理解底层技术。**
 

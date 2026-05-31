@@ -853,7 +853,7 @@
         grid-template-columns: minmax(0, 1fr) 340px;
         gap: 14px;
       }
-      .crew-hero {
+      .crew-detail-header {
         display: flex;
         align-items: center;
         gap: 14px;
@@ -4373,7 +4373,7 @@ FocusPilot/
           <!-- ===== 智能体：动态 ===== -->
           <div class="work panel active" id="crew-activity">
             <div class="card">
-              <div class="crew-hero">
+              <div class="crew-detail-header">
                 <div class="crew-avatar">💻</div>
                 <div class="crew-title">
                   <h2>代码工程师</h2>
@@ -4621,15 +4621,15 @@ FocusPilot/
             <div id="crew-runtime-detail" class="card" style="overflow:hidden">
               <div class="runtime-shell">
                 <div class="runtime-main">
-                  <div class="crew-hero" style="padding:0 0 16px;border-bottom:1px solid var(--line-soft)">
+                  <div class="crew-detail-header" id="crew-rt-header" style="padding:0 0 16px;border-bottom:1px solid var(--line-soft)">
                     <div class="crew-title">
                       <h2 id="crew-runtime-host-title">MacBook-Pro-10.local</h2>
-                      <span class="subline">5 个运行时 · 5 个在线 · 全部空闲 · 0.3.11 · daemon 019e6da2</span>
+                      <span class="subline">5 个运行时 · 5 个在线 · 全部空闲 · daemon v0.3.11 · 最后心跳 12s 前</span>
                     </div>
-                    <span class="pill green" style="margin-left:auto">本地 · 这台机器</span>
-                    <button class="btn" onclick="document.getElementById('crew-rt-logs-local').scrollIntoView({behavior:'smooth'})">View logs</button>
-                    <button class="btn">Restart</button>
-                    <button class="btn" style="color:var(--red)">Stop</button>
+                    <span class="pill green" id="crew-rt-status-pill" style="margin-left:auto">本地 · 这台机器</span>
+                    <button class="btn" onclick="document.getElementById('crew-rt-logs-section').scrollIntoView({behavior:'smooth'})">View logs</button>
+                    <button class="btn" onclick="crewRuntimeRestart()">Restart</button>
+                    <button class="btn" id="crew-rt-stop-btn" style="color:var(--red)" onclick="crewRuntimeStop()">Stop</button>
                   </div>
                   <div style="overflow-x:auto;margin-top:12px">
                     <table class="runtime-table">
@@ -4639,9 +4639,6 @@ FocusPilot/
                           <th>健康度</th>
                           <th>智能体</th>
                           <th>工作负载</th>
-                          <th>费用 · 7 天</th>
-                          <th>CLI</th>
-                          <th>配置</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -4650,142 +4647,41 @@ FocusPilot/
                           <td><span class="pill green">在线</span></td>
                           <td>代码工程师</td>
                           <td>空闲</td>
-                          <td>$0.20</td>
-                          <td><span style="font-family:var(--mono)">0.3.11</span></td>
-                          <td><button class="btn">配置</button></td>
                         </tr>
                         <tr>
                           <td><span class="runtime-name"><span>◎</span> Codex</span></td>
                           <td><span class="pill green">在线</span></td>
-                          <td>-</td>
+                          <td>—</td>
                           <td>空闲</td>
-                          <td>$0.13</td>
-                          <td><span style="font-family:var(--mono)">0.3.11</span></td>
-                          <td><button class="btn">配置</button></td>
                         </tr>
                         <tr>
                           <td><span class="runtime-name"><span>◆</span> Cursor</span></td>
                           <td><span class="pill green">在线</span></td>
-                          <td>-</td>
+                          <td>—</td>
                           <td>空闲</td>
-                          <td>-</td>
-                          <td><span style="font-family:var(--mono)">0.3.11</span></td>
-                          <td><button class="btn">配置</button></td>
                         </tr>
                         <tr>
                           <td><span class="runtime-name"><span>✦</span> Gemini</span></td>
                           <td><span class="pill green">在线</span></td>
-                          <td>-</td>
+                          <td>—</td>
                           <td>空闲</td>
-                          <td>-</td>
-                          <td><span style="font-family:var(--mono)">0.3.11</span></td>
-                          <td><button class="btn">配置</button></td>
                         </tr>
                         <tr>
                           <td><span class="runtime-name"><span>◉</span> Hermes</span></td>
                           <td><span class="pill green">在线</span></td>
-                          <td>-</td>
+                          <td>—</td>
                           <td>空闲</td>
-                          <td>-</td>
-                          <td><span style="font-family:var(--mono)">0.3.11</span></td>
-                          <td><button class="btn">配置</button></td>
                         </tr>
                       </tbody>
                     </table>
                   </div>
-                  <div class="grid cols-3" style="margin-top:16px">
-                    <div class="card" style="box-shadow:none">
-                      <div class="card-head"><h3>Claude 配置</h3><span class="pill green">已绑定</span></div>
-                      <div class="card-body">
-                        <div class="row"><strong>启动命令</strong><span class="right" style="font-family:var(--mono)">claude</span></div>
-                        <div class="row"><strong>工作目录</strong><span class="right">当前 Project</span></div>
-                        <div class="row"><strong>模型</strong><span class="right">跟随 CLI</span></div>
-                        <div class="row"><strong>Env</strong><span class="right">2 keys hidden</span></div>
-                        <div class="row"><strong>MCP</strong><span class="right">filesystem, github</span></div>
-                      </div>
-                    </div>
-                    <div class="card" style="box-shadow:none">
-                      <div class="card-head"><h3>最近运行</h3><button class="btn">查看全部</button></div>
-                      <div class="card-body crew-log">
-                        <div class="crew-log-item"><strong>FP-001 数据模型设计</strong><span class="subline">Claude · 7m18s · 成功</span></div>
-                        <div class="crew-log-item"><strong>FP-007 PRD 文档整合</strong><span class="subline">Claude · 5m51s · 成功</span></div>
-                        <div class="crew-log-item"><strong>FP-004 Terminal 手动执行模式</strong><span class="subline">Claude · 1m01s · 成功</span></div>
-                      </div>
-                    </div>
-                    <div class="card" style="box-shadow:none">
-                      <div class="card-head"><h3>最近日志</h3><button class="btn" onclick="document.getElementById('crew-rt-logs-local').scrollIntoView({behavior:'smooth'})">View logs</button></div>
-                      <div class="card-body crew-log">
-                        <div class="crew-log-item"><strong>daemon heartbeat</strong><span class="subline">12s 前 · all executors idle</span></div>
-                        <div class="crew-log-item"><strong>Claude config loaded</strong><span class="subline">2m 前 · 2 env keys redacted</span></div>
-                        <div class="crew-log-item"><strong>Codex registered</strong><span class="subline">18m 前 · CLI 0.3.11</span></div>
-                      </div>
-                    </div>
-                  </div>
                 </div>
               </div>
             </div>
 
-            <!-- ===== Runtime：配置（内联） ===== -->
-            <div id="crew-rt-config-empty" style="display:none;text-align:center;padding:48px 24px"><div class="card" style="padding:48px 24px"><div style="font-size:36px;margin-bottom:12px;opacity:.4">⚙️</div><p style="color:var(--dim);font-size:13px">远程节点尚未连接，暂无配置信息</p></div></div>
-            <div id="crew-rt-config-local" style="margin-top:18px">
-            <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);margin-bottom:8px;padding-top:14px;border-top:1px solid var(--line-soft)">节点配置</div>
-            <div class="seg" id="crew-rt-config-sub-tabs" data-scope="crewRtConfigSub" style="margin-bottom:12px;justify-content:flex-start">
-              <button class="active" data-crew-rt-config-sub="rt-basic">基础信息</button><button data-crew-rt-config-sub="rt-executors">执行器</button><button data-crew-rt-config-sub="rt-env">环境变量</button><button data-crew-rt-config-sub="rt-args">自定义参数</button>
-            </div>
 
-            <div class="crew-config-panel active" data-crew-rt-config-panel="rt-basic">
-              <div class="card">
-                <div class="card-head"><h3>机器信息</h3><span class="pill green">在线</span></div>
-                <div class="card-body">
-                  <div class="crew-field-grid">
-                    <div class="crew-field"><label>机器名</label><input value="MacBook-Pro-10.local" readonly /></div>
-                    <div class="crew-field"><label>类型</label><input value="本地 · 这台机器" readonly /></div>
-                    <div class="crew-field"><label>Daemon ID</label><input value="019e6da2" readonly style="font-family:var(--mono)" /></div>
-                    <div class="crew-field"><label>App 版本</label><input value="0.3.11" readonly style="font-family:var(--mono)" /></div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div class="crew-config-panel" data-crew-rt-config-panel="rt-executors">
-              <div class="card">
-                <div class="card-head"><h3>检测配置</h3></div>
-                <div class="card-body">
-                  <div class="row"><strong>检测模式</strong><span class="right">自动（PATH 扫描 + 版本号）</span></div>
-                  <div class="row"><strong>检测频率</strong><span class="right">启动时 + 每 30 分钟</span></div>
-                  <div class="row"><strong>已发现 CLI</strong><span class="right">5（Claude / Codex / Cursor / Gemini / Hermes）</span></div>
-                </div>
-              </div>
-            </div>
-
-            <div class="crew-config-panel" data-crew-rt-config-panel="rt-env">
-              <div class="card">
-                <div class="card-head"><h3>环境变量</h3><span class="pill">全局</span></div>
-                <div class="card-body">
-                  <div class="secret-row">
-                    <input value="PATH" readonly />
-                    <input type="password" value="********" />
-                    <button class="btn">Reveal</button>
-                  </div>
-                  <div style="margin-top:12px"><button class="btn">+ 添加变量</button></div>
-                </div>
-              </div>
-            </div>
-
-            <div class="crew-config-panel" data-crew-rt-config-panel="rt-args">
-              <div class="card">
-                <div class="card-head"><h3>自定义参数</h3><span class="pill">节点级</span></div>
-                <div class="card-body">
-                  <div class="crew-field"><label>全局 Args</label><input value="" placeholder="所有执行器共用的参数" style="font-family:var(--mono);font-size:12px" /></div>
-                  <div style="margin-top:8px;font-size:11px;color:var(--dim)">节点级参数会合并到每个执行器的参数列表末尾</div>
-                </div>
-              </div>
-            </div>
-            </div>
-
-            <!-- ===== Runtime：日志（内联） ===== -->
-            <div id="crew-rt-logs-empty" style="display:none;text-align:center;padding:48px 24px"><div class="card" style="padding:48px 24px"><div style="font-size:36px;margin-bottom:12px;opacity:.4">📋</div><p style="color:var(--dim);font-size:13px">远程节点尚未连接，暂无日志</p></div></div>
-            <div id="crew-rt-logs-local" style="margin-top:18px">
+            <!-- ===== Runtime：Daemon 日志 ===== -->
+            <div id="crew-rt-logs-section" style="margin-top:18px">
             <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);margin-bottom:8px;padding-top:14px;border-top:1px solid var(--line-soft)">Daemon 日志</div>
             <div class="card">
               <div class="card-head"><h3>Daemon 日志</h3><button class="btn">刷新</button></div>
@@ -5073,7 +4969,7 @@ FocusPilot/
       document.querySelectorAll(".seg[data-scope] button").forEach((btn) => {
         btn.addEventListener("click", () => {
           const seg = btn.closest(".seg")
-          if (seg.dataset.scope === "crewMode" || seg.dataset.scope === "crewConfigSub" || seg.dataset.scope === "crewRtConfigSub") return
+          if (seg.dataset.scope === "crewMode" || seg.dataset.scope === "crewConfigSub") return
           seg
             .querySelectorAll("button")
             .forEach((item) => item.classList.toggle("active", item === btn))
@@ -5145,26 +5041,39 @@ FocusPilot/
         agentTab: 'crew-activity',
         runtimeTab: 'crew-runtime',
         agentConfigTab: 'agent-basic',
-        runtimeConfigTab: 'rt-basic'
+        runtimeStopped: false
       };
       var crewRuntimeNames = { macbook: 'MacBook-Pro-10.local', remote: 'remote-dev-01' };
       var crewAgentPanels = ['crew-activity', 'crew-tasks', 'crew-config'];
       var crewRuntimePanels = ['crew-runtime'];
 
+      function crewRuntimeRestart() {
+        var pill = document.getElementById('crew-rt-status-pill');
+        if (pill) { pill.textContent = '重启中…'; pill.className = 'pill'; }
+        setTimeout(function() {
+          crewState.runtimeStopped = false;
+          if (pill) { pill.textContent = '本地 · 这台机器'; pill.className = 'pill green'; }
+          var btn = document.getElementById('crew-rt-stop-btn');
+          if (btn) { btn.textContent = 'Stop'; btn.style.color = 'var(--red)'; btn.onclick = crewRuntimeStop; }
+        }, 1500);
+      }
+
+      function crewRuntimeStop() {
+        if (!confirm('确定要停止 Daemon 进程吗？停止后所有执行器将不可用。')) return;
+        crewState.runtimeStopped = true;
+        var pill = document.getElementById('crew-rt-status-pill');
+        if (pill) { pill.textContent = '已停止'; pill.className = 'pill'; }
+        var btn = document.getElementById('crew-rt-stop-btn');
+        if (btn) { btn.textContent = 'Start'; btn.style.color = ''; btn.onclick = function() { crewRuntimeRestart(); }; }
+      }
+
       function setRuntimeHostAvailability(isLocal) {
-        var pairs = [
-          ['crew-runtime-detail', 'crew-runtime-empty'],
-          ['crew-rt-config-local', 'crew-rt-config-empty'],
-          ['crew-rt-logs-local', 'crew-rt-logs-empty']
-        ];
-        pairs.forEach(function(pair) {
-          var localEl = document.getElementById(pair[0]);
-          var emptyEl = document.getElementById(pair[1]);
-          if (localEl && emptyEl) {
-            localEl.style.display = isLocal ? '' : 'none';
-            emptyEl.style.display = isLocal ? 'none' : '';
-          }
-        });
+        var detailEl = document.getElementById('crew-runtime-detail');
+        var emptyEl = document.getElementById('crew-runtime-empty');
+        var logsEl = document.getElementById('crew-rt-logs-section');
+        if (detailEl) detailEl.style.display = isLocal ? '' : 'none';
+        if (emptyEl) emptyEl.style.display = isLocal ? 'none' : '';
+        if (logsEl) logsEl.style.display = isLocal ? '' : 'none';
       }
 
       function renderCrewView() {
@@ -5197,9 +5106,6 @@ FocusPilot/
           title.textContent = hostName;
           seg.innerHTML = '';
           allPanels.forEach(function(id) { var el = document.getElementById(id); if (el) el.classList.toggle('active', id === 'crew-runtime'); });
-          // restore runtime config sub-tab
-          document.querySelectorAll("[data-crew-rt-config-sub]").forEach(function(b) { b.classList.toggle("active", b.dataset.crewRtConfigSub === crewState.runtimeConfigTab); });
-          document.querySelectorAll("[data-crew-rt-config-panel]").forEach(function(p) { p.classList.toggle("active", p.dataset.crewRtConfigPanel === crewState.runtimeConfigTab); });
           // runtime detail vs empty state
           setRuntimeHostAvailability(crewState.selectedRuntimeHostId === 'macbook');
         }
@@ -5270,14 +5176,6 @@ FocusPilot/
         });
       });
 
-      // ===== Runtime config sub-tab switching =====
-      document.querySelectorAll("[data-crew-rt-config-sub]").forEach(function(btn) {
-        btn.addEventListener("click", function() {
-          crewState.runtimeConfigTab = btn.dataset.crewRtConfigSub;
-          document.querySelectorAll("[data-crew-rt-config-sub]").forEach(function(b) { b.classList.toggle("active", b.dataset.crewRtConfigSub === crewState.runtimeConfigTab); });
-          document.querySelectorAll("[data-crew-rt-config-panel]").forEach(function(p) { p.classList.toggle("active", p.dataset.crewRtConfigPanel === crewState.runtimeConfigTab); });
-        });
-      });
 
       // ===== Focus Task Demo Data =====
       var focusTaskDemoData = {
