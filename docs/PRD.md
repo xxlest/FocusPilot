@@ -356,7 +356,7 @@ Crew 是 FocusPilot 的核心交互概念——**用户不直接面对 Agent/MCP
 
 Runtime 背后由 daemon 进程负责自动扫描本机 CLI、读取环境配置、维护健康度和日志，UI 只展示状态和操作控制，不暴露 Env / Args / MCP 等编辑配置（高级配置留给 Settings）。
 
-- **Runtime Header**：节点名 + 状态摘要 + daemon 版本 + 最后心跳 + 操作按钮（View logs / Restart / Stop）。Stop 为危险操作，需确认；停止后按钮变为 Start
+- **Runtime Header**：节点名 + 状态摘要 + daemon 版本 + 最后心跳 + 操作按钮（View logs / Restart / Stop）。Stop 为危险操作，需确认；停止后隐藏 Restart 仅保留 Start，恢复 online 后重新显示 Restart / Stop
 - **执行器表格**：4 列精简（执行器 / 健康度 / 智能体 / 工作负载）。远程节点未连接时整页显示单一空状态
 - **Daemon 日志区**：内联展示，支持刷新。View logs 按钮滚动到此区域
 

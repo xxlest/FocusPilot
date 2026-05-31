@@ -5046,11 +5046,15 @@ FocusPilot/
       var crewAgentPanels = ['crew-activity', 'crew-tasks', 'crew-config'];
       var crewRuntimePanels = ['crew-runtime'];
 
-      function isRuntimeStopped() {
-        return !!(runtimeHostState[crewState.selectedRuntimeHostId] || {}).stopped;
-      }
-
-      function crewRuntimeSetTableState(online) {
+      function renderRuntimeControlState() {
+        var stopped = !!(runtimeHostState[crewState.selectedRuntimeHostId] || {}).stopped;
+        var online = !stopped;
+        var pill = document.getElementById('crew-rt-status-pill');
+        if (pill) { pill.textContent = online ? '本地 · 这台机器' : '已停止'; pill.className = online ? 'pill green' : 'pill'; }
+        var sub = document.getElementById('crew-rt-subline');
+        if (sub) sub.textContent = online
+          ? '5 个执行器 · 5 个在线 · 全部空闲 · daemon v0.3.11 · 最后心跳 12s 前'
+          : 'daemon 已停止 · 执行器不可用';
         var rows = document.querySelectorAll('#crew-runtime-detail .runtime-table tbody tr');
         rows.forEach(function(row) {
           var cells = row.querySelectorAll('td');
@@ -5059,12 +5063,14 @@ FocusPilot/
             cells[3].textContent = online ? '空闲' : '—';
           }
         });
-        var sub = document.getElementById('crew-rt-subline');
-        if (sub) sub.textContent = online
-          ? '5 个执行器 · 5 个在线 · 全部空闲 · daemon v0.3.11 · 最后心跳 12s 前'
-          : 'daemon 已停止 · 执行器不可用';
         var restartBtn = document.getElementById('crew-rt-restart-btn');
         if (restartBtn) restartBtn.style.display = online ? '' : 'none';
+        var stopBtn = document.getElementById('crew-rt-stop-btn');
+        if (stopBtn) {
+          stopBtn.textContent = online ? 'Stop' : 'Start';
+          stopBtn.style.color = online ? 'var(--red)' : '';
+          stopBtn.onclick = online ? crewRuntimeStop : function() { crewRuntimeRestart(); };
+        }
       }
 
       function crewRuntimeRestart() {
@@ -5074,10 +5080,7 @@ FocusPilot/
         setTimeout(function() {
           if (!runtimeHostState[hostId]) runtimeHostState[hostId] = {};
           runtimeHostState[hostId].stopped = false;
-          if (pill) { pill.textContent = '本地 · 这台机器'; pill.className = 'pill green'; }
-          var btn = document.getElementById('crew-rt-stop-btn');
-          if (btn) { btn.textContent = 'Stop'; btn.style.color = 'var(--red)'; btn.onclick = crewRuntimeStop; }
-          crewRuntimeSetTableState(true);
+          renderRuntimeControlState();
         }, 1500);
       }
 
@@ -5086,11 +5089,7 @@ FocusPilot/
         var hostId = crewState.selectedRuntimeHostId;
         if (!runtimeHostState[hostId]) runtimeHostState[hostId] = {};
         runtimeHostState[hostId].stopped = true;
-        var pill = document.getElementById('crew-rt-status-pill');
-        if (pill) { pill.textContent = '已停止'; pill.className = 'pill'; }
-        var btn = document.getElementById('crew-rt-stop-btn');
-        if (btn) { btn.textContent = 'Start'; btn.style.color = ''; btn.onclick = function() { crewRuntimeRestart(); }; }
-        crewRuntimeSetTableState(false);
+        renderRuntimeControlState();
       }
 
       function setRuntimeHostAvailability(isLocal) {
@@ -5134,6 +5133,7 @@ FocusPilot/
           allPanels.forEach(function(id) { var el = document.getElementById(id); if (el) el.classList.toggle('active', id === 'crew-runtime'); });
           // runtime detail vs empty state
           setRuntimeHostAvailability(crewState.selectedRuntimeHostId === 'macbook');
+          renderRuntimeControlState();
         }
       }
 
