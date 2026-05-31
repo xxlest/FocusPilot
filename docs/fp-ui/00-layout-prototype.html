@@ -864,7 +864,8 @@
         background: var(--accent); border-radius: 3px 3px 0 0; position: relative; cursor: pointer; transition: opacity .15s;
       }
       .crew-bar:hover { opacity: 1 !important; }
-      .crew-bar.active { opacity: 1 !important; box-shadow: 0 0 0 1.5px var(--accent); }
+      .crew-bar.active { opacity: 1 !important; box-shadow: 0 -2px 8px rgba(82,156,202,0.35); }
+      .crew-bar.active .crew-bar-val { opacity: 1; color: var(--accent); font-weight: 600; }
       .crew-bar.weekend { opacity: .45; }
       .crew-bar:not(.weekend):not(.active) { opacity: .75; }
       .crew-bar-val {
@@ -1230,12 +1231,60 @@
       }
       .crew-log {
         display: grid;
-        gap: 8px;
+        gap: 0;
       }
       .crew-log-item {
         border-left: 2px solid var(--line);
         padding: 3px 0 3px 10px;
         color: var(--muted);
+      }
+      .crew-run-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 9px 6px;
+        border-radius: var(--radius);
+        cursor: pointer;
+      }
+      .crew-run-row:hover {
+        background: var(--hover);
+      }
+      .crew-run-row + .crew-run-row {
+        border-top: 1px solid var(--line-soft);
+      }
+      .crew-run-icon {
+        width: 22px;
+        height: 22px;
+        display: grid;
+        place-items: center;
+        border-radius: 50%;
+        font-size: 11px;
+        font-weight: 700;
+        flex-shrink: 0;
+      }
+      .crew-run-icon.success {
+        background: rgba(52,199,89,0.15);
+        color: #34c759;
+      }
+      .crew-run-icon.failed {
+        background: rgba(255,69,58,0.15);
+        color: var(--red);
+      }
+      .crew-run-info {
+        flex: 1;
+        min-width: 0;
+      }
+      .crew-run-info strong {
+        display: block;
+        font-size: 13px;
+        font-weight: 600;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .crew-run-info .subline {
+        font-size: 11px;
+        margin-top: 1px;
       }
       .crew-member-line {
         align-items: flex-start;
@@ -4467,105 +4516,105 @@ FocusPilot/
                   <button class="btn">全部记录</button>
                 </div>
                 <div class="crew-log" id="crew-recent-log">
-                  <div class="runtime-option" data-day="fri">
-                    <div class="runtime-logo">✓</div>
-                    <div><strong>FP-001 数据模型设计</strong><span class="subline">49 分钟前 · 7m18s · dev-story</span></div>
-                    <button class="btn" onclick="openCrewRunModal('FP-001 数据模型设计')">查看记录</button>
+                  <div class="crew-run-row" data-day="fri" onclick="openCrewRunModal('FP-001 数据模型设计')">
+                    <div class="crew-run-icon success">✓</div>
+                    <div class="crew-run-info"><strong>FP-001 数据模型设计</strong><span class="subline">49 分钟前 · 7m18s · dev-story</span></div>
+                    <button class="btn">查看记录</button>
                   </div>
-                  <div class="runtime-option" data-day="fri">
-                    <div class="runtime-logo">✓</div>
-                    <div><strong>FP-007 PRD 文档整合</strong><span class="subline">52 分钟前 · 5m51s · research</span></div>
-                    <button class="btn" onclick="openCrewRunModal('FP-007 PRD 文档整合')">查看记录</button>
+                  <div class="crew-run-row" data-day="fri" onclick="openCrewRunModal('FP-007 PRD 文档整合')">
+                    <div class="crew-run-icon success">✓</div>
+                    <div class="crew-run-info"><strong>FP-007 PRD 文档整合</strong><span class="subline">52 分钟前 · 5m51s · research</span></div>
+                    <button class="btn">查看记录</button>
                   </div>
-                  <div class="runtime-option" data-day="fri">
-                    <div class="runtime-logo">✓</div>
-                    <div><strong>FP-004 Terminal 手动执行模式</strong><span class="subline">1 小时前 · 1m01s · quick-dev</span></div>
-                    <button class="btn" onclick="openCrewRunModal('FP-004 Terminal 手动执行模式')">查看记录</button>
+                  <div class="crew-run-row" data-day="fri" onclick="openCrewRunModal('FP-004 Terminal 手动执行模式')">
+                    <div class="crew-run-icon success">✓</div>
+                    <div class="crew-run-info"><strong>FP-004 Terminal 手动执行模式</strong><span class="subline">1 小时前 · 1m01s · quick-dev</span></div>
+                    <button class="btn">查看记录</button>
                   </div>
-                  <div class="runtime-option" data-day="fri">
-                    <div class="runtime-logo">✓</div>
-                    <div><strong>FP-009 CI 流水线配置</strong><span class="subline">2 小时前 · 3m42s · dev-story</span></div>
-                    <button class="btn" onclick="openCrewRunModal('FP-009 CI 流水线配置')">查看记录</button>
+                  <div class="crew-run-row" data-day="fri" onclick="openCrewRunModal('FP-009 CI 流水线配置')">
+                    <div class="crew-run-icon success">✓</div>
+                    <div class="crew-run-info"><strong>FP-009 CI 流水线配置</strong><span class="subline">2 小时前 · 3m42s · dev-story</span></div>
+                    <button class="btn">查看记录</button>
                   </div>
-                  <div class="runtime-option" data-day="fri">
-                    <div class="runtime-logo">✓</div>
-                    <div><strong>FP-010 单元测试补全</strong><span class="subline">3 小时前 · 2m15s · quick-dev</span></div>
-                    <button class="btn" onclick="openCrewRunModal('FP-010 单元测试补全')">查看记录</button>
+                  <div class="crew-run-row" data-day="fri" onclick="openCrewRunModal('FP-010 单元测试补全')">
+                    <div class="crew-run-icon success">✓</div>
+                    <div class="crew-run-info"><strong>FP-010 单元测试补全</strong><span class="subline">3 小时前 · 2m15s · quick-dev</span></div>
+                    <button class="btn">查看记录</button>
                   </div>
-                  <div class="runtime-option" data-day="fri">
-                    <div class="runtime-logo" style="color:var(--red)">✗</div>
-                    <div><strong>FP-011 权限模块重构</strong><span class="subline">4 小时前 · 8m33s · dev-story</span></div>
-                    <button class="btn" onclick="openCrewRunModal('FP-011 权限模块重构')">查看记录</button>
+                  <div class="crew-run-row" data-day="fri" onclick="openCrewRunModal('FP-011 权限模块重构')">
+                    <div class="crew-run-icon failed">✗</div>
+                    <div class="crew-run-info"><strong>FP-011 权限模块重构</strong><span class="subline">4 小时前 · 8m33s · dev-story</span></div>
+                    <button class="btn">查看记录</button>
                   </div>
-                  <div class="runtime-option" data-day="thu">
-                    <div class="runtime-logo">✓</div>
-                    <div><strong>FP-005 快捷键冲突检测</strong><span class="subline">昨天 · 4m22s · quick-dev</span></div>
-                    <button class="btn" onclick="openCrewRunModal('FP-005 快捷键冲突检测')">查看记录</button>
+                  <div class="crew-run-row" data-day="thu" onclick="openCrewRunModal('FP-005 快捷键冲突检测')">
+                    <div class="crew-run-icon success">✓</div>
+                    <div class="crew-run-info"><strong>FP-005 快捷键冲突检测</strong><span class="subline">昨天 · 4m22s · quick-dev</span></div>
+                    <button class="btn">查看记录</button>
                   </div>
-                  <div class="runtime-option" data-day="wed">
-                    <div class="runtime-logo">✓</div>
-                    <div><strong>FP-002 看板状态模型</strong><span class="subline">2 天前 · 12m05s · dev-story</span></div>
-                    <button class="btn" onclick="openCrewRunModal('FP-002 看板状态模型')">查看记录</button>
+                  <div class="crew-run-row" data-day="wed" onclick="openCrewRunModal('FP-002 看板状态模型')">
+                    <div class="crew-run-icon success">✓</div>
+                    <div class="crew-run-info"><strong>FP-002 看板状态模型</strong><span class="subline">2 天前 · 12m05s · dev-story</span></div>
+                    <button class="btn">查看记录</button>
                   </div>
-                  <div class="runtime-option" data-day="wed">
-                    <div class="runtime-logo">✓</div>
-                    <div><strong>FP-008 AX API 兼容测试</strong><span class="subline">2 天前 · 6m47s · research</span></div>
-                    <button class="btn" onclick="openCrewRunModal('FP-008 AX API 兼容测试')">查看记录</button>
+                  <div class="crew-run-row" data-day="wed" onclick="openCrewRunModal('FP-008 AX API 兼容测试')">
+                    <div class="crew-run-icon success">✓</div>
+                    <div class="crew-run-info"><strong>FP-008 AX API 兼容测试</strong><span class="subline">2 天前 · 6m47s · research</span></div>
+                    <button class="btn">查看记录</button>
                   </div>
-                  <div class="runtime-option" data-day="wed">
-                    <div class="runtime-logo" style="color:var(--red)">✗</div>
-                    <div><strong>FP-012 主题色迁移</strong><span class="subline">2 天前 · 5m11s · dev-story</span></div>
-                    <button class="btn" onclick="openCrewRunModal('FP-012 主题色迁移')">查看记录</button>
+                  <div class="crew-run-row" data-day="wed" onclick="openCrewRunModal('FP-012 主题色迁移')">
+                    <div class="crew-run-icon failed">✗</div>
+                    <div class="crew-run-info"><strong>FP-012 主题色迁移</strong><span class="subline">2 天前 · 5m11s · dev-story</span></div>
+                    <button class="btn">查看记录</button>
                   </div>
-                  <div class="runtime-option" data-day="wed">
-                    <div class="runtime-logo">✓</div>
-                    <div><strong>FP-013 侧边栏导航重构</strong><span class="subline">2 天前 · 3m29s · quick-dev</span></div>
-                    <button class="btn" onclick="openCrewRunModal('FP-013 侧边栏导航重构')">查看记录</button>
+                  <div class="crew-run-row" data-day="wed" onclick="openCrewRunModal('FP-013 侧边栏导航重构')">
+                    <div class="crew-run-icon success">✓</div>
+                    <div class="crew-run-info"><strong>FP-013 侧边栏导航重构</strong><span class="subline">2 天前 · 3m29s · quick-dev</span></div>
+                    <button class="btn">查看记录</button>
                   </div>
-                  <div class="runtime-option" data-day="tue">
-                    <div class="runtime-logo">✓</div>
-                    <div><strong>FP-003 Agent Pull 管道</strong><span class="subline">3 天前 · 9m33s · dev-story</span></div>
-                    <button class="btn" onclick="openCrewRunModal('FP-003 Agent Pull 管道')">查看记录</button>
+                  <div class="crew-run-row" data-day="tue" onclick="openCrewRunModal('FP-003 Agent Pull 管道')">
+                    <div class="crew-run-icon success">✓</div>
+                    <div class="crew-run-info"><strong>FP-003 Agent Pull 管道</strong><span class="subline">3 天前 · 9m33s · dev-story</span></div>
+                    <button class="btn">查看记录</button>
                   </div>
-                  <div class="runtime-option" data-day="tue">
-                    <div class="runtime-logo">✓</div>
-                    <div><strong>FP-014 API 文档生成</strong><span class="subline">3 天前 · 2m48s · research</span></div>
-                    <button class="btn" onclick="openCrewRunModal('FP-014 API 文档生成')">查看记录</button>
+                  <div class="crew-run-row" data-day="tue" onclick="openCrewRunModal('FP-014 API 文档生成')">
+                    <div class="crew-run-icon success">✓</div>
+                    <div class="crew-run-info"><strong>FP-014 API 文档生成</strong><span class="subline">3 天前 · 2m48s · research</span></div>
+                    <button class="btn">查看记录</button>
                   </div>
-                  <div class="runtime-option" data-day="mon">
-                    <div class="runtime-logo">✓</div>
-                    <div><strong>FP-006 主题系统适配</strong><span class="subline">4 天前 · 5m18s · dev-story</span></div>
-                    <button class="btn" onclick="openCrewRunModal('FP-006 主题系统适配')">查看记录</button>
+                  <div class="crew-run-row" data-day="mon" onclick="openCrewRunModal('FP-006 主题系统适配')">
+                    <div class="crew-run-icon success">✓</div>
+                    <div class="crew-run-info"><strong>FP-006 主题系统适配</strong><span class="subline">4 天前 · 5m18s · dev-story</span></div>
+                    <button class="btn">查看记录</button>
                   </div>
-                  <div class="runtime-option" data-day="mon">
-                    <div class="runtime-logo">✓</div>
-                    <div><strong>FP-015 错误日志分析</strong><span class="subline">4 天前 · 4m02s · research</span></div>
-                    <button class="btn" onclick="openCrewRunModal('FP-015 错误日志分析')">查看记录</button>
+                  <div class="crew-run-row" data-day="mon" onclick="openCrewRunModal('FP-015 错误日志分析')">
+                    <div class="crew-run-icon success">✓</div>
+                    <div class="crew-run-info"><strong>FP-015 错误日志分析</strong><span class="subline">4 天前 · 4m02s · research</span></div>
+                    <button class="btn">查看记录</button>
                   </div>
-                  <div class="runtime-option" data-day="mon">
-                    <div class="runtime-logo" style="color:var(--red)">✗</div>
-                    <div><strong>FP-016 配置导入导出</strong><span class="subline">4 天前 · 6m55s · dev-story</span></div>
-                    <button class="btn" onclick="openCrewRunModal('FP-016 配置导入导出')">查看记录</button>
+                  <div class="crew-run-row" data-day="mon" onclick="openCrewRunModal('FP-016 配置导入导出')">
+                    <div class="crew-run-icon failed">✗</div>
+                    <div class="crew-run-info"><strong>FP-016 配置导入导出</strong><span class="subline">4 天前 · 6m55s · dev-story</span></div>
+                    <button class="btn">查看记录</button>
                   </div>
-                  <div class="runtime-option" data-day="sat">
-                    <div class="runtime-logo">✓</div>
-                    <div><strong>FP-017 文档结构梳理</strong><span class="subline">5 天前 · 3m12s · research</span></div>
-                    <button class="btn" onclick="openCrewRunModal('FP-017 文档结构梳理')">查看记录</button>
+                  <div class="crew-run-row" data-day="sat" onclick="openCrewRunModal('FP-017 文档结构梳理')">
+                    <div class="crew-run-icon success">✓</div>
+                    <div class="crew-run-info"><strong>FP-017 文档结构梳理</strong><span class="subline">5 天前 · 3m12s · research</span></div>
+                    <button class="btn">查看记录</button>
                   </div>
-                  <div class="runtime-option" data-day="sat">
-                    <div class="runtime-logo">✓</div>
-                    <div><strong>FP-018 性能基准测试</strong><span class="subline">5 天前 · 8m44s · quick-dev</span></div>
-                    <button class="btn" onclick="openCrewRunModal('FP-018 性能基准测试')">查看记录</button>
+                  <div class="crew-run-row" data-day="sat" onclick="openCrewRunModal('FP-018 性能基准测试')">
+                    <div class="crew-run-icon success">✓</div>
+                    <div class="crew-run-info"><strong>FP-018 性能基准测试</strong><span class="subline">5 天前 · 8m44s · quick-dev</span></div>
+                    <button class="btn">查看记录</button>
                   </div>
-                  <div class="runtime-option" data-day="sat">
-                    <div class="runtime-logo">✓</div>
-                    <div><strong>FP-019 缓存策略优化</strong><span class="subline">5 天前 · 4m57s · dev-story</span></div>
-                    <button class="btn" onclick="openCrewRunModal('FP-019 缓存策略优化')">查看记录</button>
+                  <div class="crew-run-row" data-day="sat" onclick="openCrewRunModal('FP-019 缓存策略优化')">
+                    <div class="crew-run-icon success">✓</div>
+                    <div class="crew-run-info"><strong>FP-019 缓存策略优化</strong><span class="subline">5 天前 · 4m57s · dev-story</span></div>
+                    <button class="btn">查看记录</button>
                   </div>
-                  <div class="runtime-option" data-day="sun">
-                    <div class="runtime-logo">✓</div>
-                    <div><strong>FP-020 周报数据汇总</strong><span class="subline">6 天前 · 2m31s · research</span></div>
-                    <button class="btn" onclick="openCrewRunModal('FP-020 周报数据汇总')">查看记录</button>
+                  <div class="crew-run-row" data-day="sun" onclick="openCrewRunModal('FP-020 周报数据汇总')">
+                    <div class="crew-run-icon success">✓</div>
+                    <div class="crew-run-info"><strong>FP-020 周报数据汇总</strong><span class="subline">6 天前 · 2m31s · research</span></div>
+                    <button class="btn">查看记录</button>
                   </div>
                 </div>
               </div>
@@ -5329,7 +5378,7 @@ FocusPilot/
         } else {
           pill.style.display = 'none';
         }
-        var rows = document.querySelectorAll('#crew-recent-log .runtime-option[data-day]');
+        var rows = document.querySelectorAll('#crew-recent-log .crew-run-row[data-day]');
         var shown = 0;
         rows.forEach(function(row) {
           if (crewActiveDay) {
