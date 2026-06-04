@@ -123,16 +123,19 @@
 
 ## 5. 页面清单
 
+一级导航 7 项，文档规格 8 个（含已合并的 02-inbox 历史参考）。
+
 | 活动栏 | 页面 | 说明 | 规格状态 | 规格文档 | 原型 |
 |--------|------|------|---------|---------|------|
 | 🏠 | **Home** | 全局概览入口：摘要数字条 + 重点列表 + 对话视图 | **可开发** | [01-home.md](fp-ui/01-home.md) | [00-layout-prototype.html](fp-ui/00-layout-prototype.html) |
-| 📥 | **Inbox** | 收集箱：待阅读/灵感/临时事项 + 流出规则 | **可开发** | [02-inbox.md](fp-ui/02-inbox.md) | [00-layout-prototype.html](fp-ui/00-layout-prototype.html) |
+| 📂 | **Projects** | 记忆与输入管理层：Inbox 收集（Tab）+ 项目资产沉淀（Tab），文件树+Markdown 编辑器+知识管道+KB 卡片+Anki 同步 | **可开发** | [05-area-projects.md](fp-ui/05-area-projects.md) | [00-layout-prototype.html](fp-ui/00-layout-prototype.html) |
 | 🎯 | **Focus** | 结构化行动工作台：规划+看板+列表+Agent Live Card | **可开发** | [03-focus.md](fp-ui/03-focus.md) | [00-layout-prototype.html](fp-ui/00-layout-prototype.html)、[03-focus-prototype.html](fp-ui/03-focus-prototype.html) |
 | 💻 | **Studio** | 项目级 AI 编程指挥台：六区布局（置顶+Triage+Workspace对话列表+Automations 侧边栏/顶栏/对话/输入/Diff审查+Git右面板/终端面板） | **可开发** | [04-studio.md](fp-ui/04-studio.md) | [00-layout-prototype.html](fp-ui/00-layout-prototype.html) |
-| 📁 | **AreaProjects** | 项目资产沉淀（执行类+知识类），文件树+Markdown 编辑器+知识管道+KB 卡片+Anki 同步 | **可开发（UI 母版）** | [05-area-projects.md](fp-ui/05-area-projects.md) | [00-layout-prototype.html](fp-ui/00-layout-prototype.html) |
 | 🧠 | **Review** | 复习与内化中心：今日复习 / 内化挑战 / 卡片库 / 统计 | **可开发** | [06-review.md](fp-ui/06-review.md) | [00-layout-prototype.html](fp-ui/00-layout-prototype.html)、[06-review-today-prototype.html](fp-ui/06-review-today-prototype.html)、[06-review-challenge-prototype.html](fp-ui/06-review-challenge-prototype.html) |
 | 🤖 | AICrew | Agent 团队管理（成员 / Runtime 侧栏分段 + 成员动态 / 配置 / 执行记录） | **可开发** | [07-ai-crew.md](fp-ui/07-ai-crew.md) | [00-layout-prototype.html](fp-ui/00-layout-prototype.html) |
-| ⚙️ | Settings | 全局配置：Focus/Studio/AICrew/Projects/通用 | 草稿 | [08-settings.md](fp-ui/08-settings.md) | [00-layout-prototype.html](fp-ui/00-layout-prototype.html) |
+| ⚙️ | Settings | 全局配置：Focus/Studio/AICrew/Projects/通用 | **可开发** | [08-settings.md](fp-ui/08-settings.md) | [00-layout-prototype.html](fp-ui/00-layout-prototype.html) |
+
+> **已合并**：原 Inbox 页面（[02-inbox.md](fp-ui/02-inbox.md)）已合并至 Projects 页面的 Inbox Tab，02-inbox.md 保留为历史参考。
 
 ### 原型策略
 
@@ -141,7 +144,7 @@
 | 优先级 | 页面 | 保真度 |
 |:------:|------|--------|
 | P0 | 00-layout（全局壳层，含全部页面工作区） | 高保真，可点击切换，已建母版 |
-| P1 | 02-inbox / 05-area-projects | 中保真 |
+| P1 | 05-area-projects（含 Inbox Tab） | 中保真 |
 | P2 | 08-settings | 暂保留规格，后补 |
 
 ### 原型命名规则
@@ -155,7 +158,7 @@
 
 | 原型文件 | 覆盖范围 | 说明 |
 |---------|---------|------|
-| [00-layout-prototype.html](fp-ui/00-layout-prototype.html) | 全局壳层 + 各页面工作区 | 活动栏+侧边栏+工作区，可切换所有页面；覆盖 Home / Inbox / Focus / Studio / AreaProjects / Review / AICrew / Settings |
+| [00-layout-prototype.html](fp-ui/00-layout-prototype.html) | 全局壳层 + 各页面工作区 | 活动栏+侧边栏+工作区，可切换所有页面；覆盖 Home / Projects（含 Inbox Tab）/ Focus / Studio / Review / AICrew / Settings |
 | [03-focus-prototype.html](fp-ui/03-focus-prototype.html) | Focus 深水流程（历史参考） | 规划三模式+看板+列表+Task 详情页+新建弹窗。核心结构已合入壳层母版，复杂状态继续作为专项参考 |
 | [03-focus-session-prototype.html](fp-ui/03-focus-session-prototype.html) | Focus Session（专项参考） | Session 模式原型。保留为专项流程参考，不再维护全局壳层 |
 | [06-review-today-prototype.html](fp-ui/06-review-today-prototype.html) | Review 今日复习（专项参考） | 队列概览、逐卡复习、完成后引导内化。核心状态已合入壳层母版，专项文件保留为流程参考 |

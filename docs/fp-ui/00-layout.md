@@ -10,17 +10,16 @@
 
 类似 VS Code 布局，由活动栏 + 侧边栏 + 工作区组成。Studio 页面额外支持右侧栏（文件浏览）和终端面板。
 
-### 基础布局（Home / Inbox / Focus / Studio / AreaProjects / Review / AICrew / Settings）
+### 基础布局（Home / Projects / Focus / Studio / Review / AICrew / Settings）
 
 ```
 ┌─ 活动栏 ─┬─ 侧边栏 ──────┬─ 工作区 ─────────────────────────┐
 │  52px    │  260px        │                                    │
 │          │               │  顶部栏（标题 + 视图切换 + 筛选）    │
 │  🏠 Home │  随活动栏      │  ─────────────────────────────     │
-│  📥 Inbox│  切换内容      │                                    │
+│  📂 Proj │  切换内容      │                                    │
 │  🎯 Focus│               │  内容区（随页面和视图变化）           │
 │  💻Studio│               │                                    │
-│  📁 Areas│               │                                    │
 │  🧠Review│               │                                    │
 │  🤖 Crew │               │                                    │
 │  ─ ─ ─   │               │                                    │
@@ -35,11 +34,10 @@
 │  52px    │  260px        │                        │  ⌘⇧B 切换       │
 │          │               │  顶栏（项目·Runtime·   │                  │
 │  🏠 Home │  自动化        │   🔧工具·🖥终端·◨侧栏）│  多 Tab 文件浏览  │
-│  📥 Inbox│  搜索          │  ────────────────     │  只读预览        │
+│  📂 Proj │  搜索          │  ────────────────     │  只读预览        │
 │  🎯 Focus│  项目区        │                        │                  │
 │  💻Studio│  (🤖📁🌿 Tab) │  对话区（消息流）       │                  │
-│  📁 Areas│               │                        │                  │
-│  🧠Review│               │  输入区（底部）         │                  │
+│  🧠Review│               │                        │                  │
 │  🤖 Crew │               │  输入区（底部）         │                  │
 │  ─ ─ ─   │               │  ────────────────     │                  │
 │  ⚙️ Set  │  [⚙ 设置]     │  终端面板（可选，⌘J）  │                  │
@@ -55,21 +53,20 @@ Studio 独有区域：右侧栏（⌘⇧B 切换，多 Tab 文件浏览）、终
 | 图标 | 页面 | 说明 | 设计文档 |
 |------|------|------|---------|
 | 🏠 | Home | 全局概览入口：摘要数字条 + 重点列表 + 对话视图（Tab 切换） | [01-home.md](01-home.md) |
-| 📥 | Inbox | 收集箱：待阅读/灵感/临时任务/便签 | [02-inbox.md](02-inbox.md) |
+| 📂 | Projects | 记忆与输入管理层：Inbox（收集）+ Projects（知识沉淀），侧边栏 Tab 切换 | [05-area-projects.md](05-area-projects.md) |
 | 🎯 | Focus | 结构化行动工作台：规划+看板+列表+Task 执行闭环 | [03-focus.md](03-focus.md) |
 | 💻 | Studio | 项目级 AI 工作区：对话/文件管理/Git 提交/右侧栏文件浏览/终端 | [04-studio.md](04-studio.md) |
-| 📁 | AreaProjects | 项目资产沉淀（执行类+知识类） | [05-area-projects.md](05-area-projects.md) |
 | 🧠 | Review | 复习与内化中心：今日复习 / 内化挑战 / 卡片库 / 统计 | [06-review.md](06-review.md) |
 | 🤖 | AICrew | Agent 团队管理 | [07-ai-crew.md](07-ai-crew.md) |
 | ⚙️ | Settings | 全局配置（底部） | [08-settings.md](08-settings.md) |
 
-### Focus vs Review vs Studio vs AreaProjects
+### Focus vs Review vs Studio vs Projects
 
-| | Focus 🎯 | Review 🧠 | Studio 💻 | AreaProjects 📁 |
+| | Focus 🎯 | Review 🧠 | Studio 💻 | Projects 📂 |
 |---|---|---|---|---|
-| 关注点 | 计划和任务怎么推进 | 知识如何被记住并内化 | 和 Agent 怎么工作 | 资料和产物沉淀在哪里 |
-| 核心对象 | WorkItem（目标/Task） | ReviewCard（卡片） | CodeSession（会话） | 文件/文件夹 |
-| 交互模式 | 看板拖拽/列表/甘特 | 复习队列/内化挑战/统计 | 对话流/文件浏览/Git 提交/终端 | 文件树/Markdown 编辑 |
+| 关注点 | 计划和任务怎么推进 | 知识如何被记住并内化 | 和 Agent 怎么工作 | 信息在哪里、归到哪里、沉淀在哪里 |
+| 核心对象 | WorkItem（目标/Task） | ReviewCard（卡片） | CodeSession（会话） | InboxItem + 文件/文件夹 |
+| 交互模式 | 看板拖拽/列表/甘特 | 复习队列/内化挑战/统计 | 对话流/文件浏览/Git 提交/终端 | Inbox 列表 / 文件树 / Markdown 编辑 |
 
 ## 侧边栏
 
@@ -77,6 +74,8 @@ Studio 独有区域：右侧栏（⌘⇧B 切换，多 Tab 文件浏览）、终
 - 顶部标题或 Tab 条
 - 搜索框
 - 分类/导航列表
+
+**Projects 侧边栏特殊结构**：顶部 `[📥 Inbox | 📂 Projects]` Tab 切换。Inbox Tab 显示分类导航（待阅读/灵感/临时事项）；Projects Tab 显示文件树。Tab 上 Inbox 角标显示未处理数。详见 [05-area-projects.md](05-area-projects.md)。
 
 **Studio 侧边栏特殊结构**：自动化区（固定顶部）→ 搜索 → 项目区（🤖 会话 / 📁 文件 / 🌿 Git 三 Tab 切换）→ 底部设置。Tab 条属于项目区，📁 文件和 🌿 Git 跟随当前 Workspace。
 

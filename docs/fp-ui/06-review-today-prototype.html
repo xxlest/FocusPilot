@@ -48,13 +48,16 @@
   .logo {
     width: 32px;
     height: 32px;
-    border-radius: 10px;
+    border-radius: 50%;
     display: grid;
     place-items: center;
-    background: linear-gradient(135deg, var(--blue), var(--purple));
     margin-bottom: 14px;
-    font-size: 14px;
-    font-weight: 700;
+  }
+  .logo img {
+    width: 32px;
+    height: 32px;
+    display: block;
+    border-radius: 50%;
   }
   .nav-icon {
     width: 36px;
@@ -400,7 +403,7 @@
 <body>
   <div class="app">
     <aside class="activity">
-      <div class="logo">FP</div>
+      <div class="logo"><img src="assets/focuspilot-enso-logo-trademark.png" alt="FocusPilot" /></div>
       <div class="nav-icon">🏠</div>
       <div class="nav-icon">📥</div>
       <div class="nav-icon">🎯</div>

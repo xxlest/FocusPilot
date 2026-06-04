@@ -33,7 +33,7 @@ Studio 是 FocusPilot 的**项目级 AI 编程指挥台**。复刻 Codex App 桌
 |------|------|-----------------|
 | **Home** | AI 对话入口（含自由聊天）+ 最近操作 | Home = 自由对话；Studio = 项目级 Session 对话 |
 | **Focus** | 任务规划、看板、列表、评估、验收 | Focus 管"任务怎么推进"；Studio 管"代码怎么改"。Studio Session 可关联 Focus Task，但不替代 Focus 的任务状态机 |
-| **AreaProjects** | 项目资产管理和长期沉淀 | AreaProjects = 文件组织/编辑/预览；Studio = AI 驱动的代码变更和交付 |
+| **Projects** | 信息收集和项目资产沉淀 | Projects = Inbox 收集 + 文件组织/编辑/预览；Studio = AI 驱动的代码变更和交付 |
 | **AICrew** | Agent 团队管理（角色/能力/MCP） | AICrew 定义 Agent 成员；Studio 消费 Agent 成员（Session 创建时选择） |
 
 ### 核心交互原则

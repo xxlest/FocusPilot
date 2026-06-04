@@ -28,7 +28,7 @@ FocusPilot 定位为 macOS 上的个人自迭代系统（Personal AIOS）—— 
 - **市场分析**：`docs/产品战略/FocusPilot市场分析与阶段验证方案.md` — 市场机会、用户画像、五阶段验证
 ### UI 设计（V1 新界面）
 - **设计总览**：`docs/FP-UI.md` — 8 个页面进度、技术架构、参考来源
-- **页面设计**：`docs/fp-ui/00~07` — Layout / Home / Inbox / Focus / Studio / AreaProjects / AICrew / Settings
+- **页面设计**：`docs/fp-ui/00~08` — Layout / Home / ~~Inbox（已合并至 Projects）~~ / Focus / Studio / Projects（含 Inbox Tab）/ Review / AICrew / Settings
 - **功能说明书**：`docs/focuspilot-ui-features.md` — 从产品定位到 UI 细节的递进式讲解
 
 ### 竞品分析
@@ -67,14 +67,16 @@ FocusPilot 定位为 macOS 上的个人自迭代系统（Personal AIOS）—— 
 
 ### UI 设计进度（fp-ui/）
 
+一级导航 7 项：Home · Projects · Focus · Studio · Review · AICrew · Settings
+
 | 页面 | 完整度 | 状态 | 下一步 |
 |------|:------:|------|--------|
 | 00-layout | 5/5 | 可开发 | — |
 | 01-home | 5/5 | 可开发 | — |
-| 02-inbox | 5/5 | 可开发 | — |
+| 02-inbox | — | 已合并至 Projects | 历史参考，见 05-area-projects.md §7 |
 | 03-focus | 5/5 | 可开发 | — |
 | 04-studio | 5/5 | 可开发 | — |
-| 05-area-projects | 5/5 | 可开发 | — |
+| 05-area-projects (Projects) | 5/5 | 可开发 | 含 Inbox Tab + Projects Tab |
 | 06-review | 5/5 | 可开发 | — |
 | 07-ai-crew | 5/5 | 可开发 | — |
 | 08-settings | 5/5 | 可开发 | — |
@@ -207,6 +209,7 @@ make clean      # 清理
 - **每次更新 `docs/fp-ui/` 目录下的文件后，必须输出当前 UI 设计进度表（各页面完整度和状态）**
 - **页面真实设计完成度以 `docs/fp-ui/00-layout-prototype.html` 母版同步完成为准；仅页面规格文档完成不得标记为 5/5 或“可开发”**
 - **每次输出 UI 设计进度表时，必须同时用浏览器打开 `docs/fp-ui/00-layout-prototype.html`，停留在页面等待用户自行查看，不用截图替代用户验收**
+- **每次修改功能后，必须检查 Settings 页面（`docs/fp-ui/07-settings.md` 及对应原型）是否需要同步调整配置项**
 
 ## ⚠️ 高频 Bug 防范：窗口标题"无标题"
 

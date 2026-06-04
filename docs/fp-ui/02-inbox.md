@@ -1,10 +1,15 @@
-# Inbox 收集箱页面设计
+# ~~Inbox 收集箱页面设计~~
 
-> **状态**：可开发
-> **更新**：2026-05-22
-> **原型**：[00-layout-prototype.html](00-layout-prototype.html)
-> **参考**：Plane Stickies（灵感卡片交互）
-> **关联**：[PRD §3.2 知识管道](../PRD.md)
+> **⚠️ 已合并 — DO NOT USE AS SOURCE OF TRUTH**
+>
+> Inbox 已合并至 [Projects 页面](05-area-projects.md) 的 Inbox 模块（§2 侧边栏 Inbox Tab + §7 Inbox 模块规格）。
+> **所有 Inbox 相关契约的唯一权威来源为 [05-area-projects.md](05-area-projects.md)**。
+> 本文档仅作历史参考，不再维护。如需修改 Inbox 规则，请编辑 05-area-projects.md。
+> **合并日期**：2026-06-04
+
+---
+
+> ⚠️ 以下为合并前的历史内容，仅供参考，不作为实现依据 ↓
 
 ---
 

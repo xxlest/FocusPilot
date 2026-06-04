@@ -105,16 +105,18 @@
       .activity-bar .logo {
         width: 32px;
         height: 32px;
-        border-radius: var(--radius-md);
-        background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+        border-radius: 50%;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-weight: 700;
-        font-size: 14px;
-        color: white;
         margin-bottom: 16px;
         box-shadow: var(--shadow-glow);
+      }
+      .activity-bar .logo img {
+        width: 32px;
+        height: 32px;
+        display: block;
+        border-radius: 50%;
       }
 
       .activity-item {
@@ -1824,7 +1826,7 @@
     <div class="app">
       <!-- ═══ Activity Bar ═══ -->
       <nav class="activity-bar">
-        <div class="logo">FP</div>
+        <div class="logo"><img src="assets/focuspilot-enso-logo-trademark.png" alt="FocusPilot" /></div>
         <div class="activity-item" data-page="home">
           <span>🏠</span>
           <span class="tooltip">Home</span>

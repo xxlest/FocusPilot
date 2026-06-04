@@ -1,22 +1,25 @@
 <!doctype html>
-<html lang="zh-CN">
+<html lang="zh-CN" data-theme="classicDark">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>FocusPilot V1 Shell Prototype</title>
     <style>
-      :root {
+      /* === FocusPilot 8-Theme System === */
+      /* 默认：经典深（classicDark） */
+      :root,
+      [data-theme="classicDark"] {
         color-scheme: dark;
-        --bg: #121316;
-        --surface: #191b20;
-        --surface-2: #20232a;
-        --surface-3: #262a33;
-        --line: #30343d;
-        --line-soft: #252932;
-        --text: #eceef2;
-        --muted: #a3a9b5;
-        --dim: #707887;
-        --accent: #529cca;
+        --bg: #1C1C1E;
+        --surface: #242426;
+        --surface-2: #2C2C2E;
+        --surface-3: #343437;
+        --line: #383838;
+        --line-soft: #2A2A2C;
+        --text: #E6E6E6;
+        --muted: #999999;
+        --dim: #6B6B6B;
+        --accent: #529CCA;
         --green: #4ade80;
         --amber: #f2c40f;
         --red: #f87171;
@@ -27,6 +30,332 @@
         --font:
           Avenir Next, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
         --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        --rail-bg: #101010;
+        --sidebar-bg: #131313;
+        --context-bg: rgba(31,31,34,0.88);
+        --content-bg: #1C1C1E;
+        --settings-group-bg: rgba(40,40,44,0.95);
+        --input-bg: #303036;
+        --avatar-bg: #28282C;
+        --activity-bg: var(--rail-bg);
+        --overlay-subtle: rgba(255,255,255,0.06);
+        --hover: rgba(255,255,255,0.05);
+        --pill-bg: rgba(255,255,255,0.03);
+        --primary-action-bg: #F4F4F5;
+        --primary-action-text: #18181B;
+        --ball-light: #91C7E2;
+        --ball-mid: #529CCA;
+        --ball-dark: #315E7A;
+        --accent-bg: rgba(82,156,202,0.14);
+        --accent-line: rgba(82,156,202,0.38);
+      }
+
+      /* 浅色：默认白 */
+      [data-theme="defaultWhite"] {
+        color-scheme: light;
+        --bg: #FFFFFF;
+        --surface: #FFFFFF;
+        --surface-2: #F4F5F6;
+        --surface-3: #ECEEF0;
+        --line: #E5E5E5;
+        --line-soft: #EEEEEE;
+        --text: #252525;
+        --muted: #747474;
+        --dim: #A0A0A0;
+        --accent: #E53935;
+        --green: #16a34a;
+        --amber: #d97706;
+        --red: #dc2626;
+        --purple: #7c3aed;
+        --rail-bg: #F3F4F6;
+        --sidebar-bg: #F7F7F7;
+        --context-bg: rgba(255,255,255,0.86);
+        --content-bg: #FFFFFF;
+        --settings-group-bg: rgba(255,255,255,0.95);
+        --input-bg: #FFFFFF;
+        --avatar-bg: #EDEDED;
+        --activity-bg: var(--rail-bg);
+        --overlay-subtle: rgba(0,0,0,0.06);
+        --hover: rgba(0,0,0,0.04);
+        --pill-bg: rgba(0,0,0,0.04);
+        --ball-light: #FF8A72;
+        --ball-mid: #DE2910;
+        --ball-dark: #8D160D;
+        --primary-action-bg: #18181B;
+        --primary-action-text: #FFFFFF;
+        --accent-bg: rgba(229,57,53,0.08);
+        --accent-line: rgba(229,57,53,0.34);
+      }
+
+      /* 浅色：暖象牙 */
+      [data-theme="warmIvory"] {
+        color-scheme: light;
+        --bg: #FBF8F4;
+        --surface: #FFFFFF;
+        --surface-2: #F4F0EA;
+        --surface-3: #ECE4D8;
+        --line: #E0D9CC;
+        --line-soft: #E9E0D4;
+        --text: #2E2924;
+        --muted: #7A7066;
+        --dim: #A6998F;
+        --accent: #D97706;
+        --green: #16a34a;
+        --amber: #D97706;
+        --red: #dc2626;
+        --purple: #7c3aed;
+        --rail-bg: #ECE7DF;
+        --sidebar-bg: #F4F0EA;
+        --context-bg: rgba(251,248,244,0.88);
+        --content-bg: #FBF8F4;
+        --settings-group-bg: rgba(255,255,255,0.95);
+        --input-bg: #FBF8F4;
+        --avatar-bg: #E9E3D9;
+        --activity-bg: var(--rail-bg);
+        --overlay-subtle: rgba(0,0,0,0.06);
+        --hover: rgba(0,0,0,0.04);
+        --pill-bg: rgba(0,0,0,0.03);
+        --ball-light: #FFC0AE;
+        --ball-mid: #E26B56;
+        --ball-dark: #874037;
+        --primary-action-bg: #2F2922;
+        --primary-action-text: #FFFAF0;
+        --accent-bg: rgba(217,119,6,0.10);
+        --accent-line: rgba(217,119,6,0.34);
+      }
+
+      /* 浅色：薄荷绿 */
+      [data-theme="mintGreen"] {
+        color-scheme: light;
+        --bg: #F0FDF4;
+        --surface: #FFFFFF;
+        --surface-2: #E7F6EC;
+        --surface-3: #D8EBDD;
+        --line: #CCE6D6;
+        --line-soft: #DCEEE3;
+        --text: #1A2E1F;
+        --muted: #4D7057;
+        --dim: #7A9985;
+        --accent: #16A34A;
+        --green: #16A34A;
+        --amber: #d97706;
+        --red: #dc2626;
+        --purple: #7c3aed;
+        --rail-bg: #E2F3E8;
+        --sidebar-bg: #E7F6EC;
+        --context-bg: rgba(240,253,244,0.88);
+        --content-bg: #F0FDF4;
+        --settings-group-bg: rgba(255,255,255,0.95);
+        --input-bg: #F0FDF4;
+        --avatar-bg: #D5EBDC;
+        --activity-bg: var(--rail-bg);
+        --overlay-subtle: rgba(0,0,0,0.06);
+        --hover: rgba(0,0,0,0.04);
+        --pill-bg: rgba(0,0,0,0.03);
+        --ball-light: #73D494;
+        --ball-mid: #1FA855;
+        --ball-dark: #166436;
+        --primary-action-bg: #183326;
+        --primary-action-text: #F4FFF8;
+        --accent-bg: rgba(22,163,74,0.10);
+        --accent-line: rgba(22,163,74,0.34);
+      }
+
+      /* 浅色：淡天蓝 */
+      [data-theme="lightBlue"] {
+        color-scheme: light;
+        --bg: #EFF6FF;
+        --surface: #FFFFFF;
+        --surface-2: #E6EEF8;
+        --surface-3: #D9E6F4;
+        --line: #D1DEF0;
+        --line-soft: #DCE8F4;
+        --text: #1A2438;
+        --muted: #4D6180;
+        --dim: #7A8CA6;
+        --accent: #2563EB;
+        --green: #16a34a;
+        --amber: #d97706;
+        --red: #dc2626;
+        --purple: #7c3aed;
+        --rail-bg: #E2EBF6;
+        --sidebar-bg: #E6EEF8;
+        --context-bg: rgba(239,246,255,0.90);
+        --content-bg: #EFF6FF;
+        --settings-group-bg: rgba(255,255,255,0.95);
+        --input-bg: #EFF6FF;
+        --avatar-bg: #DAE5F2;
+        --activity-bg: var(--rail-bg);
+        --overlay-subtle: rgba(0,0,0,0.06);
+        --hover: rgba(0,0,0,0.04);
+        --pill-bg: rgba(0,0,0,0.03);
+        --ball-light: #83B3F6;
+        --ball-mid: #2F6FE3;
+        --ball-dark: #1C438D;
+        --primary-action-bg: #182638;
+        --primary-action-text: #F6FBFF;
+        --accent-bg: rgba(37,99,235,0.10);
+        --accent-line: rgba(37,99,235,0.34);
+      }
+
+      /* 深色：深海蓝 */
+      [data-theme="deepOcean"] {
+        color-scheme: dark;
+        --bg: #0F1B2D;
+        --surface: #17263B;
+        --surface-2: #1D304A;
+        --surface-3: #263A58;
+        --line: #24334D;
+        --line-soft: #1C2B42;
+        --text: #E0EBF5;
+        --muted: #8094AD;
+        --dim: #596B85;
+        --accent: #60A5FA;
+        --green: #4ade80;
+        --amber: #f2c40f;
+        --red: #f87171;
+        --purple: #a78bfa;
+        --rail-bg: #09121F;
+        --sidebar-bg: #0B1525;
+        --context-bg: rgba(15,27,45,0.90);
+        --content-bg: #0F1B2D;
+        --settings-group-bg: rgba(23,38,59,0.95);
+        --input-bg: #1D304A;
+        --avatar-bg: #1F2D43;
+        --activity-bg: var(--rail-bg);
+        --overlay-subtle: rgba(255,255,255,0.06);
+        --hover: rgba(255,255,255,0.05);
+        --pill-bg: rgba(255,255,255,0.03);
+        --ball-light: #9CCAFB;
+        --ball-mid: #60A5FA;
+        --ball-dark: #245A9E;
+        --primary-action-bg: #EFF6FF;
+        --primary-action-text: #102033;
+        --accent-bg: rgba(96,165,250,0.14);
+        --accent-line: rgba(96,165,250,0.38);
+      }
+
+      /* 深色：墨绿 */
+      [data-theme="inkGreen"] {
+        color-scheme: dark;
+        --bg: #0D1F17;
+        --surface: #142B20;
+        --surface-2: #1A3527;
+        --surface-3: #21442F;
+        --line: #1F3829;
+        --line-soft: #172C21;
+        --text: #E0F2E6;
+        --muted: #809E8A;
+        --dim: #597566;
+        --accent: #4ADE80;
+        --green: #4ADE80;
+        --amber: #f2c40f;
+        --red: #f87171;
+        --purple: #a78bfa;
+        --rail-bg: #07140D;
+        --sidebar-bg: #091811;
+        --context-bg: rgba(13,31,23,0.90);
+        --content-bg: #0D1F17;
+        --settings-group-bg: rgba(20,43,32,0.95);
+        --input-bg: #1A3527;
+        --avatar-bg: #1D3326;
+        --activity-bg: var(--rail-bg);
+        --overlay-subtle: rgba(255,255,255,0.06);
+        --hover: rgba(255,255,255,0.05);
+        --pill-bg: rgba(255,255,255,0.03);
+        --ball-light: #8CE8A9;
+        --ball-mid: #4ADE80;
+        --ball-dark: #1D7B42;
+        --primary-action-bg: #F0FDF4;
+        --primary-action-text: #102318;
+        --accent-bg: rgba(74,222,128,0.14);
+        --accent-line: rgba(74,222,128,0.38);
+      }
+
+      /* 深色：纯黑 */
+      [data-theme="pureBlack"] {
+        color-scheme: dark;
+        --bg: #000000;
+        --surface: #111113;
+        --surface-2: #19191D;
+        --surface-3: #232329;
+        --line: #29292E;
+        --line-soft: #1C1C20;
+        --text: #EBEBF2;
+        --muted: #9494A1;
+        --dim: #666670;
+        --accent: #A78BFA;
+        --green: #4ade80;
+        --amber: #f2c40f;
+        --red: #fb7185;
+        --purple: #A78BFA;
+        --rail-bg: #050505;
+        --sidebar-bg: #0C0C0C;
+        --context-bg: rgba(12,12,14,0.92);
+        --content-bg: #000000;
+        --settings-group-bg: rgba(17,17,19,0.95);
+        --input-bg: #19191D;
+        --avatar-bg: #111113;
+        --activity-bg: var(--rail-bg);
+        --overlay-subtle: rgba(255,255,255,0.06);
+        --hover: rgba(255,255,255,0.05);
+        --pill-bg: rgba(255,255,255,0.03);
+        --ball-light: #C6B8FF;
+        --ball-mid: #A78BFA;
+        --ball-dark: #5F4F92;
+        --primary-action-bg: #F5F3FF;
+        --primary-action-text: #16111F;
+        --accent-bg: rgba(167,139,250,0.12);
+        --accent-line: rgba(167,139,250,0.38);
+      }
+
+      :root,
+      [data-theme="classicDark"],
+      [data-theme="deepOcean"],
+      [data-theme="inkGreen"],
+      [data-theme="pureBlack"] {
+        --kanban-lane-bg: rgba(18, 19, 22, 0.55);
+        --kanban-lane-border: var(--line);
+        --kanban-lane-title: var(--muted);
+        --kanban-card-bg: var(--surface);
+        --kanban-card-border: var(--line);
+        --kanban-card-shadow: none;
+      }
+
+      [data-theme="defaultWhite"] {
+        --kanban-lane-bg: #F0F1F3;
+        --kanban-lane-border: #E1E3E5;
+        --kanban-lane-title: #555B62;
+        --kanban-card-bg: rgba(255,255,255,0.98);
+        --kanban-card-border: #E1E3E5;
+        --kanban-card-shadow: 0 4px 12px rgba(24,24,27,0.04);
+      }
+
+      [data-theme="warmIvory"] {
+        --kanban-lane-bg: #F0E8DE;
+        --kanban-lane-border: #E3D7C8;
+        --kanban-lane-title: #63594F;
+        --kanban-card-bg: rgba(255,255,255,0.96);
+        --kanban-card-border: #E3D7C8;
+        --kanban-card-shadow: 0 4px 12px rgba(80,55,20,0.045);
+      }
+
+      [data-theme="mintGreen"] {
+        --kanban-lane-bg: #E1F2E7;
+        --kanban-lane-border: #CCE6D6;
+        --kanban-lane-title: #365A42;
+        --kanban-card-bg: rgba(255,255,255,0.96);
+        --kanban-card-border: #CCE6D6;
+        --kanban-card-shadow: 0 4px 12px rgba(22,101,52,0.045);
+      }
+
+      [data-theme="lightBlue"] {
+        --kanban-lane-bg: #E1EBF6;
+        --kanban-lane-border: #D1DEF0;
+        --kanban-lane-title: #3B506F;
+        --kanban-card-bg: rgba(255,255,255,0.96);
+        --kanban-card-border: #D1DEF0;
+        --kanban-card-shadow: 0 4px 12px rgba(30,64,175,0.045);
       }
 
       * {
@@ -37,7 +366,7 @@
         width: 100vw;
         height: 100vh;
         overflow: hidden;
-        background: var(--bg);
+        background: var(--content-bg);
         color: var(--text);
         font-family: var(--font);
         font-size: 13px;
@@ -60,7 +389,7 @@
       }
 
       .activity {
-        background: #0f1013;
+        background: var(--rail-bg);
         border-right: 1px solid var(--line-soft);
         display: flex;
         flex-direction: column;
@@ -75,18 +404,19 @@
         border-radius: var(--radius);
         display: grid;
         place-items: center;
-        background: radial-gradient(
-          circle at 30% 18%,
-          #d7efff,
-          var(--accent) 42%,
-          #23617e 100%
-        );
-        color: #061018;
-        font-weight: 800;
         margin-bottom: 14px;
-        box-shadow:
-          0 0 0 1px rgba(255, 255, 255, 0.08),
-          0 10px 28px rgba(82, 156, 202, 0.22);
+        flex-shrink: 0;
+      }
+      .mark svg,
+      .mark img {
+        width: 32px;
+        height: 32px;
+        display: block;
+      }
+      .mark .clean-logo {
+        border-radius: 50%;
+        filter: drop-shadow(0 4px 10px var(--accent-line));
+        transition: filter .2s ease;
       }
 
       .nav-btn {
@@ -102,20 +432,20 @@
         position: relative;
       }
       .nav-btn:hover {
-        background: var(--surface-2);
+        background: var(--hover);
         color: var(--muted);
       }
       .nav-btn.active {
-        background: rgba(82, 156, 202, 0.14);
-        color: var(--accent);
+        background: var(--accent-bg);
+        color: var(--text);
       }
       .nav-btn.active::before {
         content: "";
         position: absolute;
         left: -8px;
-        width: 3px;
-        height: 20px;
-        border-radius: 0 3px 3px 0;
+        width: 2px;
+        height: 16px;
+        border-radius: 0 999px 999px 0;
         background: var(--accent);
       }
       .nav-spacer {
@@ -123,7 +453,7 @@
       }
 
       .sidebar {
-        background: var(--surface);
+        background: var(--sidebar-bg);
         border-right: 1px solid var(--line-soft);
         min-width: 0;
         overflow: hidden;
@@ -163,7 +493,7 @@
         height: 32px;
         border: 1px solid var(--line-soft);
         border-radius: var(--radius);
-        background: #14161b;
+        background: var(--surface);
         color: var(--text);
         outline: 0;
         padding: 0 10px;
@@ -177,7 +507,7 @@
         border: 1px solid var(--line);
         border-radius: var(--radius);
         padding: 3px;
-        background: #14161b;
+        background: var(--surface-2);
         gap: 3px;
       }
       .seg button {
@@ -225,12 +555,13 @@
         cursor: pointer;
       }
       .side-item:hover {
-        background: var(--surface-2);
+        background: var(--hover);
         color: var(--text);
       }
       .side-item.active {
-        background: rgba(82, 156, 202, 0.13);
+        background: var(--accent-bg);
         color: var(--text);
+        box-shadow: inset 2px 0 0 var(--accent);
       }
       .count {
         margin-left: auto;
@@ -262,10 +593,10 @@
         background:
           radial-gradient(
             circle at 100% 0%,
-            rgba(82, 156, 202, 0.08),
-            transparent 25%
+            var(--accent-bg),
+            transparent 22%
           ),
-          var(--bg);
+          var(--content-bg);
       }
       .page {
         display: none;
@@ -279,14 +610,15 @@
       }
 
       .topbar {
-        height: 52px;
+        height: 56px;
         flex: 0 0 auto;
         border-bottom: 1px solid var(--line-soft);
         display: flex;
         align-items: center;
         gap: 12px;
         padding: 0 18px;
-        background: rgba(18, 19, 22, 0.86);
+        background: var(--context-bg);
+        backdrop-filter: blur(16px);
       }
       .topbar h1 {
         margin: 0;
@@ -330,7 +662,7 @@
       .card {
         border: 1px solid var(--line);
         border-radius: var(--radius);
-        background: rgba(25, 27, 32, 0.92);
+        background: var(--surface);
         min-width: 0;
       }
       .card-head {
@@ -359,7 +691,7 @@
         cursor: pointer;
       }
       .metric:hover {
-        border-color: rgba(82, 156, 202, 0.52);
+        border-color: var(--accent-line);
       }
       .metric .value {
         font-size: 26px;
@@ -433,9 +765,9 @@
         border-color: var(--accent);
       }
       .btn.primary {
-        background: var(--accent);
-        color: #061018;
-        border-color: transparent;
+        background: var(--primary-action-bg);
+        color: var(--primary-action-text);
+        border-color: var(--primary-action-bg);
         font-weight: 800;
       }
       .btn.icon {
@@ -453,28 +785,28 @@
         border-radius: 999px;
         padding: 4px 8px;
         color: var(--muted);
-        background: rgba(255, 255, 255, 0.03);
+        background: var(--pill-bg);
         font-size: 11px;
         white-space: nowrap;
       }
       .pill.blue {
-        border-color: rgba(82, 156, 202, 0.35);
-        color: #a9d8f4;
-        background: rgba(82, 156, 202, 0.12);
+        border-color: var(--accent-line);
+        color: var(--accent);
+        background: var(--accent-bg);
       }
       .pill.green {
         border-color: rgba(74, 222, 128, 0.28);
-        color: #a6f5c2;
+        color: var(--green);
         background: rgba(74, 222, 128, 0.1);
       }
       .pill.amber {
         border-color: rgba(242, 196, 15, 0.28);
-        color: #f7df76;
+        color: var(--amber);
         background: rgba(242, 196, 15, 0.1);
       }
       .pill.red {
         border-color: rgba(248, 113, 113, 0.3);
-        color: #fca5a5;
+        color: var(--red);
         background: rgba(248, 113, 113, 0.1);
       }
 
@@ -482,7 +814,7 @@
         width: 80px;
         height: 6px;
         border-radius: 999px;
-        background: #111318;
+        background: var(--surface);
         overflow: hidden;
       }
       .progress span {
@@ -519,7 +851,7 @@
       .settings-group {
         border: 1px solid var(--line);
         border-radius: var(--radius);
-        background: rgba(25,27,32,0.92);
+        background: var(--settings-group-bg);
         overflow: hidden;
       }
       .settings-row {
@@ -554,7 +886,7 @@
         background: var(--muted);
         transition: transform .2s, background .2s;
       }
-      .toggle.on { background: rgba(82,156,202,0.3); border-color: rgba(82,156,202,0.5); }
+      .toggle.on { background: var(--accent-line); border-color: var(--accent-line); }
       .toggle.on::after { transform: translateX(16px); background: var(--accent); }
 
       .settings-slider {
@@ -578,7 +910,7 @@
         border-radius: 50%;
         background: var(--accent);
         cursor: pointer;
-        box-shadow: 0 0 0 2px rgba(82,156,202,0.25);
+        box-shadow: 0 0 0 2px var(--accent-line);
       }
       .settings-slider .slider-val {
         font-family: var(--mono);
@@ -588,37 +920,82 @@
         text-align: right;
       }
 
-      .theme-cards { display: flex; gap: 12px; margin-bottom: 20px; }
+      .theme-group-label { font-size: 12px; color: var(--dim); margin-bottom: 8px; font-weight: 600; }
+      .theme-cards {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(96px, 118px));
+        gap: 10px;
+        margin-bottom: 16px;
+      }
       .theme-card {
-        width: 120px;
-        border: 2px solid var(--line);
-        border-radius: var(--radius);
-        overflow: hidden;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        background: var(--surface-2);
+        padding: 8px;
         cursor: pointer;
-        transition: border-color .2s;
+        transition: border-color .2s, box-shadow .2s, transform .2s;
       }
-      .theme-card:hover { border-color: var(--muted); }
-      .theme-card.selected { border-color: var(--accent); }
+      .theme-card:hover { border-color: var(--muted); transform: translateY(-1px); }
+      .theme-card.selected { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-bg); }
       .theme-card-preview {
-        height: 64px;
-        display: flex;
-        flex-direction: column;
-        padding: 6px 8px;
-        gap: 4px;
+        height: 46px;
+        display: grid;
+        grid-template-columns: 28% 1fr;
+        border: 1px solid rgba(0,0,0,0.08);
+        border-radius: 7px;
+        overflow: hidden;
+        position: relative;
+        margin-bottom: 8px;
       }
-      .theme-card-preview.light { background: #f0f0f0; }
-      .theme-card-preview.dark { background: #1a1c22; }
-      .theme-card-preview.auto { background: linear-gradient(135deg, #f0f0f0 50%, #1a1c22 50%); }
-      .theme-card-preview .bar { height: 5px; border-radius: 2px; }
-      .theme-card-preview.light .bar { background: #d0d0d0; }
-      .theme-card-preview.dark .bar { background: #2a2d36; }
-      .theme-card-preview.auto .bar { background: rgba(128,128,128,0.4); }
+      .theme-card-preview::before {
+        content: "";
+        background: var(--theme-preview-side);
+      }
+      .theme-card-preview::after {
+        content: "";
+        position: absolute;
+        left: calc(28% + 9px);
+        bottom: 8px;
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: var(--theme-preview-accent);
+      }
+      .theme-card-preview .bar {
+        grid-column: 2;
+        height: 5px;
+        border-radius: 999px;
+        align-self: start;
+        margin: 9px 8px 0;
+        background: var(--theme-preview-text);
+        opacity: .22;
+      }
+      .theme-card-preview .bar + .bar {
+        width: 68% !important;
+        margin-top: -3px;
+      }
+      .theme-rec {
+        color: var(--accent);
+        font-size: 10px;
+        font-weight: 700;
+      }
+      /* 浅色预览 */
+      .theme-card-preview.defaultWhite { background: #FFFFFF; --theme-preview-side:#F7F7F7; --theme-preview-text:#252525; --theme-preview-accent:#E53935; }
+      .theme-card-preview.warmIvory { background: #FBF8F4; --theme-preview-side:#F4F0EA; --theme-preview-text:#2E2924; --theme-preview-accent:#D97706; }
+      .theme-card-preview.mintGreen { background: #F0FDF4; --theme-preview-side:#E7F6EC; --theme-preview-text:#1A2E1F; --theme-preview-accent:#16A34A; }
+      .theme-card-preview.lightBlue { background: #EFF6FF; --theme-preview-side:#E6EEF8; --theme-preview-text:#1A2438; --theme-preview-accent:#2563EB; }
+      /* 深色预览 */
+      .theme-card-preview.classicDark { background: #1C1C1E; --theme-preview-side:#131313; --theme-preview-text:#E6E6E6; --theme-preview-accent:#529CCA; }
+      .theme-card-preview.deepOcean { background: #0F1B2D; --theme-preview-side:#0B1525; --theme-preview-text:#E0EBF5; --theme-preview-accent:#60A5FA; }
+      .theme-card-preview.inkGreen { background: #0D1F17; --theme-preview-side:#091811; --theme-preview-text:#E0F2E6; --theme-preview-accent:#4ADE80; }
+      .theme-card-preview.pureBlack { background: #000000; --theme-preview-side:#0C0C0C; --theme-preview-text:#EBEBF2; --theme-preview-accent:#A78BFA; }
       .theme-card-label {
-        text-align: center;
-        font-size: 11px;
-        padding: 6px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        font-size: 10px;
         color: var(--muted);
-        border-top: 1px solid var(--line-soft);
+        white-space: nowrap;
       }
       .theme-card.selected .theme-card-label { color: var(--accent); }
 
@@ -684,7 +1061,7 @@
         width: 100%;
         border: 1px solid var(--line);
         border-radius: var(--radius);
-        background: #14161b;
+        background: var(--input-bg);
         color: var(--text);
         padding: 0 10px;
         outline: 0;
@@ -763,32 +1140,35 @@
       }
       .lane {
         min-height: 460px;
-        border: 1px solid var(--line);
+        border: 1px solid var(--kanban-lane-border);
         border-radius: var(--radius);
-        background: rgba(18, 19, 22, 0.55);
+        background: var(--kanban-lane-bg);
         padding: 10px;
       }
       .lane h3 {
         margin: 2px 2px 10px;
         font-size: 12px;
-        color: var(--muted);
+        color: var(--kanban-lane-title);
         display: flex;
         justify-content: space-between;
+        font-weight: 750;
       }
       .task {
-        border: 1px solid var(--line);
+        border: 1px solid var(--kanban-card-border);
         border-radius: var(--radius);
-        background: var(--surface);
+        background: var(--kanban-card-bg);
         padding: 11px;
         margin-bottom: 10px;
         cursor: pointer;
+        box-shadow: var(--kanban-card-shadow);
       }
       .task:hover {
-        border-color: rgba(82, 156, 202, 0.5);
+        border-color: var(--accent-line);
       }
       .task-title {
         font-weight: 700;
         margin-bottom: 8px;
+        color: var(--text);
       }
       .task-meta {
         color: var(--dim);
@@ -866,8 +1246,8 @@
         display: grid;
         place-items: center;
         border-radius: var(--radius);
-        border: 1px solid rgba(82, 156, 202, 0.35);
-        background: rgba(82, 156, 202, 0.12);
+        border: 1px solid var(--accent-line);
+        background: var(--accent-bg);
         font-size: 26px;
       }
       .chat-empty h2 {
@@ -906,7 +1286,7 @@
       .composer {
         border: 1px solid var(--line);
         border-radius: var(--radius);
-        background: #14161b;
+        background: var(--surface-2);
         display: grid;
         grid-template-columns: 1fr auto;
         gap: 8px;
@@ -934,8 +1314,8 @@
         font-family: var(--mono);
         font-size: 12px;
         line-height: 1.7;
-        color: #cbd5e1;
-        background: #111318;
+        color: var(--text);
+        background: var(--surface);
         border: 1px solid var(--line);
         border-radius: var(--radius);
         padding: 12px;
@@ -945,11 +1325,11 @@
         margin-top: 12px;
         font-family: var(--mono);
         font-size: 12px;
-        background: #0d0f12;
+        background: var(--surface);
         border: 1px solid var(--line);
         border-radius: var(--radius);
         padding: 12px;
-        color: #9ee6b8;
+        color: var(--green);
       }
 
       .review-card {
@@ -981,7 +1361,7 @@
         min-height: 150px;
         border: 1px solid var(--line);
         border-radius: var(--radius);
-        background: #14161b;
+        background: var(--surface-2);
         color: var(--muted);
         padding: 12px;
         line-height: 1.7;
@@ -989,7 +1369,7 @@
       .review-answer {
         border: 1px solid var(--line-soft);
         border-radius: var(--radius);
-        background: #14161b;
+        background: var(--surface-2);
         color: var(--muted);
         padding: 12px;
         line-height: 1.7;
@@ -1014,8 +1394,8 @@
         background: rgba(255, 255, 255, 0.02);
       }
       .queue-item.active {
-        border-color: rgba(82, 156, 202, 0.45);
-        background: rgba(82, 156, 202, 0.1);
+        border-color: var(--accent-line);
+        background: var(--accent-bg);
       }
       .queue-item strong {
         display: block;
@@ -1024,7 +1404,7 @@
       .progress-rail {
         height: 8px;
         border-radius: 999px;
-        background: #111318;
+        background: var(--surface);
         border: 1px solid var(--line-soft);
         overflow: hidden;
       }
@@ -1049,7 +1429,7 @@
         border-left: 2px solid var(--accent);
         padding: 10px 12px;
         color: var(--muted);
-        background: rgba(82, 156, 202, 0.08);
+        background: var(--accent-bg);
         border-radius: 0 var(--radius) var(--radius) 0;
         line-height: 1.6;
       }
@@ -1077,7 +1457,7 @@
         background: var(--accent); border-radius: 3px 3px 0 0; position: relative; cursor: pointer; transition: opacity .15s;
       }
       .crew-bar:hover { opacity: 1 !important; }
-      .crew-bar.active { opacity: 1 !important; box-shadow: 0 -2px 8px rgba(82,156,202,0.35); }
+      .crew-bar.active { opacity: 1 !important; box-shadow: 0 -2px 8px var(--accent-line); }
       .crew-bar.active .crew-bar-val { opacity: 1; color: var(--accent); font-weight: 600; }
       .crew-bar.weekend { opacity: .45; }
       .crew-bar:not(.weekend):not(.active) { opacity: .75; }
@@ -1093,7 +1473,7 @@
       }
       .modal-overlay[hidden] { display: none; }
       .modal-box {
-        background: var(--card); border-radius: 10px; width: 780px; max-height: 80vh;
+        background: var(--surface-2); border-radius: 10px; width: 780px; max-height: 80vh;
         display: flex; flex-direction: column; box-shadow: 0 16px 48px rgba(0,0,0,.4);
       }
       .modal-head {
@@ -1127,7 +1507,7 @@
         place-items: center;
         border-radius: var(--radius);
         border: 1px solid var(--line);
-        background: #111318;
+        background: var(--surface);
         font-size: 22px;
       }
       .crew-title {
@@ -1148,7 +1528,7 @@
         border: 1px solid var(--line-soft);
         border-radius: var(--radius);
         padding: 10px;
-        background: rgba(255,255,255,0.02);
+        background: var(--pill-bg);
       }
       .crew-stat strong {
         display: block;
@@ -1192,7 +1572,7 @@
         min-height: 32px;
         border: 1px solid var(--line);
         border-radius: var(--radius);
-        background: #14161b;
+        background: var(--surface-2);
         color: var(--text);
         padding: 0 10px;
         outline: 0;
@@ -1212,11 +1592,11 @@
         border: 1px solid var(--line-soft);
         border-radius: var(--radius);
         padding: 10px;
-        background: rgba(255,255,255,0.02);
+        background: var(--pill-bg);
       }
       .mcp-item.enabled {
-        border-color: rgba(82,156,202,0.38);
-        background: rgba(82,156,202,0.09);
+        border-color: var(--accent-line);
+        background: var(--accent-bg);
       }
       .mcp-item header {
         display: flex;
@@ -1240,11 +1620,11 @@
         border: 1px solid var(--line-soft);
         border-radius: var(--radius);
         padding: 10px;
-        background: rgba(255,255,255,0.02);
+        background: var(--pill-bg);
       }
       .runtime-option.active {
-        border-color: rgba(82,156,202,0.48);
-        background: rgba(82,156,202,0.1);
+        border-color: var(--accent-line);
+        background: var(--accent-bg);
       }
       .runtime-logo {
         width: 34px;
@@ -1253,7 +1633,7 @@
         place-items: center;
         border: 1px solid var(--line-soft);
         border-radius: var(--radius);
-        background: #111318;
+        background: var(--surface);
         font-size: 15px;
       }
       .runtime-meta {
@@ -1268,7 +1648,7 @@
         padding: 4px;
         border: 1px solid var(--line-soft);
         border-radius: var(--radius);
-        background: #111318;
+        background: var(--surface);
         overflow-x: auto;
       }
       .config-tabs button {
@@ -1289,7 +1669,7 @@
         margin-top: 10px;
         border: 1px solid var(--line-soft);
         border-radius: var(--radius);
-        background: rgba(255,255,255,0.02);
+        background: var(--pill-bg);
         padding: 11px;
       }
       .config-panel textarea {
@@ -1297,7 +1677,7 @@
         min-height: 128px;
         border: 1px solid var(--line);
         border-radius: var(--radius);
-        background: #111318;
+        background: var(--surface);
         color: var(--muted);
         padding: 10px;
         resize: vertical;
@@ -1317,7 +1697,7 @@
         height: 30px;
         border: 1px solid var(--line);
         border-radius: var(--radius);
-        background: #111318;
+        background: var(--surface);
         color: var(--muted);
         padding: 0 9px;
         font-family: var(--mono);
@@ -1334,7 +1714,7 @@
       .runtime-sidebar {
         border-right: 1px solid var(--line-soft);
         padding: 14px;
-        background: rgba(255,255,255,0.015);
+        background: var(--pill-bg);
       }
       .runtime-main {
         min-width: 0;
@@ -1376,7 +1756,7 @@
         border: 1px solid var(--line-soft);
         border-radius: var(--radius);
         padding: 10px;
-        background: rgba(255,255,255,0.02);
+        background: var(--pill-bg);
       }
       .crew-panel {
         display: none;
@@ -1414,7 +1794,7 @@
         border-bottom: 1px solid var(--line-soft);
       }
       .crew-task-row:hover {
-        background: rgba(255,255,255,.03);
+        background: var(--pill-bg);
       }
       .crew-task-bar {
         width: 3px;
@@ -1477,7 +1857,7 @@
       }
       .crew-run-icon.success {
         background: rgba(52,199,89,0.15);
-        color: #34c759;
+        color: var(--green);
       }
       .crew-run-icon.failed {
         background: rgba(255,69,58,0.15);
@@ -1539,7 +1919,7 @@
         height: 34px;
         border: 1px solid var(--line);
         border-radius: var(--radius);
-        background: #14161b;
+        background: var(--surface-2);
         padding: 0 10px;
         outline: 0;
       }
@@ -1571,7 +1951,7 @@
         cursor: pointer; color: var(--muted);
       }
       .inbox-row:hover { background: var(--surface-2); color: var(--text); }
-      .inbox-row.expanded { background: rgba(82,156,202,.08); color: var(--text); }
+      .inbox-row.expanded { background: var(--accent-bg); color: var(--text); }
       .inbox-row strong { color: var(--text); font-weight: 650; }
       .inbox-icon { font-size: 15px; flex-shrink: 0; width: 22px; text-align: center; }
       .inbox-check { flex-shrink: 0; }
@@ -1643,7 +2023,7 @@
 	      }
     .area-ctx-menu { position:fixed;z-index:200;background:var(--surface-2);border:1px solid var(--line);border-radius:8px;padding:4px 0;min-width:180px;box-shadow:0 8px 24px rgba(0,0,0,.4);font-size:12px; }
     .area-ctx-item { display:flex;align-items:center;gap:8px;padding:6px 14px;cursor:pointer;color:var(--text); }
-    .area-ctx-item:hover { background:rgba(82,156,202,0.12); }
+    .area-ctx-item:hover { background:var(--accent-bg); }
     .area-ctx-item.danger { color:var(--red); }
     .area-ctx-item.danger:hover { background:rgba(248,113,113,0.12); }
     .area-ctx-sep { height:1px;background:var(--line-soft);margin:4px 0; }
@@ -1653,14 +2033,40 @@
   <body>
     <div class="app">
       <nav class="activity" aria-label="主导航">
-        <div class="mark">FP</div>
+        <div class="mark" id="fp-mark" aria-label="FocusPilot">
+          <svg class="clean-logo" viewBox="0 0 64 64" role="img" aria-label="FocusPilot">
+            <defs>
+              <radialGradient id="fp-logo-gradient" cx="34%" cy="26%" r="72%">
+                <stop offset="0%" stop-color="var(--ball-light)" />
+                <stop offset="54%" stop-color="var(--ball-mid)" />
+                <stop offset="100%" stop-color="var(--ball-dark)" />
+              </radialGradient>
+              <linearGradient id="fp-logo-highlight" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stop-color="#fff" stop-opacity=".54" />
+                <stop offset="54%" stop-color="#fff" stop-opacity=".10" />
+                <stop offset="100%" stop-color="#fff" stop-opacity="0" />
+              </linearGradient>
+            </defs>
+            <circle cx="32" cy="32" r="31" fill="url(#fp-logo-gradient)" />
+            <ellipse cx="22" cy="16" rx="18" ry="11" fill="url(#fp-logo-highlight)" transform="rotate(-28 22 16)" />
+            <circle cx="32" cy="32" r="30.25" fill="none" stroke="#fff" stroke-opacity=".18" stroke-width="1" />
+            <g transform="translate(0 -2)">
+              <path d="M20.3 23.4 C25.2 16.8 33.7 14.6 41.8 17.2" fill="none" stroke="#fff" stroke-width="8.0" stroke-linecap="round" stroke-opacity=".94" />
+              <path d="M39.4 17.2 C48.5 19.8 53.3 27.6 52.8 36.0" fill="none" stroke="#fff" stroke-width="6.6" stroke-linecap="round" stroke-opacity=".92" />
+              <path d="M52.4 35.0 C52.2 39.6 50.5 43.7 47.9 46.8" fill="none" stroke="#fff" stroke-width="4.5" stroke-linecap="round" stroke-opacity=".88" />
+              <path d="M19.2 37.9 C20.0 46.8 28.1 52.1 38.1 51.3" fill="none" stroke="#fff" stroke-width="2.25" stroke-linecap="round" stroke-opacity=".80" />
+              <path d="M20.0 40.4 C24.4 48.6 36.0 52.5 47.4 48.5" fill="none" stroke="#fff" stroke-width="1.08" stroke-linecap="round" stroke-opacity=".70" />
+              <path d="M18.7 42.4 C23.8 50.7 35.8 54.4 46.7 50.8" fill="none" stroke="#fff" stroke-width=".62" stroke-linecap="round" stroke-opacity=".52" />
+              <circle cx="45.2" cy="48.0" r="1.85" fill="#fff" fill-opacity=".82" />
+              <circle cx="41.8" cy="50.4" r="1.34" fill="#fff" fill-opacity=".64" />
+              <circle cx="38.4" cy="51.7" r=".88" fill="#fff" fill-opacity=".46" />
+            </g>
+          </svg>
+        </div>
         <button class="nav-btn active" data-page="home" title="Home">🏠</button>
-        <button class="nav-btn" data-page="inbox" title="Inbox">📥</button>
+        <button class="nav-btn" data-page="areas" title="Projects" style="position:relative">📂<span class="nav-badge" id="projects-inbox-badge" style="position:absolute;top:4px;right:4px;background:var(--accent);color:#fff;font-size:9px;min-width:14px;height:14px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-weight:600">10</span></button>
         <button class="nav-btn" data-page="focus" title="Focus">🎯</button>
         <button class="nav-btn" data-page="studio" title="Studio">💻</button>
-        <button class="nav-btn" data-page="areas" title="AreaProjects">
-          📁
-        </button>
         <button class="nav-btn" data-page="review" title="Review">🧠</button>
         <button class="nav-btn" data-page="crew" title="AICrew">🤖</button>
         <div class="nav-spacer"></div>
@@ -1702,7 +2108,7 @@
               <span>🔄 执行中</span><span class="count">3</span>
             </div>
             <div class="side-item">
-              <span>📥 待整合素材</span><span class="count">3</span>
+              <span>📥 待沉淀素材</span><span class="count">3</span>
             </div>
           </div>
           <div class="side-scroll panel" id="home-chat-side">
@@ -1736,32 +2142,6 @@
           </div>
         </section>
 
-        <section class="side-view" data-page="inbox">
-          <div class="side-head">
-            <div class="side-title">
-              <h2>Inbox</h2>
-              <button class="btn icon" data-modal="capture">+</button>
-            </div>
-            <input class="search" placeholder="搜索收集内容..." />
-          </div>
-          <div class="side-scroll">
-            <div class="label">分类</div>
-            <div class="side-item active" data-inbox-cat="reading">
-              <span>📖 待阅读</span><span class="count">3</span>
-            </div>
-            <div class="side-item" data-inbox-cat="idea">
-              <span>💡 灵感</span><span class="count">5</span>
-            </div>
-            <div class="side-item" data-inbox-cat="memo">
-              <span>☑️ 临时事项</span><span class="count">2</span>
-            </div>
-            <div class="label">Agent</div>
-            <div class="side-item disabled" style="opacity:.45;cursor:default" title="即将上线">
-              <span>🤖 自动采集</span><span class="count" style="font-style:italic;font-family:var(--font)">即将</span>
-            </div>
-          </div>
-        </section>
-
         <section class="side-view" data-page="focus">
           <div class="side-head">
             <div class="side-title">
@@ -1785,7 +2165,7 @@
               <span>🔥 今日聚焦</span><span class="count">2</span>
             </div>
             <div class="side-item" data-focus-filter="agent" onclick="applyFocusFilter(this)">
-              <span>🤖 Agent 执行中</span><span class="count" style="background:rgba(82,156,202,.2);color:var(--accent)">2</span>
+              <span>🤖 Agent 执行中</span><span class="count" style="background:var(--accent-bg);color:var(--accent)">2</span>
             </div>
             <div class="side-item" data-focus-filter="decision" onclick="applyFocusFilter(this)">
               <span>🔔 等我决策</span><span class="count" style="background:rgba(242,196,15,.2);color:var(--amber)">1</span>
@@ -1808,7 +2188,7 @@
             </div>
             <div class="label">来源</div>
             <div class="side-item">
-              <span>📁 AreaProject</span><span class="count">8</span>
+              <span>📁 Projects</span><span class="count">8</span>
             </div>
             <div class="side-item">
               <span>📥 Inbox 导入</span><span class="count">2</span>
@@ -1888,106 +2268,142 @@
         </section>
 
         <section class="side-view" data-page="areas" id="areas-sidebar">
-          <div class="side-head">
-            <div class="side-title">
-              <h2>AreaProjects</h2>
-              <div style="display:flex;gap:2px;margin-left:auto">
-                <button class="btn icon" id="areas-btn-newfolder" title="新建文件夹" style="width:26px;height:26px;min-height:26px;font-size:12px;border:0;background:transparent;color:var(--dim)">📁</button>
-                <button class="btn icon" id="areas-btn-newfile" title="新建文件" style="width:26px;height:26px;min-height:26px;font-size:12px;border:0;background:transparent;color:var(--dim)">📄</button>
-                <button class="btn icon" id="areas-btn-fav" title="收藏筛选" style="width:26px;height:26px;min-height:26px;font-size:12px;border:0;background:transparent;color:var(--dim)">⭐</button>
-                <button class="btn icon" id="areas-toggle-all" title="展开/折叠全部" style="width:26px;height:26px;min-height:26px;font-size:12px;border:0;background:transparent;color:var(--dim)">⤡</button>
-              </div>
-            </div>
-            <input class="search" id="areas-search" placeholder="搜索文件和项目..." />
+          <!-- Inbox/Projects tab switcher -->
+          <div style="display:flex;gap:0;border-bottom:1px solid var(--line);margin-bottom:0">
+            <button class="btn areas-sidebar-tab" data-areas-tab="inbox" style="flex:1;border-radius:0;border-bottom:2px solid transparent;font-size:13px;font-weight:500;padding:8px 0;background:transparent;color:var(--muted)">📥 Inbox <span style="font-size:11px;color:var(--accent);font-weight:700">(10)</span></button>
+            <button class="btn areas-sidebar-tab active" data-areas-tab="projects" style="flex:1;border-radius:0;border-bottom:2px solid var(--accent);font-size:13px;font-weight:600;padding:8px 0;background:transparent;color:var(--text)">📂 Projects</button>
           </div>
-          <div class="side-scroll">
 
-            <!-- 📂 FocusPilot（执行类） -->
-            <div class="side-item area-project active" data-area-id="fp" style="cursor:pointer">
-              <span><span class="area-arrow">▾</span> 📂 FocusPilot</span>
-              <span class="pill" style="font-size:9px;padding:1px 5px;margin-left:auto">执行</span>
+          <!-- ═══ Inbox tab content ═══ -->
+          <div class="areas-tab-content" id="areas-inbox-sidebar" style="display:none">
+            <div class="side-head">
+              <div class="side-title">
+                <h2>Inbox</h2>
+                <button class="btn icon" data-modal="capture">+</button>
+              </div>
+              <input class="search" placeholder="搜索收集内容..." />
             </div>
-            <div class="area-children" data-area-parent="fp">
-              <div class="side-item indent area-file active" data-area-file="arch"><span>📄 架构设计.md</span></div>
-              <div class="side-item indent area-file" data-area-file="tech"><span>📄 技术选型.md</span></div>
-              <!-- _materials 知识管道 -->
-              <div class="side-item indent area-folder" data-area-id="fp-mat" style="cursor:pointer">
-                <span><span class="area-arrow">▸</span> 📥 _materials</span>
-                <span class="count">3</span>
+            <div class="side-scroll">
+              <div class="label">分类</div>
+              <div class="side-item active" data-inbox-cat="reading">
+                <span>📖 待阅读</span><span class="count">3</span>
               </div>
-              <div class="area-children collapsed" data-area-parent="fp-mat">
-                <div class="side-item indent area-file" data-area-file="mat1" style="padding-left:36px"><span>📄 RAG工程化实践.md</span></div>
-                <div class="side-item indent area-file" data-area-file="mat2" style="padding-left:36px"><span>📄 向量数据库对比.md</span></div>
-                <div class="side-item indent area-file" data-area-file="mat3" style="padding-left:36px"><span>📄 分布式共识论文.pdf</span></div>
+              <div class="side-item" data-inbox-cat="idea">
+                <span>💡 灵感</span><span class="count">5</span>
               </div>
-              <!-- _reports 知识管道 -->
-              <div class="side-item indent area-folder" data-area-id="fp-rpt" style="cursor:pointer">
-                <span><span class="area-arrow">▸</span> 📊 _reports</span>
+              <div class="side-item" data-inbox-cat="memo">
+                <span>☑️ 临时事项</span><span class="count">2</span>
               </div>
-              <div class="area-children collapsed" data-area-parent="fp-rpt">
-                <div class="side-item indent area-file" data-area-file="rpt1" style="padding-left:36px"><span>📄 周报-W22.md</span></div>
-                <div class="side-item indent area-file" data-area-file="rpt2" style="padding-left:36px"><span>📄 月报-05.md</span></div>
-              </div>
-              <!-- _kb 知识管道（特殊） -->
-              <div class="side-item indent area-folder area-kb-folder" data-area-id="fp-kb" style="cursor:pointer">
-                <span><span class="area-arrow">▸</span> 🧠 _kb</span>
-                <span class="count">5</span>
-              </div>
-              <div class="area-children collapsed" data-area-parent="fp-kb">
-                <div class="side-item indent area-file area-kb-file" data-area-file="kb-cap" style="padding-left:36px"><span>🧠 CAP 定理.md</span></div>
-                <div class="side-item indent area-file area-kb-file" data-area-file="kb-raft" style="padding-left:36px"><span>🧠 Raft 选举机制.md</span></div>
-                <div class="side-item indent area-file area-kb-file" data-area-file="kb-vec" style="padding-left:36px"><span>🧠 向量数据库选型对比.md</span></div>
-                <div class="side-item indent area-file area-kb-file" data-area-file="kb-paxos" style="padding-left:36px"><span>🧠 Paxos vs Raft.md</span></div>
-                <div class="side-item indent area-file area-kb-file" data-area-file="kb-crdt" style="padding-left:36px"><span>🧠 CRDT 数据结构.md</span></div>
+              <div class="label">Agent</div>
+              <div class="side-item disabled" style="opacity:.45;cursor:default" title="即将上线">
+                <span>🤖 自动采集</span><span class="count" style="font-style:italic;font-family:var(--font)">即将</span>
               </div>
             </div>
+          </div>
 
-            <!-- 📂 分布式系统笔记（知识类） -->
-            <div class="side-item area-project" data-area-id="dist" style="cursor:pointer">
-              <span><span class="area-arrow">▸</span> 📂 分布式系统笔记</span>
-              <span class="pill" style="font-size:9px;padding:1px 5px;margin-left:auto">知识</span>
+          <!-- ═══ Projects tab content ═══ -->
+          <div class="areas-tab-content" id="areas-projects-sidebar" style="display:block">
+            <div class="side-head">
+              <div class="side-title">
+                <h2>Projects</h2>
+                <div style="display:flex;gap:2px;margin-left:auto">
+                  <button class="btn icon" id="areas-btn-newfolder" title="新建文件夹" style="width:26px;height:26px;min-height:26px;font-size:12px;border:0;background:transparent;color:var(--dim)">📁</button>
+                  <button class="btn icon" id="areas-btn-newfile" title="新建文件" style="width:26px;height:26px;min-height:26px;font-size:12px;border:0;background:transparent;color:var(--dim)">📄</button>
+                  <button class="btn icon" id="areas-btn-fav" title="收藏筛选" style="width:26px;height:26px;min-height:26px;font-size:12px;border:0;background:transparent;color:var(--dim)">⭐</button>
+                  <button class="btn icon" id="areas-toggle-all" title="展开/折叠全部" style="width:26px;height:26px;min-height:26px;font-size:12px;border:0;background:transparent;color:var(--dim)">⤡</button>
+                </div>
+              </div>
+              <input class="search" id="areas-search" placeholder="搜索文件和项目..." />
             </div>
-            <div class="area-children collapsed" data-area-parent="dist">
-              <div class="side-item indent area-file" data-area-file="dist-consensus"><span>📄 共识算法总结.md</span></div>
-              <div class="side-item indent area-file" data-area-file="dist-cap"><span>📄 CAP 与 BASE.md</span></div>
-              <div class="side-item indent area-folder" data-area-id="dist-mat" style="cursor:pointer">
-                <span><span class="area-arrow">▸</span> 📥 _materials</span>
-                <span class="count">2</span>
-              </div>
-              <div class="area-children collapsed" data-area-parent="dist-mat">
-                <div class="side-item indent area-file" data-area-file="dist-mat1" style="padding-left:36px"><span>📄 Raft 论文笔记.md</span></div>
-                <div class="side-item indent area-file" data-area-file="dist-mat2" style="padding-left:36px"><span>📄 CRDT 实战.md</span></div>
-              </div>
-              <div class="side-item indent area-folder area-kb-folder" data-area-id="dist-kb" style="cursor:pointer">
-                <span><span class="area-arrow">▸</span> 🧠 _kb</span>
-                <span class="count">3</span>
-              </div>
-              <div class="area-children collapsed" data-area-parent="dist-kb">
-                <div class="side-item indent area-file area-kb-file" data-area-file="dist-kb1" style="padding-left:36px"><span>🧠 Paxos 核心思想.md</span></div>
-                <div class="side-item indent area-file area-kb-file" data-area-file="dist-kb2" style="padding-left:36px"><span>🧠 一致性模型分类.md</span></div>
-                <div class="side-item indent area-file area-kb-file" data-area-file="dist-kb3" style="padding-left:36px"><span>🧠 分布式事务模式.md</span></div>
-              </div>
-            </div>
+            <div class="side-scroll">
 
-            <!-- 📂 大客户跟踪（执行类） -->
-            <div class="side-item area-project" data-area-id="client" style="cursor:pointer">
-              <span><span class="area-arrow">▸</span> 📂 大客户跟踪</span>
-              <span class="pill" style="font-size:9px;padding:1px 5px;margin-left:auto">执行</span>
-            </div>
-            <div class="area-children collapsed" data-area-parent="client">
-              <div class="side-item indent area-file" data-area-file="client-profile"><span>📄 客户画像.md</span></div>
-              <div class="side-item indent area-file" data-area-file="client-comp"><span>📄 竞品分析.md</span></div>
-              <div class="side-item indent area-folder" data-area-id="client-rpt" style="cursor:pointer">
-                <span><span class="area-arrow">▸</span> 📊 _reports</span>
+              <!-- 📂 FocusPilot（执行类） -->
+              <div class="side-item area-project active" data-area-id="fp" style="cursor:pointer">
+                <span><span class="area-arrow">▾</span> 📂 FocusPilot</span>
+                <span class="pill" style="font-size:9px;padding:1px 5px;margin-left:auto">执行</span>
               </div>
-              <div class="area-children collapsed" data-area-parent="client-rpt">
-                <div class="side-item indent area-file" data-area-file="client-rpt1" style="padding-left:36px"><span>📄 Q2 跟进报告.md</span></div>
+              <div class="area-children" data-area-parent="fp">
+                <div class="side-item indent area-file active" data-area-file="arch"><span>📄 架构设计.md</span></div>
+                <div class="side-item indent area-file" data-area-file="tech"><span>📄 技术选型.md</span></div>
+                <!-- _materials 知识管道 -->
+                <div class="side-item indent area-folder" data-area-id="fp-mat" style="cursor:pointer">
+                  <span><span class="area-arrow">▸</span> 📥 _materials</span>
+                  <span class="count">3</span>
+                </div>
+                <div class="area-children collapsed" data-area-parent="fp-mat">
+                  <div class="side-item indent area-file" data-area-file="mat1" style="padding-left:36px"><span>📄 RAG工程化实践.md</span></div>
+                  <div class="side-item indent area-file" data-area-file="mat2" style="padding-left:36px"><span>📄 向量数据库对比.md</span></div>
+                  <div class="side-item indent area-file" data-area-file="mat3" style="padding-left:36px"><span>📄 分布式共识论文.pdf</span></div>
+                </div>
+                <!-- _reports 知识管道 -->
+                <div class="side-item indent area-folder" data-area-id="fp-rpt" style="cursor:pointer">
+                  <span><span class="area-arrow">▸</span> 📊 _reports</span>
+                </div>
+                <div class="area-children collapsed" data-area-parent="fp-rpt">
+                  <div class="side-item indent area-file" data-area-file="rpt1" style="padding-left:36px"><span>📄 周报-W22.md</span></div>
+                  <div class="side-item indent area-file" data-area-file="rpt2" style="padding-left:36px"><span>📄 月报-05.md</span></div>
+                </div>
+                <!-- _kb 知识管道（特殊） -->
+                <div class="side-item indent area-folder area-kb-folder" data-area-id="fp-kb" style="cursor:pointer">
+                  <span><span class="area-arrow">▸</span> 🧠 _kb</span>
+                  <span class="count">5</span>
+                </div>
+                <div class="area-children collapsed" data-area-parent="fp-kb">
+                  <div class="side-item indent area-file area-kb-file" data-area-file="kb-cap" style="padding-left:36px"><span>🧠 CAP 定理.md</span></div>
+                  <div class="side-item indent area-file area-kb-file" data-area-file="kb-raft" style="padding-left:36px"><span>🧠 Raft 选举机制.md</span></div>
+                  <div class="side-item indent area-file area-kb-file" data-area-file="kb-vec" style="padding-left:36px"><span>🧠 向量数据库选型对比.md</span></div>
+                  <div class="side-item indent area-file area-kb-file" data-area-file="kb-paxos" style="padding-left:36px"><span>🧠 Paxos vs Raft.md</span></div>
+                  <div class="side-item indent area-file area-kb-file" data-area-file="kb-crdt" style="padding-left:36px"><span>🧠 CRDT 数据结构.md</span></div>
+                </div>
               </div>
-            </div>
 
-            <!-- 添加项目按钮 -->
-            <div style="padding:10px 12px;margin-top:8px">
-              <button class="btn" id="areas-btn-add-project" style="width:100%;border-style:dashed;color:var(--dim)">+ 添加项目</button>
+              <!-- 📂 分布式系统笔记（知识类） -->
+              <div class="side-item area-project" data-area-id="dist" style="cursor:pointer">
+                <span><span class="area-arrow">▸</span> 📂 分布式系统笔记</span>
+                <span class="pill" style="font-size:9px;padding:1px 5px;margin-left:auto">知识</span>
+              </div>
+              <div class="area-children collapsed" data-area-parent="dist">
+                <div class="side-item indent area-file" data-area-file="dist-consensus"><span>📄 共识算法总结.md</span></div>
+                <div class="side-item indent area-file" data-area-file="dist-cap"><span>📄 CAP 与 BASE.md</span></div>
+                <div class="side-item indent area-folder" data-area-id="dist-mat" style="cursor:pointer">
+                  <span><span class="area-arrow">▸</span> 📥 _materials</span>
+                  <span class="count">2</span>
+                </div>
+                <div class="area-children collapsed" data-area-parent="dist-mat">
+                  <div class="side-item indent area-file" data-area-file="dist-mat1" style="padding-left:36px"><span>📄 Raft 论文笔记.md</span></div>
+                  <div class="side-item indent area-file" data-area-file="dist-mat2" style="padding-left:36px"><span>📄 CRDT 实战.md</span></div>
+                </div>
+                <div class="side-item indent area-folder area-kb-folder" data-area-id="dist-kb" style="cursor:pointer">
+                  <span><span class="area-arrow">▸</span> 🧠 _kb</span>
+                  <span class="count">3</span>
+                </div>
+                <div class="area-children collapsed" data-area-parent="dist-kb">
+                  <div class="side-item indent area-file area-kb-file" data-area-file="dist-kb1" style="padding-left:36px"><span>🧠 Paxos 核心思想.md</span></div>
+                  <div class="side-item indent area-file area-kb-file" data-area-file="dist-kb2" style="padding-left:36px"><span>🧠 一致性模型分类.md</span></div>
+                  <div class="side-item indent area-file area-kb-file" data-area-file="dist-kb3" style="padding-left:36px"><span>🧠 分布式事务模式.md</span></div>
+                </div>
+              </div>
+
+              <!-- 📂 大客户跟踪（执行类） -->
+              <div class="side-item area-project" data-area-id="client" style="cursor:pointer">
+                <span><span class="area-arrow">▸</span> 📂 大客户跟踪</span>
+                <span class="pill" style="font-size:9px;padding:1px 5px;margin-left:auto">执行</span>
+              </div>
+              <div class="area-children collapsed" data-area-parent="client">
+                <div class="side-item indent area-file" data-area-file="client-profile"><span>📄 客户画像.md</span></div>
+                <div class="side-item indent area-file" data-area-file="client-comp"><span>📄 竞品分析.md</span></div>
+                <div class="side-item indent area-folder" data-area-id="client-rpt" style="cursor:pointer">
+                  <span><span class="area-arrow">▸</span> 📊 _reports</span>
+                </div>
+                <div class="area-children collapsed" data-area-parent="client-rpt">
+                  <div class="side-item indent area-file" data-area-file="client-rpt1" style="padding-left:36px"><span>📄 Q2 跟进报告.md</span></div>
+                </div>
+              </div>
+
+              <!-- 添加项目按钮 -->
+              <div style="padding:10px 12px;margin-top:8px">
+                <button class="btn" id="areas-btn-add-project" style="width:100%;border-style:dashed;color:var(--dim)">+ 添加项目</button>
+              </div>
             </div>
           </div>
         </section>
@@ -2148,10 +2564,15 @@
                 <div class="name">全部 TODO</div>
                 <div class="hint">未完成</div>
               </div>
-              <div class="metric" data-go="areas">
+              <div class="metric" id="home-metric-projects" style="cursor:pointer">
                 <div class="value">5</div>
                 <div class="name">活跃项目</div>
-                <div class="hint">AreaProjects</div>
+                <div class="hint">Projects</div>
+              </div>
+              <div class="metric" id="home-metric-inbox" style="cursor:pointer">
+                <div class="value" style="color:var(--accent)">10</div>
+                <div class="name">待处理</div>
+                <div class="hint">Inbox</div>
               </div>
               <div class="metric" data-go="focus">
                 <div class="value">3</div>
@@ -2253,293 +2674,6 @@
           </div>
         </section>
 
-        <section class="page" data-page="inbox">
-          <header class="topbar">
-            <h1 id="inbox-topbar-title">待阅读 (3)</h1>
-            <span class="meta">收集、暂存、整理</span>
-            <div class="top-actions">
-              <span class="pill" id="inbox-sort-pill" style="cursor:pointer">排序: 最近添加 ▾</span>
-              <button class="btn" id="inbox-batch-toggle">批量选择</button>
-              <button class="btn primary" data-modal="capture">+ 新建</button>
-            </div>
-          </header>
-
-          <!-- 待阅读 -->
-          <div class="work inbox-list active" id="inbox-reading">
-            <div class="inbox-row" data-inbox-row>
-              <span class="inbox-check" style="display:none"><input type="checkbox"></span>
-              <span class="inbox-icon">📖</span>
-              <div class="grow">
-                <strong>SwiftUI 状态管理最佳实践</strong>
-                <span class="subline">mp.weixin.qq.com · 2 小时前</span>
-              </div>
-              <span class="pill" style="font-size:10px">SwiftUI</span>
-            </div>
-            <div class="inbox-detail" style="display:none">
-              <div class="inbox-detail-inner">
-                <div class="inbox-detail-field"><span class="inbox-detail-label">摘要</span>本文介绍了 @Observable 宏在复杂状态场景下的最佳实践，包括状态拆分、依赖注入和性能优化策略。</div>
-                <div class="inbox-detail-field"><span class="inbox-detail-label">来源</span><a href="#" style="color:var(--accent)">https://mp.weixin.qq.com/s/xxx</a></div>
-                <div class="inbox-detail-field"><span class="inbox-detail-label">标签</span><span class="pill" style="font-size:10px">SwiftUI</span> <span class="pill" style="font-size:10px">状态管理</span></div>
-                <div class="inbox-detail-field"><span class="inbox-detail-label">添加时间</span>5/22</div>
-                <div class="inbox-detail-actions">
-                  <button class="btn" data-inbox-edit>编辑</button>
-                  <button class="btn" data-modal="inbox-to-focus">移入 Focus</button>
-                  <button class="btn" data-modal="inbox-to-area">移入 AreaProjects</button>
-                  <button class="btn" style="color:var(--red);border-color:rgba(248,113,113,.3)">删除</button>
-                </div>
-              </div>
-            </div>
-            <div class="inbox-row" data-inbox-row>
-              <span class="inbox-check" style="display:none"><input type="checkbox"></span>
-              <span class="inbox-icon">📖</span>
-              <div class="grow">
-                <strong>WWDC 2026 新 API 汇总</strong>
-                <span class="subline">developer.apple.com · 昨天</span>
-              </div>
-              <span class="pill" style="font-size:10px">Apple</span>
-            </div>
-            <div class="inbox-detail" style="display:none">
-              <div class="inbox-detail-inner">
-                <div class="inbox-detail-field"><span class="inbox-detail-label">摘要</span>WWDC 2026 主要 API 变更汇总，涵盖 SwiftUI 6、Foundation 新 API 和 Xcode 18 工具链升级。</div>
-                <div class="inbox-detail-field"><span class="inbox-detail-label">来源</span><a href="#" style="color:var(--accent)">https://developer.apple.com/wwdc26</a></div>
-                <div class="inbox-detail-field"><span class="inbox-detail-label">标签</span><span class="pill" style="font-size:10px">Apple</span> <span class="pill" style="font-size:10px">WWDC</span></div>
-                <div class="inbox-detail-field"><span class="inbox-detail-label">添加时间</span>5/21</div>
-                <div class="inbox-detail-actions">
-                  <button class="btn" data-inbox-edit>编辑</button>
-                  <button class="btn" data-modal="inbox-to-focus">移入 Focus</button>
-                  <button class="btn" data-modal="inbox-to-area">移入 AreaProjects</button>
-                  <button class="btn" style="color:var(--red);border-color:rgba(248,113,113,.3)">删除</button>
-                </div>
-              </div>
-            </div>
-            <div class="inbox-row" data-inbox-row>
-              <span class="inbox-check" style="display:none"><input type="checkbox"></span>
-              <span class="inbox-icon">📖</span>
-              <div class="grow">
-                <strong>RAG 工程化实践</strong>
-                <span class="subline">zhuanlan.zhihu.com · 3 天前</span>
-              </div>
-              <span class="pill" style="font-size:10px">AI</span>
-            </div>
-            <div class="inbox-detail" style="display:none">
-              <div class="inbox-detail-inner">
-                <div class="inbox-detail-field"><span class="inbox-detail-label">摘要</span>从 Embedding 选型到 Retrieval 调优，RAG 系统落地的工程化经验总结。</div>
-                <div class="inbox-detail-field"><span class="inbox-detail-label">来源</span><a href="#" style="color:var(--accent)">https://zhuanlan.zhihu.com/p/xxx</a></div>
-                <div class="inbox-detail-field"><span class="inbox-detail-label">标签</span><span class="pill" style="font-size:10px">AI</span> <span class="pill" style="font-size:10px">RAG</span></div>
-                <div class="inbox-detail-field"><span class="inbox-detail-label">添加时间</span>5/19</div>
-                <div class="inbox-detail-actions">
-                  <button class="btn" data-inbox-edit>编辑</button>
-                  <button class="btn" data-modal="inbox-to-focus">移入 Focus</button>
-                  <button class="btn" data-modal="inbox-to-area">移入 AreaProjects</button>
-                  <button class="btn" style="color:var(--red);border-color:rgba(248,113,113,.3)">删除</button>
-                </div>
-              </div>
-            </div>
-            <!-- 批量操作栏 -->
-            <div class="inbox-batch-bar" id="inbox-batch-bar" style="display:none">
-              <span id="inbox-batch-count">已选 0 项</span>
-              <button class="btn" data-modal="inbox-to-focus">移入 Focus</button>
-              <button class="btn" data-modal="inbox-to-area">移入 AreaProjects</button>
-              <button class="btn" style="color:var(--red);border-color:rgba(248,113,113,.3)">删除</button>
-              <button class="btn" id="inbox-batch-cancel">取消</button>
-            </div>
-          </div>
-
-          <!-- 灵感 -->
-          <div class="work inbox-list" id="inbox-idea">
-            <div class="inbox-row" data-inbox-row>
-              <span class="inbox-check" style="display:none"><input type="checkbox"></span>
-              <span class="inbox-icon">💡</span>
-              <div class="grow">
-                <strong>用 LLM 自动生成 Anki 卡片</strong>
-                <span class="subline inbox-body-preview">可以把 _materials 里的文章喂给 LLM，让它按 Bloom 分类学出题，自动写入 _kb/anki</span>
-                <span class="subline">3 小时前</span>
-              </div>
-              <span class="pill" style="font-size:10px">AI</span>
-            </div>
-            <div class="inbox-detail" style="display:none">
-              <div class="inbox-detail-inner">
-                <div class="inbox-detail-field"><span class="inbox-detail-label">正文</span>可以把 _materials 里的文章喂给 LLM，让它按 Bloom 分类学出题，自动写入 _kb/anki。需要设计 prompt template 和质量评分。先做手动触发，后续再做自动 pipeline。</div>
-                <div class="inbox-detail-field"><span class="inbox-detail-label">标签</span><span class="pill" style="font-size:10px">AI</span> <span class="pill" style="font-size:10px">知识管道</span></div>
-                <div class="inbox-detail-field"><span class="inbox-detail-label">添加时间</span>5/22</div>
-                <div class="inbox-detail-actions">
-                  <button class="btn" data-inbox-edit>编辑</button>
-                  <button class="btn" data-modal="inbox-to-focus">移入 Focus</button>
-                  <button class="btn" data-modal="inbox-to-area">移入 AreaProjects</button>
-                  <button class="btn" style="color:var(--red);border-color:rgba(248,113,113,.3)">删除</button>
-                </div>
-              </div>
-            </div>
-            <div class="inbox-row" data-inbox-row>
-              <span class="inbox-check" style="display:none"><input type="checkbox"></span>
-              <span class="inbox-icon">💡</span>
-              <div class="grow">
-                <strong>悬浮球状态可视化：用颜色映射当前模式</strong>
-                <span class="subline inbox-body-preview">Focus 模式红色、Studio 模式蓝色、空闲灰色，一眼看出当前在做什么</span>
-                <span class="subline">昨天</span>
-              </div>
-            </div>
-            <div class="inbox-detail" style="display:none">
-              <div class="inbox-detail-inner">
-                <div class="inbox-detail-field"><span class="inbox-detail-label">正文</span>Focus 模式红色、Studio 模式蓝色、空闲灰色，一眼看出当前在做什么。可以用呼吸动画区分 active/paused。</div>
-                <div class="inbox-detail-field"><span class="inbox-detail-label">添加时间</span>5/21</div>
-                <div class="inbox-detail-actions">
-                  <button class="btn" data-inbox-edit>编辑</button>
-                  <button class="btn" data-modal="inbox-to-focus">移入 Focus</button>
-                  <button class="btn" data-modal="inbox-to-area">移入 AreaProjects</button>
-                  <button class="btn" style="color:var(--red);border-color:rgba(248,113,113,.3)">删除</button>
-                </div>
-              </div>
-            </div>
-            <div class="inbox-row" data-inbox-row>
-              <span class="inbox-check" style="display:none"><input type="checkbox"></span>
-              <span class="inbox-icon">💡</span>
-              <div class="grow">
-                <strong>Review 页加入「遗忘曲线」可视化</strong>
-                <span class="subline">2 天前</span>
-              </div>
-              <span class="pill" style="font-size:10px">产品</span>
-            </div>
-            <div class="inbox-detail" style="display:none">
-              <div class="inbox-detail-inner">
-                <div class="inbox-detail-field"><span class="inbox-detail-label">添加时间</span>5/20</div>
-                <div class="inbox-detail-actions">
-                  <button class="btn" data-inbox-edit>编辑</button>
-                  <button class="btn" data-modal="inbox-to-focus">移入 Focus</button>
-                  <button class="btn" data-modal="inbox-to-area">移入 AreaProjects</button>
-                  <button class="btn" style="color:var(--red);border-color:rgba(248,113,113,.3)">删除</button>
-                </div>
-              </div>
-            </div>
-            <div class="inbox-row" data-inbox-row>
-              <span class="inbox-check" style="display:none"><input type="checkbox"></span>
-              <span class="inbox-icon">💡</span>
-              <div class="grow">
-                <strong>Agent 并发控制用令牌桶</strong>
-                <span class="subline inbox-body-preview">每个 Agent 分配令牌上限，避免同时跑太多任务消耗 API quota</span>
-                <span class="subline">3 天前</span>
-              </div>
-              <span class="pill" style="font-size:10px">架构</span>
-            </div>
-            <div class="inbox-detail" style="display:none">
-              <div class="inbox-detail-inner">
-                <div class="inbox-detail-field"><span class="inbox-detail-label">正文</span>每个 Agent 分配令牌上限，避免同时跑太多任务消耗 API quota。可参考 Multica 的 concurrency_limit 字段。</div>
-                <div class="inbox-detail-field"><span class="inbox-detail-label">标签</span><span class="pill" style="font-size:10px">架构</span></div>
-                <div class="inbox-detail-field"><span class="inbox-detail-label">添加时间</span>5/19</div>
-                <div class="inbox-detail-actions">
-                  <button class="btn" data-inbox-edit>编辑</button>
-                  <button class="btn" data-modal="inbox-to-focus">移入 Focus</button>
-                  <button class="btn" data-modal="inbox-to-area">移入 AreaProjects</button>
-                  <button class="btn" style="color:var(--red);border-color:rgba(248,113,113,.3)">删除</button>
-                </div>
-              </div>
-            </div>
-            <div class="inbox-row" data-inbox-row>
-              <span class="inbox-check" style="display:none"><input type="checkbox"></span>
-              <span class="inbox-icon">💡</span>
-              <div class="grow">
-                <strong>每日 Inbox 清零挑战</strong>
-                <span class="subline">4 天前</span>
-              </div>
-            </div>
-            <div class="inbox-detail" style="display:none">
-              <div class="inbox-detail-inner">
-                <div class="inbox-detail-field"><span class="inbox-detail-label">添加时间</span>5/18</div>
-                <div class="inbox-detail-actions">
-                  <button class="btn" data-inbox-edit>编辑</button>
-                  <button class="btn" data-modal="inbox-to-focus">移入 Focus</button>
-                  <button class="btn" data-modal="inbox-to-area">移入 AreaProjects</button>
-                  <button class="btn" style="color:var(--red);border-color:rgba(248,113,113,.3)">删除</button>
-                </div>
-              </div>
-            </div>
-            <div class="inbox-batch-bar" style="display:none">
-              <span>已选 0 项</span>
-              <button class="btn" data-modal="inbox-to-focus">移入 Focus</button>
-              <button class="btn" data-modal="inbox-to-area">移入 AreaProjects</button>
-              <button class="btn" style="color:var(--red);border-color:rgba(248,113,113,.3)">删除</button>
-              <button class="btn inbox-batch-cancel-btn">取消</button>
-            </div>
-          </div>
-
-          <!-- 临时事项 -->
-          <div class="work inbox-list" id="inbox-memo">
-            <div class="inbox-row" data-inbox-row>
-              <span class="inbox-check" style="display:none"><input type="checkbox"></span>
-              <span class="inbox-icon">☑️</span>
-              <div class="grow">
-                <strong>续费 Apple Developer 账号</strong>
-                <span class="subline">1 小时前</span>
-              </div>
-            </div>
-            <div class="inbox-detail" style="display:none">
-              <div class="inbox-detail-inner">
-                <div class="inbox-detail-field"><span class="inbox-detail-label">添加时间</span>5/22</div>
-                <div class="inbox-detail-actions">
-                  <button class="btn" data-inbox-edit>编辑</button>
-                  <button class="btn" data-modal="inbox-to-focus">移入 Focus</button>
-                  <button class="btn" data-modal="inbox-to-area">移入 AreaProjects</button>
-                  <button class="btn" style="color:var(--red);border-color:rgba(248,113,113,.3)">删除</button>
-                </div>
-              </div>
-            </div>
-            <div class="inbox-row" data-inbox-row>
-              <span class="inbox-check" style="display:none"><input type="checkbox"></span>
-              <span class="inbox-icon">☑️</span>
-              <div class="grow">
-                <strong>给设计师发 FP-UI 参考截图</strong>
-                <span class="subline">昨天</span>
-              </div>
-              <span class="pill" style="font-size:10px">协作</span>
-            </div>
-            <div class="inbox-detail" style="display:none">
-              <div class="inbox-detail-inner">
-                <div class="inbox-detail-field"><span class="inbox-detail-label">标签</span><span class="pill" style="font-size:10px">协作</span></div>
-                <div class="inbox-detail-field"><span class="inbox-detail-label">添加时间</span>5/21</div>
-                <div class="inbox-detail-actions">
-                  <button class="btn" data-inbox-edit>编辑</button>
-                  <button class="btn" data-modal="inbox-to-focus">移入 Focus</button>
-                  <button class="btn" data-modal="inbox-to-area">移入 AreaProjects</button>
-                  <button class="btn" style="color:var(--red);border-color:rgba(248,113,113,.3)">删除</button>
-                </div>
-              </div>
-            </div>
-            <div class="inbox-batch-bar" style="display:none">
-              <span>已选 0 项</span>
-              <button class="btn" data-modal="inbox-to-focus">移入 Focus</button>
-              <button class="btn" data-modal="inbox-to-area">移入 AreaProjects</button>
-              <button class="btn" style="color:var(--red);border-color:rgba(248,113,113,.3)">删除</button>
-              <button class="btn inbox-batch-cancel-btn">取消</button>
-            </div>
-          </div>
-
-          <!-- 空状态（各分类无数据时显示） -->
-          <div class="work inbox-list" id="inbox-empty-reading" style="display:none">
-            <div class="inbox-empty-state">
-              <div class="inbox-empty-icon">📖</div>
-              <div class="inbox-empty-title">没有待阅读的内容</div>
-              <div class="inbox-empty-hint">粘贴一个 URL 或点击「新建」添加</div>
-              <button class="btn primary" data-modal="capture">+ 新建</button>
-            </div>
-          </div>
-          <div class="work inbox-list" id="inbox-empty-idea" style="display:none">
-            <div class="inbox-empty-state">
-              <div class="inbox-empty-icon">💡</div>
-              <div class="inbox-empty-title">还没有灵感记录</div>
-              <div class="inbox-empty-hint">有想法时随时记下来</div>
-              <button class="btn primary" data-modal="capture">+ 新建</button>
-            </div>
-          </div>
-          <div class="work inbox-list" id="inbox-empty-memo" style="display:none">
-            <div class="inbox-empty-state">
-              <div class="inbox-empty-icon">☑️</div>
-              <div class="inbox-empty-title">没有临时事项</div>
-              <div class="inbox-empty-hint">需要临时记录的事情放这里</div>
-              <button class="btn primary" data-modal="capture">+ 新建</button>
-            </div>
-          </div>
-        </section>
-
         <section class="page" data-page="focus">
           <header class="topbar">
             <h1>Focus</h1>
@@ -2584,7 +2718,7 @@
                             <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
                               <span style="font-size:10px;padding:1px 6px;border-radius:10px;font-weight:500;background:rgba(74,222,128,0.15);color:var(--green);">done</span>
                               <span style="font-size:9px;padding:1px 5px;border-radius:3px;font-weight:500;letter-spacing:0.02em;background:rgba(74,222,128,0.15);color:var(--green);">ON TRACK</span>
-                              <div style="width:48px;height:4px;background:rgba(255,255,255,0.06);border-radius:2px;overflow:hidden;flex-shrink:0;"><div style="height:100%;width:100%;background:var(--green);border-radius:2px;"></div></div>
+                              <div style="width:48px;height:4px;background:var(--overlay-subtle);border-radius:2px;overflow:hidden;flex-shrink:0;"><div style="height:100%;width:100%;background:var(--green);border-radius:2px;"></div></div>
                               <span style="font-size:10px;font-family:var(--mono);color:var(--dim);width:28px;text-align:right;flex-shrink:0;">100%</span>
                             </div>
                           </div>
@@ -2628,7 +2762,7 @@
                             <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">5月</span>
                             <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
                               <span style="font-size:10px;padding:1px 6px;border-radius:10px;font-weight:500;background:rgba(74,222,128,0.15);color:var(--green);">active</span>
-                              <div style="width:48px;height:4px;background:rgba(255,255,255,0.06);border-radius:2px;overflow:hidden;flex-shrink:0;"><div style="height:100%;width:20%;background:var(--accent);border-radius:2px;"></div></div>
+                              <div style="width:48px;height:4px;background:var(--overlay-subtle);border-radius:2px;overflow:hidden;flex-shrink:0;"><div style="height:100%;width:20%;background:var(--accent);border-radius:2px;"></div></div>
                               <span style="font-size:10px;font-family:var(--mono);color:var(--dim);width:28px;text-align:right;flex-shrink:0;">20%</span>
                             </div>
                           </div>
@@ -2646,7 +2780,7 @@
                                 <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">看板状态模型实现</span>
                                 <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
                                   <span style="font-size:10px;padding:2px 6px;border-radius:3px;font-weight:500;background:rgba(248,113,113,0.15);color:var(--red);">P0</span>
-                                  <span style="font-size:10px;padding:2px 6px;border-radius:3px;font-weight:500;background:rgba(82,156,202,0.15);color:var(--accent);">auto</span>
+                                  <span style="font-size:10px;padding:2px 6px;border-radius:3px;font-weight:500;background:var(--accent-bg);color:var(--accent);">auto</span>
                                   <span style="font-size:10px;color:var(--dim);font-family:var(--mono);">05-25</span>
                                 </div>
                               </div>
@@ -2659,7 +2793,7 @@
                                 <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">Agent Pull 执行管道</span>
                                 <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
                                   <span style="font-size:10px;padding:2px 6px;border-radius:3px;font-weight:500;background:rgba(249,115,22,0.15);color:#f97316;">P1</span>
-                                  <span style="font-size:10px;padding:2px 6px;border-radius:3px;font-weight:500;background:rgba(82,156,202,0.15);color:var(--accent);">auto</span>
+                                  <span style="font-size:10px;padding:2px 6px;border-radius:3px;font-weight:500;background:var(--accent-bg);color:var(--accent);">auto</span>
                                   <span style="font-size:10px;color:var(--dim);font-family:var(--mono);">05-28</span>
                                 </div>
                               </div>
@@ -2700,7 +2834,7 @@
                             <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">6月</span>
                             <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
                               <span style="font-size:10px;padding:1px 6px;border-radius:10px;font-weight:500;background:rgba(251,191,36,0.15);color:var(--amber);">paused</span>
-                              <div style="width:48px;height:4px;background:rgba(255,255,255,0.06);border-radius:2px;overflow:hidden;flex-shrink:0;"><div style="height:100%;width:0%;border-radius:2px;"></div></div>
+                              <div style="width:48px;height:4px;background:var(--overlay-subtle);border-radius:2px;overflow:hidden;flex-shrink:0;"><div style="height:100%;width:0%;border-radius:2px;"></div></div>
                               <span style="font-size:10px;font-family:var(--mono);color:var(--dim);width:28px;text-align:right;flex-shrink:0;">0%</span>
                             </div>
                           </div>
@@ -2718,7 +2852,7 @@
                                 <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">主题系统适配</span>
                                 <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
                                   <span style="font-size:10px;padding:2px 6px;border-radius:3px;font-weight:500;background:rgba(99,105,133,0.2);color:var(--dim);">P2</span>
-                                  <span style="font-size:10px;padding:2px 6px;border-radius:3px;font-weight:500;background:rgba(82,156,202,0.15);color:var(--accent);">auto</span>
+                                  <span style="font-size:10px;padding:2px 6px;border-radius:3px;font-weight:500;background:var(--accent-bg);color:var(--accent);">auto</span>
                                 </div>
                               </div>
                             </div>
@@ -2730,7 +2864,7 @@
                                 <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">Anki 同步接口设计</span>
                                 <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
                                   <span style="font-size:10px;padding:2px 6px;border-radius:3px;font-weight:500;background:rgba(99,105,133,0.2);color:var(--dim);">P2</span>
-                                  <span style="font-size:10px;padding:2px 6px;border-radius:3px;font-weight:500;background:rgba(82,156,202,0.15);color:var(--accent);">auto</span>
+                                  <span style="font-size:10px;padding:2px 6px;border-radius:3px;font-weight:500;background:var(--accent-bg);color:var(--accent);">auto</span>
                                 </div>
                               </div>
                             </div>
@@ -2804,8 +2938,8 @@
                   <div data-fp-plan-month="4">
                   <!-- April Goal bar -->
                   <div style="height:34px;display:flex;align-items:center;position:relative;">
-                    <div style="position:absolute;height:20px;border-radius:4px;display:flex;align-items:center;padding:0 8px;font-size:9px;font-weight:500;cursor:pointer;overflow:hidden;white-space:nowrap;background:rgba(82,156,202,0.2);border:1px solid rgba(82,156,202,0.3);color:var(--accent);left:180px;width:170px;">
-                      <div style="position:absolute;left:0;top:0;bottom:0;width:40%;background:rgba(82,156,202,0.15);border-radius:4px;"></div>
+                    <div style="position:absolute;height:20px;border-radius:4px;display:flex;align-items:center;padding:0 8px;font-size:9px;font-weight:500;cursor:pointer;overflow:hidden;white-space:nowrap;background:var(--accent-bg);border:1px solid var(--accent-line);color:var(--accent);left:180px;width:170px;">
+                      <div style="position:absolute;left:0;top:0;bottom:0;width:40%;background:var(--accent-bg);border-radius:4px;"></div>
                       4月
                     </div>
                   </div>
@@ -2824,8 +2958,8 @@
                   <div data-fp-plan-month="5">
                   <!-- May Goal bar -->
                   <div data-drill-scope="month" data-drill-event="click" style="height:34px;display:flex;align-items:center;position:relative;">
-                    <div style="position:absolute;height:20px;border-radius:4px;display:flex;align-items:center;padding:0 8px;font-size:9px;font-weight:500;cursor:pointer;overflow:hidden;white-space:nowrap;background:rgba(82,156,202,0.2);border:1px solid rgba(82,156,202,0.3);color:var(--accent);left:360px;width:150px;">
-                      <div style="position:absolute;left:0;top:0;bottom:0;width:0%;background:rgba(82,156,202,0.15);border-radius:4px;"></div>
+                    <div style="position:absolute;height:20px;border-radius:4px;display:flex;align-items:center;padding:0 8px;font-size:9px;font-weight:500;cursor:pointer;overflow:hidden;white-space:nowrap;background:var(--accent-bg);border:1px solid var(--accent-line);color:var(--accent);left:360px;width:150px;">
+                      <div style="position:absolute;left:0;top:0;bottom:0;width:0%;background:var(--accent-bg);border-radius:4px;"></div>
                       5月
                     </div>
                   </div>
@@ -2854,8 +2988,8 @@
                   <div data-fp-plan-month="6">
                   <!-- June Goal bar -->
                   <div style="height:34px;display:flex;align-items:center;position:relative;">
-                    <div style="position:absolute;height:20px;border-radius:4px;display:flex;align-items:center;padding:0 8px;font-size:9px;font-weight:500;cursor:pointer;overflow:hidden;white-space:nowrap;background:rgba(82,156,202,0.2);border:1px solid rgba(82,156,202,0.3);color:var(--accent);left:540px;width:120px;opacity:0.5;">
-                      <div style="position:absolute;left:0;top:0;bottom:0;width:0%;background:rgba(82,156,202,0.15);border-radius:4px;"></div>
+                    <div style="position:absolute;height:20px;border-radius:4px;display:flex;align-items:center;padding:0 8px;font-size:9px;font-weight:500;cursor:pointer;overflow:hidden;white-space:nowrap;background:var(--accent-bg);border:1px solid var(--accent-line);color:var(--accent);left:540px;width:120px;opacity:0.5;">
+                      <div style="position:absolute;left:0;top:0;bottom:0;width:0%;background:var(--accent-bg);border-radius:4px;"></div>
                       6月
                     </div>
                   </div>
@@ -2863,11 +2997,11 @@
                   <div data-fp-goal="fp-001-release" style="height:28px;display:flex;align-items:center;padding:0 8px;font-size:10px;color:var(--muted);">📌 FocusPilot 0.0.1 发布</div>
                   <!-- FP-006: 主题系统适配 (backlog) -->
                   <div class="fp-plan-task" data-fp-schedule="month" style="height:34px;display:flex;align-items:center;position:relative;">
-                    <div style="position:absolute;height:14px;border-radius:3px;cursor:pointer;overflow:hidden;white-space:nowrap;background:rgba(255,255,255,0.06);color:var(--dim);left:530px;width:50px;" title="主题系统适配"></div>
+                    <div style="position:absolute;height:14px;border-radius:3px;cursor:pointer;overflow:hidden;white-space:nowrap;background:var(--overlay-subtle);color:var(--dim);left:530px;width:50px;" title="主题系统适配"></div>
                   </div>
                   <!-- FP-009: Anki 同步接口设计 (backlog) -->
                   <div class="fp-plan-task" data-fp-schedule="month" style="height:34px;display:flex;align-items:center;position:relative;">
-                    <div style="position:absolute;height:14px;border-radius:3px;cursor:pointer;overflow:hidden;white-space:nowrap;background:rgba(255,255,255,0.06);color:var(--dim);left:540px;width:50px;" title="Anki 同步接口设计"></div>
+                    <div style="position:absolute;height:14px;border-radius:3px;cursor:pointer;overflow:hidden;white-space:nowrap;background:var(--overlay-subtle);color:var(--dim);left:540px;width:50px;" title="Anki 同步接口设计"></div>
                   </div>
                   </div>
                   <!-- 未关联目标甘特区 -->
@@ -2907,7 +3041,7 @@
                     <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">FocusPilot 0.0.1 发布</span>
                     <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
                       <span style="font-size:10px;padding:1px 6px;border-radius:10px;font-weight:500;background:rgba(74,222,128,0.15);color:var(--green);">active</span>
-                      <div style="width:48px;height:4px;background:rgba(255,255,255,0.06);border-radius:2px;overflow:hidden;flex-shrink:0;"><div style="height:100%;width:38%;background:var(--accent);border-radius:2px;"></div></div>
+                      <div style="width:48px;height:4px;background:var(--overlay-subtle);border-radius:2px;overflow:hidden;flex-shrink:0;"><div style="height:100%;width:38%;background:var(--accent);border-radius:2px;"></div></div>
                       <span style="font-size:10px;font-family:var(--mono);color:var(--dim);width:28px;text-align:right;flex-shrink:0;">38%</span>
                     </div>
                   </div>
@@ -2932,7 +3066,7 @@
                             <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">看板状态模型实现</span>
                             <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
                               <span style="font-size:10px;padding:2px 6px;border-radius:3px;font-weight:500;background:rgba(248,113,113,0.15);color:var(--red);">P0</span>
-                              <span style="font-size:10px;padding:2px 6px;border-radius:3px;font-weight:500;background:rgba(82,156,202,0.15);color:var(--accent);">auto</span>
+                              <span style="font-size:10px;padding:2px 6px;border-radius:3px;font-weight:500;background:var(--accent-bg);color:var(--accent);">auto</span>
                             </div>
                           </div>
                         </div>
@@ -2944,7 +3078,7 @@
                             <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">Agent Pull 执行管道</span>
                             <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
                               <span style="font-size:10px;padding:2px 6px;border-radius:3px;font-weight:500;background:rgba(249,115,22,0.15);color:#f97316;">P1</span>
-                              <span style="font-size:10px;padding:2px 6px;border-radius:3px;font-weight:500;background:rgba(82,156,202,0.15);color:var(--accent);">auto</span>
+                              <span style="font-size:10px;padding:2px 6px;border-radius:3px;font-weight:500;background:var(--accent-bg);color:var(--accent);">auto</span>
                             </div>
                           </div>
                         </div>
@@ -3040,8 +3174,8 @@
                   </div>
                   <!-- Goal bar spanning full width -->
                   <div style="height:34px;display:flex;align-items:center;position:relative;">
-                    <div style="position:absolute;height:20px;border-radius:4px;display:flex;align-items:center;padding:0 8px;font-size:10px;font-weight:500;cursor:pointer;overflow:hidden;white-space:nowrap;background:rgba(82,156,202,0.2);border:1px solid rgba(82,156,202,0.3);color:var(--accent);left:8px;right:8px;">
-                      <div style="position:absolute;left:0;top:0;bottom:0;width:85%;background:rgba(82,156,202,0.15);border-radius:4px;"></div>
+                    <div style="position:absolute;height:20px;border-radius:4px;display:flex;align-items:center;padding:0 8px;font-size:10px;font-weight:500;cursor:pointer;overflow:hidden;white-space:nowrap;background:var(--accent-bg);border:1px solid var(--accent-line);color:var(--accent);left:8px;right:8px;">
+                      <div style="position:absolute;left:0;top:0;bottom:0;width:85%;background:var(--accent-bg);border-radius:4px;"></div>
                       FocusPilot 0.0.1 发布
                     </div>
                   </div>
@@ -3213,15 +3347,15 @@
                   <div style="min-width:103px;flex:1;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;color:var(--accent);border-right:1px solid var(--line-soft);position:relative;"><span>周三</span><span style="margin-left:4px;font-family:var(--mono);font-size:9px;">27</span><span style="position:absolute;bottom:0;left:0;right:0;height:2px;background:var(--accent);"></span></div>
                   <div style="min-width:103px;flex:1;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;color:var(--dim);border-right:1px solid var(--line-soft);position:relative;"><span>周四</span><span style="margin-left:4px;font-family:var(--mono);font-size:9px;opacity:0.6;">28</span></div>
                   <div style="min-width:103px;flex:1;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;color:var(--dim);border-right:1px solid var(--line-soft);position:relative;"><span>周五</span><span style="margin-left:4px;font-family:var(--mono);font-size:9px;opacity:0.6;">29</span></div>
-                  <div style="min-width:103px;flex:1;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;color:var(--dim);border-right:1px solid var(--line-soft);position:relative;background:rgba(255,255,255,0.02);"><span>周六</span><span style="margin-left:4px;font-family:var(--mono);font-size:9px;opacity:0.6;">30</span></div>
-                  <div style="min-width:103px;flex:1;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;color:var(--dim);position:relative;background:rgba(255,255,255,0.02);"><span>周日</span><span style="margin-left:4px;font-family:var(--mono);font-size:9px;opacity:0.6;">31</span></div>
+                  <div style="min-width:103px;flex:1;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;color:var(--dim);border-right:1px solid var(--line-soft);position:relative;background:var(--pill-bg);"><span>周六</span><span style="margin-left:4px;font-family:var(--mono);font-size:9px;opacity:0.6;">30</span></div>
+                  <div style="min-width:103px;flex:1;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;color:var(--dim);position:relative;background:var(--pill-bg);"><span>周日</span><span style="margin-left:4px;font-family:var(--mono);font-size:9px;opacity:0.6;">31</span></div>
                 </div>
                 <!-- Gantt Body -->
                 <div style="min-height:100%;position:relative;min-width:721px;width:721px;">
                   <!-- Today line (Wed = col 3, early) -->
                   <div style="position:absolute;top:0;bottom:0;width:1px;background:var(--red);z-index:3;opacity:0.6;left:221px;"><span style="position:absolute;top:4px;left:-14px;font-size:9px;color:var(--red);font-weight:500;">今天</span></div>
                   <!-- Weekend bg (Sat+Sun = col 6-7) -->
-                  <div style="position:absolute;top:0;bottom:0;left:515px;width:206px;background:rgba(255,255,255,0.015);z-index:0;"></div>
+                  <div style="position:absolute;top:0;bottom:0;left:515px;width:206px;background:var(--pill-bg);z-index:0;"></div>
                   <!-- Legend (mirrors left panel structure for natural alignment) -->
                   <div style="display:flex;align-items:center;gap:10px;padding:4px 12px;font-size:9px;color:var(--dim);border-bottom:1px solid var(--line-soft);">
                     <span style="display:flex;align-items:center;gap:3px;"><span style="width:10px;height:4px;border-radius:2px;background:rgba(91,138,245,0.4);"></span>执行中</span>
@@ -3359,7 +3493,7 @@
                   <div class="task-title">主题系统适配</div>
                   <div class="task-meta" style="flex-wrap:wrap;gap:4px">
                     <span class="pill" style="font-size:9px;padding:1px 5px;border-color:rgba(112,120,135,.3);color:var(--dim)">P2</span>
-                    <span class="pill" style="font-size:9px;padding:1px 5px;border-color:rgba(82,156,202,.3);color:var(--accent)">auto</span>
+                    <span class="pill" style="font-size:9px;padding:1px 5px;border-color:var(--accent-line);color:var(--accent)">auto</span>
                     <span style="font-size:10px;color:var(--dim)">→ 6月/FP 0.0.1</span>
                   </div>
                   <div style="display:flex;align-items:center;justify-content:space-between;margin-top:6px;padding-top:6px;border-top:1px solid var(--line-soft);font-size:10px;color:var(--dim)">
@@ -3371,7 +3505,7 @@
                   <div class="task-title">Anki 同步接口设计</div>
                   <div class="task-meta" style="flex-wrap:wrap;gap:4px">
                     <span class="pill" style="font-size:9px;padding:1px 5px;border-color:rgba(112,120,135,.3);color:var(--dim)">P2</span>
-                    <span class="pill" style="font-size:9px;padding:1px 5px;border-color:rgba(82,156,202,.3);color:var(--accent)">auto</span>
+                    <span class="pill" style="font-size:9px;padding:1px 5px;border-color:var(--accent-line);color:var(--accent)">auto</span>
                     <span style="font-size:10px;color:var(--dim)">→ 6月/FP 0.0.1</span>
                   </div>
                   <div style="display:flex;align-items:center;justify-content:space-between;margin-top:6px;padding-top:6px;border-top:1px solid var(--line-soft);font-size:10px;color:var(--dim)">
@@ -3388,7 +3522,7 @@
                   <div class="task-title">Agent Pull 执行管道</div>
                   <div class="task-meta" style="flex-wrap:wrap;gap:4px">
                     <span class="pill" style="font-size:9px;padding:1px 5px;border-color:rgba(242,196,15,.3);color:var(--amber)">P1</span>
-                    <span class="pill" style="font-size:9px;padding:1px 5px;border-color:rgba(82,156,202,.3);color:var(--accent)">auto</span>
+                    <span class="pill" style="font-size:9px;padding:1px 5px;border-color:var(--accent-line);color:var(--accent)">auto</span>
                     <span style="font-size:10px;color:var(--dim)">→ 5月/AI</span>
                   </div>
                   <div style="display:flex;align-items:center;justify-content:space-between;margin-top:6px;padding-top:6px;border-top:1px solid var(--line-soft);font-size:10px;color:var(--dim)">
@@ -3423,12 +3557,12 @@
               <!-- In Progress -->
               <div class="lane fp-col" data-fp-col="progress">
                 <h3><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--accent);margin-right:4px;vertical-align:middle"></span> In Progress <span class="fp-col-count">2</span></h3>
-                <div class="task fp-card" data-task-id="FP-002" onclick="openTaskDetail()" data-fp-schedule="week" data-fp-month="5" data-fp-mode="auto" data-fp-agent="yes" style="border-color:rgba(82,156,202,.3)">
+                <div class="task fp-card" data-task-id="FP-002" onclick="openTaskDetail()" data-fp-schedule="week" data-fp-month="5" data-fp-mode="auto" data-fp-agent="yes" style="border-color:var(--accent-line)">
                   <div style="font-size:10px;font-family:var(--mono);color:var(--dim);margin-bottom:2px">FP-002</div>
                   <div class="task-title">看板状态模型实现</div>
                   <div class="task-meta" style="flex-wrap:wrap;gap:4px">
                     <span class="pill" style="font-size:9px;padding:1px 5px;border-color:rgba(248,113,113,.3);color:var(--red)">P0</span>
-                    <span class="pill" style="font-size:9px;padding:1px 5px;border-color:rgba(82,156,202,.3);color:var(--accent)">auto</span>
+                    <span class="pill" style="font-size:9px;padding:1px 5px;border-color:var(--accent-line);color:var(--accent)">auto</span>
                     <span style="font-size:10px;color:var(--dim)">→ 5月/AI</span>
                     <span class="pill blue" style="font-size:9px;padding:1px 5px;font-weight:600">Agent 执行中</span>
                   </div>
@@ -3457,7 +3591,7 @@
                   <div class="task-title">规划引擎接口设计</div>
                   <div class="task-meta" style="flex-wrap:wrap;gap:4px">
                     <span class="pill" style="font-size:9px;padding:1px 5px;border-color:rgba(248,113,113,.3);color:var(--red)">P0</span>
-                    <span class="pill" style="font-size:9px;padding:1px 5px;border-color:rgba(82,156,202,.3);color:var(--accent)">auto</span>
+                    <span class="pill" style="font-size:9px;padding:1px 5px;border-color:var(--accent-line);color:var(--accent)">auto</span>
                     <span style="font-size:10px;color:var(--dim)">→ 5月/AI</span>
                     <span class="pill amber" style="font-size:9px;padding:1px 5px;font-weight:600">等你决策</span>
                   </div>
@@ -3474,7 +3608,7 @@
                   <div class="task-title" style="text-decoration:line-through">数据模型设计</div>
                   <div class="task-meta" style="flex-wrap:wrap;gap:4px">
                     <span class="pill" style="font-size:9px;padding:1px 5px;border-color:rgba(248,113,113,.3);color:var(--red)">P0</span>
-                    <span class="pill" style="font-size:9px;padding:1px 5px;border-color:rgba(82,156,202,.3);color:var(--accent)">auto</span>
+                    <span class="pill" style="font-size:9px;padding:1px 5px;border-color:var(--accent-line);color:var(--accent)">auto</span>
                   </div>
                   <div style="display:flex;align-items:center;justify-content:space-between;margin-top:6px;padding-top:6px;border-top:1px solid var(--line-soft);font-size:10px;color:var(--dim)">
                     <span>🧑‍💻 代码工程师</span><span style="font-family:var(--mono);color:var(--green)">✓ 04-15</span>
@@ -3770,7 +3904,7 @@
                 <div style="margin-bottom:12px"><div style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);margin-bottom:3px">安排</div>本周</div>
                 <div style="height:1px;background:var(--line-soft);margin:10px 0"></div>
                 <div style="margin-bottom:12px"><div style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);margin-bottom:3px">归属目标</div><span style="color:var(--dim)">5月</span><br>FocusPilot 0.0.1</div>
-                <div style="margin-bottom:12px"><div style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);margin-bottom:3px">来源</div>📁 AreaProject</div>
+                <div style="margin-bottom:12px"><div style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);margin-bottom:3px">来源</div>📁 Projects</div>
                 <div style="height:1px;background:var(--line-soft);margin:10px 0"></div>
                 <div style="margin-bottom:12px"><div style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);margin-bottom:3px">执行模式</div>全自动</div>
                 <div style="margin-bottom:12px"><div style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);margin-bottom:3px">Agent</div>代码工程师</div>
@@ -3990,8 +4124,299 @@
         </section>
 
         <section class="page" data-page="areas">
+
+          <!-- ═══ Inbox workspace (merged from old Inbox page) ═══ -->
+          <div id="areas-inbox-workspace" style="display:none">
+            <header class="topbar">
+              <h1 id="inbox-topbar-title">待阅读 (3)</h1>
+              <span class="meta">收集、暂存、整理</span>
+              <div class="top-actions">
+                <span class="pill" id="inbox-sort-pill" style="cursor:pointer">排序: 最近添加 ▾</span>
+                <button class="btn" id="inbox-batch-toggle">批量选择</button>
+                <button class="btn primary" data-modal="capture">+ 新建</button>
+              </div>
+            </header>
+
+            <!-- 待阅读 -->
+            <div class="work inbox-list active" id="inbox-reading">
+              <div class="inbox-row" data-inbox-row>
+                <span class="inbox-check" style="display:none"><input type="checkbox"></span>
+                <span class="inbox-icon">📖</span>
+                <div class="grow">
+                  <strong>SwiftUI 状态管理最佳实践</strong>
+                  <span class="subline">mp.weixin.qq.com · 2 小时前</span>
+                </div>
+                <span class="pill" style="font-size:10px">SwiftUI</span>
+              </div>
+              <div class="inbox-detail" style="display:none">
+                <div class="inbox-detail-inner">
+                  <div class="inbox-detail-field"><span class="inbox-detail-label">摘要</span>本文介绍了 @Observable 宏在复杂状态场景下的最佳实践，包括状态拆分、依赖注入和性能优化策略。</div>
+                  <div class="inbox-detail-field"><span class="inbox-detail-label">来源</span><a href="#" style="color:var(--accent)">https://mp.weixin.qq.com/s/xxx</a></div>
+                  <div class="inbox-detail-field"><span class="inbox-detail-label">标签</span><span class="pill" style="font-size:10px">SwiftUI</span> <span class="pill" style="font-size:10px">状态管理</span></div>
+                  <div class="inbox-detail-field"><span class="inbox-detail-label">添加时间</span>5/22</div>
+                  <div class="inbox-detail-actions">
+                    <button class="btn" data-inbox-edit>编辑</button>
+                    <button class="btn" data-modal="inbox-to-focus">转为工作项</button>
+                    <button class="btn" data-modal="inbox-to-area">归入项目</button>
+                    <button class="btn" style="color:var(--red);border-color:rgba(248,113,113,.3)">删除</button>
+                  </div>
+                </div>
+              </div>
+              <div class="inbox-row" data-inbox-row>
+                <span class="inbox-check" style="display:none"><input type="checkbox"></span>
+                <span class="inbox-icon">📖</span>
+                <div class="grow">
+                  <strong>WWDC 2026 新 API 汇总</strong>
+                  <span class="subline">developer.apple.com · 昨天</span>
+                </div>
+                <span class="pill" style="font-size:10px">Apple</span>
+              </div>
+              <div class="inbox-detail" style="display:none">
+                <div class="inbox-detail-inner">
+                  <div class="inbox-detail-field"><span class="inbox-detail-label">摘要</span>WWDC 2026 主要 API 变更汇总，涵盖 SwiftUI 6、Foundation 新 API 和 Xcode 18 工具链升级。</div>
+                  <div class="inbox-detail-field"><span class="inbox-detail-label">来源</span><a href="#" style="color:var(--accent)">https://developer.apple.com/wwdc26</a></div>
+                  <div class="inbox-detail-field"><span class="inbox-detail-label">标签</span><span class="pill" style="font-size:10px">Apple</span> <span class="pill" style="font-size:10px">WWDC</span></div>
+                  <div class="inbox-detail-field"><span class="inbox-detail-label">添加时间</span>5/21</div>
+                  <div class="inbox-detail-actions">
+                    <button class="btn" data-inbox-edit>编辑</button>
+                    <button class="btn" data-modal="inbox-to-focus">转为工作项</button>
+                    <button class="btn" data-modal="inbox-to-area">归入项目</button>
+                    <button class="btn" style="color:var(--red);border-color:rgba(248,113,113,.3)">删除</button>
+                  </div>
+                </div>
+              </div>
+              <div class="inbox-row" data-inbox-row>
+                <span class="inbox-check" style="display:none"><input type="checkbox"></span>
+                <span class="inbox-icon">📖</span>
+                <div class="grow">
+                  <strong>RAG 工程化实践</strong>
+                  <span class="subline">zhuanlan.zhihu.com · 3 天前</span>
+                </div>
+                <span class="pill" style="font-size:10px">AI</span>
+              </div>
+              <div class="inbox-detail" style="display:none">
+                <div class="inbox-detail-inner">
+                  <div class="inbox-detail-field"><span class="inbox-detail-label">摘要</span>从 Embedding 选型到 Retrieval 调优，RAG 系统落地的工程化经验总结。</div>
+                  <div class="inbox-detail-field"><span class="inbox-detail-label">来源</span><a href="#" style="color:var(--accent)">https://zhuanlan.zhihu.com/p/xxx</a></div>
+                  <div class="inbox-detail-field"><span class="inbox-detail-label">标签</span><span class="pill" style="font-size:10px">AI</span> <span class="pill" style="font-size:10px">RAG</span></div>
+                  <div class="inbox-detail-field"><span class="inbox-detail-label">添加时间</span>5/19</div>
+                  <div class="inbox-detail-actions">
+                    <button class="btn" data-inbox-edit>编辑</button>
+                    <button class="btn" data-modal="inbox-to-focus">转为工作项</button>
+                    <button class="btn" data-modal="inbox-to-area">归入项目</button>
+                    <button class="btn" style="color:var(--red);border-color:rgba(248,113,113,.3)">删除</button>
+                  </div>
+                </div>
+              </div>
+              <!-- 批量操作栏 -->
+              <div class="inbox-batch-bar" id="inbox-batch-bar" style="display:none">
+                <span id="inbox-batch-count">已选 0 项</span>
+                <button class="btn" data-modal="inbox-to-focus">转为工作项</button>
+                <button class="btn" data-modal="inbox-to-area">归入项目</button>
+                <button class="btn" style="color:var(--red);border-color:rgba(248,113,113,.3)">删除</button>
+                <button class="btn" id="inbox-batch-cancel">取消</button>
+              </div>
+            </div>
+
+            <!-- 灵感 -->
+            <div class="work inbox-list" id="inbox-idea">
+              <div class="inbox-row" data-inbox-row>
+                <span class="inbox-check" style="display:none"><input type="checkbox"></span>
+                <span class="inbox-icon">💡</span>
+                <div class="grow">
+                  <strong>用 LLM 自动生成 Anki 卡片</strong>
+                  <span class="subline inbox-body-preview">可以把 _materials 里的文章喂给 LLM，让它按 Bloom 分类学出题，自动写入 _kb/anki</span>
+                  <span class="subline">3 小时前</span>
+                </div>
+                <span class="pill" style="font-size:10px">AI</span>
+              </div>
+              <div class="inbox-detail" style="display:none">
+                <div class="inbox-detail-inner">
+                  <div class="inbox-detail-field"><span class="inbox-detail-label">正文</span>可以把 _materials 里的文章喂给 LLM，让它按 Bloom 分类学出题，自动写入 _kb/anki。需要设计 prompt template 和质量评分。先做手动触发，后续再做自动 pipeline。</div>
+                  <div class="inbox-detail-field"><span class="inbox-detail-label">标签</span><span class="pill" style="font-size:10px">AI</span> <span class="pill" style="font-size:10px">知识管道</span></div>
+                  <div class="inbox-detail-field"><span class="inbox-detail-label">添加时间</span>5/22</div>
+                  <div class="inbox-detail-actions">
+                    <button class="btn" data-inbox-edit>编辑</button>
+                    <button class="btn" data-modal="inbox-to-focus">转为工作项</button>
+                    <button class="btn" data-modal="inbox-to-area">归入项目</button>
+                    <button class="btn" style="color:var(--red);border-color:rgba(248,113,113,.3)">删除</button>
+                  </div>
+                </div>
+              </div>
+              <div class="inbox-row" data-inbox-row>
+                <span class="inbox-check" style="display:none"><input type="checkbox"></span>
+                <span class="inbox-icon">💡</span>
+                <div class="grow">
+                  <strong>悬浮球状态可视化：用颜色映射当前模式</strong>
+                  <span class="subline inbox-body-preview">Focus 模式红色、Studio 模式蓝色、空闲灰色，一眼看出当前在做什么</span>
+                  <span class="subline">昨天</span>
+                </div>
+              </div>
+              <div class="inbox-detail" style="display:none">
+                <div class="inbox-detail-inner">
+                  <div class="inbox-detail-field"><span class="inbox-detail-label">正文</span>Focus 模式红色、Studio 模式蓝色、空闲灰色，一眼看出当前在做什么。可以用呼吸动画区分 active/paused。</div>
+                  <div class="inbox-detail-field"><span class="inbox-detail-label">添加时间</span>5/21</div>
+                  <div class="inbox-detail-actions">
+                    <button class="btn" data-inbox-edit>编辑</button>
+                    <button class="btn" data-modal="inbox-to-focus">转为工作项</button>
+                    <button class="btn" data-modal="inbox-to-area">归入项目</button>
+                    <button class="btn" style="color:var(--red);border-color:rgba(248,113,113,.3)">删除</button>
+                  </div>
+                </div>
+              </div>
+              <div class="inbox-row" data-inbox-row>
+                <span class="inbox-check" style="display:none"><input type="checkbox"></span>
+                <span class="inbox-icon">💡</span>
+                <div class="grow">
+                  <strong>Review 页加入「遗忘曲线」可视化</strong>
+                  <span class="subline">2 天前</span>
+                </div>
+                <span class="pill" style="font-size:10px">产品</span>
+              </div>
+              <div class="inbox-detail" style="display:none">
+                <div class="inbox-detail-inner">
+                  <div class="inbox-detail-field"><span class="inbox-detail-label">添加时间</span>5/20</div>
+                  <div class="inbox-detail-actions">
+                    <button class="btn" data-inbox-edit>编辑</button>
+                    <button class="btn" data-modal="inbox-to-focus">转为工作项</button>
+                    <button class="btn" data-modal="inbox-to-area">归入项目</button>
+                    <button class="btn" style="color:var(--red);border-color:rgba(248,113,113,.3)">删除</button>
+                  </div>
+                </div>
+              </div>
+              <div class="inbox-row" data-inbox-row>
+                <span class="inbox-check" style="display:none"><input type="checkbox"></span>
+                <span class="inbox-icon">💡</span>
+                <div class="grow">
+                  <strong>Agent 并发控制用令牌桶</strong>
+                  <span class="subline inbox-body-preview">每个 Agent 分配令牌上限，避免同时跑太多任务消耗 API quota</span>
+                  <span class="subline">3 天前</span>
+                </div>
+                <span class="pill" style="font-size:10px">架构</span>
+              </div>
+              <div class="inbox-detail" style="display:none">
+                <div class="inbox-detail-inner">
+                  <div class="inbox-detail-field"><span class="inbox-detail-label">正文</span>每个 Agent 分配令牌上限，避免同时跑太多任务消耗 API quota。可参考 Multica 的 concurrency_limit 字段。</div>
+                  <div class="inbox-detail-field"><span class="inbox-detail-label">标签</span><span class="pill" style="font-size:10px">架构</span></div>
+                  <div class="inbox-detail-field"><span class="inbox-detail-label">添加时间</span>5/19</div>
+                  <div class="inbox-detail-actions">
+                    <button class="btn" data-inbox-edit>编辑</button>
+                    <button class="btn" data-modal="inbox-to-focus">转为工作项</button>
+                    <button class="btn" data-modal="inbox-to-area">归入项目</button>
+                    <button class="btn" style="color:var(--red);border-color:rgba(248,113,113,.3)">删除</button>
+                  </div>
+                </div>
+              </div>
+              <div class="inbox-row" data-inbox-row>
+                <span class="inbox-check" style="display:none"><input type="checkbox"></span>
+                <span class="inbox-icon">💡</span>
+                <div class="grow">
+                  <strong>每日 Inbox 清零挑战</strong>
+                  <span class="subline">4 天前</span>
+                </div>
+              </div>
+              <div class="inbox-detail" style="display:none">
+                <div class="inbox-detail-inner">
+                  <div class="inbox-detail-field"><span class="inbox-detail-label">添加时间</span>5/18</div>
+                  <div class="inbox-detail-actions">
+                    <button class="btn" data-inbox-edit>编辑</button>
+                    <button class="btn" data-modal="inbox-to-focus">转为工作项</button>
+                    <button class="btn" data-modal="inbox-to-area">归入项目</button>
+                    <button class="btn" style="color:var(--red);border-color:rgba(248,113,113,.3)">删除</button>
+                  </div>
+                </div>
+              </div>
+              <div class="inbox-batch-bar" style="display:none">
+                <span>已选 0 项</span>
+                <button class="btn" data-modal="inbox-to-focus">转为工作项</button>
+                <button class="btn" data-modal="inbox-to-area">归入项目</button>
+                <button class="btn" style="color:var(--red);border-color:rgba(248,113,113,.3)">删除</button>
+                <button class="btn inbox-batch-cancel-btn">取消</button>
+              </div>
+            </div>
+
+            <!-- 临时事项 -->
+            <div class="work inbox-list" id="inbox-memo">
+              <div class="inbox-row" data-inbox-row>
+                <span class="inbox-check" style="display:none"><input type="checkbox"></span>
+                <span class="inbox-icon">☑️</span>
+                <div class="grow">
+                  <strong>续费 Apple Developer 账号</strong>
+                  <span class="subline">1 小时前</span>
+                </div>
+              </div>
+              <div class="inbox-detail" style="display:none">
+                <div class="inbox-detail-inner">
+                  <div class="inbox-detail-field"><span class="inbox-detail-label">添加时间</span>5/22</div>
+                  <div class="inbox-detail-actions">
+                    <button class="btn" data-inbox-edit>编辑</button>
+                    <button class="btn" data-modal="inbox-to-focus">转为工作项</button>
+                    <button class="btn" data-modal="inbox-to-area">归入项目</button>
+                    <button class="btn" style="color:var(--red);border-color:rgba(248,113,113,.3)">删除</button>
+                  </div>
+                </div>
+              </div>
+              <div class="inbox-row" data-inbox-row>
+                <span class="inbox-check" style="display:none"><input type="checkbox"></span>
+                <span class="inbox-icon">☑️</span>
+                <div class="grow">
+                  <strong>给设计师发 FP-UI 参考截图</strong>
+                  <span class="subline">昨天</span>
+                </div>
+                <span class="pill" style="font-size:10px">协作</span>
+              </div>
+              <div class="inbox-detail" style="display:none">
+                <div class="inbox-detail-inner">
+                  <div class="inbox-detail-field"><span class="inbox-detail-label">标签</span><span class="pill" style="font-size:10px">协作</span></div>
+                  <div class="inbox-detail-field"><span class="inbox-detail-label">添加时间</span>5/21</div>
+                  <div class="inbox-detail-actions">
+                    <button class="btn" data-inbox-edit>编辑</button>
+                    <button class="btn" data-modal="inbox-to-focus">转为工作项</button>
+                    <button class="btn" data-modal="inbox-to-area">归入项目</button>
+                    <button class="btn" style="color:var(--red);border-color:rgba(248,113,113,.3)">删除</button>
+                  </div>
+                </div>
+              </div>
+              <div class="inbox-batch-bar" style="display:none">
+                <span>已选 0 项</span>
+                <button class="btn" data-modal="inbox-to-focus">转为工作项</button>
+                <button class="btn" data-modal="inbox-to-area">归入项目</button>
+                <button class="btn" style="color:var(--red);border-color:rgba(248,113,113,.3)">删除</button>
+                <button class="btn inbox-batch-cancel-btn">取消</button>
+              </div>
+            </div>
+
+            <!-- 空状态（各分类无数据时显示） -->
+            <div class="work inbox-list" id="inbox-empty-reading" style="display:none">
+              <div class="inbox-empty-state">
+                <div class="inbox-empty-icon">📖</div>
+                <div class="inbox-empty-title">没有待阅读的内容</div>
+                <div class="inbox-empty-hint">粘贴一个 URL 或点击「新建」添加</div>
+                <button class="btn primary" data-modal="capture">+ 新建</button>
+              </div>
+            </div>
+            <div class="work inbox-list" id="inbox-empty-idea" style="display:none">
+              <div class="inbox-empty-state">
+                <div class="inbox-empty-icon">💡</div>
+                <div class="inbox-empty-title">还没有灵感记录</div>
+                <div class="inbox-empty-hint">有想法时随时记下来</div>
+                <button class="btn primary" data-modal="capture">+ 新建</button>
+              </div>
+            </div>
+            <div class="work inbox-list" id="inbox-empty-memo" style="display:none">
+              <div class="inbox-empty-state">
+                <div class="inbox-empty-icon">☑️</div>
+                <div class="inbox-empty-title">没有临时事项</div>
+                <div class="inbox-empty-hint">需要临时记录的事情放这里</div>
+                <button class="btn primary" data-modal="capture">+ 新建</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- ═══ Projects workspace (original Areas content) ═══ -->
+          <div id="areas-projects-workspace" style="display:block">
           <header class="topbar">
-            <h1>AreaProjects</h1>
+            <h1>Projects</h1>
             <span class="meta">项目资产沉淀区</span>
             <div class="top-actions">
               <div class="seg" data-scope="areasView">
@@ -4102,7 +4527,7 @@
                   <!-- 编辑面板（左右分栏） -->
                   <div class="panel" id="areas-edit" style="display:none;height:100%">
                     <div style="display:flex;height:100%">
-                      <textarea id="areas-edit-source" style="flex:1;background:#0d0f12;color:#cbd5e1;font-family:var(--mono);font-size:12px;line-height:1.7;padding:16px;border:none;border-right:1px solid var(--line-soft);outline:none;resize:none">---
+                      <textarea id="areas-edit-source" style="flex:1;background:var(--surface);color:var(--text);font-family:var(--mono);font-size:12px;line-height:1.7;padding:16px;border:none;border-right:1px solid var(--line-soft);outline:none;resize:none">---
 title: 项目产出结构
 author: Bruce
 date: 2026-05-20
@@ -4160,7 +4585,7 @@ FocusPilot/
                   <button class="btn icon" style="font-size:12px">×</button>
                 </div>
                 <!-- 终端面板 -->
-                <div class="panel active" id="areas-aux-terminal" style="flex:1;min-height:0;overflow:auto;padding:12px;background:#0d0f12;font-family:var(--mono);font-size:11px;line-height:1.7;color:var(--green)">
+                <div class="panel active" id="areas-aux-terminal" style="flex:1;min-height:0;overflow:auto;padding:12px;background:var(--surface);font-family:var(--mono);font-size:11px;line-height:1.7;color:var(--green)">
 <span style="color:var(--dim)">$</span> rg "Knowledge Pipeline" docs/<br>
 <br>
 <span style="color:var(--accent)">docs/Architecture.md</span><br>
@@ -4185,7 +4610,7 @@ FocusPilot/
                   </div>
                   <!-- 对话气泡 -->
                   <div style="flex:1;overflow:auto;padding:12px;display:flex;flex-direction:column;gap:10px">
-                    <div style="align-self:flex-end;background:rgba(82,156,202,0.15);border:1px solid rgba(82,156,202,0.25);border-radius:var(--radius);padding:8px 12px;max-width:85%;font-size:12px;line-height:1.6">
+                    <div style="align-self:flex-end;background:var(--accent-bg);border:1px solid var(--accent-line);border-radius:var(--radius);padding:8px 12px;max-width:85%;font-size:12px;line-height:1.6">
                       这个架构中 _kb 和 _materials 的区别是什么？
                     </div>
                     <div style="align-self:flex-start;background:var(--surface-2);border:1px solid var(--line-soft);border-radius:var(--radius);padding:8px 12px;max-width:85%;font-size:12px;line-height:1.6;color:var(--muted)">
@@ -4217,7 +4642,7 @@ FocusPilot/
             <!-- 卡片列表 -->
             <div style="display:flex;flex-direction:column;gap:10px">
               <!-- 卡片 1: CAP 定理 -->
-              <div class="card area-kb-card" data-area-file="kb-cap" style="cursor:pointer" onmouseover="this.style.borderColor='rgba(82,156,202,0.5)'" onmouseout="this.style.borderColor='var(--line)'">
+              <div class="card area-kb-card" data-area-file="kb-cap" style="cursor:pointer" onmouseover="this.style.borderColor='var(--accent-line)'" onmouseout="this.style.borderColor='var(--line)'">
                 <div style="padding:14px 16px">
                   <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
                     <span>🧠</span><strong style="font-size:13px">CAP 定理</strong>
@@ -4232,7 +4657,7 @@ FocusPilot/
                 </div>
               </div>
               <!-- 卡片 2: Raft 选举机制 -->
-              <div class="card area-kb-card" data-area-file="kb-raft" style="cursor:pointer" onmouseover="this.style.borderColor='rgba(82,156,202,0.5)'" onmouseout="this.style.borderColor='var(--line)'">
+              <div class="card area-kb-card" data-area-file="kb-raft" style="cursor:pointer" onmouseover="this.style.borderColor='var(--accent-line)'" onmouseout="this.style.borderColor='var(--line)'">
                 <div style="padding:14px 16px">
                   <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
                     <span>🧠</span><strong style="font-size:13px">Raft 选举机制</strong>
@@ -4247,7 +4672,7 @@ FocusPilot/
                 </div>
               </div>
               <!-- 卡片 3: 向量数据库选型对比 -->
-              <div class="card area-kb-card" data-area-file="kb-vec" style="cursor:pointer" onmouseover="this.style.borderColor='rgba(82,156,202,0.5)'" onmouseout="this.style.borderColor='var(--line)'">
+              <div class="card area-kb-card" data-area-file="kb-vec" style="cursor:pointer" onmouseover="this.style.borderColor='var(--accent-line)'" onmouseout="this.style.borderColor='var(--line)'">
                 <div style="padding:14px 16px">
                   <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
                     <span>🧠</span><strong style="font-size:13px">向量数据库选型对比</strong>
@@ -4262,7 +4687,7 @@ FocusPilot/
                 </div>
               </div>
               <!-- 卡片 4: Paxos vs Raft -->
-              <div class="card area-kb-card" data-area-file="kb-paxos" style="cursor:pointer" onmouseover="this.style.borderColor='rgba(82,156,202,0.5)'" onmouseout="this.style.borderColor='var(--line)'">
+              <div class="card area-kb-card" data-area-file="kb-paxos" style="cursor:pointer" onmouseover="this.style.borderColor='var(--accent-line)'" onmouseout="this.style.borderColor='var(--line)'">
                 <div style="padding:14px 16px">
                   <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
                     <span>🧠</span><strong style="font-size:13px">Paxos vs Raft</strong>
@@ -4277,7 +4702,7 @@ FocusPilot/
                 </div>
               </div>
               <!-- 卡片 5: CRDT 数据结构 -->
-              <div class="card area-kb-card" data-area-file="kb-crdt" style="cursor:pointer" onmouseover="this.style.borderColor='rgba(82,156,202,0.5)'" onmouseout="this.style.borderColor='var(--line)'">
+              <div class="card area-kb-card" data-area-file="kb-crdt" style="cursor:pointer" onmouseover="this.style.borderColor='var(--accent-line)'" onmouseout="this.style.borderColor='var(--line)'">
                 <div style="padding:14px 16px">
                   <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
                     <span>🧠</span><strong style="font-size:13px">CRDT 数据结构</strong>
@@ -4294,7 +4719,7 @@ FocusPilot/
             </div>
           </div>
 
-          <!-- ═══ AreaProjects: 添加项目弹窗 ═══ -->
+          <!-- ═══ Projects: 添加项目弹窗 ═══ -->
           <div id="areas-add-project-modal" style="position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:60;display:none;align-items:center;justify-content:center;backdrop-filter:blur(4px)">
             <div style="width:440px;max-width:90vw;background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,.5);padding:24px" onclick="event.stopPropagation()">
               <h3 style="font-size:16px;font-weight:600;margin:0 0 16px">添加项目</h3>
@@ -4327,6 +4752,8 @@ FocusPilot/
               </div>
             </div>
           </div>
+
+          </div><!-- /areas-projects-workspace -->
 
         </section>
 
@@ -4581,7 +5008,7 @@ FocusPilot/
                     </tr>
                     <tr>
                       <td><strong>Anki 同步边界</strong><span class="subline">经验类 · 可追溯</span></td>
-                      <td>知识管道<span class="subline">AreaProjects/_kb</span></td>
+                      <td>知识管道<span class="subline">Projects/_kb</span></td>
                       <td><span class="pill green">熟练</span></td>
                       <td><span class="pill blue">能应用</span></td>
                       <td><span class="pill">suspended</span></td>
@@ -5226,31 +5653,67 @@ FocusPilot/
               <div class="settings-section" data-settings-panel="appearance">
                 <h2>偏好设置</h2>
                 <h4>主题</h4>
+                <div class="theme-group-label">浅色</div>
                 <div class="theme-cards">
-                  <div class="theme-card" data-theme="light" onclick="selectThemeCard(this)">
-                    <div class="theme-card-preview light">
-                      <div class="bar" style="width:80%"></div>
-                      <div class="bar" style="width:60%"></div>
-                      <div class="bar" style="width:70%"></div>
-                    </div>
-                    <div class="theme-card-label">浅色</div>
-                  </div>
-                  <div class="theme-card" data-theme="dark" onclick="selectThemeCard(this)">
-                    <div class="theme-card-preview dark">
-                      <div class="bar" style="width:80%"></div>
-                      <div class="bar" style="width:60%"></div>
-                      <div class="bar" style="width:70%"></div>
-                    </div>
-                    <div class="theme-card-label">深色</div>
-                  </div>
-                  <div class="theme-card selected" data-theme="system" onclick="selectThemeCard(this)">
-                    <div class="theme-card-preview auto">
-                      <div class="bar" style="width:80%"></div>
-                      <div class="bar" style="width:60%"></div>
-                      <div class="bar" style="width:70%"></div>
-                    </div>
-                    <div class="theme-card-label">跟随系统</div>
-                  </div>
+                  <div class="theme-card" data-theme="defaultWhite" onclick="selectThemeCard(this)">
+                    <div class="theme-card-preview defaultWhite">
+	                      <div class="bar" style="width:80%"></div>
+	                      <div class="bar" style="width:55%"></div>
+	                    </div>
+	                    <div class="theme-card-label"><span>默认白</span><span class="theme-rec">推荐</span></div>
+	                  </div>
+                  <div class="theme-card" data-theme="warmIvory" onclick="selectThemeCard(this)">
+                    <div class="theme-card-preview warmIvory">
+	                      <div class="bar" style="width:80%"></div>
+	                      <div class="bar" style="width:55%"></div>
+	                    </div>
+	                    <div class="theme-card-label"><span>暖象牙</span></div>
+	                  </div>
+                  <div class="theme-card" data-theme="mintGreen" onclick="selectThemeCard(this)">
+                    <div class="theme-card-preview mintGreen">
+	                      <div class="bar" style="width:80%"></div>
+	                      <div class="bar" style="width:55%"></div>
+	                    </div>
+	                    <div class="theme-card-label"><span>薄荷绿</span></div>
+	                  </div>
+                  <div class="theme-card" data-theme="lightBlue" onclick="selectThemeCard(this)">
+                    <div class="theme-card-preview lightBlue">
+	                      <div class="bar" style="width:80%"></div>
+	                      <div class="bar" style="width:55%"></div>
+	                    </div>
+	                    <div class="theme-card-label"><span>淡天蓝</span></div>
+	                  </div>
+                </div>
+                <div class="theme-group-label">深色</div>
+                <div class="theme-cards">
+                  <div class="theme-card selected" data-theme="classicDark" onclick="selectThemeCard(this)">
+                    <div class="theme-card-preview classicDark">
+	                      <div class="bar" style="width:80%"></div>
+	                      <div class="bar" style="width:55%"></div>
+	                    </div>
+	                    <div class="theme-card-label"><span>经典深</span><span class="theme-rec">推荐</span></div>
+	                  </div>
+                  <div class="theme-card" data-theme="deepOcean" onclick="selectThemeCard(this)">
+                    <div class="theme-card-preview deepOcean">
+	                      <div class="bar" style="width:80%"></div>
+	                      <div class="bar" style="width:55%"></div>
+	                    </div>
+	                    <div class="theme-card-label"><span>深海蓝</span></div>
+	                  </div>
+                  <div class="theme-card" data-theme="inkGreen" onclick="selectThemeCard(this)">
+                    <div class="theme-card-preview inkGreen">
+	                      <div class="bar" style="width:80%"></div>
+	                      <div class="bar" style="width:55%"></div>
+	                    </div>
+	                    <div class="theme-card-label"><span>墨绿</span></div>
+	                  </div>
+                  <div class="theme-card" data-theme="pureBlack" onclick="selectThemeCard(this)">
+                    <div class="theme-card-preview pureBlack">
+	                      <div class="bar" style="width:80%"></div>
+	                      <div class="bar" style="width:55%"></div>
+	                    </div>
+	                    <div class="theme-card-label"><span>纯黑</span></div>
+	                  </div>
                 </div>
 
                 <h4>悬浮球</h4>
@@ -5606,7 +6069,7 @@ FocusPilot/
         </div>
         <div class="card-body" style="padding:16px 20px 20px">
           <div style="display:flex;align-items:flex-start;gap:14px;margin-bottom:16px">
-            <div style="width:52px;height:52px;border-radius:var(--radius);border:1.5px dashed var(--line);background:#111318;display:grid;place-items:center;flex-shrink:0;cursor:pointer" title="选择头像">
+            <div style="width:52px;height:52px;border-radius:var(--radius);border:1.5px dashed var(--line);background:var(--avatar-bg);display:grid;place-items:center;flex-shrink:0;cursor:pointer" title="选择头像">
               <span style="font-size:22px;color:var(--dim)">🤖</span>
             </div>
             <div style="flex:1;display:flex;flex-direction:column;gap:10px">
@@ -5714,7 +6177,7 @@ FocusPilot/
             <option value="idea">💡 灵感</option>
             <option value="memo">☑️ 临时事项</option>
           </select>
-          <textarea placeholder="输入标题、粘贴链接或记录想法..." style="width:100%;min-height:100px;resize:vertical;border:1px solid var(--line);border-radius:var(--radius);background:#14161b;color:var(--text);padding:10px;outline:0;line-height:1.6"></textarea>
+          <textarea placeholder="输入标题、粘贴链接或记录想法..." style="width:100%;min-height:100px;resize:vertical;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface-2);color:var(--text);padding:10px;outline:0;line-height:1.6"></textarea>
           <div style="display:flex;align-items:center;justify-content:space-between;margin-top:12px">
             <button class="btn" style="font-size:12px">🏷 标签 +</button>
             <div style="display:flex;align-items:center;gap:8px">
@@ -5729,14 +6192,14 @@ FocusPilot/
     <div class="modal-backdrop" id="inbox-to-focus-modal">
       <div class="modal" style="width:min(520px,calc(100vw - 48px))">
         <div class="card-head">
-          <h3>移入 Focus</h3>
+          <h3>转为工作项</h3>
           <button class="btn icon" data-close>✕</button>
         </div>
         <div class="card-body" style="padding:16px 18px">
           <div class="form">
-            <div class="field"><label>标题</label><input value="SwiftUI 状态管理最佳实践" style="height:34px;border:1px solid var(--line);border-radius:var(--radius);background:#14161b;padding:0 10px;outline:0" /></div>
-            <div class="field"><label>归属项目</label><select style="height:34px;border:1px solid var(--line);border-radius:var(--radius);background:#14161b;padding:0 10px"><option>选择项目...</option><option>FocusPilot V1</option><option>个人知识库</option></select></div>
-            <div class="field"><label>排期</label><select style="height:34px;border:1px solid var(--line);border-radius:var(--radius);background:#14161b;padding:0 10px"><option>待排期</option><option>今日</option><option>本周</option><option>指定日期</option></select></div>
+            <div class="field"><label>标题</label><input value="SwiftUI 状态管理最佳实践" style="height:34px;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface-2);padding:0 10px;outline:0" /></div>
+            <div class="field"><label>归属项目</label><select style="height:34px;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface-2);padding:0 10px"><option>选择项目...</option><option>FocusPilot V1</option><option>个人知识库</option></select></div>
+            <div class="field"><label>排期</label><select style="height:34px;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface-2);padding:0 10px"><option>待排期</option><option>今日</option><option>本周</option><option>指定日期</option></select></div>
           </div>
         </div>
         <div class="card-body" style="border-top:1px solid var(--line-soft);text-align:right;display:flex;justify-content:flex-end;gap:8px">
@@ -5749,19 +6212,19 @@ FocusPilot/
     <div class="modal-backdrop" id="inbox-to-area-modal">
       <div class="modal" style="width:min(520px,calc(100vw - 48px))">
         <div class="card-head">
-          <h3>移入 AreaProjects</h3>
+          <h3>归入项目</h3>
           <button class="btn icon" data-close>✕</button>
         </div>
         <div class="card-body" style="padding:16px 18px">
           <div class="form">
-            <div class="field"><label>标题</label><input value="RAG 工程化实践" style="height:34px;border:1px solid var(--line);border-radius:var(--radius);background:#14161b;padding:0 10px;outline:0" /></div>
-            <div class="field"><label>目标项目</label><select style="height:34px;border:1px solid var(--line);border-radius:var(--radius);background:#14161b;padding:0 10px"><option>选择项目...</option><option>FocusPilot V1</option><option>个人知识库</option></select></div>
+            <div class="field"><label>标题</label><input value="RAG 工程化实践" style="height:34px;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface-2);padding:0 10px;outline:0" /></div>
+            <div class="field"><label>目标项目</label><select style="height:34px;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface-2);padding:0 10px"><option>选择项目...</option><option>FocusPilot V1</option><option>个人知识库</option></select></div>
             <div class="field"><label>存入</label><span style="color:var(--muted);font-family:var(--mono);font-size:12px">_materials/</span></div>
           </div>
         </div>
         <div class="card-body" style="border-top:1px solid var(--line-soft);text-align:right;display:flex;justify-content:flex-end;gap:8px">
           <button class="btn" data-close>取消</button>
-          <button class="btn primary" data-close>确认移入</button>
+          <button class="btn primary" id="inbox-area-confirm">确认归入</button>
         </div>
       </div>
     </div>
@@ -5769,10 +6232,9 @@ FocusPilot/
     <script>
 	      const pageOrder = [
 	        "home",
-	        "inbox",
+	        "areas",
 	        "focus",
 	        "studio",
-        "areas",
         "review",
         "crew",
 	        "settings",
@@ -5802,6 +6264,10 @@ FocusPilot/
           .forEach((view) =>
 	            view.classList.toggle("active", view.dataset.page === page),
 	          )
+        // Restore Projects page internal tab to last remembered state
+        if (page === 'areas' && typeof setAreasTab === 'function') {
+          setAreasTab(_areasLastTab, { remember: false });
+        }
 	      }
 	
 	      normalizePageMounts()
@@ -6452,6 +6918,100 @@ FocusPilot/
         })
       })
 
+      // ── Projects page: Inbox/Projects tab switching ──
+      // 'areas' is legacy internal route name for Projects
+      var _areasLastTab = 'projects';
+
+      // remember: true = user explicitly chose this tab (persists for next visit)
+      // remember: false (default) = directed entry or restore, don't overwrite user's last choice
+      function setAreasTab(target, opts) {
+        var remember = opts && opts.remember === true;
+        if (remember) _areasLastTab = target;
+        document.querySelectorAll('.areas-sidebar-tab').forEach(function(t) {
+          t.classList.toggle('active', t.dataset.areasTab === target);
+          t.style.borderBottomColor = t.dataset.areasTab === target ? 'var(--accent)' : 'transparent';
+          t.style.color = t.dataset.areasTab === target ? 'var(--text)' : 'var(--muted)';
+          t.style.fontWeight = t.dataset.areasTab === target ? '600' : '500';
+        });
+        var inboxSide = document.getElementById('areas-inbox-sidebar');
+        var projSide = document.getElementById('areas-projects-sidebar');
+        var inboxWork = document.getElementById('areas-inbox-workspace');
+        var projWork = document.getElementById('areas-projects-workspace');
+        if (target === 'inbox') {
+          if (inboxSide) inboxSide.style.display = 'block';
+          if (projSide) projSide.style.display = 'none';
+          if (inboxWork) inboxWork.style.display = 'block';
+          if (projWork) projWork.style.display = 'none';
+        } else {
+          if (inboxSide) inboxSide.style.display = 'none';
+          if (projSide) projSide.style.display = 'block';
+          if (inboxWork) inboxWork.style.display = 'none';
+          if (projWork) projWork.style.display = 'block';
+        }
+      }
+
+      // User manually clicks tab → remember choice
+      document.querySelectorAll('.areas-sidebar-tab').forEach(function(tab) {
+        tab.addEventListener('click', function() {
+          setAreasTab(this.dataset.areasTab, { remember: true });
+        });
+      });
+
+      // Badge click → force Inbox Tab, don't remember
+      var inboxBadge = document.getElementById('projects-inbox-badge');
+      if (inboxBadge) {
+        inboxBadge.addEventListener('click', function(e) {
+          e.stopPropagation();
+          showPage('areas');
+          setAreasTab('inbox', { remember: false });
+        });
+        inboxBadge.style.cursor = 'pointer';
+      }
+
+      // Home "Inbox 待处理" metric → force Inbox Tab, don't remember
+      var homeInboxMetric = document.getElementById('home-metric-inbox');
+      if (homeInboxMetric) {
+        homeInboxMetric.addEventListener('click', function() {
+          showPage('areas');
+          setAreasTab('inbox', { remember: false });
+        });
+      }
+
+      // Home "活跃项目" metric → force Projects Tab, don't remember
+      var homeProjMetric = document.getElementById('home-metric-projects');
+      if (homeProjMetric) {
+        homeProjMetric.addEventListener('click', function() {
+          showPage('areas');
+          setAreasTab('projects', { remember: false });
+        });
+      }
+
+      // "归入项目" confirm → close modal + switch to Projects Tab + mock highlight
+      var areaConfirmBtn = document.getElementById('inbox-area-confirm');
+      if (areaConfirmBtn) {
+        areaConfirmBtn.addEventListener('click', function() {
+          var modal = document.getElementById('inbox-to-area-modal');
+          if (modal) modal.style.display = 'none';
+          setAreasTab('projects', { remember: false });
+          // Mock: expand _materials folder and highlight target file
+          var matFolder = document.querySelector('#areas-projects-sidebar [data-area-file="mat1"]');
+          if (!matFolder) matFolder = document.querySelector('#areas-projects-sidebar .area-file');
+          if (matFolder) {
+            // Ensure parent _materials folder is expanded
+            var parent = matFolder.closest('.area-children');
+            if (parent) parent.style.display = 'block';
+            var arrow = parent && parent.previousElementSibling ? parent.previousElementSibling.querySelector('.area-arrow') : null;
+            if (arrow) arrow.textContent = '▾';
+            // Highlight target file
+            matFile = matFolder;
+            matFile.style.transition = 'background .3s';
+            matFile.style.background = 'var(--accent-bg)';
+            matFile.scrollIntoView({ block: 'nearest' });
+            setTimeout(function() { matFile.style.background = ''; }, 1500);
+          }
+        });
+      }
+
       document.addEventListener("keydown", (event) => {
         if (!event.metaKey) return
         const index = Number(event.key) - 1
@@ -6616,7 +7176,7 @@ FocusPilot/
           feedback.style.background = 'rgba(251,191,36,0.1)'; feedback.style.color = 'var(--amber)';
           feedback.textContent = '⚠ 已忽略评估建议，任务标记为待验收';
         } else {
-          feedback.style.background = 'rgba(82,156,202,0.1)'; feedback.style.color = 'var(--accent)';
+          feedback.style.background = 'var(--accent-bg)'; feedback.style.color = 'var(--accent)';
           feedback.textContent = '🖐 已切换为手动接管模式';
         }
         feedback.className = 'eval-feedback';
@@ -7288,7 +7848,7 @@ FocusPilot/
         });
       });
 
-      /* ═══ AreaProjects 交互 ═══ */
+      /* ═══ Projects 交互（内部变量沿用 areas- 前缀，用户侧统一显示 Projects）═══ */
       (function initAreaProjects() {
 
         // ── Mock 数据 ──
@@ -8193,12 +8753,27 @@ FocusPilot/
         });
       });
 
-      // Theme card selection
+      // Theme switching
+      var FP_THEMES = ['defaultWhite','warmIvory','mintGreen','lightBlue','classicDark','deepOcean','inkGreen','pureBlack'];
       function selectThemeCard(card) {
-        card.closest('.theme-cards').querySelectorAll('.theme-card').forEach(function(c) {
+        document.querySelectorAll('.theme-card').forEach(function(c) {
           c.classList.toggle('selected', c === card);
         });
+        var theme = card.dataset.theme;
+        document.documentElement.dataset.theme = theme;
+        try { localStorage.setItem('fp-theme', theme); } catch(e) {}
       }
+
+      (function() {
+        var saved = null;
+        try { saved = localStorage.getItem('fp-theme'); } catch(e) {}
+        if (saved && FP_THEMES.indexOf(saved) !== -1) {
+          document.documentElement.dataset.theme = saved;
+          document.querySelectorAll('.theme-card').forEach(function(c) {
+            c.classList.toggle('selected', c.dataset.theme === saved);
+          });
+        }
+      })();
 
       // Hotkey recording
       var activeHotkeyPill = null;
