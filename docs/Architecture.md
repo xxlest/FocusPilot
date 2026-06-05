@@ -860,3 +860,155 @@ activateWindow(window)
 - 插件系统
 - 网络请求（无遥测、无更新检查）
 - AI 会话持久化（重启后清空）
+
+---
+
+## V1 新增模型（FP-UI 主面板架构）
+
+> 以下为 V1（FP-UI 主面板）的核心数据模型和状态机定义。
+> 详细 UI 规格见 [04-studio.md](fp-ui/04-studio.md)、[05-area-projects.md](fp-ui/05-area-projects.md)。
+> 设计决策详见 [Focus+Studio 合并设计](superpowers/specs/2026-06-05-focus-studio-merge-design.md)。
+
+### 一级导航
+
+```
+Home · Projects · Studio · Review · AICrew · Settings
+```
+
+6 项。Projects = 记忆层（Inbox + 项目资产），Studio = 执行层（任务 + 对话 + Workspace），Review = 内化层。
+
+### WorkItem（统一工作项）
+
+```swift
+struct WorkItem: Identifiable, Codable {
+    let id: String                          // "FP-002"
+    var title: String
+    var itemType: ItemType                  // epic | story | task | subtask | group
+    var itemRole: ItemRole                  // container | executable | hybrid
+    var status: WorkItemStatus              // backlog | todo | in_progress | in_evaluation | done | blocked | cancelled
+    var priority: Priority                  // p0 | p1 | p2
+    var executionMode: ExecutionMode        // none | manual | semi_auto | auto
+    var evaluationEnabled: Bool
+
+    // Workspace（必填）
+    var workspaceRef: WorkspaceRef
+
+    // 归属（独立于 Workspace）
+    var projectID: String?                  // 资产归属
+    var goalID: String?                     // 规划归属
+
+    // 执行状态
+    var currentRunID: String?               // 当前活跃 ExecutionRun（至多一个，完成后置 null）
+    var runHistoryIDs: [String]             // 历史 Run 列表
+
+    // Session 关联
+    var primarySessionID: String?           // 当前 Run 的主对话
+    var relatedSessionIDs: [String]         // 参考上下文对话
+}
+
+enum WorkItemStatus: String, Codable {
+    case backlog, todo, in_progress, in_evaluation, done, blocked, cancelled
+}
+
+enum ExecutionMode: String, Codable {
+    case none, manual, semi_auto, auto
+}
+```
+
+### WorkspaceRef
+
+```swift
+struct WorkspaceRef: Codable {
+    var type: WorkspaceType                 // temporary | local_project（V2: remote_git）
+    var path: String                        // 稳定路径，创建时分配
+    var materialized: Bool                  // 延迟物化：首次使用时创建真实目录
+}
+
+enum WorkspaceType: String, Codable {
+    case temporary, local_project
+}
+```
+
+### ExecutionRun
+
+```swift
+struct ExecutionRun: Identifiable, Codable {
+    let id: String
+    var workItemID: String
+    var mode: ExecutionMode                 // manual | semi_auto | auto
+    var evaluationEnabled: Bool
+    var status: RunStatus                   // pending | running | paused | completed | aborted
+
+    var primaryAgentID: String
+    var primarySessionID: String?
+    var subAgentRuns: [SubAgentRun]         // V1 默认空，V2 扩展
+
+    var currentStepIndex: Int
+    var steps: [StepRun]
+
+    var workspaceSnapshot: WorkspaceSnapshot
+    var writeLease: WorkspaceWriteLease?
+}
+
+enum RunStatus: String, Codable {
+    case pending, running, paused, completed, aborted
+}
+```
+
+### WorkspaceWriteLease
+
+```swift
+struct WorkspaceWriteLease: Identifiable, Codable {
+    let leaseID: String
+    var runID: String
+    var resolvedWorkdir: String
+    var status: LeaseStatus                 // active | released | orphaned
+    var acquiredAt: Date
+    var heartbeatAt: Date
+    var expiresAt: Date
+    var releasedAt: Date?
+}
+
+enum LeaseStatus: String, Codable {
+    case active, released, orphaned
+}
+```
+
+**Lease 规则**：
+- Session 不占锁，只有 Agent Runtime 写入时通过 ExecutionRun 占锁
+- 同一 `resolvedWorkdir` 同时只允许一个 active lease
+- Primary Agent 与 Sub Agents 共享同一个 lease
+- Run completed/aborted → 自动释放
+- 心跳超时 → 标记 orphaned → App 重启时提示用户确认释放
+
+### StudioSession
+
+```swift
+struct StudioSession: Identifiable, Codable {
+    let id: String
+    var title: String
+    var projectID: String
+    var workdir: String
+    var crewMemberID: String?
+    var runtime: RuntimeType                // claude_code | codex_cli | gemini_cli
+    var status: SessionStatus               // active | idle | done | ended
+}
+```
+
+### Task / Session / Run 关系
+
+```
+Workspace (执行目录)
+├── Session A: 自由对话（无关联 Task）
+├── Session B: Task 主对话（primary_session）
+└── Session C: 参考对话（related_context）
+
+WorkItem (Task)
+├── currentRunID → ExecutionRun（一对一）
+│   └── primaryAgentID + primarySessionID
+├── runHistoryIDs: [旧 Run]
+├── relatedSessionIDs: [参考上下文]
+└── workspaceRef → Workspace
+
+Run 完成后：append runHistoryIDs → currentRunID = null → release lease
+```

@@ -2217,7 +2217,7 @@
             <!-- 📌 置顶区 -->
             <div id="studioPinArea">
               <div id="studioPinHeader" style="padding:4px 8px 2px;font-size:10px;font-weight:600;color:var(--dim);text-transform:uppercase;letter-spacing:.04em">置顶</div>
-              <div class="side-item indent studio-session" oncontextmenu="openSessionMenu(event,this);return false" onclick="selectStudioSession(this);switchToProjectWorkspace()" data-workspace="FocusPilot" data-session="重构 auth" data-session-id="s1" data-runtime="✳ Claude Code" data-pinned="true" style="font-size:11px">
+              <div class="side-item indent studio-session" oncontextmenu="openSessionMenu(event,this);return false" onclick="selectStudioSession(this)" data-workspace="FocusPilot" data-session="重构 auth" data-session-id="s1" data-runtime="✳ Claude Code" data-pinned="true" style="font-size:11px">
                 <span>📌 重构 auth</span><span class="count" style="font-size:10px;color:var(--dim)">FocusPilot</span>
               </div>
               <div id="studioPinSep" style="border-bottom:1px solid var(--line-soft);margin:6px 8px"></div>
@@ -2227,10 +2227,10 @@
             <div class="side-item ws-row" data-workspace="FocusPilot" style="font-weight:500;cursor:pointer" onclick="setCurrentWorkspace(this.dataset.workspace)">
               <span>📂 FocusPilot</span><span class="count" style="cursor:pointer;display:flex;gap:8px"><span onclick="event.stopPropagation();openWorkspaceMenu(event,this.closest('.ws-row').dataset.workspace)" title="项目菜单">···</span><span onclick="event.stopPropagation();openNewSessionModal(this.closest('.ws-row').dataset.workspace)" title="在此项目中新建对话">+</span></span>
             </div>
-            <div class="side-item indent studio-session" oncontextmenu="openSessionMenu(event,this);return false" onclick="selectStudioSession(this);switchToProjectWorkspace()" data-workspace="FocusPilot" data-session="代码审查" data-session-id="s2" data-runtime="✳ Claude Code" style="font-size:11px">
+            <div class="side-item indent studio-session" oncontextmenu="openSessionMenu(event,this);return false" onclick="selectStudioSession(this)" data-workspace="FocusPilot" data-session="代码审查" data-session-id="s2" data-runtime="✳ Claude Code" style="font-size:11px">
               <span>🔍 代码审查</span><span class="count"><span style="color:var(--green)">✅ 1h</span></span>
             </div>
-            <div class="side-item indent studio-session" oncontextmenu="openSessionMenu(event,this);return false" onclick="selectStudioSession(this);switchToProjectWorkspace()" data-workspace="FocusPilot" data-session="Bug fix #12" data-session-id="s3" data-runtime="⚡ Codex CLI" style="font-size:11px">
+            <div class="side-item indent studio-session" oncontextmenu="openSessionMenu(event,this);return false" onclick="selectStudioSession(this)" data-workspace="FocusPilot" data-session="Bug fix #12" data-session-id="s3" data-runtime="⚡ Codex CLI" style="font-size:11px">
               <span>⚡ Bug fix #12</span><span class="count"><span style="color:var(--accent)">● 15m</span></span>
             </div>
             <div class="side-item ws-row" data-workspace="PilotOne" style="font-weight:500;cursor:pointer" onclick="setCurrentWorkspace(this.dataset.workspace)">
@@ -2521,7 +2521,6 @@
             <div class="side-item" data-settings-nav="updates"><span>⬇️ 更新</span></div>
             <div class="label">FocusPilot</div>
             <div class="side-item" data-settings-nav="general"><span>⚙️ 通用</span></div>
-            <div class="side-item" data-settings-nav="s-focus"><span>🎯 Focus</span></div>
             <div class="side-item" data-settings-nav="s-studio"><span>💻 Studio</span></div>
             <div class="side-item" data-settings-nav="s-aicrew"><span>🤖 AICrew</span></div>
           </div>
@@ -2536,22 +2535,22 @@
           </header>
           <div class="work panel active" id="home-overview">
             <div class="grid cols-6 summary-strip">
-              <div class="metric" data-go="studio">
+              <div class="metric" data-go="studio" data-studio-filter="today">
                 <div class="value">4</div>
                 <div class="name">今日待办</div>
                 <div class="hint">今日聚焦</div>
               </div>
-              <div class="metric" data-go="studio">
+              <div class="metric" data-go="studio" data-studio-filter="week">
                 <div class="value">12</div>
                 <div class="name">本周待办</div>
                 <div class="hint">跨项目</div>
               </div>
-              <div class="metric" data-go="studio">
+              <div class="metric" data-go="studio" data-studio-filter="month">
                 <div class="value">28</div>
                 <div class="name">本月目标</div>
                 <div class="hint">月度目标</div>
               </div>
-              <div class="metric" data-go="studio">
+              <div class="metric" data-go="studio" data-studio-filter="all">
                 <div class="value">45</div>
                 <div class="name">全部 TODO</div>
                 <div class="hint">未完成</div>
@@ -2566,7 +2565,7 @@
                 <div class="name">待处理</div>
                 <div class="hint">Inbox</div>
               </div>
-              <div class="metric" data-go="studio">
+              <div class="metric" data-go="studio" data-studio-filter="agent">
                 <div class="value">3</div>
                 <div class="name">执行中</div>
                 <div class="hint">含评估中</div>
@@ -3914,20 +3913,135 @@
               <div style="padding:16px 18px">
                 <div style="margin-bottom:12px"><label style="display:block;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--dim);margin-bottom:4px">标题</label><input type="text" placeholder="任务标题..." style="width:100%;background:var(--bg);border:1px solid var(--line-soft);border-radius:var(--radius);padding:7px 10px;color:var(--text);font-size:12px;font-family:var(--sans);outline:none"></div>
                 <div style="margin-bottom:12px"><label style="display:block;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--dim);margin-bottom:4px">描述</label><textarea placeholder="描述任务内容..." style="width:100%;background:var(--bg);border:1px solid var(--line-soft);border-radius:var(--radius);padding:7px 10px;color:var(--text);font-size:12px;font-family:var(--sans);outline:none;resize:vertical;min-height:50px"></textarea></div>
+
+                <!-- Workspace 选择 -->
+                <div style="background:var(--bg);border:1px solid var(--line-soft);border-radius:var(--radius);padding:10px;margin-bottom:12px">
+                  <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--dim);margin-bottom:8px">Workspace</div>
+                  <label id="ws-temp-label" style="display:flex;align-items:center;gap:8px;font-size:11px;color:var(--text);cursor:pointer;padding:5px 0;border-radius:4px" onclick="selectWorkspace('temp')">
+                    <input type="radio" name="fp-ws" value="temp" checked style="accent-color:var(--accent)">
+                    <span>📦 临时目录</span>
+                    <span style="font-size:10px;color:var(--dim);margin-left:auto">自动创建，适合快速任务</span>
+                  </label>
+                  <label id="ws-local-label" style="display:flex;align-items:center;gap:8px;font-size:11px;color:var(--text);cursor:pointer;padding:5px 0;border-radius:4px" onclick="selectWorkspace('local')">
+                    <input type="radio" name="fp-ws" value="local" style="accent-color:var(--accent)">
+                    <span>📁 本地项目</span>
+                    <select id="ws-local-project" style="margin-left:auto;background:var(--surface);border:1px solid var(--line-soft);border-radius:var(--radius);padding:3px 6px;color:var(--text);font-size:10px;font-family:var(--sans)" onclick="event.stopPropagation();selectWorkspace('local')">
+                      <option>选择项目...</option>
+                      <option selected>FocusPilot</option>
+                      <option>PilotOne</option>
+                      <option>分布式系统学习</option>
+                    </select>
+                  </label>
+                </div>
+
                 <div style="display:flex;gap:10px;margin-bottom:12px"><div style="flex:1"><label style="display:block;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--dim);margin-bottom:4px">安排</label><select style="width:100%;background:var(--bg);border:1px solid var(--line-soft);border-radius:var(--radius);padding:6px 8px;color:var(--text);font-size:11px;font-family:var(--sans)"><option>今天</option><option selected>本周</option><option>本月</option><option>Backlog</option></select></div><div style="flex:1"><label style="display:block;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--dim);margin-bottom:4px">优先级</label><select style="width:100%;background:var(--bg);border:1px solid var(--line-soft);border-radius:var(--radius);padding:6px 8px;color:var(--text);font-size:11px;font-family:var(--sans)"><option>P0 — 紧急</option><option selected>P1 — 重要</option><option>P2 — 普通</option></select></div></div>
-                <div style="background:var(--bg);border:1px solid var(--line-soft);border-radius:var(--radius);padding:10px;margin-top:8px">
-                  <div style="font-size:10px;color:var(--dim);margin-bottom:8px">执行模式</div>
-                  <div style="display:flex;gap:0;border:1px solid var(--line);border-radius:var(--radius);overflow:hidden"><label style="flex:1;text-align:center;padding:5px 0;cursor:pointer;font-size:11px;background:var(--elevated);color:var(--text);border-right:1px solid var(--line)"><input type="radio" name="fp-exec" checked style="display:none"> 普通</label><label style="flex:1;text-align:center;padding:5px 0;cursor:pointer;font-size:11px;color:var(--muted);border-right:1px solid var(--line)"><input type="radio" name="fp-exec" style="display:none"> 对话</label><label style="flex:1;text-align:center;padding:5px 0;cursor:pointer;font-size:11px;color:var(--muted);border-right:1px solid var(--line)"><input type="radio" name="fp-exec" style="display:none"> 半自动</label><label style="flex:1;text-align:center;padding:5px 0;cursor:pointer;font-size:11px;color:var(--muted)"><input type="radio" name="fp-exec" style="display:none"> 全自动</label></div>
-                  <div style="display:flex;gap:10px;margin-top:8px"><div style="flex:1"><label style="display:block;font-size:10px;color:var(--dim);margin-bottom:3px">Agent</label><select style="width:100%;background:var(--surface);border:1px solid var(--line-soft);border-radius:var(--radius);padding:5px 6px;color:var(--text);font-size:10px;font-family:var(--sans)"><option selected>代码工程师</option><option>数据分析师</option></select></div><div style="flex:1"><label style="display:block;font-size:10px;color:var(--dim);margin-bottom:3px">归属</label><select style="width:100%;background:var(--surface);border:1px solid var(--line-soft);border-radius:var(--radius);padding:5px 6px;color:var(--text);font-size:10px;font-family:var(--sans)"><option>无（临时任务）</option><option>4月/FP 0.0.1</option><option>5月/FP 0.0.1</option><option>6月/FP 0.0.1</option></select></div></div>
-                  <label style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted);cursor:pointer;margin-top:8px"><input type="checkbox" style="accent-color:var(--accent)"> 启用评估</label>
+
+                <!-- 执行方式（3模式 + 2开关） -->
+                <div style="background:var(--bg);border:1px solid var(--line-soft);border-radius:var(--radius);padding:10px">
+                  <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--dim);margin-bottom:8px">执行方式</div>
+                  <div style="display:flex;gap:0;border:1px solid var(--line);border-radius:var(--radius);overflow:hidden" id="fp-exec-modes">
+                    <label style="flex:1;text-align:center;padding:5px 0;cursor:pointer;font-size:11px;background:var(--elevated);color:var(--text);border-right:1px solid var(--line)" data-exec="none" onclick="selectExecMode('none')"><input type="radio" name="fp-exec" checked style="display:none"> 普通任务</label>
+                    <label style="flex:1;text-align:center;padding:5px 0;cursor:pointer;font-size:11px;color:var(--muted);border-right:1px solid var(--line)" data-exec="dialog" onclick="selectExecMode('dialog')"><input type="radio" name="fp-exec" style="display:none"> 💬 对话</label>
+                    <label style="flex:1;text-align:center;padding:5px 0;cursor:pointer;font-size:11px;color:var(--muted)" data-exec="auto" onclick="selectExecMode('auto')"><input type="radio" name="fp-exec" style="display:none"> 🤖 自动</label>
+                  </div>
+
+                  <!-- Agent（对话/自动时显示） -->
+                  <div id="fp-exec-agent" style="display:none;margin-top:8px">
+                    <div style="display:flex;gap:10px">
+                      <div style="flex:1"><label style="display:block;font-size:10px;color:var(--dim);margin-bottom:3px">Agent</label><select style="width:100%;background:var(--surface);border:1px solid var(--line-soft);border-radius:var(--radius);padding:5px 6px;color:var(--text);font-size:10px;font-family:var(--sans)"><option selected>代码工程师</option><option>数据分析师</option><option>架构师</option></select></div>
+                      <div style="flex:1"><label style="display:block;font-size:10px;color:var(--dim);margin-bottom:3px">归属目标</label><select style="width:100%;background:var(--surface);border:1px solid var(--line-soft);border-radius:var(--radius);padding:5px 6px;color:var(--text);font-size:10px;font-family:var(--sans)"><option>无</option><option selected>4月/FP 0.0.1</option><option>5月/FP 0.0.1</option></select></div>
+                    </div>
+                  </div>
+
+                  <!-- 自动模式开关（仅自动时显示） -->
+                  <div id="fp-exec-auto-options" style="display:none;margin-top:8px;padding-top:8px;border-top:1px solid var(--line-soft)">
+                    <label style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text);cursor:pointer;margin-bottom:4px"><input type="checkbox" checked style="accent-color:var(--accent)"> 执行前需要我批准计划</label>
+                    <label style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted);cursor:pointer"><input type="checkbox" style="accent-color:var(--accent)"> 完成后启用 AI 评估</label>
+                  </div>
                 </div>
               </div>
-              <div style="display:flex;justify-content:flex-end;gap:8px;padding:12px 18px;border-top:1px solid var(--line-soft)"><button class="btn" onclick="closeNewTaskModal()">取消</button><button class="btn">创建</button><button class="btn primary">创建并规划</button></div>
+              <div style="display:flex;justify-content:flex-end;gap:8px;padding:12px 18px;border-top:1px solid var(--line-soft)"><button class="btn" onclick="closeNewTaskModal()">取消</button><button class="btn">创建</button><button class="btn primary">创建并启动</button></div>
             </div>
           </div>
           </div>
           <!-- ═══ Project Workspace (Studio sessions) ═══ -->
           <div id="studio-project-workspace" style="display:none;flex-direction:column;flex:1;overflow:hidden">
+
+          <!-- ── Project Context View: 工作项 + 对话 ── -->
+          <div id="studio-project-context-view">
+            <header class="topbar">
+              <h1 id="studioProjectTitle" style="display:flex;align-items:center;gap:6px">📂 FocusPilot</h1>
+              <div class="top-actions">
+                <div class="seg" style="margin-right:8px">
+                  <button class="active" onclick="showProjectTab('tasks')">📋 工作项</button>
+                  <button onclick="showProjectTab('sessions')">💬 对话</button>
+                </div>
+              </div>
+            </header>
+
+            <!-- 工作项 sub-view -->
+            <div id="studio-project-tasks" class="work" style="padding:16px 20px;overflow-y:auto">
+              <div style="display:flex;gap:12px;min-height:400px">
+                <div style="flex:1;min-width:0">
+                  <div style="font-size:11px;font-weight:600;color:var(--dim);text-transform:uppercase;letter-spacing:.04em;margin-bottom:8px">Todo (2)</div>
+                  <div style="display:flex;flex-direction:column;gap:6px">
+                    <div style="background:var(--surface);border:1px solid var(--line-soft);border-radius:var(--radius);padding:8px 10px;font-size:11px;cursor:pointer">
+                      <div style="font-weight:500;margin-bottom:3px">FP-003 列表视图实现</div>
+                      <div style="display:flex;gap:6px;color:var(--dim);font-size:10px"><span>P1</span><span>📦 临时</span><span>普通任务</span></div>
+                    </div>
+                    <div style="background:var(--surface);border:1px solid var(--line-soft);border-radius:var(--radius);padding:8px 10px;font-size:11px;cursor:pointer">
+                      <div style="font-weight:500;margin-bottom:3px">FP-004 Agent Live Card</div>
+                      <div style="display:flex;gap:6px;color:var(--dim);font-size:10px"><span>P1</span><span>📁 FocusPilot</span><span>🤖 自动</span></div>
+                    </div>
+                  </div>
+                </div>
+                <div style="flex:1;min-width:0">
+                  <div style="font-size:11px;font-weight:600;color:var(--dim);text-transform:uppercase;letter-spacing:.04em;margin-bottom:8px">In Progress (1)</div>
+                  <div style="display:flex;flex-direction:column;gap:6px">
+                    <div style="background:var(--surface);border:1px solid var(--line-soft);border-radius:var(--radius);padding:8px 10px;font-size:11px;cursor:pointer;border-left:2px solid var(--accent)">
+                      <div style="font-weight:500;margin-bottom:3px">FP-002 看板状态模型实现</div>
+                      <div style="display:flex;gap:6px;color:var(--dim);font-size:10px"><span>P0</span><span>📁 FocusPilot</span><span>🤖 自动</span><span style="color:var(--accent)">Agent 执行中</span></div>
+                    </div>
+                  </div>
+                </div>
+                <div style="flex:1;min-width:0">
+                  <div style="font-size:11px;font-weight:600;color:var(--dim);text-transform:uppercase;letter-spacing:.04em;margin-bottom:8px">Done (1)</div>
+                  <div style="display:flex;flex-direction:column;gap:6px">
+                    <div style="background:var(--surface);border:1px solid var(--line-soft);border-radius:var(--radius);padding:8px 10px;font-size:11px;cursor:pointer;opacity:.6">
+                      <div style="font-weight:500;margin-bottom:3px">FP-001 数据模型设计</div>
+                      <div style="display:flex;gap:6px;color:var(--dim);font-size:10px"><span>P0</span><span>📁 FocusPilot</span><span>✓</span></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div style="display:flex;align-items:center;justify-content:center;gap:4px;padding:8px;border-radius:var(--radius);border:1px dashed var(--line);color:var(--dim);font-size:12px;cursor:pointer;margin-top:12px" onclick="openNewTaskModal()">＋ 新建任务</div>
+            </div>
+
+            <!-- 对话列表 sub-view -->
+            <div id="studio-project-sessions" class="work" style="display:none;padding:16px 20px;overflow-y:auto">
+              <div style="display:flex;flex-direction:column;gap:6px">
+                <div style="background:var(--surface);border:1px solid var(--line-soft);border-radius:var(--radius);padding:10px 14px;cursor:pointer;display:flex;align-items:center;gap:10px" onclick="document.querySelector('.studio-session[data-session-id=s1]').click()">
+                  <span style="font-size:14px">🧑‍💻</span>
+                  <div style="flex:1;min-width:0"><div style="font-size:12px;font-weight:500">重构 auth</div><div style="font-size:10px;color:var(--dim)">✳ Claude Code · 3 分钟前</div></div>
+                  <span style="font-size:10px;padding:2px 6px;background:var(--accent-bg);color:var(--accent);border-radius:4px">活跃</span>
+                </div>
+                <div style="background:var(--surface);border:1px solid var(--line-soft);border-radius:var(--radius);padding:10px 14px;cursor:pointer;display:flex;align-items:center;gap:10px" onclick="document.querySelector('.studio-session[data-session-id=s2]').click()">
+                  <span style="font-size:14px">🔍</span>
+                  <div style="flex:1;min-width:0"><div style="font-size:12px;font-weight:500">代码审查</div><div style="font-size:10px;color:var(--dim)">✳ Claude Code · 1 小时前</div></div>
+                  <span style="font-size:10px;padding:2px 6px;background:rgba(74,222,128,.15);color:var(--green);border-radius:4px">完成</span>
+                </div>
+                <div style="background:var(--surface);border:1px solid var(--line-soft);border-radius:var(--radius);padding:10px 14px;cursor:pointer;display:flex;align-items:center;gap:10px" onclick="document.querySelector('.studio-session[data-session-id=s3]').click()">
+                  <span style="font-size:14px">⚡</span>
+                  <div style="flex:1;min-width:0"><div style="font-size:12px;font-weight:500">Bug fix #12</div><div style="font-size:10px;color:var(--dim)">⚡ Codex CLI · 15 分钟前</div></div>
+                  <span style="font-size:10px;padding:2px 6px;background:var(--accent-bg);color:var(--accent);border-radius:4px">活跃</span>
+                </div>
+              </div>
+              <div style="display:flex;align-items:center;justify-content:center;gap:4px;padding:8px;border-radius:var(--radius);border:1px dashed var(--line);color:var(--dim);font-size:12px;cursor:pointer;margin-top:12px">＋ 新建对话</div>
+            </div>
+          </div>
+
+          <!-- ── Session View: Chat/Diff/Terminal ── -->
+          <div id="studio-session-view" style="display:none;flex-direction:column;flex:1;overflow:hidden">
           <header class="topbar">
             <h1 id="studioTopbarTitle" style="display:flex;align-items:center;gap:6px">📂 FocusPilot <span style="color:var(--dim);font-weight:400">·</span> <span style="font-weight:500">重构 auth</span> <span style="color:var(--dim);font-weight:400">·</span> <span style="color:var(--dim);font-weight:400;font-size:12px">✳ Claude Code</span></h1>
             <div class="top-actions">
@@ -4116,7 +4230,8 @@
               </div>
             </div>
           </div>
-          </div>
+          </div><!-- /studio-session-view -->
+          </div><!-- /studio-project-workspace -->
         </section>
 
         <section class="page" data-page="areas">
@@ -5923,9 +6038,9 @@ FocusPilot/
                 </div>
               </div>
 
-              <!-- ===== 3.8 Focus ===== -->
-              <div class="settings-section" data-settings-panel="s-focus">
-                <h2>Focus</h2>
+              <!-- ===== 3.8 Studio (merged Focus + Studio) ===== -->
+              <div class="settings-section" data-settings-panel="s-studio">
+                <h2>Studio</h2>
                 <h4>规划引擎</h4>
                 <div class="settings-group" style="max-width:520px">
                   <div class="settings-row">
@@ -5980,15 +6095,11 @@ FocusPilot/
                     </select>
                   </div>
                 </div>
-              </div>
-
-              <!-- ===== 3.9 Studio ===== -->
-              <div class="settings-section" data-settings-panel="s-studio">
-                <h2>Studio</h2>
+                <h4>对话</h4>
                 <div class="settings-group" style="max-width:520px">
                   <div class="settings-row">
                     <div class="row-left">
-                      <div class="row-label">默认 Agent</div>
+                      <div class="row-label">默认对话 Agent</div>
                       <div class="row-desc">Studio 对话默认执行者</div>
                     </div>
                     <select style="height:32px;width:150px;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface-2);padding:0 10px;appearance:none;cursor:pointer;font-size:12px">
@@ -6291,7 +6402,17 @@ FocusPilot/
       })
 
       document.querySelectorAll("[data-go]").forEach((el) => {
-        el.addEventListener("click", () => showPage(el.dataset.go))
+        el.addEventListener("click", () => {
+          showPage(el.dataset.go);
+          // If navigating to studio with a filter, apply the filter
+          if (el.dataset.go === 'studio' && el.dataset.studioFilter) {
+            switchToGlobalWorkspace();
+            var filterItem = document.querySelector('[data-focus-filter="' + el.dataset.studioFilter + '"]');
+            if (filterItem) {
+              applyFocusFilter(filterItem);
+            }
+          }
+        })
       })
 
       document.querySelectorAll(".seg[data-scope] button").forEach((btn) => {
@@ -7234,9 +7355,36 @@ FocusPilot/
       });
 
       /* ── Focus: New Task Modal ── */
-      function openNewTaskModal() { document.getElementById('fpNewTaskModal').style.display = 'flex'; }
+      function openNewTaskModal() { document.getElementById('fpNewTaskModal').style.display = 'flex'; selectExecMode('none'); }
       function closeNewTaskModal() { document.getElementById('fpNewTaskModal').style.display = 'none'; }
       document.getElementById('fpNewTaskModal').addEventListener('click', closeNewTaskModal);
+
+      // Workspace 选择
+      function selectWorkspace(type) {
+        document.querySelectorAll('input[name="fp-ws"]').forEach(function(r) { r.checked = r.value === type; });
+      }
+
+      // 执行方式切换（3模式 + 2开关）
+      function selectExecMode(mode) {
+        document.querySelectorAll('#fp-exec-modes label').forEach(function(l) {
+          var isActive = l.dataset.exec === mode;
+          l.style.background = isActive ? 'var(--elevated)' : 'transparent';
+          l.style.color = isActive ? 'var(--text)' : 'var(--muted)';
+          l.querySelector('input').checked = isActive;
+        });
+        var agentSection = document.getElementById('fp-exec-agent');
+        var autoSection = document.getElementById('fp-exec-auto-options');
+        if (mode === 'none') {
+          agentSection.style.display = 'none';
+          autoSection.style.display = 'none';
+        } else if (mode === 'dialog') {
+          agentSection.style.display = 'block';
+          autoSection.style.display = 'none';
+        } else {
+          agentSection.style.display = 'block';
+          autoSection.style.display = 'block';
+        }
+      }
 
       /* ── Studio: Global/Project Workspace Switching ── */
       function switchToGlobalWorkspace() {
@@ -7254,6 +7402,36 @@ FocusPilot/
         if (pw) { pw.style.display = 'flex'; }
         // Deselect global view items in sidebar
         document.querySelectorAll('[data-focus-filter]').forEach(function(s) { s.classList.remove('active'); });
+      }
+
+      /* ── Studio: Project Tab Switch (tasks / sessions / session) ── */
+      function showProjectTab(tab) {
+        var contextView = document.getElementById('studio-project-context-view');
+        var sessionView = document.getElementById('studio-session-view');
+        var tasksPanel = document.getElementById('studio-project-tasks');
+        var sessionsPanel = document.getElementById('studio-project-sessions');
+
+        if (tab === 'session') {
+          // Entering a specific session - hide project context, show session chat
+          if (contextView) contextView.style.display = 'none';
+          if (sessionView) sessionView.style.display = 'flex';
+        } else {
+          // In project context view
+          if (contextView) contextView.style.display = 'block';
+          if (sessionView) sessionView.style.display = 'none';
+          if (tab === 'tasks') {
+            if (tasksPanel) tasksPanel.style.display = 'block';
+            if (sessionsPanel) sessionsPanel.style.display = 'none';
+          } else if (tab === 'sessions') {
+            if (tasksPanel) tasksPanel.style.display = 'none';
+            if (sessionsPanel) sessionsPanel.style.display = 'block';
+          }
+          // Update tab active state
+          var seg = contextView ? contextView.querySelector('.seg') : null;
+          if (seg) seg.querySelectorAll('button').forEach(function(b, i) {
+            b.classList.toggle('active', (tab === 'tasks' && i === 0) || (tab === 'sessions' && i === 1));
+          });
+        }
       }
 
       /* ── Studio: Toggle Functions ── */
@@ -7477,6 +7655,9 @@ FocusPilot/
           renderStudioTerminal(sid);
         }
         showStudioRightMode('diff');
+        // Switch to session view (chat/diff/terminal)
+        switchToProjectWorkspace();
+        showProjectTab('session');
       }
 
       /* ── Studio: 添加项目文件夹交互 ── */
@@ -7623,11 +7804,13 @@ FocusPilot/
       function setCurrentWorkspace(ws) {
         currentStudioWorkspace = ws;
         switchToProjectWorkspace();
-        var title = document.getElementById('studioTopbarTitle');
-        if (title) {
-          title.innerHTML = '📂 ' + ws + ' <span style="color:var(--dim);font-weight:400;font-size:12px">— 选择左侧对话开始</span>';
-          title.style.display = '';
-        }
+        // Update project context view title
+        var projectTitle = document.getElementById('studioProjectTitle');
+        if (projectTitle) projectTitle.innerHTML = '📂 ' + ws;
+        // Show project context view (tasks tab by default)
+        showProjectTab('tasks');
+        // Deselect all studio sessions in sidebar
+        document.querySelectorAll('.studio-session').forEach(function(s) { s.classList.remove('active'); });
         var emptyTop = document.getElementById('studioEmptyTopbar');
         if (emptyTop) emptyTop.style.display = 'none';
       }
@@ -8746,7 +8929,6 @@ FocusPilot/
         daemon: 'Daemon',
         updates: '更新',
         general: '通用',
-        's-focus': 'Focus',
         's-studio': 'Studio',
         's-aicrew': 'AICrew'
       };
