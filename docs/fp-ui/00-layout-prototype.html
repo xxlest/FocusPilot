@@ -7700,7 +7700,14 @@ FocusPilot/
           renderStudioDiff(sid);
           renderStudioTerminal(sid);
         }
-        showStudioRightMode('diff');
+        // Ensure right panel is visible and show Diff tab
+        var rightPanel = document.getElementById('studioRightSidebar');
+        if (rightPanel) {
+          rightPanel.style.display = 'flex';
+          var grid = rightPanel.closest('.studio-layout');
+          if (grid) grid.style.gridTemplateColumns = 'minmax(0,1fr) 320px';
+        }
+        showStudioRightTab('diff');
         // Switch to session view (chat/diff/terminal)
         switchToProjectWorkspace();
         showProjectTab('session');
