@@ -7771,9 +7771,11 @@ FocusPilot/
 	        var pw = document.getElementById('studio-project-workspace');
 	        if (gw) { gw.style.display = 'flex'; }
 	        if (pw) pw.style.display = 'none';
-        // Deselect all studio sessions in sidebar
-        document.querySelectorAll('.studio-session').forEach(function(s) { s.classList.remove('active'); });
-      }
+	        currentStudioSessionId = '';
+	        showProjectTab('sessions');
+	        // Deselect all studio sessions in sidebar
+	        document.querySelectorAll('.studio-session').forEach(function(s) { s.classList.remove('active'); });
+	      }
       function switchToProjectWorkspace() {
         var gw = document.getElementById('studio-global-workspace');
         var pw = document.getElementById('studio-project-workspace');
