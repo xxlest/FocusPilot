@@ -3926,7 +3926,7 @@
                 <div style="margin-bottom:12px"><label style="display:block;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--dim);margin-bottom:4px">描述</label><textarea placeholder="描述任务内容..." style="width:100%;background:var(--bg);border:1px solid var(--line-soft);border-radius:var(--radius);padding:7px 10px;color:var(--text);font-size:12px;font-family:var(--sans);outline:none;resize:vertical;min-height:50px"></textarea></div>
 
                 <!-- Workspace 选择 -->
-                <div style="background:var(--bg);border:1px solid var(--line-soft);border-radius:var(--radius);padding:10px;margin-bottom:12px">
+                <div id="fp-new-task-workspace-section" style="background:var(--bg);border:1px solid var(--line-soft);border-radius:var(--radius);padding:10px;margin-bottom:12px">
                   <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--dim);margin-bottom:8px">Workspace</div>
                   <label id="ws-temp-label" style="display:flex;align-items:center;gap:8px;font-size:11px;color:var(--text);cursor:pointer;padding:5px 0;border-radius:4px" onclick="selectWorkspace('temp')">
                     <input type="radio" name="fp-ws" value="temp" checked style="accent-color:var(--accent)">
@@ -6534,28 +6534,46 @@ FocusPilot/
             '<span style="color:var(--dim);font-size:9px">○</span>'));
           var bgStyle = item.status === 'in_progress' ? 'background:var(--surface-2);border-left:2px solid var(--accent);' : '';
           var opStyle = item.status === 'done' ? 'opacity:.5;' : '';
-	          listHtml += '<div onclick="linkTaskToCurrentSession(\'' + item.id + '\')" style="display:flex;align-items:center;gap:6px;padding:6px 8px;border-radius:var(--radius);cursor:pointer;font-size:11px;' + bgStyle + opStyle + '">';
-	          listHtml += statusIcon;
-	          listHtml += '<span style="flex:1;' + (item.status === 'in_progress' ? 'font-weight:500' : '') + '">' + item.id + ' ' + item.title + '</span>';
-	          listHtml += '<span style="font-size:9px;color:var(--dim)">' + (item.sessionId === currentStudioSessionId && currentStudioSessionId ? '关联' : (item.status === 'done' ? 'done' : item.priority.toUpperCase())) + '</span>';
-	          listHtml += '</div>';
+          var canRun = !!currentStudioSessionId && item.status !== 'done';
+          var runTitle = item.status === 'done' ? '任务已完成' : (canRun ? '投递到当前对话执行' : '先进入一个对话后再执行');
+          var disabledAttr = canRun ? '' : ' disabled';
+          listHtml += '<div style="display:flex;align-items:center;gap:6px;padding:6px 8px;border-radius:var(--radius);font-size:11px;' + bgStyle + opStyle + '">';
+          listHtml += "<button onclick=\"enqueueTaskToCurrentSession(event,'" + item.id + "')\" title=\"" + runTitle + "\"" + disabledAttr + " style=\"width:20px;height:20px;display:flex;align-items:center;justify-content:center;border:1px solid var(--line-soft);border-radius:50%;background:" + (canRun ? 'var(--accent-bg)' : 'transparent') + ';color:' + (canRun ? 'var(--accent)' : 'var(--dim)') + ';font-size:10px;cursor:' + (canRun ? 'pointer' : 'not-allowed') + ';padding:0;flex-shrink:0">▶</button>';
+          listHtml += statusIcon;
+          listHtml += "<span onclick=\"openTaskDetail('" + item.id + "')\" style=\"flex:1;cursor:pointer;" + (item.status === 'in_progress' ? 'font-weight:500' : '') + '">' + item.id + ' ' + item.title + '</span>';
+          listHtml += '<span style="font-size:9px;color:var(--dim)">' + (item.status === 'done' ? 'done' : item.priority.toUpperCase()) + '</span>';
+          listHtml += '</div>';
 	        });
 	        listHtml += '</div>';
-	        listHtml += '<div style="display:flex;align-items:center;justify-content:center;gap:4px;padding:6px;border-radius:var(--radius);border:1px dashed var(--line);color:var(--dim);font-size:10px;cursor:pointer;margin-top:8px" onclick="openNewTaskModal({source:\'session\',projectId:currentStudioWorkspace,sessionId:currentStudioSessionId})">+ 新建任务</div>';
+	        listHtml += '<div style="display:flex;align-items:center;justify-content:center;gap:4px;padding:6px;border-radius:var(--radius);border:1px dashed var(--line);color:var(--dim);font-size:10px;cursor:pointer;margin-top:8px" onclick="openNewTaskModal({source:&quot;session&quot;,projectId:currentStudioWorkspace})">+ 新建任务</div>';
 	        panel.innerHTML = listHtml;
 	      }
 
-	      function linkTaskToCurrentSession(taskId) {
-	        var item = workItems.find(function(w) { return w.id === taskId; });
-	        if (item && currentStudioSessionId) {
-	          item.sessionId = currentStudioSessionId;
-	          if (!item.primarySessionId) item.primarySessionId = currentStudioSessionId;
-	          renderStudioTasksPanelFromItems(currentStudioWorkspace);
-	          renderProjectInspectorTasks(currentStudioWorkspace);
-	          showToast('任务 ' + taskId + ' 已关联当前对话');
-	        }
-	        openTaskDetail(taskId);
-	      }
+      function enqueueTaskToCurrentSession(event, taskId) {
+        if (event) event.stopPropagation();
+        var item = workItems.find(function(w) { return w.id === taskId; });
+        var session = currentStudioSessionId ? studioSessions[currentStudioSessionId] : null;
+        if (!item) return;
+        if (item.status === 'done') {
+          showToast('任务已完成，无需再次执行');
+          return;
+        }
+        if (!session) {
+          showToast('请先进入一个对话');
+          return;
+        }
+        item.status = 'in_progress';
+        item.agentStatus = '排队执行';
+        item.executionSessionId = currentStudioSessionId;
+        session.messages.push({ role: 'user', text: '执行任务 ' + item.id + '：' + item.title });
+        session.messages.push({ role: 'agent', text: '已加入当前对话执行队列，开始处理项目任务：' + item.title });
+        renderStudioChat(currentStudioSessionId);
+        renderStudioTasksPanelFromItems(currentStudioWorkspace);
+        renderProjectInspectorTasks(currentStudioWorkspace);
+        renderKanbanFromItems();
+        if (typeof renderFocusListFromItems === 'function') renderFocusListFromItems();
+        showToast('任务 ' + item.id + ' 已发送到当前对话执行');
+      }
 
 	      const pageOrder = [
 	        "home",
@@ -7701,18 +7719,27 @@ FocusPilot/
         _newTaskContext = context || null;
         document.getElementById('fpNewTaskModal').style.display = 'flex';
         selectExecMode('none');
-        // If context provides project info, pre-select local workspace and project
-	        if (context && (context.source === 'project' || context.source === 'session') && context.projectId) {
-	          selectWorkspace('local');
-	          var sel = document.getElementById('ws-local-project');
+        var workspaceSection = document.getElementById('fp-new-task-workspace-section');
+        var isProjectScoped = context && (context.source === 'project' || context.source === 'session') && context.projectId;
+        if (workspaceSection) workspaceSection.style.display = isProjectScoped ? 'none' : '';
+        if (isProjectScoped) {
+          selectWorkspace('local');
+          var sel = document.getElementById('ws-local-project');
           if (sel) {
             for (var i = 0; i < sel.options.length; i++) {
               if (sel.options[i].text === context.projectId) { sel.selectedIndex = i; break; }
             }
           }
+        } else {
+          selectWorkspace('temp');
         }
       }
-      function closeNewTaskModal() { _newTaskContext = null; document.getElementById('fpNewTaskModal').style.display = 'none'; }
+      function closeNewTaskModal() {
+        _newTaskContext = null;
+        var workspaceSection = document.getElementById('fp-new-task-workspace-section');
+        if (workspaceSection) workspaceSection.style.display = '';
+        document.getElementById('fpNewTaskModal').style.display = 'none';
+      }
       document.getElementById('fpNewTaskModal').addEventListener('click', closeNewTaskModal);
 
       // Workspace 选择
@@ -9679,9 +9706,10 @@ FocusPilot/
         // Read description
         var descInput = modal.querySelector('textarea[placeholder="描述任务内容..."]');
         var description = descInput ? descInput.value.trim() : '';
-        // Read workspace type
+        // Project-scoped creation uses the selected project's workspace.
+        var isProjectScopedCreate = _newTaskContext && (_newTaskContext.source === 'project' || _newTaskContext.source === 'session') && _newTaskContext.projectId;
         var wsRadio = modal.querySelector('input[name="fp-ws"]:checked');
-        var wsType = wsRadio ? wsRadio.value : 'temp';
+        var wsType = isProjectScopedCreate ? 'local' : (wsRadio ? wsRadio.value : 'temp');
         var wsTypeMap = { temp: 'temporary', local: 'local_project', git: 'git_project' };
         var workspaceType = wsTypeMap[wsType] || 'temporary';
         // Read project: context projectId as default, user selection can override
@@ -9730,11 +9758,10 @@ FocusPilot/
           schedule: schedule,
           month: '',
           goal: '',
-	          agent: agent,
-	          date: '',
-	          sessionId: (_newTaskContext && _newTaskContext.sessionId) ? _newTaskContext.sessionId : '',
-	          primarySessionId: (_newTaskContext && _newTaskContext.sessionId) ? _newTaskContext.sessionId : ''
-	        };
+          agent: agent,
+          date: '',
+          executionSessionId: ''
+        };
         if (opts.start && executionMode === 'auto' && agent) {
           newItem.agentStatus = 'Agent 执行中';
         }

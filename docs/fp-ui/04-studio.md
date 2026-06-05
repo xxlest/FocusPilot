@@ -374,8 +374,8 @@ WorkItem (Task)
 | 创建入口 | 行为 |
 |---------|------|
 | 全局视图（看板）→ 新建任务 | 选 Workspace + 可选归属项目 → 项目 Inspector 任务列表同步可见 |
-| 项目 Inspector 任务列表 → 新建任务 | 自动关联当前项目 + 使用项目 Workspace → 看板视图同步可见 |
-| Session 右面板 → 新建任务 | 自动关联当前项目 + 当前 Session → 双向可见 |
+| 项目 Inspector 任务列表 → 新建任务 | 自动关联当前项目 + 使用项目 Workspace，不展示 Workspace 选择 → 看板视图同步可见 |
+| Session 右面板 → 新建任务 | 自动关联当前项目 + 使用项目 Workspace，不自动关联 Session |
 | Inbox → 转为工作项 | 选归属项目 → 同上 |
 
 ---
@@ -529,9 +529,10 @@ WorkItem (Task)
 ```
 
 右面板新增 **📋 任务 Tab**（与 Diff、Git 并列）：
-- 显示当前项目的任务列表（紧凑模式）
-- 点击任务 → 关联到当前 Session，上下文注入对话
-- [+ 新建任务] → 自动关联当前项目 + 当前 Session
+- 显示当前项目的任务列表（紧凑模式），任务归属仍是 Project，不归属 Session
+- 点击任务标题 → 打开任务详情
+- 点击任务行的 `▶` → 将任务发送到当前 Session 排队执行，并把任务状态调整为执行中
+- [+ 新建任务] → 自动关联当前项目 + 使用项目 Workspace，不展示 Workspace 选择
 
 ### 7.4 场景 D：打开 Task 详情
 
@@ -622,6 +623,7 @@ WorkItem (Task)
 
 - 选"本地项目"→ 自动填充 `project_id` 和 `workspace_ref`
 - 选"临时目录"→ `project_id` 可选填，`workspace_ref` 自动生成
+- 从项目上下文或 Session 右面板新建任务时，项目已确定，隐藏 Workspace 选择，直接使用当前项目 Workspace
 - 选"对话"或"自动"→ 必须确认 Agent
 - 选"普通任务"→ Agent 配置区隐藏
 
@@ -674,7 +676,7 @@ Inspector 通过项目顶栏的 `◨ Inspector` 按钮可显隐。
 
 | Tab | 内容 |
 |-----|------|
-| **📋 任务** | 当前项目的 WorkItem 列表（同项目级），点击可关联任务到当前 Session |
+| **📋 任务** | 当前项目的 WorkItem 列表（同项目级），任务不归属 Session；点击 `▶` 时投递到当前 Session 执行 |
 | **📁 环境** | 当前 Session 所在项目 Workspace 摘要：项目、Session、路径、分支、未提交变更 |
 | **📝 Diff** | 当前 Session 产生的代码变更，文件 Tab 切换，红绿 diff + inline 评论 |
 | **📁 Git** | 当前 Session 的变更文件列表 + Stage/Revert/Commit/Push/PR |
@@ -683,9 +685,10 @@ Inspector 通过项目顶栏的 `◨ Inspector` 按钮可显隐。
 
 显示当前项目的 WorkItem 列表（紧凑模式）：
 - 按状态分组（执行中 / 待办 / 已完成）
-- 每行：状态点 + ID + 标题 + 优先级
-- 点击任务 → 关联到当前 Session
-- [+ 新建任务] → 自动关联当前项目 + 当前 Session
+- 每行：执行箭头 + 状态点 + ID + 标题 + 优先级
+- 点击标题 → 打开任务详情
+- 点击 `▶` → 等同于在当前 Session 输入框发送该任务：追加到当前 Session 队列，任务状态改为执行中
+- [+ 新建任务] → 自动关联当前项目 + 使用项目 Workspace
 
 ### 11.4 📝 Diff Tab / 📁 Git Tab
 
