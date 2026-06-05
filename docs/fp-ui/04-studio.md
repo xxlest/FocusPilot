@@ -643,17 +643,42 @@ WorkItem (Task)
 
 ---
 
-## 11. 右面板（Diff 审查 + 任务 + Git 操作）
+## 11. Inspector 面板（项目级 + Session 级）
 
-在原 Studio 右面板基础上新增 📋 任务 Tab：
+Inspector 是右侧的可显隐面板，在项目上下文和 Session 上下文中都存在，Tab 内容根据上下文切换。
 
-### 11.1 Tab 切换
+### 11.1 项目级 Inspector
+
+当选中项目但未进入具体 Session 时，Inspector 显示项目级信息：
+
+```
+[📋 任务 | 📁 环境 | 📝 Diff | 📁 Git]
+```
+
+| Tab | 内容 |
+|-----|------|
+| **📋 任务** | 当前 project_id 下的 WorkItem 列表（从统一 workItems 过滤），可点击进入详情，可新建任务 |
+| **📁 环境** | Workspace 类型/路径、Git 分支、最近提交、未提交变更数、自动化状态。随项目切换动态更新 |
+| **📝 Diff** | 项目工作目录的未提交变更预览（文件级红绿 diff）。随项目切换动态更新 |
+| **📁 Git** | 分支/远程/变更文件列表 + Stage All/Revert All/Commit/Push/PR 操作按钮 |
+
+Inspector 通过项目顶栏的 `◨ Inspector` 按钮可显隐。
+
+### 11.2 Session 级 Inspector（右面板）
+
+进入具体 Session 后，右面板切换为 Session 上下文：
 
 ```
 [📋 任务 | 📝 Diff | 📁 Git]
 ```
 
-### 11.2 📋 任务 Tab
+| Tab | 内容 |
+|-----|------|
+| **📋 任务** | 当前项目的 WorkItem 列表（同项目级），可关联任务到当前 Session |
+| **📝 Diff** | 当前 Session 产生的代码变更，文件 Tab 切换，红绿 diff + inline 评论 |
+| **📁 Git** | 当前 Session 的变更文件列表 + Stage/Revert/Commit/Push/PR |
+
+### 11.3 📋 任务 Tab 详细规格
 
 显示当前项目的 WorkItem 列表（紧凑模式）：
 - 按状态分组（执行中 / 待办 / 已完成）

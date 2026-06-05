@@ -6947,7 +6947,9 @@ FocusPilot/
       });
 
 
-      // ===== Focus Task Demo Data =====
+      // ===== Focus Task Detail Fixture (demo only) =====
+      // 仅用于补充任务详情页的 plan/execution/evaluation 等内容 Tab，
+      // 不是任务主数据源。主数据源是 workItems 数组。
       var focusTaskDemoData = {
         'FP-001': {
           id: 'FP-001', title: '数据模型设计', status: 'done', statusLabel: '● Done', statusClass: 'green',
@@ -7859,6 +7861,83 @@ FocusPilot/
         if (branchEl) branchEl.textContent = env.branch;
       }
 
+      // ── Project Inspector: Diff/Git dynamic data ──
+      var projectDiffData = {
+        'FocusPilot': {
+          files: [
+            { name: 'Models.swift', lines: [
+              { type: 'del', text: '- let duration = 0.3' },
+              { type: 'add', text: '+ let duration = 0.2' },
+              { type: 'add', text: '+ let curve: CAMediaTimingFunction = .easeOut' }
+            ]},
+            { name: 'AppDelegate.swift', lines: [
+              { type: 'add', text: '+ import CoderBridgeService' },
+              { type: 'del', text: '- // TODO: init bridge' },
+              { type: 'add', text: '+ CoderBridgeService.shared.start()' }
+            ]}
+          ],
+          summary: '2 个文件变更 · +4 -2'
+        },
+        'PilotOne': {
+          files: [],
+          summary: '无未提交变更'
+        }
+      };
+      var projectGitData = {
+        'FocusPilot': { branch: 'main', remote: 'origin/main (同步)', changedFiles: [
+          { name: 'Models.swift', status: 'M', color: 'var(--amber)' },
+          { name: '新文件.swift', status: 'U', color: 'var(--green)' }
+        ], changesSummary: '2 个 (M:1, U:1)' },
+        'PilotOne': { branch: 'develop', remote: 'origin/develop (同步)', changedFiles: [], changesSummary: '0 个' }
+      };
+      function renderProjectInspectorDiff(projectId) {
+        var container = document.getElementById('projectInspectorDiff');
+        if (!container) return;
+        var data = projectDiffData[projectId];
+        if (!data || !data.files.length) {
+          container.innerHTML = '<div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--dim);margin-bottom:8px">项目未提交变更</div><div style="font-size:11px;color:var(--dim);padding:16px 0;text-align:center">暂无未提交变更</div>';
+          return;
+        }
+        var html = '<div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--dim);margin-bottom:8px">项目未提交变更</div>';
+        html += '<div style="font-family:var(--mono);font-size:10px;line-height:1.7">';
+        data.files.forEach(function(f) {
+          html += '<div style="padding:2px 4px;color:var(--dim);background:var(--surface-2);border-radius:3px;margin-bottom:4px;font-weight:500">' + f.name + '</div>';
+          f.lines.forEach(function(l) {
+            var color = l.type === 'del' ? 'var(--red)' : 'var(--green)';
+            html += '<div style="padding:0 6px"><span style="color:' + color + '">' + l.text + '</span></div>';
+          });
+          html += '<div style="height:8px"></div>';
+        });
+        html += '</div><div style="font-size:10px;color:var(--dim);margin-top:4px">' + data.summary + '</div>';
+        container.innerHTML = html;
+      }
+      function renderProjectInspectorGit(projectId) {
+        var container = document.getElementById('projectInspectorGit');
+        if (!container) return;
+        var data = projectGitData[projectId];
+        if (!data) { container.innerHTML = '<div style="font-size:11px;color:var(--dim);padding:16px 0;text-align:center">暂无 Git 信息</div>'; return; }
+        var html = '<div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--dim);margin-bottom:8px">Git 状态</div>';
+        html += '<div style="display:flex;flex-direction:column;gap:4px;font-size:11px;margin-bottom:12px">';
+        html += '<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--line-soft)"><span style="color:var(--dim)">分支</span><span style="font-family:var(--mono);font-size:10px">' + data.branch + '</span></div>';
+        html += '<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--line-soft)"><span style="color:var(--dim)">远程</span><span style="font-family:var(--mono);font-size:10px">' + data.remote + '</span></div>';
+        html += '<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--line-soft)"><span style="color:var(--dim)">变更文件</span><span>' + data.changesSummary + '</span></div>';
+        html += '</div>';
+        if (data.changedFiles.length) {
+          html += '<div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--dim);margin-bottom:6px">变更文件</div>';
+          html += '<div style="display:flex;flex-direction:column;gap:2px;margin-bottom:12px">';
+          data.changedFiles.forEach(function(f) {
+            html += '<div style="display:flex;justify-content:space-between;font-size:11px;padding:3px 4px"><span>📝 ' + f.name + '</span><span style="color:' + f.color + ';font-size:10px">' + f.status + '</span></div>';
+          });
+          html += '</div>';
+        }
+        html += '<div style="display:flex;flex-direction:column;gap:4px">';
+        html += '<div style="display:flex;gap:4px"><button class="btn" style="flex:1;font-size:10px;min-height:26px">✓ Stage All</button><button class="btn" style="flex:1;font-size:10px;min-height:26px">↩ Revert All</button></div>';
+        html += '<button class="btn primary" style="font-size:10px;min-height:26px">📝 Commit ⌘↩</button>';
+        html += '<div style="display:flex;gap:4px"><button class="btn" style="flex:1;font-size:10px;min-height:26px">⬆ Push</button><button class="btn" style="flex:1;font-size:10px;min-height:26px">🔀 Create PR</button></div>';
+        html += '</div>';
+        container.innerHTML = html;
+      }
+
       /* ── Studio: Toggle Functions ── */
       function toggleStudioTerminal() {
         const t = document.getElementById('studioTerminal');
@@ -8260,6 +8339,8 @@ FocusPilot/
         renderProjectInspectorTasks(ws);
         // Render project Inspector environment
         renderProjectInspectorEnv(ws);
+        renderProjectInspectorDiff(ws);
+        renderProjectInspectorGit(ws);
         // Deselect all studio sessions in sidebar
         document.querySelectorAll('.studio-session').forEach(function(s) { s.classList.remove('active'); });
         var emptyTop = document.getElementById('studioEmptyTopbar');

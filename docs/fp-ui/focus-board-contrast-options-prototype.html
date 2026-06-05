@@ -1,0 +1,339 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Focus Board Contrast Options</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #fbf8f4;
+      --surface: #ffffff;
+      --surface-2: #f4f0ea;
+      --surface-3: #ece4d8;
+      --line: #e0d9cc;
+      --line-soft: #e9e0d4;
+      --text: #2e2924;
+      --muted: #7a7066;
+      --dim: #a6998f;
+      --accent: #d97706;
+      --accent-bg: rgba(217,119,6,.10);
+      --accent-line: rgba(217,119,6,.34);
+      --green: #16a34a;
+      --amber: #d97706;
+      --red: #dc2626;
+      --purple: #7c3aed;
+      --radius: 8px;
+      --font: Avenir Next, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: #f7f2eb;
+      color: var(--text);
+      font-family: var(--font);
+    }
+
+    .page {
+      max-width: 1320px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      gap: 24px;
+      align-items: flex-start;
+      margin-bottom: 18px;
+    }
+
+    h1 { margin: 0 0 8px; font-size: 22px; letter-spacing: 0; }
+    .sub, .note { color: var(--muted); font-size: 13px; line-height: 1.7; }
+    .note {
+      max-width: 440px;
+      padding: 10px 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(255,255,255,.58);
+    }
+
+    .options {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+    }
+
+    .option {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      overflow: hidden;
+      background: var(--bg);
+      box-shadow: 0 14px 36px rgba(80,55,20,.06);
+    }
+
+    .option.recommended {
+      border-color: rgba(217,119,6,.42);
+      box-shadow: 0 16px 42px rgba(217,119,6,.10);
+    }
+
+    .option-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--line);
+      background: rgba(255,255,255,.55);
+    }
+
+    .title {
+      font-weight: 800;
+      font-size: 14px;
+    }
+
+    .desc {
+      color: var(--muted);
+      font-size: 12px;
+      margin-top: 4px;
+      line-height: 1.45;
+    }
+
+    .badge {
+      color: var(--accent);
+      background: rgba(217,119,6,.09);
+      border: 1px solid rgba(217,119,6,.24);
+      border-radius: 999px;
+      padding: 3px 8px;
+      font-size: 10px;
+      white-space: nowrap;
+    }
+
+    .board {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+      padding: 14px;
+      min-height: 286px;
+    }
+
+    .lane {
+      min-height: 250px;
+      border: 1px solid var(--lane-border);
+      border-radius: var(--radius);
+      background: var(--lane-bg);
+      padding: 10px;
+    }
+
+    .lane h3 {
+      margin: 2px 2px 10px;
+      font-size: 12px;
+      color: var(--lane-title);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-weight: 750;
+    }
+
+    .dot {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      margin-right: 5px;
+      vertical-align: middle;
+    }
+
+    .task {
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius);
+      background: var(--card-bg);
+      padding: 11px;
+      margin-bottom: 10px;
+      box-shadow: var(--card-shadow);
+    }
+
+    .task-code {
+      font-size: 10px;
+      font-family: var(--mono);
+      color: var(--card-dim);
+      margin-bottom: 2px;
+    }
+
+    .task-title {
+      color: var(--card-text);
+      font-weight: 750;
+      margin-bottom: 8px;
+      font-size: 13px;
+    }
+
+    .task-meta {
+      color: var(--card-dim);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+      font-size: 10px;
+    }
+
+    .pill {
+      border: 1px solid var(--pill-border);
+      border-radius: 999px;
+      padding: 1px 5px;
+      color: var(--pill-text);
+      background: var(--pill-bg);
+      font-size: 9px;
+      white-space: nowrap;
+    }
+
+    .current {
+      --lane-bg: rgba(18,19,22,.55);
+      --lane-border: var(--line);
+      --lane-title: var(--muted);
+      --card-bg: rgba(255,255,255,.92);
+      --card-border: var(--line);
+      --card-text: #2e2924;
+      --card-dim: #a6998f;
+      --pill-bg: rgba(0,0,0,.03);
+      --pill-border: rgba(166,153,143,.30);
+      --pill-text: #a6998f;
+      --card-shadow: none;
+    }
+
+    .warm-soft {
+      --lane-bg: #f0e8de;
+      --lane-border: #e3d7c8;
+      --lane-title: #63594f;
+      --card-bg: rgba(255,255,255,.96);
+      --card-border: #e3d7c8;
+      --card-text: #2e2924;
+      --card-dim: #8c8177;
+      --pill-bg: rgba(99,89,79,.04);
+      --pill-border: rgba(99,89,79,.20);
+      --pill-text: #786d62;
+      --card-shadow: 0 4px 12px rgba(80,55,20,.045);
+    }
+
+    .warm-contrast {
+      --lane-bg: #eadfd2;
+      --lane-border: #d9cab8;
+      --lane-title: #4d4339;
+      --card-bg: #fffdf9;
+      --card-border: #dacdbd;
+      --card-text: #241f1a;
+      --card-dim: #74685d;
+      --pill-bg: rgba(217,119,6,.07);
+      --pill-border: rgba(217,119,6,.22);
+      --pill-text: #8d5615;
+      --card-shadow: 0 5px 14px rgba(80,55,20,.065);
+    }
+
+    .neutral-clean {
+      --lane-bg: #f6f2ec;
+      --lane-border: #e5dacd;
+      --lane-title: #5c5248;
+      --card-bg: #ffffff;
+      --card-border: #e4dbcf;
+      --card-text: #2a251f;
+      --card-dim: #81766b;
+      --pill-bg: rgba(0,0,0,.035);
+      --pill-border: rgba(0,0,0,.12);
+      --pill-text: #71675e;
+      --card-shadow: none;
+    }
+
+    @media (max-width: 980px) {
+      .options { grid-template-columns: 1fr; }
+      .header { flex-direction: column; }
+      .note { max-width: none; }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <header class="header">
+      <div>
+        <h1>Focus 看板文字可读性候选</h1>
+        <div class="sub">问题来源：浅色主题下 lane 仍用了固定深色背景，导致列标题和辅助文字对比度不足。这里先给你看效果，不改主原型。</div>
+      </div>
+      <div class="note">我倾向 B：列背景恢复暖象牙层级，卡片保持白，文字对比明显提升，但整体仍然克制。</div>
+    </header>
+
+    <section class="options">
+      <article class="option current">
+        <div class="option-head">
+          <div>
+            <div class="title">A. 当前效果</div>
+            <div class="desc">深色 lane + 浅主题文字，列标题和辅助信息发灰。</div>
+          </div>
+        </div>
+        <div class="board"></div>
+      </article>
+
+      <article class="option warm-soft recommended">
+        <div class="option-head">
+          <div>
+            <div class="title">B. 暖象牙柔和版</div>
+            <div class="desc">推荐。lane 改为暖灰纸面，标题加深，卡片仍保留轻白感。</div>
+          </div>
+          <span class="badge">推荐</span>
+        </div>
+        <div class="board"></div>
+      </article>
+
+      <article class="option warm-contrast">
+        <div class="option-head">
+          <div>
+            <div class="title">C. 高对比暖灰版</div>
+            <div class="desc">可读性最好，但列背景稍重，页面会更“工作台”。</div>
+          </div>
+        </div>
+        <div class="board"></div>
+      </article>
+
+      <article class="option neutral-clean">
+        <div class="option-head">
+          <div>
+            <div class="title">D. 极简干净版</div>
+            <div class="desc">最轻，适合喜欢大面积留白；列分区感相对弱一点。</div>
+          </div>
+        </div>
+        <div class="board"></div>
+      </article>
+    </section>
+  </main>
+
+  <script>
+    const lanes = [
+      ['#a6998f', 'Backlog', '2', [['FP-006', '主题系统适配', 'P2', 'auto'], ['FP-009', 'Anki 同步接口设计', 'P2', 'auto']]],
+      ['#e26b56', 'In Progress', '2', [['FP-002', '看板状态模型实现', 'P0', 'auto'], ['FP-011', '研究 Multica 执行模型', 'P1', 'manual']]],
+      ['#16a34a', 'Done', '2', [['FP-001', '数据模型设计', 'P0', 'auto'], ['FP-007', 'PRD 文档整合', 'P1', 'manual']]]
+    ];
+
+    function renderBoard(board) {
+      board.innerHTML = lanes.map(([color, name, count, tasks]) => `
+        <div class="lane">
+          <h3><span><span class="dot" style="background:${color}"></span>${name}</span><span>${count}</span></h3>
+          ${tasks.map(([code, title, priority, mode]) => `
+            <div class="task">
+              <div class="task-code">${code}</div>
+              <div class="task-title">${title}</div>
+              <div class="task-meta">
+                <span>
+                  <span class="pill">${priority}</span>
+                  <span class="pill">${mode}</span>
+                </span>
+                <span>05-27</span>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      `).join('');
+    }
+
+    document.querySelectorAll('.board').forEach(renderBoard);
+  </script>
+</body>
+</html>
