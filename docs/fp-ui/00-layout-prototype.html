@@ -3950,7 +3950,7 @@
                   </label>
                 </div>
 
-                <div style="display:flex;gap:10px;margin-bottom:12px"><div style="flex:1"><label style="display:block;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--dim);margin-bottom:4px">安排</label><select style="width:100%;background:var(--bg);border:1px solid var(--line-soft);border-radius:var(--radius);padding:6px 8px;color:var(--text);font-size:11px;font-family:var(--sans)"><option>今天</option><option selected>本周</option><option>本月</option><option>Backlog</option></select></div><div style="flex:1"><label style="display:block;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--dim);margin-bottom:4px">优先级</label><select style="width:100%;background:var(--bg);border:1px solid var(--line-soft);border-radius:var(--radius);padding:6px 8px;color:var(--text);font-size:11px;font-family:var(--sans)"><option>P0 — 紧急</option><option selected>P1 — 重要</option><option>P2 — 普通</option></select></div></div>
+                <div style="display:flex;gap:10px;margin-bottom:12px"><div style="flex:1"><label style="display:block;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--dim);margin-bottom:4px">安排</label><select id="fp-task-schedule" style="width:100%;background:var(--bg);border:1px solid var(--line-soft);border-radius:var(--radius);padding:6px 8px;color:var(--text);font-size:11px;font-family:var(--sans)"><option>今天</option><option selected>本周</option><option>本月</option><option>Backlog</option></select></div><div style="flex:1"><label style="display:block;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--dim);margin-bottom:4px">优先级</label><select id="fp-task-priority" style="width:100%;background:var(--bg);border:1px solid var(--line-soft);border-radius:var(--radius);padding:6px 8px;color:var(--text);font-size:11px;font-family:var(--sans)"><option>P0 — 紧急</option><option selected>P1 — 重要</option><option>P2 — 普通</option></select></div></div>
 
                 <!-- 执行方式（3模式 + 2开关） -->
                 <div style="background:var(--bg);border:1px solid var(--line-soft);border-radius:var(--radius);padding:10px">
@@ -3964,8 +3964,8 @@
                   <!-- Agent（对话/自动时显示） -->
                   <div id="fp-exec-agent" style="display:none;margin-top:8px">
                     <div style="display:flex;gap:10px">
-                      <div style="flex:1"><label style="display:block;font-size:10px;color:var(--dim);margin-bottom:3px">Agent</label><select style="width:100%;background:var(--surface);border:1px solid var(--line-soft);border-radius:var(--radius);padding:5px 6px;color:var(--text);font-size:10px;font-family:var(--sans)"><option selected>代码工程师</option><option>数据分析师</option><option>架构师</option></select></div>
-                      <div style="flex:1"><label style="display:block;font-size:10px;color:var(--dim);margin-bottom:3px">归属目标</label><select style="width:100%;background:var(--surface);border:1px solid var(--line-soft);border-radius:var(--radius);padding:5px 6px;color:var(--text);font-size:10px;font-family:var(--sans)"><option>无</option><option selected>4月/FP 0.0.1</option><option>5月/FP 0.0.1</option></select></div>
+                      <div style="flex:1"><label style="display:block;font-size:10px;color:var(--dim);margin-bottom:3px">Agent</label><select id="fp-task-agent" style="width:100%;background:var(--surface);border:1px solid var(--line-soft);border-radius:var(--radius);padding:5px 6px;color:var(--text);font-size:10px;font-family:var(--sans)"><option selected>代码工程师</option><option>数据分析师</option><option>架构师</option></select></div>
+                      <div style="flex:1"><label style="display:block;font-size:10px;color:var(--dim);margin-bottom:3px">归属目标</label><select id="fp-task-goal" style="width:100%;background:var(--surface);border:1px solid var(--line-soft);border-radius:var(--radius);padding:5px 6px;color:var(--text);font-size:10px;font-family:var(--sans)"><option>无</option><option selected>4月/FP 0.0.1</option><option>5月/FP 0.0.1</option></select></div>
                     </div>
                   </div>
 
@@ -4021,6 +4021,8 @@
               <div style="display:flex;border-bottom:1px solid var(--line-soft);background:var(--surface);padding:0 8px;height:32px;align-items:stretch" id="projectInspectorTabBar">
                 <button class="btn active" style="border-radius:0;border-bottom:2px solid var(--accent);font-size:10px;padding:0 10px;background:transparent;color:var(--text);font-weight:600" onclick="showProjectInspectorTab('tasks')" data-inspector-tab="tasks">📋 任务</button>
                 <button class="btn" style="border-radius:0;border-bottom:2px solid transparent;font-size:10px;padding:0 10px;background:transparent;color:var(--muted);font-weight:500" onclick="showProjectInspectorTab('env')" data-inspector-tab="env">📁 环境</button>
+                <button class="btn" style="border-radius:0;border-bottom:2px solid transparent;font-size:10px;padding:0 10px;background:transparent;color:var(--muted);font-weight:500" onclick="showProjectInspectorTab('diff')" data-inspector-tab="diff">📝 Diff</button>
+                <button class="btn" style="border-radius:0;border-bottom:2px solid transparent;font-size:10px;padding:0 10px;background:transparent;color:var(--muted);font-weight:500" onclick="showProjectInspectorTab('git')" data-inspector-tab="git">📁 Git</button>
               </div>
               <!-- 📋 任务 tab -->
               <div id="projectInspectorTasks" style="display:flex;flex-direction:column;flex:1;overflow-y:auto;padding:10px 12px">
@@ -4036,6 +4038,41 @@
                   <div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--line-soft)"><span style="color:var(--dim)">最近提交</span><span style="font-size:10px">a13625b · 2h前</span></div>
                   <div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--line-soft)"><span style="color:var(--dim)">未提交变更</span><span>3 个文件</span></div>
                   <div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--line-soft)"><span style="color:var(--dim)">自动化</span><span>2 规则 · 1 运行中</span></div>
+                </div>
+              </div>
+              <!-- 📝 Diff tab -->
+              <div id="projectInspectorDiff" style="display:none;flex-direction:column;flex:1;overflow-y:auto;padding:10px 12px">
+                <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--dim);margin-bottom:8px">项目未提交变更</div>
+                <div style="font-family:var(--mono);font-size:10px;line-height:1.7">
+                  <div style="padding:2px 4px;color:var(--dim);background:var(--surface-2);border-radius:3px;margin-bottom:4px;font-weight:500">Models.swift</div>
+                  <div style="padding:0 6px"><span style="color:var(--red)">- let duration = 0.3</span></div>
+                  <div style="padding:0 6px"><span style="color:var(--green)">+ let duration = 0.2</span></div>
+                  <div style="padding:0 6px"><span style="color:var(--green)">+ let curve: CAMediaTimingFunction = .easeOut</span></div>
+                  <div style="height:8px"></div>
+                  <div style="padding:2px 4px;color:var(--dim);background:var(--surface-2);border-radius:3px;margin-bottom:4px;font-weight:500">AppDelegate.swift</div>
+                  <div style="padding:0 6px"><span style="color:var(--green)">+ import CoderBridgeService</span></div>
+                  <div style="padding:0 6px"><span style="color:var(--red)">- // TODO: init bridge</span></div>
+                  <div style="padding:0 6px"><span style="color:var(--green)">+ CoderBridgeService.shared.start()</span></div>
+                </div>
+                <div style="font-size:10px;color:var(--dim);margin-top:8px">2 个文件变更 · +4 -2</div>
+              </div>
+              <!-- 📁 Git tab -->
+              <div id="projectInspectorGit" style="display:none;flex-direction:column;flex:1;overflow-y:auto;padding:10px 12px">
+                <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--dim);margin-bottom:8px">Git 状态</div>
+                <div style="display:flex;flex-direction:column;gap:4px;font-size:11px;margin-bottom:12px">
+                  <div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--line-soft)"><span style="color:var(--dim)">分支</span><span style="font-family:var(--mono);font-size:10px" id="projGitBranch">main</span></div>
+                  <div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--line-soft)"><span style="color:var(--dim)">远程</span><span style="font-family:var(--mono);font-size:10px">origin/main (同步)</span></div>
+                  <div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--line-soft)"><span style="color:var(--dim)">变更文件</span><span>2 个 (M:1, U:1)</span></div>
+                </div>
+                <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--dim);margin-bottom:6px">变更文件</div>
+                <div style="display:flex;flex-direction:column;gap:2px;margin-bottom:12px">
+                  <div style="display:flex;justify-content:space-between;font-size:11px;padding:3px 4px"><span>📝 Models.swift</span><span style="color:var(--amber);font-size:10px">M</span></div>
+                  <div style="display:flex;justify-content:space-between;font-size:11px;padding:3px 4px"><span>📝 新文件.swift</span><span style="color:var(--green);font-size:10px">U</span></div>
+                </div>
+                <div style="display:flex;flex-direction:column;gap:4px">
+                  <div style="display:flex;gap:4px"><button class="btn" style="flex:1;font-size:10px;min-height:26px">✓ Stage All</button><button class="btn" style="flex:1;font-size:10px;min-height:26px">↩ Revert All</button></div>
+                  <button class="btn primary" style="font-size:10px;min-height:26px">📝 Commit ⌘↩</button>
+                  <div style="display:flex;gap:4px"><button class="btn" style="flex:1;font-size:10px;min-height:26px">⬆ Push</button><button class="btn" style="flex:1;font-size:10px;min-height:26px">🔀 Create PR</button></div>
                 </div>
               </div>
             </div>
@@ -6469,30 +6506,6 @@ FocusPilot/
         });
       }
 
-      /* ── Render: Project Task List (for right panel / floating panel) ── */
-      function renderProjectTaskList(projectId) {
-        var container = document.getElementById('projectTasksContent');
-        if (!container) return;
-        var filtered = workItems.filter(function(item) { return item.projectId === projectId; });
-        var html = '<div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--dim);margin-bottom:8px">📂 ' + projectId + ' (' + filtered.length + ')</div>';
-        html += '<div style="display:flex;flex-direction:column;gap:4px">';
-        filtered.forEach(function(item) {
-          var statusIcon = item.status === 'done' ? '<span style="color:var(--green);font-size:9px">✓</span>' :
-            (item.status === 'in_progress' ? '<span style="color:var(--accent);font-size:9px">●</span>' :
-            (item.status === 'in_evaluation' ? '<span style="color:var(--purple);font-size:9px">◆</span>' :
-            '<span style="color:var(--dim);font-size:9px">○</span>'));
-          var bgStyle = item.status === 'in_progress' ? 'background:var(--surface-2);border-left:2px solid var(--accent);' : '';
-          var opStyle = item.status === 'done' ? 'opacity:.5;' : '';
-          html += '<div onclick="openTaskDetail(\'' + item.id + '\')" style="display:flex;align-items:center;gap:6px;padding:6px 8px;border-radius:var(--radius);cursor:pointer;font-size:11px;' + bgStyle + opStyle + '">';
-          html += statusIcon;
-          html += '<span style="flex:1;' + (item.status === 'in_progress' ? 'font-weight:500' : '') + '">' + item.id + ' ' + item.title + '</span>';
-          html += '<span style="font-size:9px;color:var(--dim)">' + (item.status === 'done' ? 'done' : item.priority.toUpperCase()) + '</span>';
-          html += '</div>';
-        });
-        html += '</div>';
-        container.innerHTML = html;
-      }
-
       /* ── Also render studioTasksPanel (session right panel) from workItems ── */
       function renderStudioTasksPanelFromItems(projectId) {
         var panel = document.getElementById('studioTasksPanel');
@@ -7071,6 +7084,43 @@ FocusPilot/
         }
       }
 
+      // Content-only version: renders plan/exec tabs and live card without overriding attribute fields
+      function renderFocusTaskDetailContent(taskId) {
+        var task = focusTaskDemoData[taskId];
+        if (!task) return;
+        var panel = document.getElementById('fpDetailPanel');
+        if (!panel) return;
+        // agent live card (same as renderFocusTaskDetail)
+        var liveCard = panel.children[1];
+        if (liveCard && liveCard.style.background && liveCard.style.background.indexOf('elevated') !== -1) {
+          if (task.exec) {
+            liveCard.style.display = '';
+            liveCard.innerHTML = '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><span style="width:7px;height:7px;border-radius:50%;background:var(--green);animation:pulse 2s infinite"></span><strong>' + task.exec.agent + '</strong><span style="color:var(--dim)">· ' + task.exec.status + ' · ' + task.exec.time + ' · ' + task.exec.step + '</span></div>' +
+              '<div style="font-family:var(--mono);font-size:10px;line-height:1.7;color:var(--muted);background:var(--bg);padding:6px 8px;border-radius:4px;max-height:60px;overflow-y:auto">' + task.exec.logs + '</div>' +
+              '<div style="display:flex;gap:6px;margin-top:8px"><button class="btn" style="font-size:10px;min-height:24px;padding:0 8px;color:var(--red)">停止</button><button class="btn" style="font-size:10px;min-height:24px;padding:0 8px">手动接管</button><button class="btn" style="font-size:10px;min-height:24px;padding:0 8px">Transcript</button><button class="btn" style="font-size:10px;min-height:24px;padding:0 8px">产物</button></div>';
+          } else {
+            liveCard.style.display = 'none';
+          }
+        }
+        // plan tab: description + plan (same as renderFocusTaskDetail)
+        var planTab = document.getElementById('fp-t-plan');
+        if (planTab) {
+          var descHtml = '<div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);margin-bottom:6px">📝 任务描述</div>' +
+            '<div style="background:var(--bg);border:1px solid var(--line-soft);border-radius:var(--radius);padding:10px;font-size:12px;line-height:1.6;color:var(--muted);margin-bottom:16px">' + task.desc + '</div>';
+          if (task.plan) {
+            descHtml += '<div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);margin-bottom:6px">📋 规划文档 <span style="color:var(--green);margin-left:4px">● READY</span></div>' +
+              '<div style="background:var(--bg);border:1px solid var(--line-soft);border-radius:var(--radius);overflow:hidden">' +
+              '<div style="display:flex;justify-content:space-between;padding:6px 10px;background:var(--elevated);border-bottom:1px solid var(--line-soft);font-size:10px;color:var(--dim)"><span style="color:var(--green)">✓ plan.md</span><span><button class="btn" style="font-size:9px;min-height:20px;padding:0 6px">重新规划</button></span></div>' +
+              '<div style="padding:12px;font-size:12px;line-height:1.7;color:var(--muted)">' + task.plan + '</div></div>';
+          } else {
+            descHtml += '<div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);margin-bottom:6px">📋 规划文档 <span style="color:var(--dim);margin-left:4px">○ 未规划</span></div>' +
+              '<div style="background:var(--bg);border:1px solid var(--line-soft);border-radius:var(--radius);padding:24px;text-align:center;font-size:12px;color:var(--dim)">尚无规划文档<br><button class="btn" style="font-size:10px;min-height:24px;margin-top:8px">开始规划</button></div>';
+          }
+          planTab.innerHTML = descHtml;
+        }
+        // NOTE: sidebar metadata is intentionally NOT rendered here — workItems is the source of truth
+      }
+
       // ===== Tasks: click row to jump to Studio global workspace =====
       function openCrewTaskInFocus(taskId) {
         showPage('studio');
@@ -7583,9 +7633,10 @@ FocusPilot/
             var dateEl = document.querySelector('#fpDetailPanel .fp-detail-date');
             if (dateEl) dateEl.textContent = item.date || '—';
           }
-          // Also render from focusTaskDemoData if available
+          // Also render complex content (plan/exec tabs, live card) from focusTaskDemoData if available
+          // but skip attribute overrides since workItems is the primary source for those
           if (typeof focusTaskDemoData !== 'undefined' && focusTaskDemoData[taskId]) {
-            renderFocusTaskDetail(taskId);
+            renderFocusTaskDetailContent(taskId);
           }
         }
         var defaultTab = document.querySelector('.fp-dtab[data-t="fp-t-plan"]');
@@ -7609,7 +7660,9 @@ FocusPilot/
       });
 
       /* ── Focus: New Task Modal ── */
+      var _newTaskContext = null;
       function openNewTaskModal(context) {
+        _newTaskContext = context || null;
         document.getElementById('fpNewTaskModal').style.display = 'flex';
         selectExecMode('none');
         // If context provides project info, pre-select local workspace and project
@@ -7623,7 +7676,7 @@ FocusPilot/
           }
         }
       }
-      function closeNewTaskModal() { document.getElementById('fpNewTaskModal').style.display = 'none'; }
+      function closeNewTaskModal() { _newTaskContext = null; document.getElementById('fpNewTaskModal').style.display = 'none'; }
       document.getElementById('fpNewTaskModal').addEventListener('click', closeNewTaskModal);
 
       // Workspace 选择
@@ -7750,10 +7803,11 @@ FocusPilot/
           btn.style.fontWeight = isActive ? '600' : '500';
           btn.classList.toggle('active', isActive);
         });
-        var tasks = document.getElementById('projectInspectorTasks');
-        var env = document.getElementById('projectInspectorEnv');
-        if (tasks) tasks.style.display = tab === 'tasks' ? 'flex' : 'none';
-        if (env) env.style.display = tab === 'env' ? 'flex' : 'none';
+        var panels = ['projectInspectorTasks', 'projectInspectorEnv', 'projectInspectorDiff', 'projectInspectorGit'];
+        panels.forEach(function(id) {
+          var el = document.getElementById(id);
+          if (el) el.style.display = id === 'projectInspector' + tab.charAt(0).toUpperCase() + tab.slice(1) ? 'flex' : 'none';
+        });
       }
 
       function renderProjectInspectorTasks(projectId) {
@@ -7780,8 +7834,30 @@ FocusPilot/
         container.innerHTML = html;
       }
 
-      /* ── Legacy alias for floating panel (now replaced by Inspector) ── */
-      function toggleProjectTasksPanel() { toggleProjectInspector(); }
+      /* ── Dynamic environment tab ── */
+      var projectEnvData = {
+        'FocusPilot': { wsType: '📁 本地项目', path: '~/Workspace/FocusPilot', branch: 'main', commit: '5374e4f · 2h前', changes: '3 个文件', automations: '2 规则 · 1 运行中' },
+        'PilotOne': { wsType: '📁 本地项目', path: '~/Workspace/PilotOne', branch: 'develop', commit: 'b19e02f · 1d前', changes: '0 个文件', automations: '1 规则 · 空闲' }
+      };
+      function renderProjectInspectorEnv(projectId) {
+        var container = document.getElementById('projectInspectorEnv');
+        if (!container) return;
+        var env = projectEnvData[projectId];
+        if (!env) { container.innerHTML = '<div style="font-size:11px;color:var(--dim);padding:12px 0;text-align:center">暂无环境信息</div>'; return; }
+        var html = '<div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--dim);margin-bottom:8px">项目环境</div>';
+        html += '<div style="display:flex;flex-direction:column;gap:6px;font-size:11px">';
+        html += '<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--line-soft)"><span style="color:var(--dim)">Workspace</span><span>' + env.wsType + '</span></div>';
+        html += '<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--line-soft)"><span style="color:var(--dim)">路径</span><span style="font-family:var(--mono);font-size:10px">' + env.path + '</span></div>';
+        html += '<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--line-soft)"><span style="color:var(--dim)">Git 分支</span><span style="font-family:var(--mono);font-size:10px">' + env.branch + '</span></div>';
+        html += '<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--line-soft)"><span style="color:var(--dim)">最近提交</span><span style="font-size:10px">' + env.commit + '</span></div>';
+        html += '<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--line-soft)"><span style="color:var(--dim)">未提交变更</span><span>' + env.changes + '</span></div>';
+        html += '<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--line-soft)"><span style="color:var(--dim)">自动化</span><span>' + env.automations + '</span></div>';
+        html += '</div>';
+        container.innerHTML = html;
+        // Also update Git tab branch
+        var branchEl = document.getElementById('projGitBranch');
+        if (branchEl) branchEl.textContent = env.branch;
+      }
 
       /* ── Studio: Toggle Functions ── */
       function toggleStudioTerminal() {
@@ -8182,6 +8258,8 @@ FocusPilot/
         renderStudioTasksPanelFromItems(ws);
         // Render project Inspector tasks
         renderProjectInspectorTasks(ws);
+        // Render project Inspector environment
+        renderProjectInspectorEnv(ws);
         // Deselect all studio sessions in sidebar
         document.querySelectorAll('.studio-session').forEach(function(s) { s.classList.remove('active'); });
         var emptyTop = document.getElementById('studioEmptyTopbar');
@@ -9394,37 +9472,32 @@ FocusPilot/
         var wsType = wsRadio ? wsRadio.value : 'temp';
         var wsTypeMap = { temp: 'temporary', local: 'local_project', git: 'git_project' };
         var workspaceType = wsTypeMap[wsType] || 'temporary';
-        // Read project (only for local workspace)
-        var projectId = '';
+        // Read project: context projectId as default, user selection can override
+        var projectId = (_newTaskContext && _newTaskContext.projectId) ? _newTaskContext.projectId : '';
         if (wsType === 'local') {
           var projSel = document.getElementById('ws-local-project');
-          if (projSel && projSel.selectedIndex > 0) projectId = projSel.options[projSel.selectedIndex].text;
+          if (projSel && projSel.selectedIndex > 0) {
+            projectId = projSel.options[projSel.selectedIndex].text;
+          } else if (projSel && projSel.selectedIndex === 0 && projSel.options[0].text === '选择项目...') {
+            // User explicitly selected "无" placeholder — clear projectId only if no context default
+            if (!(_newTaskContext && _newTaskContext.projectId)) projectId = '';
+          }
         }
-        // Read schedule
-        var schedSel = modal.querySelectorAll('select');
-        var schedule = '';
-        if (schedSel.length >= 1) {
-          var sv = schedSel[0].value;
-          if (sv === '今天') schedule = 'today';
-          else if (sv === '本周') schedule = 'week';
-          else if (sv === '本月') schedule = 'month';
-          else schedule = '';
-        }
-        // Read priority
-        var priority = 'p1';
-        if (schedSel.length >= 2) {
-          var pv = schedSel[1].value;
-          if (pv.indexOf('P0') === 0) priority = 'p0';
-          else if (pv.indexOf('P1') === 0) priority = 'p1';
-          else priority = 'p2';
-        }
+        // Read schedule (by ID)
+        var scheduleMap = {'今天':'today','本周':'week','本月':'month','Backlog':'backlog'};
+        var scheduleEl = document.getElementById('fp-task-schedule');
+        var schedule = scheduleEl ? (scheduleMap[scheduleEl.options[scheduleEl.selectedIndex].text] || 'backlog') : 'backlog';
+        // Read priority (by ID)
+        var priorityMap = {'P0 — 紧急':'p0','P1 — 重要':'p1','P2 — 普通':'p2'};
+        var priorityEl = document.getElementById('fp-task-priority');
+        var priority = priorityEl ? (priorityMap[priorityEl.options[priorityEl.selectedIndex].text] || 'p1') : 'p1';
         // Read execution mode
         var execRadio = modal.querySelector('input[name="fp-exec"]:checked');
         var executionMode = execRadio ? execRadio.parentElement.dataset.exec : 'none';
-        // Read agent
+        // Read agent (by ID)
         var agent = '';
         if (executionMode === 'dialog' || executionMode === 'auto') {
-          var agentSel = document.querySelector('#fp-exec-agent select');
+          var agentSel = document.getElementById('fp-task-agent');
           if (agentSel) agent = agentSel.value;
         }
         // Read approval/evaluation checkboxes
@@ -9459,7 +9532,6 @@ FocusPilot/
         if (typeof renderFocusListFromItems === 'function') renderFocusListFromItems();
         // Refresh project task lists if applicable
         if (projectId) {
-          renderProjectTaskList(projectId);
           renderStudioTasksPanelFromItems(projectId);
           renderProjectInspectorTasks(projectId);
         }
