@@ -1,640 +1,685 @@
 # Studio 页面设计
 
+> **页面名**：Studio（合并原 Focus + 原 Studio）
 > **状态**：可开发
-> **更新**：2026-05-26
+> **更新**：2026-06-05
 > **原型**：[00-layout-prototype.html](00-layout-prototype.html)
 > **参考**：[Codex App macOS 竞品调研](../竞品分析/Codex%20App%20macOS%20竞品调研.md)、[Codex UI 功能层次梳理](../竞品分析/Codex%20UI%20功能层次梳理.md)
-> **旧版备份**：[04-studio-backup-v1.md](04-studio-backup-v1.md)
+> **设计决策**：[Focus + Studio 合并设计](../superpowers/specs/2026-06-05-focus-studio-merge-design.md)
+> **历史**：原 Focus 页面（[03-focus.md](03-focus.md)）已合并至本页；原 Studio 旧版备份见 [04-studio-backup-v1.md](04-studio-backup-v1.md)
+> **关联**：[PRD §3.1 两阶段模型](../PRD.md)、[PRD §3.3 Task 双轴管理](../PRD.md)
 
 ---
 
 ## 1. 定位
 
-Studio 是 FocusPilot 的**项目级 AI 编程指挥台**。复刻 Codex App 桌面端的核心体验：Session 管理、对话执行、Diff 审查、Git 交付、终端操控和后台自动化，统一收束在一个六区布局中。
+Studio 是 FocusPilot 的**跨项目 AI 工作台**，承载"规划 → 执行 → 评估 → 交付"全链路。
 
-**V1 功能范围**：Session 管理 + AICrew 执行器选择 + 对话执行 + Diff 审查 + Git 操作 + 终端 + Automations/Triage 基础入口。
+用户在这里看到所有项目的任务全貌，也能下钻到具体项目与 Agent 对话、审查代码、交付成果。不限于代码，任何需要 AI 协作的结构化任务都在这里完成。
 
-**V2 预留**：Worktree 隔离执行、Cloud 执行模式、Handoff、Computer Use、Appshot、内置浏览器。
+**三层模型中的位置**：
 
-### 设计来源
-
-| 模块 | 参考来源 | 吸收内容 |
-|------|---------|---------|
-| **整体布局** | Codex Desktop App | 六区布局（侧边栏 + 顶栏 + 对话区 + 输入区 + 右面板 + 终端面板） |
-| **侧边栏** | Codex Desktop App | Triage 收件箱 + 对话列表（按项目分组）+ Automations 上下堆叠 |
-| **Session 管理** | Codex Desktop App | Session 状态、项目分组 |
-| **Diff 审查** | Codex Desktop App | Diff 视图 + inline 评论 + Stage/Revert + Commit/Push/PR |
-| **自动化** | Codex Desktop App | Automations 规则定义 + Triage 结果收件箱 |
-| **Agent 选择** | FocusPilot AICrew | Session 创建时选择 AICrew 配置的 Agent 成员 |
+```
+Projects  ──→  Studio  ──→  Review
+记忆层          执行层        内化层
+信息在哪里      怎么加工      如何内化
+```
 
 ### 与其他页面的职责边界
 
 | 页面 | 职责 | 与 Studio 的边界 |
 |------|------|-----------------|
-| **Home** | AI 对话入口（含自由聊天）+ 最近操作 | Home = 自由对话；Studio = 项目级 Session 对话 |
-| **Focus** | 任务规划、看板、列表、评估、验收 | Focus 管"任务怎么推进"；Studio 管"代码怎么改"。Studio Session 可关联 Focus Task，但不替代 Focus 的任务状态机 |
-| **Projects** | 信息收集和项目资产沉淀 | Projects = Inbox 收集 + 文件组织/编辑/预览；Studio = AI 驱动的代码变更和交付 |
-| **AICrew** | Agent 团队管理（角色/能力/MCP） | AICrew 定义 Agent 成员；Studio 消费 Agent 成员（Session 创建时选择） |
+| **Home** | AI 对话入口（含自由聊天）+ 全局概览 | Home = 自由对话 + 摘要跳转；Studio = 项目级结构化执行 |
+| **Projects** | 信息收集（Inbox）+ 项目资产沉淀 | Projects = 文件组织/编辑/知识管道；Studio = AI 驱动的任务执行和交付 |
+| **Review** | 复习与内化中心 | Review = 记忆/费曼复述/统计；Studio = 执行和产出 |
+| **AICrew** | Agent 团队管理（角色/能力/MCP） | AICrew 定义 Agent 成员；Studio 消费 Agent 成员 |
 
 ### 核心交互原则
 
-1. **Session = 可执行工作单元**。每个 Session 绑定项目和 Agent，有独立的对话、终端、变更和 Git 状态
+1. **两种视角无缝切换**。全局视图看跨项目任务全貌，项目视图深入某个项目执行
 2. **不打断**。高频导航不弹确认框，顶栏和侧边栏已充分标识当前上下文
-3. **切换即切换**。切换 Session 时，右面板清空 Diff/文件；终端切换到目标 Session 的终端组（不销毁其他 Session 终端），目标无终端时自动收起
-4. **审查再交付**。AI 产出的代码变更必须经过 Diff 审查，Stage/Revert 只能操作当前 Session 产生的文件
+3. **Session = 交互容器**。Session 本身不占 Workspace 写锁，只有 Agent Runtime 写入时通过 ExecutionRun 占锁
+4. **审查再交付**。AI 产出的代码变更必须经过 Diff 审查
 
 ---
 
-## 2. 页面完整布局
+## 2. 数据模型
 
-### 2.1 整体结构（A 侧边栏 + B 顶栏 + C 对话区 + D 输入区 + E 右面板 + F 终端面板）
+### 2.1 工作项（WorkItem）
 
-```
-┌─ A 侧边栏 260px ──┬─ 主区域 flex ─────────────────────┬─ E 右面板（可选）───┐
-│                    │                                    │                    │
-│ 📥 Triage      3   │ ┌─ B 顶栏 44px ────────────────┐  │ ┌ Diff 审查 ─────┐ │
-│ ──────────────── │ │ 📂 FP · 🧑‍💻 代码工程师 (✳)    │  │ │ - old line     │ │
-│ 🔍 搜索...        │ │ [🔧▾] [🖥] [◨]               │  │ │ + new line     │ │
-│                    │ └───────────────────────────────┘  │ │ 💬 inline 评论 │ │
-│ ▾ 📂 FocusPilot [+]│                                    │ └────────────────┘ │
-│  🧑‍💻 重构 auth        ✳│ ┌─ C 对话区 flex 可滚动 ────┐  │                    │
-│  🔍 代码审查         ✳│ │ 👤 用户消息               │  │ 变更文件:          │
-│  ⚡ Bug fix #12      ⚡│ │ 🤖 Agent 回复             │  │ ☑ auth.ts   M    │
-│ ▸ 📂 PilotOne   [+]│ │ 📦 Diff 卡片              │  │ ☑ oauth.ts  U    │
-│                    │ └────────────────────────────┘  │                    │
-│ ▸ 自动化 (2)      │                                    │ [✓ Stage]          │
-│                    │ ┌─ D 输入区 ─────────────────┐  │ [↩ Revert]         │
-│                    │ │ 描述内容...        [↑ 发送] │  │ [📝 Commit]        │
-│                    │ └────────────────────────────┘  │ [⬆ Push] [🔀 PR]  │
-│                    │ ┌─ F 终端面板（⌘J 切换）────┐  │                    │
-│ [+ New ⌘N] [⚙]   │ │ T1 ✕│T2 ✕│[+]             │  │                    │
-│                    │ │ $ make build                │  │                    │
-│                    │ └────────────────────────────┘  │                    │
-└────────────────────┴────────────────────────────────────┴────────────────────┘
-```
+统一工作项模型，支持任意层级嵌套。
 
-**六个区域**：
+```yaml
+WorkItem:
+  # ── 身份 ──
+  id: "FP-002"
+  title: "看板状态模型实现"
+  item_type: task               # epic | story | task | subtask | group
+  item_role: executable         # container | executable | hybrid
 
-| 区域 | 尺寸 | 说明 |
-|------|------|------|
-| **A 侧边栏** | 260px 固定，⌘B 收起/展开 | Triage + 搜索 + 对话列表 + Automations + 底部按钮 |
-| **B 顶栏** | 44px 固定 | 项目名 + Agent 角色 + Runtime + 工具按钮 |
-| **C 对话区** | flex 可滚动 | 消息流 + 内嵌 Diff 卡片 + 终端输出卡片 + 审批卡片 |
-| **D 输入区** | 对话区下方 | 多行自适应输入框 |
-| **E 右面板** | 可选，◨ 或 ⌘⇧B 切换 | Diff 审查 + inline 评论 + Git 操作按钮 |
-| **F 终端面板** | 可选，⌘J 切换 | 多 Tab 终端，工作目录跟随 Session |
+  # ── 树结构 ──
+  parent_id: "FP-US01"
+  children_ids: []
 
----
+  # ── 看板维度 ──
+  status: in_progress           # backlog|todo|in_progress|in_evaluation|done|blocked|cancelled
+  blocked_from_status: null     # blocked 解除后回到的来源状态
+  priority: p0                  # p0|p1|p2
+  source: area_project          # inbox|area_project|adhoc
 
-## 3. A 区：侧边栏（260px，⌘B 收起/展开）
+  # ── 时间维度 ──
+  scheduled_date: "2026-04-21"  # 计划执行日期
+  due_date: "2026-04-25"        # 截止日期
+  start_date: "2026-04-18"      # 开始日期（可选）
+  schedule: week                # today|week|month|backlog（由 scheduled_date 派生，不持久化）
 
-侧边栏分五层：Triage（固定顶部）→ 搜索 → 对话列表（可滚动）→ Automations（可折叠）→ 底部（固定）。
+  # ── Workspace（必填）──
+  workspace_ref:
+    type: temporary | local_project    # V2 增加 remote_git
+    path: "{focuspilot_root}/workspaces/FP-002/"
+    materialized: false                # 延迟物化：首次写入/启动/打开时创建真实目录
 
-### 3.1 Triage 收件箱（固定顶部）
+  # ── 归属（独立于 Workspace）──
+  project_id: "proj_focuspilot"        # 资产归属（可选）
+  goal_id: "FP-001-release"           # 规划归属（可选）
 
-```
-┌──────────────────────────────────┐
-│ 📥 Triage                    3   │
-│ ──────────────────────────────  │
-│ 🔄 每日代码审查  发现 2 个问题   │
-│ 🔄 PR #45 检查   合并冲突       │
-│ 🔄 依赖更新      3 个可更新     │
-└──────────────────────────────────┘
+  # ── 执行配置 ──
+  execution_mode: semi_auto     # none|manual|semi_auto|auto
+  evaluation_enabled: true      # 评估开关
+  agents:
+    planner: "agent_architect"
+    executor: "agent_coder"
+    dialog: "agent_coder"
+    evaluator: "agent_evaluator"
 
-无待处理结果时（折叠为一行）:
-┌──────────────────────────────────┐
-│ 📥 Triage                    0   │
-└──────────────────────────────────┘
-```
+  # ── 执行状态 ──
+  current_run_id: "run_abc123"         # 当前活跃 ExecutionRun（至多一个，完成后置 null）
+  run_history_ids: ["run_prev01"]      # 历史 ExecutionRun 列表
 
-**Triage 是结果审阅入口**，只收纳需要用户处理的自动化结果。自动化完成但无需人工处理的不进入 Triage。
+  # ── Session 关联 ──
+  primary_session_id: "session_abc"    # 当前 Run 的主对话（可为 null）
+  related_session_ids: ["session_def"] # 参考上下文对话（不推进状态）
 
-| 功能 | 说明 |
-|------|------|
-| 计数角标 | 待处理结果数量，有新结果时红色高亮 |
-| 点击结果行 | 右面板打开详情/日志视图 |
-| 操作 | [接受] / [派生对话] / [归档] |
-| 无结果时 | 折叠为一行摘要，不占空间 |
-
-**Triage vs Automations 的职责边界**：
-
-| | Triage | Automations |
-|---|---|---|
-| 放什么 | 需要用户处理的结果（有发现/有失败/需决策） | 规则定义和运行状态列表 |
-| 何时出现 | 自动化产出需人工处理的结果时 | 始终存在（用户创建的自动化规则） |
-| 操作 | 审阅、接受、派生、归档 | 编辑、启用/禁用、删除、查看历史 |
-
-### 3.2 搜索
-
-```
-┌──────────────────────────────────┐
-│ 🔍 搜索对话...                    │
-└──────────────────────────────────┘
+  # ── 容器聚合（item_role=container|hybrid 时自动计算）──
+  progress:
+    completion: 40%
+    health: on_track            # on_track|at_risk|off_track
+    children_total: 5
+    children_done: 2
+  lifecycle: active             # active|paused|archived（容器节点使用）
 ```
 
-按名称搜索对话 Session。
+### 2.2 item_role 规则
 
-### 3.3 置顶区
+| 角色 | 含义 | 看板 | 执行步骤 |
+|------|------|:----:|:--------:|
+| `container` | 有 children，自身不可执行 | 不显示 | 无 |
+| `executable` | 无 children，可执行 | 显示 | 有 |
+| `hybrid` | 有 children 且自身也有 ExecutionRun | 显示 | 有 |
 
-侧边栏最上方显示全局置顶项（对话置顶 + 项目置顶），无置顶项时隐藏。
-
-```
-── 置顶 ──────────────────────────
-  📌 重构 auth              FocusPilot   ← 置顶对话（标注来源 Workspace）
-  📂 PilotOne                            ← 置顶 Workspace
-```
-
-| 操作 | 效果 |
-|------|------|
-| 对话置顶 | 出现在置顶区，标注来源 Workspace 名 |
-| Workspace 置顶 | 整个项目提升到置顶区 |
-| 取消置顶 | 回到"项目 Workspace"区原位 |
-
-### 3.4 项目 Workspace 列表（可滚动）
+### 2.3 工作项层级与项目模式
 
 ```
-── 项目 Workspace ────────────────
-  📂 FocusPilot                ··· [+]
-    🧑‍💻 重构 auth           ● 3m        ← 对话 Session
-    🔍 代码审查              ✅ 1h
-    ⚡ Bug fix #12           ● 15m
-    展开显示
-  📂 PilotOne                  ··· [+]
-    暂无对话
+Agile:  Epic → User Story → Task (→ Sub-task)
+Flow:   Phase → Task (→ Sub-task)
+Lite:   Task (→ Sub-task)
+Free:   Group → ... → Task (→ Sub-task)
 ```
 
-**对话 Session 显示格式**：`Agent图标 + 标题 + 状态 + 时长`
-
-- Agent 图标：来自 AICrew 配置的角色图标，标识该对话使用的执行器
-- 状态：● 活跃 / ✅ 完成
-- 点击对话 → 顶栏、对话区、右面板、终端组全部切换到该 Session 上下文
-
-**Workspace 行操作**：
-
-| 按钮 | 操作 |
-|------|------|
-| **[+]** | 新建对话：弹出 Agent 选择器（见 §4.2） |
-| **[···]** | 打开 Workspace 菜单 |
-
-**Workspace [···] 菜单**：
-```
-┌─────────────────────────┐
-│ + 新建对话               │
-│ ─────────────────────── │
-│ 📌 置顶项目              │
-│ 📂 在访达中打开          │
-│ ✏️ 重命名                │
-│ ─────────────────────── │
-│ 🗄️ 归档所有对话          │
-│ ✕ 移除项目              │
-└─────────────────────────┘
-```
-
-**对话右键菜单**：
-```
-┌─────────────────────────┐
-│ 📌 置顶对话              │
-│ ✏️ 重命名                │
-│ ─────────────────────── │
-│ 🗄️ 归档                 │
-│ ✕ 删除                  │
-└─────────────────────────┘
-```
-
-### 3.5 添加项目文件夹
+### 2.4 Task 状态机
 
 ```
-── + 添加项目文件夹 ──
+创建 ──▶ backlog ──▶ todo ──▶ in_progress ──▶ in_evaluation ──▶ done
+              │         │         │               │
+              │         │         │               ├─ 采纳评估意见 ──▶ in_progress（修复）
+              │         │         │               ├─ 忽略并完成 ──▶ done
+              │         │         │               └─ 手动接管 ──▶ in_progress（dialog）
+              │         │         │
+              │         │         └──▶ blocked（外部依赖阻塞）
+              │         │                 └─ 解除 ──▶ blocked_from_status
+              └─────────┴──── cancelled
 ```
 
-点击弹出 Workspace 创建弹窗（见 §4.1）。
+**7 种状态**（Multica 标准 7 态）：backlog / todo / in_progress / in_evaluation / done / blocked / cancelled。
 
-### 3.6 Automations（可折叠）
+### 2.5 ExecutionRun
 
-```
-── 自动化 ──────────────────  [▾ 折叠]
-🔄 每日代码审查            ✅ 2h前
-🔄 PR 自动检查            🔄 运行中
-🔄 依赖更新检测            ✅ 1d前
-```
+```yaml
+ExecutionRun:
+  id: "run_abc123"
+  work_item_id: "FP-002"
+  mode: semi_auto               # manual|semi_auto|auto
+  evaluation_enabled: true
+  status: running               # pending|running|paused|completed|aborted
 
-**Automations 是规则和运行状态列表**。点击某条自动化可查看/编辑规则。
+  # Agent
+  primary_agent_id: "agent_coder"
+  primary_session_id: "session_abc"
+  sub_agent_runs: []            # V1 字段保留、默认空；V2 开始写入多 Agent 记录
 
-默认折叠，仅显示标题行 + 运行中任务数角标；展开后显示所有规则及最近运行状态。
+  # 步骤
+  current_step_index: 3
+  active_evaluation_cycle: 1
+  steps:
+    - { step_run_id: "step_plan", type: plan, status: completed }
+    - { step_run_id: "step_approval", type: approval, status: completed }
+    - { step_run_id: "step_exec", type: execute, status: running }
+    # ... evaluation, acceptance
 
-| 功能 | 说明 |
-|------|------|
-| 点击自动化行 | 展开该自动化的详情/编辑面板 |
-| 运行状态 | ✅ 完成 + 时间 / 🔄 运行中 / ❌ 失败 |
-| 右键操作 | 编辑 / 启用/禁用 / 立即运行 / 查看历史 / 删除 |
+  # Workspace 快照（启动时冻结）
+  workspace_snapshot:
+    resolved_workdir: "/Users/bruce/Workspace/FocusPilot"
+    source_type: local_project
+    base_commit: "3764760"
+    branch: "task/FP-002"
+    created_at: "2026-06-05T10:00:00"
 
-### 3.7 底部（36px，固定）
-
-```
-[⚙ 设置]
-```
-
----
-
-## 4. 创建流程
-
-Studio 有两层创建：添加项目文件夹（Workspace）和新建对话（Session）。
-
-### 4.1 添加项目文件夹（Workspace 创建）
-
-入口：侧边栏 Workspace 列表末尾 [+ 添加项目文件夹] 虚线按钮。
-
-```
-┌────────────────────────────────────────────┐
-│ 添加项目文件夹                              │
-│ 选择本地项目目录作为 Workspace              │
-│ ────────────────────────────────────────── │
-│                                            │
-│ 项目路径                                    │
-│ [/Users/bruce/Workspace/...] [📂 选择文件夹]│
-│                                            │
-│                       [取消]   [添加]        │
-└────────────────────────────────────────────┘
+  # Lease
+  workspace_write_lease:
+    lease_id: "lease_001"
+    status: active              # active|released|orphaned
+    acquired_at: "2026-06-05T10:00:00"
+    heartbeat_at: "2026-06-05T10:05:00"
+    expires_at: "2026-06-05T10:10:00"
 ```
 
-Workspace 只绑定本地路径和项目名，不绑定 Agent/Runtime。
+**Run 完成后状态迁移**：Run completed/aborted → append `run_history_ids` → `current_run_id = null` → release WorkspaceWriteLease。如需展示最近一次 Run，通过 `run_history_ids[-1]` 反查。
 
-### 4.2 新建对话（Session 创建）
-
-入口：Workspace 行 [+] 按钮、Workspace [···] 菜单 → 新建对话、⌘N（在当前活跃 Workspace 下新建；无活跃 Workspace 时弹出 §4.1 添加项目文件夹）。
-
-```
-┌────────────────────────────────────────────┐
-│ 新建对话                                    │
-│ 📂 FocusPilot                              │ ← 只读上下文
-│ ────────────────────────────────────────── │
-│                                            │
-│ 选择 Agent 执行器                           │
-│                                            │
-│ ▶ 🧑‍💻 代码工程师            ✳ Claude Code   │ ← AICrew 配置的成员
-│   全栈开发、调试、重构、代码审查             │
-│                                            │
-│   🔍 代码审查员              ✳ Claude Code   │
-│   PR 审查、安全审计、代码质量               │
-│                                            │
-│   ⚡ Codex 工程师            ⚡ Codex CLI    │
-│   并行任务、代码修改、自动验证              │
-│                                            │
-│   ◆ Gemini 助手             ◆ Gemini CLI    │
-│   长文本分析、文档生成                      │
-│                                            │
-│ ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈ │
-│   + 自定义 Agent...                        │ ← 仅本对话使用
-│     临时指定 Runtime + 指令，不保存到 AICrew │
-│                                            │
-│                     [取消]   [新建对话]      │
-└────────────────────────────────────────────┘
-```
-
-**绑定层级**：
-
-| 层级 | 绑定内容 |
-|------|---------|
-| **Workspace** | 本地路径、项目名、置顶状态 |
-| **Session** | Agent 执行器、对话历史、终端组、Diff/Git 状态、运行日志 |
-
-同一 Workspace 下允许多个 Session 使用不同执行器。Session 创建后绑定 Agent 不可更改。
-
-**AICrew 依赖 fallback 规则**：
-
-- AICrew 已配置成员：直接列出所有成员
-- AICrew 为空（未配置）：显示内置默认成员「🧑‍💻 代码工程师 / ✳ Claude Code」，底部显示「去 AICrew 配置更多 Agent →」引导链接
-
-### 4.3 Runtime 可用性
-
-Agent 行右侧显示其绑定 Runtime 的可用状态：
-
-| 状态 | 显示 | 可选 |
-|------|------|------|
-| **可用** | 正常显示 | 是 |
-| **未安装** | 禁用 + 「安装/配置」提示 | 否 |
-| **权限缺失** | 禁用 + 「授权」提示 | 否 |
-| **版本过低** | 禁用 + 「更新」提示 | 否 |
-
-[新建对话] 按钮仅在选中可用 Agent 时启用。
-
-### 4.4 自定义 Agent
-
-选择「+ 自定义 Agent...」时展开临时配置：
-
-```
-┌────────────────────────────────────────────┐
-│ 自定义 Agent（仅本对话使用）                │
-│                                            │
-│ Runtime   [claude-code ▾]                  │
-│ 指令      [                             ]  │
-│                                            │
-│              [取消]   [新建对话]              │
-└────────────────────────────────────────────┘
-```
-
-顶栏对自定义 Agent 显示为 `📂 项目名 · 对话名 · ⚙ Custom`，明确标识为临时配置。
-
----
-
-## 5. B 区：顶栏（44px，固定）
-
-```
-┌──────────────────────────────────────────────────────────┐
-│ 📂 FocusPilot · 重构 auth · ✳ Claude Code                │
-│                             [🔧 ▾]  [🖥]  [◨]           │
-└──────────────────────────────────────────────────────────┘
-```
-
-| 元素 | 说明 |
-|------|------|
-| 📂 项目名 | 当前 Session 所属 Workspace |
-| 对话名 | 当前活跃 Session 名称 |
-| Runtime | 该 Session 绑定的执行器（✳ Claude Code / ⚡ Codex CLI / ◆ Gemini CLI） |
-| [🔧 ▾] | 用相关工具打开（自动检测已安装开发工具） |
-| [🖥] | 终端面板显隐（⌘J） |
-| [◨] | 右面板显隐（⌘⇧B） |
-
-**「用相关工具打开」下拉**：
-
-```
-点击 [🔧 ▾] →
-┌──────────────────────┐
-│ 🔵 VS Code           │
-│ 🟣 Cursor            │
-│ 📂 Finder            │
-│ 🖥 Terminal          │
-│ 🖥 iTerm2            │
-│ 🖥 Ghostty           │
-└──────────────────────┘
-```
-
-自动扫描 `/Applications` 和已知路径，识别 IDE/编辑器/终端/文件管理器。点击后以当前 Workspace 项目目录为工作目录打开。
-
-**无 Session 选中时**：
-
-```
-┌──────────────────────────────────────────────────────────┐
-│ 选择左侧对话或添加项目文件夹         [+ 添加项目文件夹]     │
-└──────────────────────────────────────────────────────────┘
-```
-
----
-
-## 6. C 区：对话区（flex，可滚动）
-
-消息流交互，与 Claude Code / Codex CLI 一致的聊天体验。消息向上堆叠，新消息在底部。
-
-```
-👤 帮我把 animateRow 的动画改成 0.2s ease-out
-
-🤖 好的，我来修改 KanbanDataSource 中的动画参数...
-
-   已修改:
-   ~ KanbanDataSource.swift +3 -2       [查看 Diff →]
-
-👤 跑一下测试
-
-🤖 $ make build
-   ✓ Build succeeded
-
-   ┌─ 审批 ──────────────────────────────┐
-   │ $ rm -rf /tmp/old-build             │
-   │ [✓ Approve]  [✗ Deny]  [✎ Edit]    │
-   └─────────────────────────────────────┘
-```
-
-**对话区内嵌卡片**：
-
-| 卡片类型 | 说明 |
-|---------|------|
-| **Diff 卡片** | 文件变更摘要（文件名 + 增删行数），点击 [查看 Diff →] 在右面板打开 |
-| **终端输出卡片** | 命令 + 输出结果，深色背景 |
-| **审批卡片** | 危险命令需用户确认：[✓ Approve] / [✗ Deny] / [✎ Edit] |
-
-**新建对话 空状态**：
-
-```
-              🧑‍💻 代码工程师
-              ✳ Claude Code · claude-opus-4
-              全栈开发、调试、重构、代码审查
-
-           开始对话，描述你的需求
-```
-
-显示 Agent 角色名 + Runtime + 模型名 + 擅长领域。
-
----
-
-## 7. D 区：输入区（固定底部）
-
-```
-┌──────────────────────────────────────────────────────┐
-│ 描述内容...                                [↑ 发送]  │
-└──────────────────────────────────────────────────────┘
-```
-
-- 多行自适应高度（最小 1 行，最大 6 行）
-- Enter 发送，Shift+Enter 换行
-
----
-
-## 8. E 区：右面板（Diff 审查 + Git 操作，⌘⇧B 切换）
-
-右面板是 Studio 的**代码审查和交付中心**。承载 Diff 审查、inline 评论和 Git 操作。
-
-### 8.1 Diff 审查视图
-
-```
-┌─ 右面板 ────────────────────────┐
-│ ┌─ 文件 Tab 条 ──────────────┐ │
-│ │ auth.ts │ oauth.ts      │✕│ │
-│ └─────────────────────────────┘ │
-│                                  │
-│  12  - const auth = basic()     │  ← 红色：删除行
-│  12  + const auth = oauth2()    │  ← 绿色：新增行
-│  13    const config = {         │
-│  14  + const secret = env.KEY   │
-│      ┌─ 💬 ──────────────────┐  │  ← inline 评论
-│      │ 这里应该用 env var     │  │
-│      │ 而不是硬编码           │  │
-│      └───────────────────────┘  │
-│                                  │
-│ ── 变更文件 ─────────────── 2  │
-│ ☑ 📝 auth.ts                 M │
-│ ☑ 📝 oauth.ts                U │
-│                                  │
-│ ┌──────────────────────────────┐ │
-│ │ [✓ Stage]  [↩ Revert]       │ │
-│ │ [📝 Commit ⌘↩]             │ │
-│ │ [⬆ Push]  [🔀 Create PR]   │ │
-│ └──────────────────────────────┘ │
-└──────────────────────────────────┘
-```
-
-### 8.2 功能说明
-
-| 功能 | 说明 |
-|------|------|
-| **文件 Tab** | 多文件切换浏览，每个 Tab 可单独关闭 |
-| **Diff 视图** | 红绿对比显示代码变更，支持统一视图和并排视图 |
-| **Inline 评论** | 点击 Diff 行添加评论，Agent 根据评论继续修改 |
-| **变更文件列表** | 勾选控制 Stage 范围，显示 M(Modified)/U(Untracked)/D(Deleted) 状态 |
-
-### 8.3 Git 操作按钮
-
-| 按钮 | 说明 |
-|------|------|
-| **[✓ Stage]** | 暂存选中文件 |
-| **[↩ Revert]** | 还原选中文件（有安全限制，见 8.4） |
-| **[📝 Commit ⌘↩]** | 弹出 commit message 输入，提交已暂存文件 |
-| **[⬆ Push]** | 推送到远程 |
-| **[🔀 Create PR]** | 创建 Pull Request |
-
-### 8.4 Stage/Revert 安全规则
-
-| 规则 | 说明 |
-|------|------|
-| **作用范围** | 默认只允许操作当前 Session 产生的 changed files |
-| **Revert 二次确认** | Revert 必须展示即将还原的文件清单，用户二次确认后执行 |
-| **未追踪文件** | 仅允许 Stage，不允许 Revert（无法还原） |
-| **用户外部修改** | 非当前 Session 产生的修改，标记为"外部修改"，不可直接 Stage/Revert |
-| **冲突状态** | 存在 Git 冲突的文件，显示冲突标记，不可直接操作，需先解决冲突 |
-
-### 8.5 打开路径
-
-所有 Diff 预览均在右面板进行，不占用对话区。
-
-| 触发 | 目标 |
-|------|------|
-| 对话区 Diff 卡片点击 [查看 Diff →] | 右面板打开该文件 Diff Tab |
-| Triage 结果行点击 | 右面板打开详情/日志视图 |
-| 自动化行点击（运行中/失败） | 右面板打开实时日志/失败日志 |
-
----
-
-## 9. F 区：终端面板（⌘J 切换）
-
-位于输入区下方、页面最底部的可展开/收起内嵌终端。
-
-```
-┌─ 终端面板 ─────────────────────────────────────┐
-│ ┌─ Tab 条 ──────────────────────────────────┐  │
-│ │ Terminal 1 ✕ │ Terminal 2 ✕ │     [+]      │  │
-│ │ ━━━━━━━━━━━━                               │  │
-│ └────────────────────────────────────────────┘  │
-│ $ make build                                    │
-│ Build succeeded.                                │
-│ $                                               │
-└─────────────────────────────────────────────────┘
-```
-
-| 功能 | 说明 |
-|------|------|
-| **切换显隐** | 顶栏 [🖥] 按钮或 ⌘J 快捷键 |
-| **[+] 新建终端** | Tab 条右侧，点击新建终端实例 |
-| **✕ 关闭终端** | 每个 Tab 可单独关闭，最后一个关闭后面板自动收起 |
-| **工作目录** | 自动设为当前 Session 的项目路径 |
-| **切换 Session** | 终端实例与 Session 绑定，切换时显示目标 Session 的终端组；目标无终端时面板自动收起。不销毁原 Session 的运行中进程 |
-| **关闭运行中终端** | 终端内有活跃进程时，关闭需二次确认（"终端中有正在运行的进程，确定关闭？"） |
-
----
-
-## 10. 数据模型
-
-### 10.1 StudioSession
+### 2.6 StudioSession
 
 ```yaml
 StudioSession:
   id: "session_abc"
   title: "重构 auth 模块"
-
-  # 项目
   project_id: "proj_focuspilot"
   workdir: "/Users/bruce/.../FocusPilot"
 
   # Agent（创建时绑定，不可更改）
-  crew_member_id: "crew_code_engineer"    # 关联 AICrew CrewMember，null 表示自定义 Agent
-  agent_display_snapshot:                  # 创建时快照，避免 AICrew 修改导致历史语义漂移
+  crew_member_id: "crew_code_engineer"
+  agent_display_snapshot:
     name: "代码工程师"
     icon: "🧑‍💻"
     specialty: "全栈开发、调试、重构、代码审查"
-  runtime: claude_code                     # claude_code | codex_cli | gemini_cli
+  runtime: claude_code          # claude_code | codex_cli | gemini_cli
   model: "claude-opus-4"
-  mcp_config_snapshot:                     # 创建时快照 AICrew 的 MCP 配置
-    - server: "context7"
-    - server: "github"
 
-  # 状态
-  status: active                           # active | idle | done | ended
-  is_custom_agent: false                   # true = 自定义 Agent，不保存到 AICrew
-
+  status: active                # active | idle | done | ended
   transcript_ref: "sessions/session_abc/transcript.jsonl"
-
-  created_at: "2026-05-25T10:00:00"
-  last_active_at: "2026-05-25T10:30:00"
+  created_at: "2026-06-05T10:00:00"
+  last_active_at: "2026-06-05T10:30:00"
 ```
 
-### 10.2 AutomationRule
+### 2.7 AutomationRule / TriageItem
 
-```yaml
-AutomationRule:
-  id: "auto_001"
-  name: "每日代码审查"
-  project_id: "proj_focuspilot"
-
-  # 调度
-  schedule: "0 9 * * *"                    # cron 表达式
-  crew_member_id: "crew_code_reviewer"     # 执行此自动化的 Agent
-  runtime: claude_code
-
-  # 状态
-  enabled: true
-  last_run_at: "2026-05-25T09:00:00"
-  last_status: completed                   # running | completed | failed
-```
-
-### 10.3 TriageItem
-
-```yaml
-TriageItem:
-  id: "triage_001"
-  automation_id: "auto_001"
-  run_id: "run_20260525_0900"
-
-  # 结果
-  summary: "发现 2 个潜在问题"
-  severity: warning                        # info | warning | error
-  detail_ref: "triage/triage_001/detail.md"
-
-  # 用户操作
-  status: pending                          # pending | accepted | archived | spawned_session
-  spawned_session_id: null                  # 如果用户选择派生对话
-
-  created_at: "2026-05-25T09:01:00"
-```
-
-### 10.4 Runtime
-
-| Runtime | 图标 | 说明 |
-|---------|------|------|
-| `claude_code` | ✳ | Claude Code，Anthropic 模型 |
-| `codex_cli` | ⚡ | Codex CLI，OpenAI 模型 |
-| `gemini_cli` | ◆ | Gemini CLI，Google 模型 |
+沿用原 Studio 定义，不变。
 
 ---
 
-## 11. 交互规则汇总
+## 3. 执行模式
 
-### 11.1 Session 上下文切换
+### 3.1 三种模式 + 两个开关
 
-| 操作 | 行为 |
-|------|------|
-| 点击任意对话 Session | 对话区 + 顶栏 + 右面板 + 终端，全部切换到该 Session 上下文 |
-| 切换 Session 时右面板 | 清空所有已打开的 Diff Tab，自动收起 |
-| 切换 Session 时终端 | 切换到目标 Session 的终端组（不销毁原 Session 终端），目标无终端时收起 |
+| 用户面向模式 | 底层 execution_mode | 定位 | 执行模型 |
+|------------|-------------------|------|---------|
+| **普通任务** | `none` | 手动管理 | 不启动 Agent Runtime，不创建 ExecutionRun，但仍有 Workspace |
+| **对话** | `manual` | 和 Agent 交互式协作 | 启动 dialog ExecutionRun，创建/绑定 primary Session |
+| **自动** | `semi_auto`（审批开）/ `auto`（审批关） | Agent 自主规划执行 | 启动 auto ExecutionRun，可绑定 primary Session 展示日志和交互 |
 
-### 11.2 快捷键
+自动模式的两个开关：
+
+| 开关 | 默认 | 开启 | 关闭 |
+|------|------|------|------|
+| 审批计划 | ✅ 开 | plan → 等用户批准 → execute（底层 semi_auto） | plan → 直接执行（底层 auto） |
+| 启用评估 | ❌ 关 | execute → Evaluation Agent 审查 | execute → 直接验收 |
+
+### 3.2 步骤流
+
+```
+普通任务:     (无步骤) → 手动打勾 → done
+
+对话:         dialog → (evaluation) → 验收
+
+自动:
+  审批开+评估关:  plan → 批准 → execute → 验收
+  审批开+评估开:  plan → 批准 → execute → evaluation → 验收
+  审批关+评估关:  plan → execute → 验收
+  审批关+评估开:  plan → execute → evaluation → 验收
+```
+
+### 3.3 手动接管
+
+任何模式执行中，用户都可点击"手动接管"：
+
+- 当前 Run 暂停
+- 打开对话视图
+- 注入当前全部上下文（plan.md、execution_log、evaluation_report、changed_files）
+- 用户和 Agent 对话微调
+- 完成后提交验收或标记 done
+
+---
+
+## 4. Workspace 模型
+
+### 4.1 核心契约
+
+**每个 WorkItem 创建时必须有 `workspace_ref`**。普通任务不启动 Agent，但仍绑定 Workspace。
+
+### 4.2 V1 两种 Workspace 类型
+
+| 类型 | 路径 | 适用场景 | 产出交付 |
+|------|------|---------|---------|
+| `temporary` | `{focuspilot_root}/workspaces/{task_id}/` | 快速任务、无关联项目 | 用户手动取用或复制到项目 |
+| `local_project` | 用户选定的 Project 目录 | 有明确归属项目 | Studio Diff 审查 → Stage → Commit → Push |
+
+V2 预留：`remote_git`（clone Git repo 到临时目录，产出以 PR 交付）。
+
+### 4.3 默认策略
+
+| 场景 | 默认 Workspace |
+|------|---------------|
+| 创建任务时未选项目 | `temporary` |
+| 创建任务时选了本地 Project | `local_project` |
+
+### 4.4 延迟物化
+
+创建 Task 时分配稳定路径，增加 `materialized: false`。首次写入附件、启动执行或打开目录时创建真实目录，`materialized` 变为 `true`。
+
+### 4.5 WorkspaceWriteLease（写入租约）
+
+Session 本身不占用 Workspace 写锁。只有当 Agent Runtime 写入文件、执行命令或进行 Git 操作时，才通过 ExecutionRun 申请 WorkspaceWriteLease。
+
+**V1 硬规则**：
+- 同一 `resolved_workdir` 同时只允许一个 active WorkspaceWriteLease
+- 同一 ExecutionRun 内的 Primary Agent 与 Sub Agents 共享同一个 lease
+- 纯对话 / 只读上下文读取：不占用写锁，多个 Session 可同时存在
+
+**Lease 生命周期**：
+
+| 事件 | Lease 行为 |
+|------|-----------|
+| ExecutionRun completed / aborted | 自动释放（status → released） |
+| Runtime 心跳超时（heartbeat_at + TTL < now） | 标记 orphaned |
+| App 重启时扫描 | 扫描 active lease；心跳超时则标记 orphaned，并提示用户确认释放 |
+| 用户强制释放 orphaned lease | 二次确认后释放，关联 Run 标记 aborted |
+
+### 4.6 本地项目的脏检测
+
+默认直接在项目目录执行。启动执行时如果检测到未提交改动，弹出提示：
+
+```
+⚠️ 项目中有未提交的修改（3 个文件）
+建议先提交或创建独立分支再启动执行。
+
+[忽略继续]  [创建任务分支]  [取消]
+```
+
+"创建任务分支"：自动 `git checkout -b task/{task_id}`。
+
+### 4.7 临时 Workspace 生命周期
+
+```
+物化: 首次写入附件、启动执行或打开目录时创建真实目录（延迟物化）
+使用: Agent 在其中执行
+完成: 任务 done 后目录保留
+清理: done/cancelled 超过 30 天自动 GC
+保护: 有未 push commit 或用户标记保留时不清理
+复用: 同一任务重新启动时复用原目录
+配置: Settings 可调 GC 天数和磁盘上限
+```
+
+### 4.8 Project 与 Workspace 的关系
+
+- `Project` = 资产归属实体（Projects 页面管理），一个 Project 有一个本地目录
+- `Workspace` = 执行目录实体（WorkItem 的执行场所）
+- V1：一个 Project 最多绑定一个 local workspace（= 项目目录本身）
+- temporary workspace 可选关联 Project（通过 `project_id`），产物不自动写回项目目录，需显式操作迁移
+- 项目视图中 Workspace 类型和路径应可见
+
+---
+
+## 5. Task / Session / ExecutionRun 关系
+
+### 5.1 关系模型
+
+```
+Workspace (执行目录)
+├── Session A: 💬 自由对话（无关联 Task）
+├── Session B: 💬 Task 主对话（primary_session）
+└── Session C: 💬 参考对话（related_context）
+
+WorkItem (Task)
+├── current_run_id ──→ ExecutionRun（一对一，同时只有一个活跃）
+│   └── primary_agent_id + primary_session_id
+├── run_history_ids: [旧 Run]
+├── related_sessions[]: 参考上下文
+└── workspace_ref ──→ Workspace
+```
+
+**硬规则**：
+- 一个 Task 同时只有一个活跃 ExecutionRun
+- 一个 ExecutionRun 由一个 primary Agent 推进；Sub Agents 共享同一个 WorkspaceWriteLease
+- Session 本身不占锁，只有 Agent Runtime 写入时通过 ExecutionRun 占锁
+- Run 完成/停止后：append `run_history_ids` → `current_run_id = null` → release lease
+
+### 5.2 primary_session 转换规则
+
+| 当前状态 | 操作 | 结果 |
+|---------|------|------|
+| Task 无 primary_session | 关联 Session | 设为 primary |
+| Task 有 primary，无 active Run | 关联新 Session | 默认 related；可右键"设为主对话"替换 |
+| Task 有 primary，有 active Run | 关联新 Session | 只能成为 related；不允许替换 |
+| Active Run 完成/停止后 | 替换 primary | 允许，旧 primary 降为 related |
+
+### 5.3 任务创建的双向规则
+
+| 创建入口 | 行为 |
+|---------|------|
+| 全局视图 → 新建任务 | 选 Workspace + 可选归属项目 → 项目工作项 Tab 同步可见 |
+| 项目工作项 Tab → 新建任务 | 自动关联当前项目 + 使用项目 Workspace → 全局视图同步可见 |
+| 对话右面板 → 新建任务 | 自动关联当前项目 + 当前 Session → 双向可见 |
+| Inbox → 转为工作项 | 选归属项目 → 同上 |
+
+---
+
+## 6. 侧边栏
+
+侧边栏分两段：**全局视图**（跨项目筛选器）+ **项目列表**（按项目组织任务和对话）。两段共存，不需要 Tab 切换。
+
+```
+┌─ 侧边栏 260px ─────────────────────┐
+│                                      │
+│  🔍 搜索任务和对话...                │
+│                                      │
+│  ── 全局视图 ──────────────────────  │
+│  📅 今日聚焦        (3)              │
+│  📆 本周计划        (8)              │
+│  📋 本月计划       (12)              │
+│  🌐 全局规划       (24)              │
+│  ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─  │
+│  🤖 执行中          (2)              │
+│  🔔 等我决策        (1)              │
+│  📥 Triage          (3)              │
+│                                      │
+│  ── 项目 ──────────────────── [+]   │
+│  ▾ 📂 FocusPilot                    │
+│     📋 工作项 (5)              [+]  │
+│     💬 对话   (3)              [+]  │
+│     🔄 自动化 (2)                    │
+│  ▸ 📂 PilotOne                      │
+│                                      │
+│  [+ 添加项目]                        │
+│                                      │
+│  ── 自动化 ────────────── [▾ 折叠]  │
+│  🔄 每日代码审查       ✅ 2h前       │
+│  🔄 PR 自动检查       🔄 运行中      │
+│                                      │
+│  [⚙ 设置]                           │
+└──────────────────────────────────────┘
+```
+
+### 6.1 全局视图筛选规则
+
+继承原 Focus 的筛选语义：
+
+| 侧边栏选择 | 筛选条件 |
+|-----------|---------|
+| 今日聚焦 | schedule=today |
+| 本周计划 | schedule=today\|week |
+| 本月计划 | goal.month=当月 + 未关联目标中 schedule∈{today,week,month} |
+| 全局规划 | 无筛选 |
+| 执行中 | status=in_progress & execution_mode≠none |
+| 等我决策 | status=in_evaluation \| (approval pending) |
+| Triage | 自动化结果待处理 |
+
+### 6.2 项目列表
+
+每个项目展开后显示三个子节点：
+- **📋 工作项**：该 `project_id` 下的 WorkItem 数量（与 Workspace 类型无关）
+- **💬 对话**：该项目的 Studio Session 数量
+- **🔄 自动化**：该项目的 Automation 规则数量
+
+---
+
+## 7. 主区域
+
+### 7.1 场景 A：选中全局视图
+
+显示跨项目的任务视图，顶部 Tab 切换三种展示模式：
+
+```
+┌─ 主区域 ──────────────────────────────────────────────────────┐
+│                                                                │
+│  今日聚焦                    [📐 规划]  [📋 看板]  [📄 列表]    │
+│  ───────────────────────────────────────────────────────────── │
+│                                                                │
+│  继承原 Focus 三视图能力：四级甘特 / 七态看板 / 全量列表        │
+│                                                                │
+└────────────────────────────────────────────────────────────────┘
+```
+
+**三个视图**：
+
+- **规划视图**：四级同构甘特（全局 月级 / 本月 周级 / 本周 天级 / 今日 小时级）
+- **看板视图**：仅展示 executable/hybrid 角色 WorkItem，按七态分列
+- **列表视图**：全量表格化展示，支持多维排序和分组
+
+详细规格继承自原 Focus 设计（见 [03-focus.md](03-focus.md) 历史参考 §6-§7）。
+
+### 7.2 场景 B：选中某个项目
+
+显示项目上下文，Tab 切换两个维度：
+
+```
+┌─ 主区域 ──────────────────────────────────────────────────────┐
+│                                                                │
+│  📂 FocusPilot                       [📋 工作项 | 💬 对话]      │
+│  ───────────────────────────────────────────────────────────── │
+│                                                                │
+│  📋 工作项 Tab:                                                │
+│    可切换视图：[看板] [列表]                                     │
+│    该项目的 WorkItem 看板/列表（按 project_id 自动过滤）         │
+│    [+ 新建任务]                                                 │
+│                                                                │
+│  💬 对话 Tab:                                                   │
+│    该项目的 Session 列表                                        │
+│    🧑‍💻 重构 auth          ● 活跃 · 3m · ✳ Claude Code          │
+│    🔍 代码审查            ✅ 完成 · 1h · ✳ Claude Code          │
+│    ⚡ Bug fix #12         ● 活跃 · 15m · ⚡ Codex CLI           │
+│                                                                │
+└────────────────────────────────────────────────────────────────┘
+```
+
+### 7.3 场景 C：进入对话（Session）
+
+点击某个 Session 后进入对话执行视图：
+
+```
+┌─ 顶栏 ────────────────────────────────────────────────────────┐
+│  ← 📂 FocusPilot · 重构 auth · ✳ Claude Code                 │
+│                                        [🔧▾] [🖥] [◨]        │
+├─ 对话区 ──────────────────────────────┬─ 右面板 ──────────────┤
+│                                       │ [📋 任务|📝 Diff|📁 Git]│
+│  👤 帮我改动画参数                     │                       │
+│  🤖 好的，修改中...                   │  📋 任务 Tab:           │
+│     ~ KanbanDataSource.swift [Diff →] │  ● FP-002 看板拖拽 P0  │
+│                                       │  ○ FP-003 列表视图 P1  │
+│  ┌─ 输入区 ────────────────┐         │  ✓ FP-001 数据模型     │
+│  │ 描述内容...    [↑ 发送]  │         │  [+ 新建任务]           │
+│  └──────────────────────────┘         │                       │
+│  ┌─ 终端面板 ──────────────┐         │  📝 Diff / 📁 Git Tab:  │
+│  │ T1✕│T2✕│[+]            │         │  （与原 Studio 一致）   │
+│  │ $ make build             │         │                       │
+│  └──────────────────────────┘         │                       │
+└───────────────────────────────────────┴───────────────────────┘
+```
+
+右面板新增 **📋 任务 Tab**（与 Diff、Git 并列）：
+- 显示当前项目的任务列表（紧凑模式）
+- 点击任务 → 关联到当前 Session，上下文注入对话
+- [+ 新建任务] → 自动关联当前项目 + 当前 Session
+
+### 7.4 场景 D：打开 Task 详情
+
+从任何视图点击 Task 打开详情面板：
+
+```
+┌─ Task 详情 ──────────────────────────────────────────────────┐
+│  ← 返回    FP-002 看板状态模型实现           ● in_progress   │
+│                                                               │
+│  ┌─ 执行步骤进度条 ────────────────────────────────────────┐ │
+│  │  ✅ ──── ✅ ──── ● ──── ○ ──── ○                       │ │
+│  │  规划    确认    执行    评估    验收                     │ │
+│  └─────────────────────────────────────────────────────────┘ │
+│                                                               │
+│  ┌─ Agent Live Card（运行中时显示）────────────────────────┐ │
+│  │  🤖 代码工程师 · Running · 00:03:42                     │ │
+│  │  > 正在修改 Models.swift...                             │ │
+│  │  [停止]  [手动接管]  [查看 Transcript]                   │ │
+│  └─────────────────────────────────────────────────────────┘ │
+│                                                               │
+│  [📄 规划 ✓] [⚡ 执行 ●] [📝 评估] [✅ 验收]                │
+│  （Tab 内容区）                                               │
+│                                                               │
+│  ── 关联对话 ──────────────────────────────────              │
+│  💬 重构 auth · ✳ Claude Code · 30min  [主对话]              │
+│  💬 Bug fix #12 · ⚡ Codex · 15min     [参考]                │
+│  [+ 新建关联对话]                                             │
+│                                                               │
+│  ── 属性 ───────────────────────────────────────             │
+│  状态 / 优先级 / Workspace / 归属项目 / 目标 / 执行方式       │
+└───────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 8. 评估系统
+
+沿用原 Focus 评估系统设计，不变。核心要点：
+
+- Evaluation Agent 只产出评估意见，不产出 pass/fail
+- 用户三选一：按建议处理 / 忽略并完成 / 手动接管
+- EvaluationCycle 可循环，每轮修复由用户显式触发
+- severity（critical/important/nit）帮助用户排序，不自动阻断
+
+详细规格见 [03-focus.md](03-focus.md) 历史参考 §4。
+
+---
+
+## 9. 创建流程
+
+### 9.1 新建任务弹窗
+
+```
+┌──── 新建工作项 ────────────────────────────────────┐
+│                                                     │
+│  标题: [                                        ]   │
+│  描述: [                                        ]   │
+│                                                     │
+│  ── Workspace ────────────────────────────────────  │
+│  (●) 临时目录      （自动创建，适合快速任务）          │
+│  ( ) 本地项目      [选择项目... ▾]                    │
+│                                                     │
+│  安排: [本周 ▾]    优先级: [P1 ▾]                    │
+│                                                     │
+│  ── 执行方式 ─────────────────────────────────────  │
+│  [✅ 普通任务]   [💬 对话]   [🤖 自动]               │
+│                                                     │
+│  选中"对话"时:                                      │
+│  ┌──────────────────────────────────────────────┐  │
+│  │ Agent: [代码工程师 ▾]                         │  │
+│  └──────────────────────────────────────────────┘  │
+│                                                     │
+│  选中"自动"时:                                      │
+│  ┌──────────────────────────────────────────────┐  │
+│  │ Agent: [代码工程师 ▾]                         │  │
+│  │ ☑ 执行前需要我批准计划                         │  │
+│  │ ☐ 完成后启用 AI 评估                           │  │
+│  └──────────────────────────────────────────────┘  │
+│                                                     │
+│  归属目标: [4月/FP 0.0.1 ▾]  （可选）                │
+│                                                     │
+│           [创建]  [创建并启动]                        │
+└─────────────────────────────────────────────────────┘
+```
+
+### 9.2 联动规则
+
+- 选"本地项目"→ 自动填充 `project_id` 和 `workspace_ref`
+- 选"临时目录"→ `project_id` 可选填，`workspace_ref` 自动生成
+- 选"对话"或"自动"→ 必须确认 Agent
+- 选"普通任务"→ Agent 配置区隐藏
+
+### 9.3 新建 Session（项目对话 Tab）
+
+入口：项目 💬 对话子节点的 [+] 按钮、⌘N。
+
+选择 Agent 执行器 → 新建对话。沿用原 Studio 的 Session 创建流程（Agent 选择 + Runtime 可用性 + 自定义 Agent）。
+
+---
+
+## 10. 对话区 / 输入区 / 终端面板
+
+沿用原 Studio 设计（六区布局中的 C/D/F 区），不变：
+
+- **对话区**：消息流 + 内嵌 Diff 卡片 + 终端输出卡片 + 审批卡片
+- **输入区**：多行自适应，Enter 发送，Shift+Enter 换行
+- **终端面板**：⌘J 切换，多 Tab 终端，工作目录跟随 Session
+
+---
+
+## 11. 右面板（Diff 审查 + 任务 + Git 操作）
+
+在原 Studio 右面板基础上新增 📋 任务 Tab：
+
+### 11.1 Tab 切换
+
+```
+[📋 任务 | 📝 Diff | 📁 Git]
+```
+
+### 11.2 📋 任务 Tab
+
+显示当前项目的 WorkItem 列表（紧凑模式）：
+- 按状态分组（执行中 / 待办 / 已完成）
+- 每行：状态点 + ID + 标题 + 优先级
+- 点击任务 → 关联到当前 Session
+- [+ 新建任务] → 自动关联当前项目 + 当前 Session
+
+### 11.3 📝 Diff Tab / 📁 Git Tab
+
+沿用原 Studio 的 Diff 审查 + Git 操作规则，包括：
+- 红绿对比 Diff 视图 + inline 评论
+- 变更文件列表 + Stage/Revert
+- Commit / Push / Create PR
+- Stage/Revert 安全规则（只操作当前 Session changed files）
+
+---
+
+## 12. Triage + Automations
+
+沿用原 Studio 设计，不变。
+
+- **Triage**：侧边栏全局视图段，收纳需要用户处理的自动化结果
+- **Automations**：侧边栏底部可折叠区域 + 项目级自动化子节点
+
+---
+
+## 13. 空状态与错误状态
+
+| 场景 | 空状态文案 | 引导操作 |
+|------|-----------|---------|
+| 无今日任务 | 今日无计划任务 | [从 Backlog 安排] [新建任务] |
+| 无 Agent 执行中 | 当前没有 Agent 在运行 | [启动任务] |
+| 看板全空 | 还没有工作项 | [新建任务] [从 Inbox 转入] |
+| 列表全空 | 没有匹配的工作项 | [清除筛选] [新建任务] |
+| 项目无对话 | 还没有对话 | [新建对话] |
+| 项目无工作项 | 该项目没有工作项 | [新建任务] |
+| 任务 Blocked | 任务被阻塞 | [查看阻塞原因] [解除阻塞] |
+| 新建对话空状态 | Agent 名 + Runtime + 擅长领域 | 开始对话，描述你的需求 |
+
+---
+
+## 14. 快捷键
 
 | 快捷键 | 功能 |
 |--------|------|
@@ -646,27 +691,34 @@ TriageItem:
 
 ---
 
-## 12. 术语
+## 15. V2 预留
 
-| 术语 | 定义 |
-|------|------|
-| **Session（对话）** | Studio 的核心工作单元，绑定项目和 Agent，有独立对话和终端 |
-| **Triage** | 自动化结果中需要用户处理的项目收件箱 |
-| **Automation** | 后台自动化规则（定时代码审查、PR 检查等） |
-| **Agent 执行器** | Session 创建时选择的 AICrew 成员，决定用什么 Runtime 和配置执行 |
+不在 V1 展示：
+- `remote_git` Workspace 类型
+- Git worktree 并行隔离执行
+- Cloud 执行模式（远程容器）
+- Handoff（Worktree 变更迁移到主工作区）
+- Computer Use / Appshot
+- 内置浏览器
+- Resume / Fork Session
+- Pop-out Window
+- 右面板文件编辑能力
 
 ---
 
-## 13. V2 预留
+## 16. 术语
 
-V1 不展示 Local/Worktree/Cloud/Handoff 入口；这些能力仅作为内部或后续扩展，不出现在创建弹窗、顶栏、Session 行、右面板按钮和右键菜单中。
+### 核心模型概念
 
-- Worktree 隔离执行（Git worktree 并行执行）
-- Cloud 执行模式（远程容器执行）
-- Handoff（Worktree 变更迁移到主工作区）
-- Computer Use（macOS 桌面 GUI 操控）
-- Appshot（窗口截图采集到 Session 上下文）
-- 内置浏览器（本地 Web 应用预览 + 元素评论）
-- Resume / Fork Session（恢复/分叉历史 Session）
-- 右面板文件编辑能力
-- Pop-out Window（Session 弹出为独立窗口）
+| 术语 | 定义 |
+|------|------|
+| **Workspace / 工作区** | 执行目录实体，与 Project（资产归属）和 Goal（规划归属）独立 |
+| **Project** | 资产归属实体（Projects 页面管理） |
+| **Goal** | 规划归属实体（目标树节点） |
+| **WorkItem / 工作项** | 统一工作项模型 |
+| **Session / 对话** | 交互容器（对话 UI），本身不占 Workspace 写锁 |
+| **ExecutionRun** | 一次完整执行实例，持有 WorkspaceWriteLease |
+| **WorkspaceWriteLease** | Workspace 写入租约；V1 同一 workdir 只允许一个 active lease |
+| **primary Session / 主对话** | 关联 ExecutionRun 的 Session，每个 Task 至多一个 |
+| **related Sessions / 参考对话** | 仅作为上下文参考，不推进状态 |
+| **远程 Git Workspace** | V2 预留，不在 V1 UI 展示 |

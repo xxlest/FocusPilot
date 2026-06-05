@@ -28,7 +28,7 @@ FocusPilot 定位为 macOS 上的个人自迭代系统（Personal AIOS）—— 
 - **市场分析**：`docs/产品战略/FocusPilot市场分析与阶段验证方案.md` — 市场机会、用户画像、五阶段验证
 ### UI 设计（V1 新界面）
 - **设计总览**：`docs/FP-UI.md` — 8 个页面进度、技术架构、参考来源
-- **页面设计**：`docs/fp-ui/00~08` — Layout / Home / ~~Inbox（已合并至 Projects）~~ / Focus / Studio / Projects（含 Inbox Tab）/ Review / AICrew / Settings
+- **页面设计**：`docs/fp-ui/00~08` — Layout / Home / ~~Inbox~~ / ~~Focus~~ / Studio（含原 Focus 全局视图）/ Projects（含 Inbox Tab）/ Review / AICrew / Settings
 - **功能说明书**：`docs/focuspilot-ui-features.md` — 从产品定位到 UI 细节的递进式讲解
 
 ### 竞品分析
@@ -67,15 +67,15 @@ FocusPilot 定位为 macOS 上的个人自迭代系统（Personal AIOS）—— 
 
 ### UI 设计进度（fp-ui/）
 
-一级导航 7 项：Home · Projects · Focus · Studio · Review · AICrew · Settings
+一级导航 6 项：Home · Projects · Studio · Review · AICrew · Settings
 
 | 页面 | 完整度 | 状态 | 下一步 |
 |------|:------:|------|--------|
 | 00-layout | 5/5 | 可开发 | — |
 | 01-home | 5/5 | 可开发 | — |
 | 02-inbox | — | 已合并至 Projects | 历史参考，见 05-area-projects.md §7 |
-| 03-focus | 5/5 | 可开发 | — |
-| 04-studio | 5/5 | 可开发 | — |
+| 03-focus | — | 已合并至 Studio | 历史参考，见 04-studio.md |
+| 04-studio (Studio) | 5/5 | 可开发 | 含全局视图（原 Focus）+ 项目视图（原 Studio）+ Workspace + ExecutionRun |
 | 05-area-projects (Projects) | 5/5 | 可开发 | 含 Inbox Tab + Projects Tab |
 | 06-review | 5/5 | 可开发 | — |
 | 07-ai-crew | 5/5 | 可开发 | — |

@@ -1,9 +1,16 @@
-# Focus 页面设计
+# ~~Focus 页面设计~~
 
-> **状态**：可开发
-> **更新**：2026-05-28
-> **原型**：[03-focus-prototype.html](03-focus-prototype.html)、[03-focus-session-prototype.html](03-focus-session-prototype.html)（历史参考，Session 已归入 Task 详情）
-> **关联**：[PRD §3.1 两阶段模型](../PRD.md)、[PRD §3.3 Task 双轴管理](../PRD.md)
+> **⚠️ 已合并 — DO NOT USE AS SOURCE OF TRUTH**
+>
+> Focus 已合并至 [Studio 页面](04-studio.md)。
+> 合并后的 Studio 包含原 Focus 的全部能力（全局视图：规划/看板/列表 + Task 详情 + 执行模式 + 评估系统）。
+> **所有工作项/执行模式/评估系统相关契约的唯一权威来源为 [04-studio.md](04-studio.md)**。
+> 设计决策详见 [Focus + Studio 合并设计](../superpowers/specs/2026-06-05-focus-studio-merge-design.md)。
+> **合并日期**：2026-06-05
+
+---
+
+> ⚠️ 以下为合并前的历史内容，仅供参考，不作为实现依据 ↓
 
 ---
 

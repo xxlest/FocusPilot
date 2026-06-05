@@ -2065,7 +2065,6 @@
         </div>
         <button class="nav-btn active" data-page="home" title="Home">🏠</button>
         <button class="nav-btn" data-page="areas" title="Projects" style="position:relative">📂<span class="nav-badge" id="projects-inbox-badge" style="position:absolute;top:4px;right:4px;background:var(--accent);color:#fff;font-size:9px;min-width:14px;height:14px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-weight:600">10</span></button>
-        <button class="nav-btn" data-page="focus" title="Focus">🎯</button>
         <button class="nav-btn" data-page="studio" title="Studio">💻</button>
         <button class="nav-btn" data-page="review" title="Review">🧠</button>
         <button class="nav-btn" data-page="crew" title="AICrew">🤖</button>
@@ -2142,83 +2141,40 @@
           </div>
         </section>
 
-        <section class="side-view" data-page="focus">
-          <div class="side-head">
-            <div class="side-title">
-              <h2>Focus</h2>
-              <button class="btn icon" onclick="openNewTaskModal()">+</button>
-            </div>
-            <input class="search" placeholder="搜索目标和任务..." />
-          </div>
-          <div class="side-scroll">
-            <div class="label">快捷视图</div>
-            <div class="side-item active" data-focus-filter="all" onclick="applyFocusFilter(this)">
-              <span>📋 全局规划</span><span class="count">11</span>
-            </div>
-            <div class="side-item" data-focus-filter="month" onclick="applyFocusFilter(this)">
-              <span>📆 本月计划</span><span class="count">6</span>
-            </div>
-            <div class="side-item" data-focus-filter="week" onclick="applyFocusFilter(this)">
-              <span>📅 本周计划</span><span class="count">8</span>
-            </div>
-            <div class="side-item" data-focus-filter="today" onclick="applyFocusFilter(this)">
-              <span>🔥 今日聚焦</span><span class="count">2</span>
-            </div>
-            <div class="side-item" data-focus-filter="agent" onclick="applyFocusFilter(this)">
-              <span>🤖 Agent 执行中</span><span class="count" style="background:var(--accent-bg);color:var(--accent)">2</span>
-            </div>
-            <div class="side-item" data-focus-filter="decision" onclick="applyFocusFilter(this)">
-              <span>🔔 等我决策</span><span class="count" style="background:rgba(242,196,15,.2);color:var(--amber)">1</span>
-            </div>
-            <div class="label">目标树</div>
-            <div class="side-item" style="font-weight:600">
-              <span>▾ 📌 FocusPilot 0.0.1</span><span class="count">38%</span>
-            </div>
-            <div class="side-item indent">
-              <span>▾ 📆 4月</span><span class="count">100%</span>
-            </div>
-            <div class="side-item indent" style="padding-left:36px">
-              <span>▾ 📆 5月</span><span class="count">20%</span>
-            </div>
-            <div class="side-item indent" style="padding-left:36px">
-              <span>▸ 📆 6月</span><span class="count">0%</span>
-            </div>
-            <div class="side-item">
-              <span>▸ 📌 知识沉淀</span><span class="count">25%</span>
-            </div>
-            <div class="label">来源</div>
-            <div class="side-item">
-              <span>📁 Projects</span><span class="count">8</span>
-            </div>
-            <div class="side-item">
-              <span>📥 Inbox 导入</span><span class="count">2</span>
-            </div>
-            <div class="side-item">
-              <span>✏️ 临时创建</span><span class="count">2</span>
-            </div>
-          </div>
-        </section>
-
         <section class="side-view" data-page="studio">
           <div class="side-head">
             <div class="side-title">
               <h2>Studio</h2>
+              <button class="btn icon" onclick="openNewTaskModal()">+</button>
             </div>
+            <input class="search" placeholder="搜索目标、任务和对话..." />
           </div>
           <div class="side-scroll">
-            <!-- 📌 置顶区 -->
-            <div id="studioPinArea">
-              <div id="studioPinHeader" style="padding:4px 8px 2px;font-size:10px;font-weight:600;color:var(--dim);text-transform:uppercase;letter-spacing:.04em">置顶</div>
-              <div class="side-item indent active studio-session" oncontextmenu="openSessionMenu(event,this);return false" onclick="selectStudioSession(this)" data-workspace="FocusPilot" data-session="重构 auth" data-session-id="s1" data-runtime="✳ Claude Code" data-pinned="true" style="font-size:11px">
-                <span>📌 重构 auth</span><span class="count" style="font-size:10px;color:var(--dim)">FocusPilot</span>
-              </div>
-              <div id="studioPinSep" style="border-bottom:1px solid var(--line-soft);margin:6px 8px"></div>
+            <!-- ── 全局视图 ── -->
+            <div style="padding:4px 8px 2px;font-size:10px;font-weight:600;color:var(--dim);text-transform:uppercase;letter-spacing:.04em">全局视图</div>
+            <div class="side-item active" data-focus-filter="all" onclick="applyFocusFilter(this);switchToGlobalWorkspace()">
+              <span>📋 全局规划</span><span class="count">11</span>
+            </div>
+            <div class="side-item" data-focus-filter="month" onclick="applyFocusFilter(this);switchToGlobalWorkspace()">
+              <span>📆 本月计划</span><span class="count">6</span>
+            </div>
+            <div class="side-item" data-focus-filter="week" onclick="applyFocusFilter(this);switchToGlobalWorkspace()">
+              <span>📅 本周计划</span><span class="count">8</span>
+            </div>
+            <div class="side-item" data-focus-filter="today" onclick="applyFocusFilter(this);switchToGlobalWorkspace()">
+              <span>🔥 今日聚焦</span><span class="count">2</span>
+            </div>
+            <div class="side-item" data-focus-filter="agent" onclick="applyFocusFilter(this);switchToGlobalWorkspace()">
+              <span>🤖 Agent 执行中</span><span class="count" style="background:var(--accent-bg);color:var(--accent)">2</span>
+            </div>
+            <div class="side-item" data-focus-filter="decision" onclick="applyFocusFilter(this);switchToGlobalWorkspace()">
+              <span>🔔 等我决策</span><span class="count" style="background:rgba(242,196,15,.2);color:var(--amber)">1</span>
             </div>
             <!-- 📥 Triage 收件箱 -->
-            <div class="side-item" style="font-weight:500;display:flex;align-items:center;justify-content:space-between">
+            <div class="side-item" style="font-weight:500;display:flex;align-items:center;justify-content:space-between" onclick="switchToGlobalWorkspace()">
               <span>📥 Triage</span><span style="background:var(--red);color:#fff;border-radius:8px;padding:1px 6px;font-size:10px;min-width:16px;text-align:center">3</span>
             </div>
-            <div class="side-item indent" style="font-size:11px;cursor:pointer" onclick="showTriageDetail()">
+            <div class="side-item indent" style="font-size:11px;cursor:pointer" onclick="showTriageDetail();switchToGlobalWorkspace()">
               <span>🔄 每日代码审查</span><span class="count" style="color:var(--amber);font-size:10px">发现 2 个问题</span>
             </div>
             <div class="side-item indent" style="font-size:11px">
@@ -2228,17 +2184,53 @@
               <span>🔄 依赖更新</span><span class="count" style="color:var(--amber);font-size:10px">3 个可更新</span>
             </div>
             <div style="border-bottom:1px solid var(--line-soft);margin:8px 8px"></div>
-            <!-- 🔍 搜索 -->
+            <!-- ── 目标树 ── -->
+            <div class="label">目标树</div>
+            <div class="side-item" style="font-weight:600" onclick="switchToGlobalWorkspace()">
+              <span>▾ 📌 FocusPilot 0.0.1</span><span class="count">38%</span>
+            </div>
+            <div class="side-item indent" onclick="switchToGlobalWorkspace()">
+              <span>▾ 📆 4月</span><span class="count">100%</span>
+            </div>
+            <div class="side-item indent" style="padding-left:36px" onclick="switchToGlobalWorkspace()">
+              <span>▾ 📆 5月</span><span class="count">20%</span>
+            </div>
+            <div class="side-item indent" style="padding-left:36px" onclick="switchToGlobalWorkspace()">
+              <span>▸ 📆 6月</span><span class="count">0%</span>
+            </div>
+            <div class="side-item" onclick="switchToGlobalWorkspace()">
+              <span>▸ 📌 知识沉淀</span><span class="count">25%</span>
+            </div>
+            <div class="label">来源</div>
+            <div class="side-item" onclick="switchToGlobalWorkspace()">
+              <span>📁 Projects</span><span class="count">8</span>
+            </div>
+            <div class="side-item" onclick="switchToGlobalWorkspace()">
+              <span>📥 Inbox 导入</span><span class="count">2</span>
+            </div>
+            <div class="side-item" onclick="switchToGlobalWorkspace()">
+              <span>✏️ 临时创建</span><span class="count">2</span>
+            </div>
+            <div style="border-bottom:1px solid var(--line-soft);margin:8px 8px"></div>
+            <!-- ── 项目 ── -->
             <div style="padding:0 8px 8px"><input class="search" placeholder="🔍 搜索对话..." style="width:100%" /></div>
+            <!-- 📌 置顶区 -->
+            <div id="studioPinArea">
+              <div id="studioPinHeader" style="padding:4px 8px 2px;font-size:10px;font-weight:600;color:var(--dim);text-transform:uppercase;letter-spacing:.04em">置顶</div>
+              <div class="side-item indent studio-session" oncontextmenu="openSessionMenu(event,this);return false" onclick="selectStudioSession(this);switchToProjectWorkspace()" data-workspace="FocusPilot" data-session="重构 auth" data-session-id="s1" data-runtime="✳ Claude Code" data-pinned="true" style="font-size:11px">
+                <span>📌 重构 auth</span><span class="count" style="font-size:10px;color:var(--dim)">FocusPilot</span>
+              </div>
+              <div id="studioPinSep" style="border-bottom:1px solid var(--line-soft);margin:6px 8px"></div>
+            </div>
             <!-- 📂 项目 Workspace -->
             <div style="padding:4px 8px 2px;font-size:10px;font-weight:600;color:var(--dim);text-transform:uppercase;letter-spacing:.04em">项目 Workspace</div>
             <div class="side-item ws-row" data-workspace="FocusPilot" style="font-weight:500;cursor:pointer" onclick="setCurrentWorkspace(this.dataset.workspace)">
               <span>📂 FocusPilot</span><span class="count" style="cursor:pointer;display:flex;gap:8px"><span onclick="event.stopPropagation();openWorkspaceMenu(event,this.closest('.ws-row').dataset.workspace)" title="项目菜单">···</span><span onclick="event.stopPropagation();openNewSessionModal(this.closest('.ws-row').dataset.workspace)" title="在此项目中新建对话">+</span></span>
             </div>
-            <div class="side-item indent studio-session" oncontextmenu="openSessionMenu(event,this);return false" onclick="selectStudioSession(this)" data-workspace="FocusPilot" data-session="代码审查" data-session-id="s2" data-runtime="✳ Claude Code" style="font-size:11px">
+            <div class="side-item indent studio-session" oncontextmenu="openSessionMenu(event,this);return false" onclick="selectStudioSession(this);switchToProjectWorkspace()" data-workspace="FocusPilot" data-session="代码审查" data-session-id="s2" data-runtime="✳ Claude Code" style="font-size:11px">
               <span>🔍 代码审查</span><span class="count"><span style="color:var(--green)">✅ 1h</span></span>
             </div>
-            <div class="side-item indent studio-session" oncontextmenu="openSessionMenu(event,this);return false" onclick="selectStudioSession(this)" data-workspace="FocusPilot" data-session="Bug fix #12" data-session-id="s3" data-runtime="⚡ Codex CLI" style="font-size:11px">
+            <div class="side-item indent studio-session" oncontextmenu="openSessionMenu(event,this);return false" onclick="selectStudioSession(this);switchToProjectWorkspace()" data-workspace="FocusPilot" data-session="Bug fix #12" data-session-id="s3" data-runtime="⚡ Codex CLI" style="font-size:11px">
               <span>⚡ Bug fix #12</span><span class="count"><span style="color:var(--accent)">● 15m</span></span>
             </div>
             <div class="side-item ws-row" data-workspace="PilotOne" style="font-weight:500;cursor:pointer" onclick="setCurrentWorkspace(this.dataset.workspace)">
@@ -2544,22 +2536,22 @@
           </header>
           <div class="work panel active" id="home-overview">
             <div class="grid cols-6 summary-strip">
-              <div class="metric" data-go="focus">
+              <div class="metric" data-go="studio">
                 <div class="value">4</div>
                 <div class="name">今日待办</div>
-                <div class="hint">Focus 今日</div>
+                <div class="hint">今日聚焦</div>
               </div>
-              <div class="metric" data-go="focus">
+              <div class="metric" data-go="studio">
                 <div class="value">12</div>
                 <div class="name">本周待办</div>
                 <div class="hint">跨项目</div>
               </div>
-              <div class="metric" data-go="focus">
+              <div class="metric" data-go="studio">
                 <div class="value">28</div>
                 <div class="name">本月目标</div>
                 <div class="hint">月度目标</div>
               </div>
-              <div class="metric" data-go="focus">
+              <div class="metric" data-go="studio">
                 <div class="value">45</div>
                 <div class="name">全部 TODO</div>
                 <div class="hint">未完成</div>
@@ -2574,7 +2566,7 @@
                 <div class="name">待处理</div>
                 <div class="hint">Inbox</div>
               </div>
-              <div class="metric" data-go="focus">
+              <div class="metric" data-go="studio">
                 <div class="value">3</div>
                 <div class="name">执行中</div>
                 <div class="hint">含评估中</div>
@@ -2587,17 +2579,17 @@
                   <span class="pill blue">3 项</span>
                 </div>
                 <div class="card-body">
-                  <div class="row" data-go="focus">
+                  <div class="row" data-go="studio">
                     <strong>客户画像生成</strong>
                     <div class="progress"><span style="width: 60%"></span></div>
                     <span class="right">大客户</span>
                   </div>
-                  <div class="row" data-go="focus">
+                  <div class="row" data-go="studio">
                     <strong>API 文档更新</strong>
                     <div class="progress"><span style="width: 30%"></span></div>
                     <span class="right">FocusPilot</span>
                   </div>
-                  <div class="row" data-go="focus">
+                  <div class="row" data-go="studio">
                     <strong>周报自动汇总</strong>
                     <div class="progress"><span style="width: 10%"></span></div>
                     <span class="right">内部</span>
@@ -2607,18 +2599,18 @@
               <div class="card">
                 <div class="card-head">
                   <h3>今日待办 (4/7)</h3>
-                  <button class="btn" data-go="focus">查看全部</button>
+                  <button class="btn" data-go="studio">查看全部</button>
                 </div>
                 <div class="card-body">
-                  <div class="row" data-go="focus">
+                  <div class="row" data-go="studio">
                     <span>☐</span><strong>frontmatter 解析</strong
                     ><span class="right">FocusPilot</span>
                   </div>
-                  <div class="row" data-go="focus">
+                  <div class="row" data-go="studio">
                     <span>☐</span><strong>审阅 PR #18</strong
                     ><span class="right">FocusPilot</span>
                   </div>
-                  <div class="row" data-go="focus">
+                  <div class="row" data-go="studio">
                     <span>☐</span><strong>客户跟进电话</strong
                     ><span class="right">大客户</span>
                   </div>
@@ -2674,9 +2666,12 @@
           </div>
         </section>
 
-        <section class="page" data-page="focus">
+
+        <section class="page" data-page="studio">
+          <!-- ═══ Global Workspace (merged from Focus) ═══ -->
+          <div id="studio-global-workspace" style="display:flex;flex-direction:column;flex:1;overflow:hidden">
           <header class="topbar">
-            <h1>Focus</h1>
+            <h1>Studio</h1>
             <span class="meta">规划 -> 执行 -> 评估 -> 验收</span>
             <div class="top-actions">
               <div class="seg" data-scope="focusView">
@@ -3930,9 +3925,9 @@
               <div style="display:flex;justify-content:flex-end;gap:8px;padding:12px 18px;border-top:1px solid var(--line-soft)"><button class="btn" onclick="closeNewTaskModal()">取消</button><button class="btn">创建</button><button class="btn primary">创建并规划</button></div>
             </div>
           </div>
-        </section>
-
-        <section class="page" data-page="studio">
+          </div>
+          <!-- ═══ Project Workspace (Studio sessions) ═══ -->
+          <div id="studio-project-workspace" style="display:none;flex-direction:column;flex:1;overflow:hidden">
           <header class="topbar">
             <h1 id="studioTopbarTitle" style="display:flex;align-items:center;gap:6px">📂 FocusPilot <span style="color:var(--dim);font-weight:400">·</span> <span style="font-weight:500">重构 auth</span> <span style="color:var(--dim);font-weight:400">·</span> <span style="color:var(--dim);font-weight:400;font-size:12px">✳ Claude Code</span></h1>
             <div class="top-actions">
@@ -4120,6 +4115,7 @@
                 </div>
               </div>
             </div>
+          </div>
           </div>
         </section>
 
@@ -6233,7 +6229,6 @@ FocusPilot/
 	      const pageOrder = [
 	        "home",
 	        "areas",
-	        "focus",
 	        "studio",
         "review",
         "crew",
@@ -6763,9 +6758,10 @@ FocusPilot/
         }
       }
 
-      // ===== Tasks: click row to jump to Focus =====
+      // ===== Tasks: click row to jump to Studio global workspace =====
       function openCrewTaskInFocus(taskId) {
-        showPage('focus');
+        showPage('studio');
+        switchToGlobalWorkspace();
         // reset filter to 'all' so target card is visible
         var allFilter = document.querySelector('[data-focus-filter="all"]');
         if (allFilter) applyFocusFilter(allFilter);
@@ -7242,6 +7238,24 @@ FocusPilot/
       function closeNewTaskModal() { document.getElementById('fpNewTaskModal').style.display = 'none'; }
       document.getElementById('fpNewTaskModal').addEventListener('click', closeNewTaskModal);
 
+      /* ── Studio: Global/Project Workspace Switching ── */
+      function switchToGlobalWorkspace() {
+        var gw = document.getElementById('studio-global-workspace');
+        var pw = document.getElementById('studio-project-workspace');
+        if (gw) { gw.style.display = 'flex'; }
+        if (pw) pw.style.display = 'none';
+        // Deselect all studio sessions in sidebar
+        document.querySelectorAll('.studio-session').forEach(function(s) { s.classList.remove('active'); });
+      }
+      function switchToProjectWorkspace() {
+        var gw = document.getElementById('studio-global-workspace');
+        var pw = document.getElementById('studio-project-workspace');
+        if (gw) gw.style.display = 'none';
+        if (pw) { pw.style.display = 'flex'; }
+        // Deselect global view items in sidebar
+        document.querySelectorAll('[data-focus-filter]').forEach(function(s) { s.classList.remove('active'); });
+      }
+
       /* ── Studio: Toggle Functions ── */
       function toggleStudioTerminal() {
         const t = document.getElementById('studioTerminal');
@@ -7608,6 +7622,7 @@ FocusPilot/
       }
       function setCurrentWorkspace(ws) {
         currentStudioWorkspace = ws;
+        switchToProjectWorkspace();
         var title = document.getElementById('studioTopbarTitle');
         if (title) {
           title.innerHTML = '📂 ' + ws + ' <span style="color:var(--dim);font-weight:400;font-size:12px">— 选择左侧对话开始</span>';
