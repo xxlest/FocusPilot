@@ -645,7 +645,7 @@ WorkItem (Task)
 
 ## 11. Inspector 面板（项目级 + Session 级）
 
-Inspector 是右侧的可显隐面板，在项目上下文和 Session 上下文中都存在，Tab 内容根据上下文切换。
+Inspector 是右侧的可显隐面板。项目上下文和 Session 上下文复用同一套右侧面板能力，点击项目或对话时只切换 Inspector 的数据上下文，不能让项目级环境 / Diff / Git 能力在进入 Session 后消失。
 
 ### 11.1 项目级 Inspector
 
@@ -666,15 +666,16 @@ Inspector 通过项目顶栏的 `◨ Inspector` 按钮可显隐。
 
 ### 11.2 Session 级 Inspector（右面板）
 
-进入具体 Session 后，右面板切换为 Session 上下文：
+进入具体 Session 后，右面板切换为 Session 上下文，同时保留当前项目 Workspace 摘要：
 
 ```
-[📋 任务 | 📝 Diff | 📁 Git]
+[📋 任务 | 📁 环境 | 📝 Diff | 📁 Git]
 ```
 
 | Tab | 内容 |
 |-----|------|
-| **📋 任务** | 当前项目的 WorkItem 列表（同项目级），可关联任务到当前 Session |
+| **📋 任务** | 当前项目的 WorkItem 列表（同项目级），点击可关联任务到当前 Session |
+| **📁 环境** | 当前 Session 所在项目 Workspace 摘要：项目、Session、路径、分支、未提交变更 |
 | **📝 Diff** | 当前 Session 产生的代码变更，文件 Tab 切换，红绿 diff + inline 评论 |
 | **📁 Git** | 当前 Session 的变更文件列表 + Stage/Revert/Commit/Push/PR |
 
@@ -686,7 +687,7 @@ Inspector 通过项目顶栏的 `◨ Inspector` 按钮可显隐。
 - 点击任务 → 关联到当前 Session
 - [+ 新建任务] → 自动关联当前项目 + 当前 Session
 
-### 11.3 📝 Diff Tab / 📁 Git Tab
+### 11.4 📝 Diff Tab / 📁 Git Tab
 
 沿用原 Studio 的 Diff 审查 + Git 操作规则，包括：
 - 红绿对比 Diff 视图 + inline 评论
