@@ -2149,9 +2149,15 @@
             </div>
             <input class="search" placeholder="搜索目标、任务和对话..." />
           </div>
-          <div class="side-scroll">
+          <!-- ── Studio 侧边栏 Tab 切换 ── -->
+          <div style="display:flex;gap:0;border-bottom:1px solid var(--line);margin-bottom:0" id="studioSideTabBar">
+            <button class="btn studio-side-tab active" data-studio-side="kanban" onclick="switchStudioSideTab('kanban')" style="flex:1;border-radius:0;border-bottom:2px solid var(--accent);font-size:12px;font-weight:600;padding:7px 0;background:transparent;color:var(--text)">📋 看板视图</button>
+            <button class="btn studio-side-tab" data-studio-side="project" onclick="switchStudioSideTab('project')" style="flex:1;border-radius:0;border-bottom:2px solid transparent;font-size:12px;font-weight:500;padding:7px 0;background:transparent;color:var(--muted)">📂 项目视图</button>
+          </div>
+          <!-- ═══ 看板视图 Tab 内容 ═══ -->
+          <div class="side-scroll studio-side-content" id="studioSideKanban" style="display:block">
             <!-- ── 全局视图 ── -->
-            <div style="padding:4px 8px 2px;font-size:10px;font-weight:600;color:var(--dim);text-transform:uppercase;letter-spacing:.04em">全局视图</div>
+            <div style="padding:4px 8px 2px;font-size:10px;font-weight:600;color:var(--dim);text-transform:uppercase;letter-spacing:.04em">范围筛选</div>
             <div class="side-item active" data-focus-filter="all" onclick="applyFocusFilter(this);switchToGlobalWorkspace()">
               <span>📋 全局规划</span><span class="count">11</span>
             </div>
@@ -2169,19 +2175,6 @@
             </div>
             <div class="side-item" data-focus-filter="decision" onclick="applyFocusFilter(this);switchToGlobalWorkspace()">
               <span>🔔 等我决策</span><span class="count" style="background:rgba(242,196,15,.2);color:var(--amber)">1</span>
-            </div>
-            <!-- 📥 Triage 收件箱 -->
-            <div class="side-item" style="font-weight:500;display:flex;align-items:center;justify-content:space-between" onclick="switchToGlobalWorkspace()">
-              <span>📥 Triage</span><span style="background:var(--red);color:#fff;border-radius:8px;padding:1px 6px;font-size:10px;min-width:16px;text-align:center">3</span>
-            </div>
-            <div class="side-item indent" style="font-size:11px;cursor:pointer" onclick="showTriageDetail();switchToGlobalWorkspace()">
-              <span>🔄 每日代码审查</span><span class="count" style="color:var(--amber);font-size:10px">发现 2 个问题</span>
-            </div>
-            <div class="side-item indent" style="font-size:11px">
-              <span>🔄 PR #45 检查</span><span class="count" style="color:var(--red);font-size:10px">合并冲突</span>
-            </div>
-            <div class="side-item indent" style="font-size:11px">
-              <span>🔄 依赖更新</span><span class="count" style="color:var(--amber);font-size:10px">3 个可更新</span>
             </div>
             <div style="border-bottom:1px solid var(--line-soft);margin:8px 8px"></div>
             <!-- ── 目标树 ── -->
@@ -2210,6 +2203,22 @@
             </div>
             <div class="side-item" onclick="switchToGlobalWorkspace()">
               <span>✏️ 临时创建</span><span class="count">2</span>
+            </div>
+          </div>
+          <!-- ═══ 项目视图 Tab 内容 ═══ -->
+          <div class="side-scroll studio-side-content" id="studioSideProject" style="display:none">
+            <!-- 📥 Triage 收件箱 -->
+            <div class="side-item" style="font-weight:500;display:flex;align-items:center;justify-content:space-between" onclick="switchToGlobalWorkspace()">
+              <span>📥 Triage</span><span style="background:var(--red);color:#fff;border-radius:8px;padding:1px 6px;font-size:10px;min-width:16px;text-align:center">3</span>
+            </div>
+            <div class="side-item indent" style="font-size:11px;cursor:pointer" onclick="showTriageDetail();switchToGlobalWorkspace()">
+              <span>🔄 每日代码审查</span><span class="count" style="color:var(--amber);font-size:10px">发现 2 个问题</span>
+            </div>
+            <div class="side-item indent" style="font-size:11px">
+              <span>🔄 PR #45 检查</span><span class="count" style="color:var(--red);font-size:10px">合并冲突</span>
+            </div>
+            <div class="side-item indent" style="font-size:11px">
+              <span>🔄 依赖更新</span><span class="count" style="color:var(--amber);font-size:10px">3 个可更新</span>
             </div>
             <div style="border-bottom:1px solid var(--line-soft);margin:8px 8px"></div>
             <!-- ── 项目 ── -->
@@ -2550,7 +2559,7 @@
                 <div class="name">本月目标</div>
                 <div class="hint">月度目标</div>
               </div>
-              <div class="metric" data-go="studio" data-studio-filter="all">
+              <div class="metric" data-go="studio" data-studio-filter="all" data-studio-view="focus-list">
                 <div class="value">45</div>
                 <div class="name">全部 TODO</div>
                 <div class="hint">未完成</div>
@@ -2768,7 +2777,7 @@
                             </div>
                             <!-- Task: 看板状态模型实现 (in_progress) -->
                             <div class="fp-plan-task" data-fp-schedule="week" style="margin-bottom:2px;">
-                              <div onclick="openTaskDetail()" style="display:flex;align-items:center;gap:6px;padding:6px 8px;border-radius:var(--radius);cursor:pointer;font-size:13px;">
+                              <div onclick="openTaskDetail('FP-002')" style="display:flex;align-items:center;gap:6px;padding:6px 8px;border-radius:var(--radius);cursor:pointer;font-size:13px;">
                                 <span style="font-size:10px;width:14px;visibility:hidden;flex-shrink:0;">▶</span>
                                 <span style="width:7px;height:7px;border-radius:50%;flex-shrink:0;border:1.5px solid #5b8af5;background:#5b8af5;"></span>
                                 <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">看板状态模型实现</span>
@@ -2781,7 +2790,7 @@
                             </div>
                             <!-- Task: Agent Pull 执行管道 (todo) -->
                             <div class="fp-plan-task" data-fp-schedule="week" style="margin-bottom:2px;">
-                              <div onclick="openTaskDetail()" style="display:flex;align-items:center;gap:6px;padding:6px 8px;border-radius:var(--radius);cursor:pointer;font-size:13px;">
+                              <div onclick="openTaskDetail('FP-003')" style="display:flex;align-items:center;gap:6px;padding:6px 8px;border-radius:var(--radius);cursor:pointer;font-size:13px;">
                                 <span style="font-size:10px;width:14px;visibility:hidden;flex-shrink:0;">▶</span>
                                 <span style="width:7px;height:7px;border-radius:50%;flex-shrink:0;border:1.5px solid #9399b0;background:transparent;"></span>
                                 <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">Agent Pull 执行管道</span>
@@ -2794,7 +2803,7 @@
                             </div>
                             <!-- Task: Terminal 手动执行模式 (todo) -->
                             <div class="fp-plan-task" data-fp-schedule="week" style="margin-bottom:2px;">
-                              <div onclick="openTaskDetail()" style="display:flex;align-items:center;gap:6px;padding:6px 8px;border-radius:var(--radius);cursor:pointer;font-size:13px;">
+                              <div onclick="openTaskDetail('FP-004')" style="display:flex;align-items:center;gap:6px;padding:6px 8px;border-radius:var(--radius);cursor:pointer;font-size:13px;">
                                 <span style="font-size:10px;width:14px;visibility:hidden;flex-shrink:0;">▶</span>
                                 <span style="width:7px;height:7px;border-radius:50%;flex-shrink:0;border:1.5px solid #9399b0;background:transparent;"></span>
                                 <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">Terminal 手动执行模式</span>
@@ -2807,7 +2816,7 @@
                             </div>
                             <!-- Task: 规划引擎接口设计 (in_evaluation) -->
                             <div class="fp-plan-task" data-fp-schedule="week" style="margin-bottom:2px;">
-                              <div onclick="openTaskDetail()" style="display:flex;align-items:center;gap:6px;padding:6px 8px;border-radius:var(--radius);cursor:pointer;font-size:13px;">
+                              <div onclick="openTaskDetail('FP-005')" style="display:flex;align-items:center;gap:6px;padding:6px 8px;border-radius:var(--radius);cursor:pointer;font-size:13px;">
                                 <span style="font-size:10px;width:14px;visibility:hidden;flex-shrink:0;">▶</span>
                                 <span style="width:7px;height:7px;border-radius:50%;flex-shrink:0;border:1.5px solid var(--purple);background:var(--purple);"></span>
                                 <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">规划引擎接口设计</span>
@@ -2898,7 +2907,7 @@
                         </div>
                         <!-- Task: 研究 Multica 执行模型 (in_progress) -->
                         <div class="fp-plan-task" data-fp-schedule="today" style="margin-bottom:2px;">
-                          <div onclick="openTaskDetail()" style="display:flex;align-items:center;gap:6px;padding:6px 8px;border-radius:var(--radius);cursor:pointer;font-size:13px;">
+                          <div onclick="openTaskDetail('FP-011')" style="display:flex;align-items:center;gap:6px;padding:6px 8px;border-radius:var(--radius);cursor:pointer;font-size:13px;">
                             <span style="font-size:10px;width:14px;visibility:hidden;flex-shrink:0;">▶</span>
                             <span style="width:7px;height:7px;border-radius:50%;flex-shrink:0;border:1.5px solid #5b8af5;background:#5b8af5;"></span>
                             <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">研究 Multica 执行模型</span>
@@ -3054,7 +3063,7 @@
                       <div style="padding-left:22px;">
                         <!-- FP-002: 看板状态模型实现 (in_progress, P0, auto) -->
                         <div class="fp-month-task" data-fp-schedule="week" style="margin-bottom:2px;">
-                          <div onclick="openTaskDetail()" style="display:flex;align-items:center;gap:6px;padding:6px 8px;border-radius:var(--radius);cursor:pointer;font-size:13px;">
+                          <div onclick="openTaskDetail('FP-002')" style="display:flex;align-items:center;gap:6px;padding:6px 8px;border-radius:var(--radius);cursor:pointer;font-size:13px;">
                             <span style="font-size:10px;width:14px;visibility:hidden;flex-shrink:0;">▶</span>
                             <span style="width:7px;height:7px;border-radius:50%;flex-shrink:0;border:1.5px solid #5b8af5;background:#5b8af5;"></span>
                             <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">看板状态模型实现</span>
@@ -3066,7 +3075,7 @@
                         </div>
                         <!-- FP-003: Agent Pull 执行管道 (todo, P1, auto) -->
                         <div class="fp-month-task" data-fp-schedule="week" style="margin-bottom:2px;">
-                          <div onclick="openTaskDetail()" style="display:flex;align-items:center;gap:6px;padding:6px 8px;border-radius:var(--radius);cursor:pointer;font-size:13px;">
+                          <div onclick="openTaskDetail('FP-003')" style="display:flex;align-items:center;gap:6px;padding:6px 8px;border-radius:var(--radius);cursor:pointer;font-size:13px;">
                             <span style="font-size:10px;width:14px;visibility:hidden;flex-shrink:0;">▶</span>
                             <span style="width:7px;height:7px;border-radius:50%;flex-shrink:0;border:1.5px solid #9399b0;background:transparent;"></span>
                             <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">Agent Pull 执行管道</span>
@@ -3078,7 +3087,7 @@
                         </div>
                         <!-- FP-004: Terminal 手动执行模式 (todo, P1, manual) -->
                         <div class="fp-month-task" data-fp-schedule="week" style="margin-bottom:2px;">
-                          <div onclick="openTaskDetail()" style="display:flex;align-items:center;gap:6px;padding:6px 8px;border-radius:var(--radius);cursor:pointer;font-size:13px;">
+                          <div onclick="openTaskDetail('FP-004')" style="display:flex;align-items:center;gap:6px;padding:6px 8px;border-radius:var(--radius);cursor:pointer;font-size:13px;">
                             <span style="font-size:10px;width:14px;visibility:hidden;flex-shrink:0;">▶</span>
                             <span style="width:7px;height:7px;border-radius:50%;flex-shrink:0;border:1.5px solid #9399b0;background:transparent;"></span>
                             <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">Terminal 手动执行模式</span>
@@ -3090,7 +3099,7 @@
                         </div>
                         <!-- FP-005: 规划引擎接口设计 (in_evaluation, P0, auto) -->
                         <div class="fp-month-task" data-fp-schedule="week" style="margin-bottom:2px;">
-                          <div onclick="openTaskDetail()" style="display:flex;align-items:center;gap:6px;padding:6px 8px;border-radius:var(--radius);cursor:pointer;font-size:13px;">
+                          <div onclick="openTaskDetail('FP-005')" style="display:flex;align-items:center;gap:6px;padding:6px 8px;border-radius:var(--radius);cursor:pointer;font-size:13px;">
                             <span style="font-size:10px;width:14px;visibility:hidden;flex-shrink:0;">▶</span>
                             <span style="width:7px;height:7px;border-radius:50%;flex-shrink:0;border:1.5px solid var(--purple);background:var(--purple);"></span>
                             <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">规划引擎接口设计</span>
@@ -3114,7 +3123,7 @@
                         </div>
                         <!-- FP-011: 研究 Multica 执行模型 (in_progress, P1, manual) -->
                         <div class="fp-month-task" data-fp-schedule="today" style="margin-bottom:2px;">
-                          <div onclick="openTaskDetail()" style="display:flex;align-items:center;gap:6px;padding:6px 8px;border-radius:var(--radius);cursor:pointer;font-size:13px;">
+                          <div onclick="openTaskDetail('FP-011')" style="display:flex;align-items:center;gap:6px;padding:6px 8px;border-radius:var(--radius);cursor:pointer;font-size:13px;">
                             <span style="font-size:10px;width:14px;visibility:hidden;flex-shrink:0;">▶</span>
                             <span style="width:7px;height:7px;border-radius:50%;flex-shrink:0;border:1.5px solid #5b8af5;background:#5b8af5;"></span>
                             <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">研究 Multica 执行模型</span>
@@ -3230,19 +3239,19 @@
                       <span style="font-size:10px;font-weight:400;color:var(--dim);font-family:var(--mono);margin-left:auto;">4 项</span>
                     </div>
                     <div style="padding-left:10px;">
-                      <div class="fp-week-task" data-fp-schedule="week" onclick="openTaskDetail()" style="height:34px;display:flex;align-items:center;gap:6px;padding:0 12px;cursor:pointer;border-radius:var(--radius);font-size:12px;">
+                      <div class="fp-week-task" data-fp-schedule="week" onclick="openTaskDetail('FP-002')" style="height:34px;display:flex;align-items:center;gap:6px;padding:0 12px;cursor:pointer;border-radius:var(--radius);font-size:12px;">
                         <span style="width:7px;height:7px;border-radius:50%;flex-shrink:0;border:1.5px solid #5b8af5;background:#5b8af5;"></span>
                         <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">看板状态模型实现</span>
                         <span style="font-size:10px;padding:2px 6px;border-radius:3px;font-weight:500;background:rgba(248,113,113,0.15);color:var(--red);">P0</span>
                         <span style="font-size:11px;flex-shrink:0;">🤖</span>
                       </div>
-                      <div class="fp-week-task" data-fp-schedule="today" onclick="openTaskDetail()" style="height:34px;display:flex;align-items:center;gap:6px;padding:0 12px;cursor:pointer;border-radius:var(--radius);font-size:12px;">
+                      <div class="fp-week-task" data-fp-schedule="today" onclick="openTaskDetail('FP-010')" style="height:34px;display:flex;align-items:center;gap:6px;padding:0 12px;cursor:pointer;border-radius:var(--radius);font-size:12px;">
                         <span style="width:7px;height:7px;border-radius:50%;flex-shrink:0;border:1.5px solid #9399b0;background:transparent;"></span>
                         <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">整理本周会议记录</span>
                         <span style="font-size:10px;padding:2px 6px;border-radius:3px;font-weight:500;background:rgba(99,105,133,0.2);color:var(--dim);">P2</span>
                         <span style="font-size:11px;flex-shrink:0;">🖐</span>
                       </div>
-                      <div class="fp-week-task" data-fp-schedule="today" onclick="openTaskDetail()" style="height:34px;display:flex;align-items:center;gap:6px;padding:0 12px;cursor:pointer;border-radius:var(--radius);font-size:12px;">
+                      <div class="fp-week-task" data-fp-schedule="today" onclick="openTaskDetail('FP-011')" style="height:34px;display:flex;align-items:center;gap:6px;padding:0 12px;cursor:pointer;border-radius:var(--radius);font-size:12px;">
                         <span style="width:7px;height:7px;border-radius:50%;flex-shrink:0;border:1.5px solid #5b8af5;background:#5b8af5;"></span>
                         <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">研究 Multica 执行模型</span>
                         <span style="font-size:10px;padding:2px 6px;border-radius:3px;font-weight:500;background:rgba(249,115,22,0.15);color:#f97316;">P1</span>
@@ -3263,7 +3272,7 @@
                       <span style="font-size:10px;font-weight:400;color:var(--dim);font-family:var(--mono);margin-left:auto;">1 项</span>
                     </div>
                     <div style="padding-left:10px;">
-                      <div class="fp-week-task" data-fp-schedule="week" onclick="openTaskDetail()" style="height:34px;display:flex;align-items:center;gap:6px;padding:0 12px;cursor:pointer;border-radius:var(--radius);font-size:12px;">
+                      <div class="fp-week-task" data-fp-schedule="week" onclick="openTaskDetail('FP-005')" style="height:34px;display:flex;align-items:center;gap:6px;padding:0 12px;cursor:pointer;border-radius:var(--radius);font-size:12px;">
                         <span style="width:7px;height:7px;border-radius:50%;flex-shrink:0;border:1.5px solid var(--purple);background:var(--purple);"></span>
                         <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">规划引擎接口设计</span>
                         <span style="font-size:10px;padding:2px 6px;border-radius:3px;font-weight:500;background:rgba(248,113,113,0.15);color:var(--red);">P0</span>
@@ -3280,13 +3289,13 @@
                       <span style="font-size:10px;font-weight:400;color:var(--dim);font-family:var(--mono);margin-left:auto;">2 项</span>
                     </div>
                     <div style="padding-left:10px;">
-                      <div class="fp-week-task" data-fp-schedule="week" onclick="openTaskDetail()" style="height:34px;display:flex;align-items:center;gap:6px;padding:0 12px;cursor:pointer;border-radius:var(--radius);font-size:12px;">
+                      <div class="fp-week-task" data-fp-schedule="week" onclick="openTaskDetail('FP-003')" style="height:34px;display:flex;align-items:center;gap:6px;padding:0 12px;cursor:pointer;border-radius:var(--radius);font-size:12px;">
                         <span style="width:7px;height:7px;border-radius:50%;flex-shrink:0;border:1.5px solid #9399b0;background:transparent;"></span>
                         <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">Agent Pull 执行管道</span>
                         <span style="font-size:10px;padding:2px 6px;border-radius:3px;font-weight:500;background:rgba(249,115,22,0.15);color:#f97316;">P1</span>
                         <span style="font-size:11px;flex-shrink:0;">🤖</span>
                       </div>
-                      <div class="fp-week-task" data-fp-schedule="week" onclick="openTaskDetail()" style="height:34px;display:flex;align-items:center;gap:6px;padding:0 12px;cursor:pointer;border-radius:var(--radius);font-size:12px;">
+                      <div class="fp-week-task" data-fp-schedule="week" onclick="openTaskDetail('FP-004')" style="height:34px;display:flex;align-items:center;gap:6px;padding:0 12px;cursor:pointer;border-radius:var(--radius);font-size:12px;">
                         <span style="width:7px;height:7px;border-radius:50%;flex-shrink:0;border:1.5px solid #9399b0;background:transparent;"></span>
                         <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">Terminal 手动执行模式</span>
                         <span style="font-size:10px;padding:2px 6px;border-radius:3px;font-weight:500;background:rgba(249,115,22,0.15);color:#f97316;">P1</span>
@@ -3413,7 +3422,7 @@
                 <!-- Scheduled tasks -->
                 <div style="padding:6px 0 0;">
                   <div style="padding:0 12px 4px;font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;color:var(--dim);">已排时间 · 1 项</div>
-                  <div class="fp-day-task" data-fp-schedule="today" onclick="openTaskDetail()" style="height:34px;display:flex;align-items:center;gap:6px;padding:0 12px;cursor:pointer;border-radius:var(--radius);font-size:12px;">
+                  <div class="fp-day-task" data-fp-schedule="today" onclick="openTaskDetail('FP-011')" style="height:34px;display:flex;align-items:center;gap:6px;padding:0 12px;cursor:pointer;border-radius:var(--radius);font-size:12px;">
                     <span style="width:7px;height:7px;border-radius:50%;flex-shrink:0;border:1.5px solid #5b8af5;background:#5b8af5;"></span>
                     <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">研究 Multica 执行模型</span>
                     <span style="font-size:10px;padding:2px 6px;border-radius:3px;font-weight:500;background:rgba(249,115,22,0.15);color:#f97316;">P1</span>
@@ -3423,7 +3432,7 @@
                 <!-- Unscheduled tasks -->
                 <div style="padding:4px 0 8px;border-top:1px dashed var(--line-soft);margin-top:4px;">
                   <div style="padding:4px 12px;font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;color:var(--dim);">未排时间 · 1 项</div>
-                  <div class="fp-day-task" data-fp-schedule="today" onclick="openTaskDetail()" style="height:28px;display:flex;align-items:center;gap:6px;padding:0 12px;cursor:pointer;font-size:11px;color:var(--dim);">
+                  <div class="fp-day-task" data-fp-schedule="today" onclick="openTaskDetail('FP-010')" style="height:28px;display:flex;align-items:center;gap:6px;padding:0 12px;cursor:pointer;font-size:11px;color:var(--dim);">
                     <span style="width:6px;height:6px;border-radius:50%;border:1px solid #636985;flex-shrink:0;"></span>
                     <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">整理本周会议记录</span>
                     <span style="font-size:9px;color:var(--dim);">P2</span>
@@ -3695,7 +3704,7 @@
                 </tr>
               </thead>
               <tbody>
-                <tr class="fp-list-row" onclick="openTaskDetail()" style="cursor:pointer" data-fp-schedule="week" data-fp-mode="auto" data-fp-agent="yes">
+                <tr class="fp-list-row" onclick="openTaskDetail('FP-002')" style="cursor:pointer" data-fp-schedule="week" data-fp-mode="auto" data-fp-agent="yes">
                   <td style="padding:8px 10px"><span class="pill blue" style="font-size:10px;padding:1px 6px">● 进行</span></td>
                   <td style="padding:8px 10px"><strong>看板状态模型实现</strong></td>
                   <td style="padding:8px 10px;font-size:12px;color:var(--muted)">本周</td>
@@ -3705,7 +3714,7 @@
                   <td style="padding:8px 10px;font-size:11px;color:var(--dim)">area</td>
                   <td style="padding:8px 10px;font-size:11px;font-family:var(--mono);color:var(--muted)">05-25</td>
                 </tr>
-                <tr class="fp-list-row" onclick="openTaskDetail()" style="cursor:pointer" data-fp-schedule="week" data-fp-mode="auto">
+                <tr class="fp-list-row" onclick="openTaskDetail('FP-003')" style="cursor:pointer" data-fp-schedule="week" data-fp-mode="auto">
                   <td style="padding:8px 10px"><span class="pill" style="font-size:10px;padding:1px 6px;border-color:rgba(163,169,181,.3);color:var(--muted)">○ 待做</span></td>
                   <td style="padding:8px 10px"><strong>Agent Pull 执行管道</strong></td>
                   <td style="padding:8px 10px;font-size:12px;color:var(--muted)">本周</td>
@@ -3715,7 +3724,7 @@
                   <td style="padding:8px 10px;font-size:11px;color:var(--dim)">area</td>
                   <td style="padding:8px 10px;font-size:11px;font-family:var(--mono);color:var(--muted)">05-28</td>
                 </tr>
-                <tr class="fp-list-row" onclick="openTaskDetail()" style="cursor:pointer" data-fp-schedule="week" data-fp-mode="manual">
+                <tr class="fp-list-row" onclick="openTaskDetail('FP-004')" style="cursor:pointer" data-fp-schedule="week" data-fp-mode="manual">
                   <td style="padding:8px 10px"><span class="pill" style="font-size:10px;padding:1px 6px;border-color:rgba(163,169,181,.3);color:var(--muted)">○ 待做</span></td>
                   <td style="padding:8px 10px"><strong>Terminal 手动执行模式</strong></td>
                   <td style="padding:8px 10px;font-size:12px;color:var(--muted)">本周</td>
@@ -3725,7 +3734,7 @@
                   <td style="padding:8px 10px;font-size:11px;color:var(--dim)">area</td>
                   <td style="padding:8px 10px;font-size:11px;font-family:var(--mono);color:var(--muted)">05-29</td>
                 </tr>
-                <tr class="fp-list-row" onclick="openTaskDetailTab('fp-t-eval')" style="cursor:pointer" data-fp-schedule="week" data-fp-mode="auto" data-fp-decision="yes">
+                <tr class="fp-list-row" onclick="openTaskDetailTab('fp-t-eval','FP-005')" style="cursor:pointer" data-fp-schedule="week" data-fp-mode="auto" data-fp-decision="yes">
                   <td style="padding:8px 10px"><span class="pill" style="font-size:10px;padding:1px 6px;border-color:rgba(167,139,250,.3);color:var(--purple)">◈ 评估</span></td>
                   <td style="padding:8px 10px"><strong>规划引擎接口设计</strong></td>
                   <td style="padding:8px 10px;font-size:12px;color:var(--muted)">本周</td>
@@ -3807,7 +3816,7 @@
                   <td style="padding:8px 10px;font-size:11px;color:var(--dim)">area</td>
                   <td style="padding:8px 10px;font-size:11px;font-family:var(--mono);color:var(--muted)">—</td>
                 </tr>
-                <tr class="fp-list-row" onclick="openTaskDetail()" style="cursor:pointer" data-fp-schedule="today" data-fp-mode="manual">
+                <tr class="fp-list-row" onclick="openTaskDetail('FP-011')" style="cursor:pointer" data-fp-schedule="today" data-fp-mode="manual">
                   <td style="padding:8px 10px"><span class="pill blue" style="font-size:10px;padding:1px 6px">● 进行</span></td>
                   <td style="padding:8px 10px"><strong>研究 Multica 执行模型</strong></td>
                   <td style="padding:8px 10px;font-size:12px;color:var(--muted)">今天</td>
@@ -3837,7 +3846,7 @@
           <div id="fpDetailPanel" style="position:fixed;top:0;right:0;width:720px;max-width:88vw;height:100vh;background:var(--surface);border-left:1px solid var(--line-soft);z-index:51;transform:translateX(100%);transition:transform .3s;display:flex;flex-direction:column;box-shadow:-8px 0 40px rgba(0,0,0,.3)">
             <div style="padding:14px 18px;border-bottom:1px solid var(--line-soft);display:flex;align-items:center;gap:12px">
               <div style="cursor:pointer;color:var(--dim);font-size:16px" onclick="closeTaskDetail()">✕</div>
-              <div style="flex:1"><div style="font-size:10px;font-family:var(--mono);color:var(--dim)">FP-002</div><div style="font-size:15px;font-weight:600">看板状态模型实现</div></div>
+              <div style="flex:1"><div class="fp-detail-id" style="font-size:10px;font-family:var(--mono);color:var(--dim)">FP-002</div><div class="fp-detail-title" style="font-size:15px;font-weight:600">看板状态模型实现</div></div>
               <span class="pill blue" style="font-size:11px">● In Progress</span>
             </div>
             <div style="background:var(--elevated);border:1px solid var(--line);border-radius:var(--radius);padding:10px 14px;margin:12px 18px 0;font-size:11px">
@@ -3932,6 +3941,11 @@
                       <option>分布式系统学习</option>
                     </select>
                   </label>
+                  <label id="ws-git-label" style="display:flex;align-items:center;gap:8px;font-size:11px;color:var(--text);cursor:pointer;padding:5px 0;border-radius:4px" onclick="selectWorkspace('git')">
+                    <input type="radio" name="fp-ws" value="git" style="accent-color:var(--accent)">
+                    <span>🔗 Git 项目</span>
+                    <input id="ws-git-url" type="text" placeholder="git@github.com:xxx/xxx.git" style="margin-left:auto;width:200px;background:var(--surface);border:1px solid var(--line-soft);border-radius:var(--radius);padding:3px 6px;color:var(--text);font-size:10px;font-family:var(--mono);outline:none" onclick="event.stopPropagation();selectWorkspace('git')">
+                  </label>
                 </div>
 
                 <div style="display:flex;gap:10px;margin-bottom:12px"><div style="flex:1"><label style="display:block;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--dim);margin-bottom:4px">安排</label><select style="width:100%;background:var(--bg);border:1px solid var(--line-soft);border-radius:var(--radius);padding:6px 8px;color:var(--text);font-size:11px;font-family:var(--sans)"><option>今天</option><option selected>本周</option><option>本月</option><option>Backlog</option></select></div><div style="flex:1"><label style="display:block;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--dim);margin-bottom:4px">优先级</label><select style="width:100%;background:var(--bg);border:1px solid var(--line-soft);border-radius:var(--radius);padding:6px 8px;color:var(--text);font-size:11px;font-family:var(--sans)"><option>P0 — 紧急</option><option selected>P1 — 重要</option><option>P2 — 普通</option></select></div></div>
@@ -3972,53 +3986,13 @@
             <header class="topbar">
               <h1 id="studioProjectTitle" style="display:flex;align-items:center;gap:6px">📂 FocusPilot</h1>
               <div class="top-actions">
-                <div class="seg" style="margin-right:8px">
-                  <button class="active" onclick="showProjectTab('tasks')">📋 工作项</button>
-                  <button onclick="showProjectTab('sessions')">💬 对话</button>
-                </div>
+                <button class="btn" style="font-size:11px" id="projectTasksToggleBtn" onclick="toggleProjectTasksPanel()">📋 任务列表</button>
+                <button class="btn primary" style="font-size:11px" onclick="openNewTaskModal({source:'project',projectId:currentStudioWorkspace})">+ 新建任务</button>
               </div>
             </header>
 
-            <!-- 工作项 sub-view -->
-            <div id="studio-project-tasks" class="work" style="padding:16px 20px;overflow-y:auto">
-              <div style="display:flex;gap:12px;min-height:400px">
-                <div style="flex:1;min-width:0">
-                  <div style="font-size:11px;font-weight:600;color:var(--dim);text-transform:uppercase;letter-spacing:.04em;margin-bottom:8px">Todo (2)</div>
-                  <div style="display:flex;flex-direction:column;gap:6px">
-                    <div style="background:var(--surface);border:1px solid var(--line-soft);border-radius:var(--radius);padding:8px 10px;font-size:11px;cursor:pointer">
-                      <div style="font-weight:500;margin-bottom:3px">FP-003 列表视图实现</div>
-                      <div style="display:flex;gap:6px;color:var(--dim);font-size:10px"><span>P1</span><span>📦 临时</span><span>普通任务</span></div>
-                    </div>
-                    <div style="background:var(--surface);border:1px solid var(--line-soft);border-radius:var(--radius);padding:8px 10px;font-size:11px;cursor:pointer">
-                      <div style="font-weight:500;margin-bottom:3px">FP-004 Agent Live Card</div>
-                      <div style="display:flex;gap:6px;color:var(--dim);font-size:10px"><span>P1</span><span>📁 FocusPilot</span><span>🤖 自动</span></div>
-                    </div>
-                  </div>
-                </div>
-                <div style="flex:1;min-width:0">
-                  <div style="font-size:11px;font-weight:600;color:var(--dim);text-transform:uppercase;letter-spacing:.04em;margin-bottom:8px">In Progress (1)</div>
-                  <div style="display:flex;flex-direction:column;gap:6px">
-                    <div style="background:var(--surface);border:1px solid var(--line-soft);border-radius:var(--radius);padding:8px 10px;font-size:11px;cursor:pointer;border-left:2px solid var(--accent)">
-                      <div style="font-weight:500;margin-bottom:3px">FP-002 看板状态模型实现</div>
-                      <div style="display:flex;gap:6px;color:var(--dim);font-size:10px"><span>P0</span><span>📁 FocusPilot</span><span>🤖 自动</span><span style="color:var(--accent)">Agent 执行中</span></div>
-                    </div>
-                  </div>
-                </div>
-                <div style="flex:1;min-width:0">
-                  <div style="font-size:11px;font-weight:600;color:var(--dim);text-transform:uppercase;letter-spacing:.04em;margin-bottom:8px">Done (1)</div>
-                  <div style="display:flex;flex-direction:column;gap:6px">
-                    <div style="background:var(--surface);border:1px solid var(--line-soft);border-radius:var(--radius);padding:8px 10px;font-size:11px;cursor:pointer;opacity:.6">
-                      <div style="font-weight:500;margin-bottom:3px">FP-001 数据模型设计</div>
-                      <div style="display:flex;gap:6px;color:var(--dim);font-size:10px"><span>P0</span><span>📁 FocusPilot</span><span>✓</span></div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div style="display:flex;align-items:center;justify-content:center;gap:4px;padding:8px;border-radius:var(--radius);border:1px dashed var(--line);color:var(--dim);font-size:12px;cursor:pointer;margin-top:12px" onclick="openNewTaskModal()">＋ 新建任务</div>
-            </div>
-
-            <!-- 对话列表 sub-view -->
-            <div id="studio-project-sessions" class="work" style="display:none;padding:16px 20px;overflow-y:auto">
+            <!-- 对话列表 (主区域，直接显示) -->
+            <div id="studio-project-sessions" class="work" style="padding:16px 20px;overflow-y:auto">
               <div style="display:flex;flex-direction:column;gap:6px">
                 <div style="background:var(--surface);border:1px solid var(--line-soft);border-radius:var(--radius);padding:10px 14px;cursor:pointer;display:flex;align-items:center;gap:10px" onclick="document.querySelector('.studio-session[data-session-id=s1]').click()">
                   <span style="font-size:14px">🧑‍💻</span>
@@ -4036,7 +4010,7 @@
                   <span style="font-size:10px;padding:2px 6px;background:var(--accent-bg);color:var(--accent);border-radius:4px">活跃</span>
                 </div>
               </div>
-              <div style="display:flex;align-items:center;justify-content:center;gap:4px;padding:8px;border-radius:var(--radius);border:1px dashed var(--line);color:var(--dim);font-size:12px;cursor:pointer;margin-top:12px">＋ 新建对话</div>
+              <div style="display:flex;align-items:center;justify-content:center;gap:4px;padding:8px;border-radius:var(--radius);border:1px dashed var(--line);color:var(--dim);font-size:12px;cursor:pointer;margin-top:12px" onclick="openNewSessionModal(currentStudioWorkspace)">＋ 新建对话</div>
             </div>
           </div>
 
@@ -6372,6 +6346,151 @@ FocusPilot/
     </div>
 
     <script>
+      /* ═══ Unified Work Items Data Source ═══ */
+      var workItems = [
+        { id: 'FP-001', title: '数据模型设计', status: 'done', priority: 'p0', projectId: 'FocusPilot', workspaceType: 'local_project', executionMode: 'auto', schedule: '', month: '', goal: '4月/FP 0.0.1', agent: '代码工程师', date: '04-15' },
+        { id: 'FP-002', title: '看板状态模型实现', status: 'in_progress', priority: 'p0', projectId: 'FocusPilot', workspaceType: 'local_project', executionMode: 'auto', schedule: 'week', month: '5', goal: '5月/FP 0.0.1', agent: '代码工程师', agentStatus: 'Agent 执行中', date: '05-25' },
+        { id: 'FP-003', title: 'Agent Pull 执行管道', status: 'todo', priority: 'p1', projectId: 'FocusPilot', workspaceType: 'local_project', executionMode: 'auto', schedule: 'week', month: '5', goal: '5月/AI', agent: '代码工程师', date: '05-28' },
+        { id: 'FP-004', title: 'Terminal 手动执行模式', status: 'todo', priority: 'p1', projectId: 'FocusPilot', workspaceType: 'local_project', executionMode: 'manual', schedule: 'week', month: '5', goal: '5月/AI', agent: '', date: '05-29' },
+        { id: 'FP-005', title: '规划引擎接口设计', status: 'in_evaluation', priority: 'p0', projectId: 'FocusPilot', workspaceType: 'git_project', executionMode: 'auto', schedule: 'week', month: '5', goal: '5月/AI', agent: '代码工程师', decision: true, date: '05-26' },
+        { id: 'FP-006', title: '主题系统适配', status: 'backlog', priority: 'p2', projectId: 'FocusPilot', workspaceType: 'local_project', executionMode: 'auto', schedule: 'month', month: '6', goal: '6月/FP 0.0.1', agent: '代码工程师' },
+        { id: 'FP-007', title: 'PRD 文档整合', status: 'done', priority: 'p1', projectId: 'FocusPilot', workspaceType: 'local_project', executionMode: 'manual', schedule: '', month: '', goal: '4月/FP 0.0.1', agent: '', date: '04-16' },
+        { id: 'FP-008', title: '配置迁移脚本', status: 'blocked', priority: 'p1', projectId: 'FocusPilot', workspaceType: 'local_project', executionMode: 'auto', schedule: '', month: '', goal: '', agent: '代码工程师' },
+        { id: 'FP-009', title: 'Anki 同步接口设计', status: 'backlog', priority: 'p2', projectId: 'FocusPilot', workspaceType: 'local_project', executionMode: 'auto', schedule: 'month', month: '6', goal: '6月/FP 0.0.1', agent: '代码工程师' },
+        { id: 'FP-010', title: '整理本周会议记录', status: 'todo', priority: 'p2', projectId: 'FocusPilot', workspaceType: 'temporary', executionMode: 'manual', schedule: 'today', month: '', goal: '', agent: '', date: '05-27' },
+        { id: 'FP-011', title: '研究 Multica 执行模型', status: 'in_progress', priority: 'p1', projectId: 'FocusPilot', workspaceType: 'temporary', executionMode: 'manual', schedule: 'today', month: '', goal: '', agent: '', date: '05-27' },
+        { id: 'PO-001', title: '首页重构', status: 'todo', priority: 'p1', projectId: 'PilotOne', workspaceType: 'local_project', executionMode: 'none', schedule: 'week', month: '', goal: '', agent: '' },
+        { id: 'PO-002', title: 'API 文档更新', status: 'in_progress', priority: 'p1', projectId: 'PilotOne', workspaceType: 'temporary', executionMode: 'dialog', schedule: 'today', month: '', goal: '', agent: '代码工程师' },
+      ];
+
+      /* ── Render: Kanban Board from workItems ── */
+      function renderKanbanFromItems(filter) {
+        var statusColumns = {
+          backlog: { label: 'Backlog', color: 'var(--dim)', items: [] },
+          todo: { label: 'Todo', color: 'var(--muted)', items: [] },
+          in_progress: { label: 'In Progress', color: 'var(--accent)', items: [] },
+          in_evaluation: { label: 'Evaluation', color: 'var(--purple)', items: [] },
+          done: { label: 'Done', color: 'var(--green)', items: [] },
+          blocked: { label: 'Blocked', color: 'rgba(249,115,22,.7)', items: [] }
+        };
+        workItems.forEach(function(item) {
+          if (statusColumns[item.status]) {
+            statusColumns[item.status].items.push(item);
+          }
+        });
+        var kanban = document.getElementById('fp-kanban');
+        if (!kanban) return;
+        kanban.innerHTML = '';
+        var statusOrder = ['backlog', 'todo', 'in_progress', 'in_evaluation', 'done', 'blocked'];
+        statusOrder.forEach(function(status) {
+          var col = statusColumns[status];
+          var lane = document.createElement('div');
+          lane.className = 'lane fp-col';
+          lane.dataset.fpCol = status === 'in_progress' ? 'progress' : (status === 'in_evaluation' ? 'evaluation' : status);
+          if (status === 'blocked') { lane.style.opacity = '.6'; lane.style.minWidth = '140px'; }
+          var h3 = document.createElement('h3');
+          h3.innerHTML = '<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:' + col.color + ';margin-right:4px;vertical-align:middle"></span> ' + col.label + ' <span class="fp-col-count">' + col.items.length + '</span>';
+          lane.appendChild(h3);
+          col.items.forEach(function(item) {
+            var priorityColor = item.priority === 'p0' ? 'var(--red)' : (item.priority === 'p1' ? 'var(--amber)' : 'var(--dim)');
+            var priorityBorder = item.priority === 'p0' ? 'rgba(248,113,113,.3)' : (item.priority === 'p1' ? 'rgba(242,196,15,.3)' : 'rgba(112,120,135,.3)');
+            var modeLabel = item.executionMode === 'auto' ? 'auto' : (item.executionMode === 'manual' ? 'manual' : (item.executionMode === 'dialog' ? 'dialog' : ''));
+            var modeColor = item.executionMode === 'auto' ? 'var(--accent)' : (item.executionMode === 'manual' ? 'var(--purple)' : 'var(--muted)');
+            var modeBorder = item.executionMode === 'auto' ? 'var(--accent-line)' : (item.executionMode === 'manual' ? 'rgba(167,139,250,.3)' : 'var(--line)');
+            var card = document.createElement('div');
+            card.className = 'task fp-card';
+            card.dataset.taskId = item.id;
+            card.dataset.fpSchedule = item.schedule || '';
+            if (item.month) card.dataset.fpMonth = item.month;
+            if (item.executionMode) card.dataset.fpMode = item.executionMode;
+            if (item.agentStatus) card.dataset.fpAgent = 'yes';
+            if (item.decision) card.dataset.fpDecision = 'yes';
+            if (item.status === 'done') card.style.opacity = '.7';
+            if (item.agentStatus) card.style.borderColor = 'var(--accent-line)';
+            if (item.decision) card.style.borderColor = 'rgba(167,139,250,.3)';
+            card.onclick = function() { openTaskDetail(item.id); };
+            var html = '<div style="font-size:10px;font-family:var(--mono);color:var(--dim);margin-bottom:2px">' + item.id + '</div>';
+            html += '<div class="task-title"' + (item.status === 'done' ? ' style="text-decoration:line-through"' : '') + '>' + item.title + '</div>';
+            html += '<div class="task-meta" style="flex-wrap:wrap;gap:4px">';
+            html += '<span class="pill" style="font-size:9px;padding:1px 5px;border-color:' + priorityBorder + ';color:' + priorityColor + '">' + item.priority.toUpperCase() + '</span>';
+            if (modeLabel) html += '<span class="pill" style="font-size:9px;padding:1px 5px;border-color:' + modeBorder + ';color:' + modeColor + '">' + modeLabel + '</span>';
+            if (item.goal) html += '<span style="font-size:10px;color:var(--dim)">&rarr; ' + item.goal + '</span>';
+            if (item.agentStatus) html += '<span class="pill blue" style="font-size:9px;padding:1px 5px;font-weight:600">' + item.agentStatus + '</span>';
+            if (item.decision) html += '<span class="pill amber" style="font-size:9px;padding:1px 5px;font-weight:600">等你决策</span>';
+            html += '</div>';
+            html += '<div style="display:flex;align-items:center;justify-content:space-between;margin-top:6px;padding-top:6px;border-top:1px solid var(--line-soft);font-size:10px;color:var(--dim)">';
+            if (item.agent) {
+              html += '<span' + (item.agentStatus ? ' style="color:var(--accent)"' : '') + '>🧑‍💻 ' + item.agent + '</span>';
+            } else {
+              html += '<span>👤 ' + (item.status === 'done' ? '手动完成' : '手动执行') + '</span>';
+            }
+            html += '<span style="font-family:var(--mono)">' + (item.status === 'done' && item.date ? '✓ ' + item.date : (item.date || '—')) + '</span>';
+            html += '</div>';
+            card.innerHTML = html;
+            if (status === 'blocked') card.style.display = 'none';
+            lane.appendChild(card);
+          });
+          // Add "新建任务" button (except for blocked/done)
+          if (status !== 'blocked' && status !== 'done' && status !== 'in_evaluation') {
+            var addBtn = document.createElement('div');
+            addBtn.style.cssText = 'display:flex;align-items:center;justify-content:center;gap:4px;padding:8px;border-radius:var(--radius);border:1px dashed var(--line);color:var(--dim);font-size:12px;cursor:pointer;margin-top:4px';
+            addBtn.textContent = '＋ 新建任务';
+            addBtn.onclick = function() { openNewTaskModal(); };
+            lane.appendChild(addBtn);
+          }
+          kanban.appendChild(lane);
+        });
+      }
+
+      /* ── Render: Project Task List (for right panel / floating panel) ── */
+      function renderProjectTaskList(projectId) {
+        var container = document.getElementById('projectTasksContent');
+        if (!container) return;
+        var filtered = workItems.filter(function(item) { return item.projectId === projectId; });
+        var html = '<div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--dim);margin-bottom:8px">📂 ' + projectId + ' (' + filtered.length + ')</div>';
+        html += '<div style="display:flex;flex-direction:column;gap:4px">';
+        filtered.forEach(function(item) {
+          var statusIcon = item.status === 'done' ? '<span style="color:var(--green);font-size:9px">✓</span>' :
+            (item.status === 'in_progress' ? '<span style="color:var(--accent);font-size:9px">●</span>' :
+            (item.status === 'in_evaluation' ? '<span style="color:var(--purple);font-size:9px">◆</span>' :
+            '<span style="color:var(--dim);font-size:9px">○</span>'));
+          var bgStyle = item.status === 'in_progress' ? 'background:var(--surface-2);border-left:2px solid var(--accent);' : '';
+          var opStyle = item.status === 'done' ? 'opacity:.5;' : '';
+          html += '<div onclick="openTaskDetail(\'' + item.id + '\')" style="display:flex;align-items:center;gap:6px;padding:6px 8px;border-radius:var(--radius);cursor:pointer;font-size:11px;' + bgStyle + opStyle + '">';
+          html += statusIcon;
+          html += '<span style="flex:1;' + (item.status === 'in_progress' ? 'font-weight:500' : '') + '">' + item.id + ' ' + item.title + '</span>';
+          html += '<span style="font-size:9px;color:var(--dim)">' + (item.status === 'done' ? 'done' : item.priority.toUpperCase()) + '</span>';
+          html += '</div>';
+        });
+        html += '</div>';
+        container.innerHTML = html;
+      }
+
+      /* ── Also render studioTasksPanel (session right panel) from workItems ── */
+      function renderStudioTasksPanelFromItems(projectId) {
+        var panel = document.getElementById('studioTasksPanel');
+        if (!panel) return;
+        var filtered = workItems.filter(function(item) { return item.projectId === projectId; });
+        var listHtml = '<div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--dim);margin-bottom:8px">当前项目任务</div>';
+        listHtml += '<div style="display:flex;flex-direction:column;gap:4px">';
+        filtered.forEach(function(item) {
+          var statusIcon = item.status === 'done' ? '<span style="color:var(--green);font-size:9px">✓</span>' :
+            (item.status === 'in_progress' ? '<span style="color:var(--accent);font-size:9px">●</span>' :
+            (item.status === 'in_evaluation' ? '<span style="color:var(--purple);font-size:9px">◆</span>' :
+            '<span style="color:var(--dim);font-size:9px">○</span>'));
+          var bgStyle = item.status === 'in_progress' ? 'background:var(--surface-2);border-left:2px solid var(--accent);' : '';
+          var opStyle = item.status === 'done' ? 'opacity:.5;' : '';
+          listHtml += '<div onclick="openTaskDetail(\'' + item.id + '\')" style="display:flex;align-items:center;gap:6px;padding:6px 8px;border-radius:var(--radius);cursor:pointer;font-size:11px;' + bgStyle + opStyle + '">';
+          listHtml += statusIcon;
+          listHtml += '<span style="flex:1;' + (item.status === 'in_progress' ? 'font-weight:500' : '') + '">' + item.id + ' ' + item.title + '</span>';
+          listHtml += '<span style="font-size:9px;color:var(--dim)">' + (item.status === 'done' ? 'done' : item.priority.toUpperCase()) + '</span>';
+          listHtml += '</div>';
+        });
+        listHtml += '</div>';
+        listHtml += '<div style="display:flex;align-items:center;justify-content:center;gap:4px;padding:6px;border-radius:var(--radius);border:1px dashed var(--line);color:var(--dim);font-size:10px;cursor:pointer;margin-top:8px" onclick="openNewTaskModal({source:\'project\',projectId:currentStudioWorkspace})">+ 新建任务</div>';
+        panel.innerHTML = listHtml;
+      }
+
 	      const pageOrder = [
 	        "home",
 	        "areas",
@@ -6442,9 +6561,20 @@ FocusPilot/
           // If navigating to studio with a filter, apply the filter
           if (el.dataset.go === 'studio' && el.dataset.studioFilter) {
             switchToGlobalWorkspace();
+            // Auto-switch sidebar to kanban tab
+            switchStudioSideTab('kanban');
             var filterItem = document.querySelector('[data-focus-filter="' + el.dataset.studioFilter + '"]');
             if (filterItem) {
               applyFocusFilter(filterItem);
+            }
+            // If a specific view is requested (e.g., focus-list), switch to it
+            if (el.dataset.studioView) {
+              var viewBtn = document.querySelector('.seg[data-scope="focusView"] button[data-target="' + el.dataset.studioView + '"]');
+              if (viewBtn) {
+                viewBtn.closest('.seg').querySelectorAll('button').forEach(function(b) { b.classList.remove('active'); });
+                viewBtn.classList.add('active');
+                showPanel(el.dataset.studioView);
+              }
             }
           }
         })
@@ -6918,6 +7048,8 @@ FocusPilot/
       function openCrewTaskInFocus(taskId) {
         showPage('studio');
         switchToGlobalWorkspace();
+        // Switch sidebar to kanban view
+        switchStudioSideTab('kanban');
         // reset filter to 'all' so target card is visible
         var allFilter = document.querySelector('[data-focus-filter="all"]');
         if (allFilter) applyFocusFilter(allFilter);
@@ -6938,7 +7070,7 @@ FocusPilot/
         }
         // render detail panel with task-specific data
         renderFocusTaskDetail(taskId);
-        openTaskDetail();
+        openTaskDetail(taskId);
       }
       document.querySelectorAll(".crew-task-row[data-focus-task-id]").forEach(function(row) {
         row.addEventListener("click", function() {
@@ -7361,14 +7493,28 @@ FocusPilot/
         var af = document.querySelector('.accept-feedback'); if (af) af.remove();
       }
 
-      function openTaskDetailTab(tabId) {
-        openTaskDetail();
+      function openTaskDetailTab(tabId, taskId) {
+        openTaskDetail(taskId);
         var tab = document.querySelector('.fp-dtab[data-t="' + tabId + '"]');
         if (tab) tab.click();
       }
 
-      function openTaskDetail() {
+      function openTaskDetail(taskId) {
         resetTaskDetailActions();
+        // If taskId provided, try to populate detail from workItems
+        if (taskId) {
+          var item = workItems.find(function(w) { return w.id === taskId; });
+          if (item) {
+            var idEl = document.querySelector('#fpDetailPanel .fp-detail-id');
+            var titleEl = document.querySelector('#fpDetailPanel .fp-detail-title');
+            if (idEl) idEl.textContent = item.id;
+            if (titleEl) titleEl.textContent = item.title;
+          }
+          // Also render from focusTaskDemoData if available
+          if (typeof focusTaskDemoData !== 'undefined' && focusTaskDemoData[taskId]) {
+            renderFocusTaskDetail(taskId);
+          }
+        }
         var defaultTab = document.querySelector('.fp-dtab[data-t="fp-t-plan"]');
         if (defaultTab) defaultTab.click();
         document.getElementById('fpDetailOverlay').style.opacity = '1';
@@ -7390,7 +7536,20 @@ FocusPilot/
       });
 
       /* ── Focus: New Task Modal ── */
-      function openNewTaskModal() { document.getElementById('fpNewTaskModal').style.display = 'flex'; selectExecMode('none'); }
+      function openNewTaskModal(context) {
+        document.getElementById('fpNewTaskModal').style.display = 'flex';
+        selectExecMode('none');
+        // If context provides project info, pre-select local workspace and project
+        if (context && context.source === 'project' && context.projectId) {
+          selectWorkspace('local');
+          var sel = document.getElementById('ws-local-project');
+          if (sel) {
+            for (var i = 0; i < sel.options.length; i++) {
+              if (sel.options[i].text === context.projectId) { sel.selectedIndex = i; break; }
+            }
+          }
+        }
+      }
       function closeNewTaskModal() { document.getElementById('fpNewTaskModal').style.display = 'none'; }
       document.getElementById('fpNewTaskModal').addEventListener('click', closeNewTaskModal);
 
@@ -7421,6 +7580,33 @@ FocusPilot/
         }
       }
 
+      /* ── Studio: Sidebar Tab Switch (看板视图 / 项目视图) ── */
+      function switchStudioSideTab(tab) {
+        // Update tab bar active state
+        document.querySelectorAll('#studioSideTabBar .studio-side-tab').forEach(function(btn) {
+          var isActive = btn.dataset.studioSide === tab;
+          btn.style.borderBottomColor = isActive ? 'var(--accent)' : 'transparent';
+          btn.style.color = isActive ? 'var(--text)' : 'var(--muted)';
+          btn.style.fontWeight = isActive ? '600' : '500';
+          btn.classList.toggle('active', isActive);
+        });
+        // Toggle content containers
+        var kanbanSide = document.getElementById('studioSideKanban');
+        var projectSide = document.getElementById('studioSideProject');
+        if (kanbanSide) kanbanSide.style.display = tab === 'kanban' ? 'block' : 'none';
+        if (projectSide) projectSide.style.display = tab === 'project' ? 'block' : 'none';
+        // Switch main area accordingly
+        if (tab === 'kanban') {
+          switchToGlobalWorkspace();
+        } else {
+          // If a project was previously selected, show it; otherwise just show the project workspace
+          var pw = document.getElementById('studio-project-workspace');
+          var gw = document.getElementById('studio-global-workspace');
+          if (gw) gw.style.display = 'none';
+          if (pw) pw.style.display = 'flex';
+        }
+      }
+
       /* ── Studio: Global/Project Workspace Switching ── */
       function switchToGlobalWorkspace() {
         var gw = document.getElementById('studio-global-workspace');
@@ -7437,13 +7623,14 @@ FocusPilot/
         if (pw) { pw.style.display = 'flex'; }
         // Deselect global view items in sidebar
         document.querySelectorAll('[data-focus-filter]').forEach(function(s) { s.classList.remove('active'); });
+        // Auto-switch sidebar to project tab
+        switchStudioSideTab('project');
       }
 
-      /* ── Studio: Project Tab Switch (tasks / sessions / session) ── */
+      /* ── Studio: Project Tab Switch (sessions / session) ── */
       function showProjectTab(tab) {
         var contextView = document.getElementById('studio-project-context-view');
         var sessionView = document.getElementById('studio-session-view');
-        var tasksPanel = document.getElementById('studio-project-tasks');
         var sessionsPanel = document.getElementById('studio-project-sessions');
 
         if (tab === 'session') {
@@ -7451,21 +7638,39 @@ FocusPilot/
           if (contextView) contextView.style.display = 'none';
           if (sessionView) sessionView.style.display = 'flex';
         } else {
-          // In project context view
+          // In project context view - show sessions directly (no tasks tab)
           if (contextView) contextView.style.display = 'block';
           if (sessionView) sessionView.style.display = 'none';
-          if (tab === 'tasks') {
-            if (tasksPanel) tasksPanel.style.display = 'block';
-            if (sessionsPanel) sessionsPanel.style.display = 'none';
-          } else if (tab === 'sessions') {
-            if (tasksPanel) tasksPanel.style.display = 'none';
-            if (sessionsPanel) sessionsPanel.style.display = 'block';
-          }
-          // Update tab active state
-          var seg = contextView ? contextView.querySelector('.seg') : null;
-          if (seg) seg.querySelectorAll('button').forEach(function(b, i) {
-            b.classList.toggle('active', (tab === 'tasks' && i === 0) || (tab === 'sessions' && i === 1));
-          });
+          if (sessionsPanel) sessionsPanel.style.display = 'block';
+        }
+      }
+
+      /* ── Studio: Toggle Project Tasks Panel in Right Sidebar ── */
+      function toggleProjectTasksPanel() {
+        var btn = document.getElementById('projectTasksToggleBtn');
+        var tasksPanel = document.getElementById('studioTasksPanel');
+        var rightSidebar = document.getElementById('studioRightSidebar');
+        // Check if we're in project context (not session view)
+        var contextView = document.getElementById('studio-project-context-view');
+        if (!contextView || contextView.style.display === 'none') return;
+        // If right sidebar is hidden or tasks panel not visible, show it
+        if (!rightSidebar) return;
+        var sessionView = document.getElementById('studio-session-view');
+        // For project context view, we need to show the right panel with tasks
+        // First ensure the session view layout is available - use a simpler approach
+        // Toggle a floating task panel instead
+        var floatingPanel = document.getElementById('projectTasksFloatingPanel');
+        if (!floatingPanel) {
+          // Create floating panel dynamically
+          floatingPanel = document.createElement('div');
+          floatingPanel.id = 'projectTasksFloatingPanel';
+          floatingPanel.style.cssText = 'position:fixed;right:20px;top:80px;width:320px;max-height:70vh;background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,.4);z-index:50;display:flex;flex-direction:column;overflow:hidden';
+          floatingPanel.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-bottom:1px solid var(--line-soft)"><span style="font-size:12px;font-weight:600">📋 任务列表</span><span style="cursor:pointer;color:var(--dim);font-size:11px" onclick="toggleProjectTasksPanel()">✕</span></div><div id="projectTasksContent" style="flex:1;overflow-y:auto;padding:10px 12px"></div><div style="padding:8px 12px;border-top:1px solid var(--line-soft)"><div style="display:flex;align-items:center;justify-content:center;gap:4px;padding:6px;border-radius:var(--radius);border:1px dashed var(--line);color:var(--dim);font-size:10px;cursor:pointer" onclick="openNewTaskModal({source:\'project\',projectId:currentStudioWorkspace})">+ 新建任务</div></div>';
+          document.body.appendChild(floatingPanel);
+          renderProjectTaskList(currentStudioWorkspace);
+        } else {
+          floatingPanel.style.display = floatingPanel.style.display === 'none' ? 'flex' : 'none';
+          if (floatingPanel.style.display === 'flex') renderProjectTaskList(currentStudioWorkspace);
         }
       }
 
@@ -7708,9 +7913,14 @@ FocusPilot/
           if (grid) grid.style.gridTemplateColumns = 'minmax(0,1fr) 320px';
         }
         showStudioRightTab('diff');
+        // Render tasks panel from workItems for this workspace
+        renderStudioTasksPanelFromItems(workspace);
         // Switch to session view (chat/diff/terminal)
         switchToProjectWorkspace();
         showProjectTab('session');
+        // Hide floating task panel if visible
+        var floatingPanel = document.getElementById('projectTasksFloatingPanel');
+        if (floatingPanel) floatingPanel.style.display = 'none';
       }
 
       /* ── Studio: 添加项目文件夹交互 ── */
@@ -7732,7 +7942,7 @@ FocusPilot/
       function addWorkspaceFromModal() {
         var path = document.getElementById('wsPathDisplay').textContent;
         var name = path.split('/').pop();
-        var list = document.querySelector('[data-page="studio"] .side-scroll');
+        var list = document.getElementById('studioSideProject');
         var anchor = list.querySelector('[onclick*="openNewWorkspaceModal"]');
         if (anchor && name) {
           var wsRow = document.createElement('div');
@@ -7802,7 +8012,7 @@ FocusPilot/
         if (action === 'rename') {
           var newName = prompt('重命名项目 "' + ws + '"：', ws);
           if (newName && newName !== ws) {
-            document.querySelectorAll('[data-page="studio"] .side-scroll .ws-row[data-workspace="' + ws + '"]').forEach(function(row) {
+            document.querySelectorAll('#studioSideProject .ws-row[data-workspace="' + ws + '"]').forEach(function(row) {
               row.dataset.workspace = newName;
               var span = row.querySelector('span');
               if (span) span.textContent = '📂 ' + newName;
@@ -7818,7 +8028,7 @@ FocusPilot/
           return;
         }
         if (action === 'archive') {
-          var wsItems = document.querySelectorAll('[data-page="studio"] .side-scroll .side-item');
+          var wsItems = document.querySelectorAll('#studioSideProject .side-item');
           var archiving = false;
           wsItems.forEach(function(item) {
             if (item.querySelector('span') && item.querySelector('span').textContent.indexOf('📂 ' + ws) === 0) { archiving = true; return; }
@@ -7832,7 +8042,7 @@ FocusPilot/
           return;
         }
         if (action === 'remove') {
-          var items = document.querySelectorAll('[data-page="studio"] .side-scroll .side-item');
+          var items = document.querySelectorAll('#studioSideProject .side-item');
           var removing = false;
           var toRemove = [];
           items.forEach(function(item) {
@@ -7860,12 +8070,17 @@ FocusPilot/
         // Update project context view title
         var projectTitle = document.getElementById('studioProjectTitle');
         if (projectTitle) projectTitle.innerHTML = '📂 ' + ws;
-        // Show project context view (tasks tab by default)
-        showProjectTab('tasks');
+        // Show project context view (sessions directly)
+        showProjectTab('sessions');
+        // Render tasks panel data for this project
+        renderStudioTasksPanelFromItems(ws);
         // Deselect all studio sessions in sidebar
         document.querySelectorAll('.studio-session').forEach(function(s) { s.classList.remove('active'); });
         var emptyTop = document.getElementById('studioEmptyTopbar');
         if (emptyTop) emptyTop.style.display = 'none';
+        // Hide floating task panel if visible
+        var floatingPanel = document.getElementById('projectTasksFloatingPanel');
+        if (floatingPanel) floatingPanel.style.display = 'none';
       }
 
       /* ── Studio: 新建对话闭环 ── */
@@ -7887,7 +8102,7 @@ FocusPilot/
           terminalLines: '$ ',
           terminalTabs: ['Terminal 1']
         };
-        var wsItems = document.querySelectorAll('[data-page="studio"] .side-scroll .side-item');
+        var wsItems = document.querySelectorAll('#studioSideProject .side-item');
         var targetWs = null;
         wsItems.forEach(function(item) {
           var span = item.querySelector('span');
@@ -7935,7 +8150,7 @@ FocusPilot/
 
         if (wsRow.dataset.pinned) {
           // 取消置顶：移回项目列表
-          var addBtn = document.querySelector('[data-page="studio"] .side-scroll [onclick*="openNewWorkspaceModal"]');
+          var addBtn = document.querySelector('#studioSideProject [onclick*="openNewWorkspaceModal"]');
           var nodes = [wsRow];
           var next = wsRow.nextElementSibling;
           while (next && next !== pinSep && next.classList.contains('indent')) {
@@ -9056,6 +9271,10 @@ FocusPilot/
           activeHotkeyPill = null;
         }
       });
+
+      /* ═══ Initialize: Render kanban from workItems data ═══ */
+      renderKanbanFromItems();
+      renderStudioTasksPanelFromItems('FocusPilot');
     </script>
 
     <!-- ═══ Studio: Workspace 菜单 popover ═══ -->
