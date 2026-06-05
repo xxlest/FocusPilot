@@ -6572,6 +6572,14 @@ FocusPilot/
 	        document.querySelectorAll("body > .page").forEach((page) => {
 	          main.appendChild(page)
 	        })
+	        const studioPage = main.querySelector('.page[data-page="studio"]')
+	        const studioOwnedNodes = ['studio-project-workspace', 'studioGlobalRightDrawer']
+	        if (studioPage) {
+	          studioOwnedNodes.forEach((id) => {
+	            const el = document.getElementById(id)
+	            if (el && el.parentElement !== studioPage) studioPage.appendChild(el)
+	          })
+	        }
 	      }
 	
 	      function showPage(page) {
