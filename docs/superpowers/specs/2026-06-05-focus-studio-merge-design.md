@@ -353,7 +353,7 @@ WorkspaceWriteLease:
 |------|-----------|
 | ExecutionRun completed / aborted | 自动释放（status → released） |
 | Runtime 心跳超时（heartbeat_at + TTL < now） | 标记 orphaned |
-| App 重启时扫描 | 扫描 active lease；若 heartbeat 超时则标记 orphaned，提示用户确认释放 |
+| App 重启时扫描 | 扫描 active lease；心跳超时则标记 orphaned，并提示用户确认释放 |
 | 用户强制释放 orphaned lease | 二次确认后释放，关联 Run 标记 aborted |
 
 ### 5.6 Project 与 Workspace 的关系
@@ -557,6 +557,8 @@ ExecutionRun
 | `06-review.md` | 修改 | 职责边界表更新 |
 | `08-settings.md` | 修改 | Focus 配置区合入 Studio |
 | `FP-UI.md` | 修改 | 页面清单更新 |
+| `Architecture.md` | **修改** | 新增 WorkspaceWriteLease / ExecutionRun 扩展字段（run_history_ids, sub_agent_runs）/ Workspace 模型；更新模块边界（Focus 模块合入 Studio） |
+| `DesignGuide.md` | 检查/修改 | 确认 6 项导航、合并后 Studio 侧边栏结构、右面板 Tab（任务/Diff/Git）、Workspace 类型标识视觉规则 |
 | `PRD.md` | 修改 | 两阶段模型、页面引用更新 |
 | `CLAUDE.md` | 修改 | 进度表、页面列表更新 |
 
