@@ -1092,39 +1092,20 @@
         display: flex;
         flex-direction: column;
       }
-      .studio-view-switch {
-        display: inline-flex;
-        align-items: center;
-        height: 28px;
+      .studio-display-dropdown {
+        min-height: 28px;
+        padding: 0 28px 0 9px;
         border: 1px solid var(--line-soft);
         border-radius: var(--radius);
         background: var(--surface);
-        overflow: hidden;
-      }
-      .studio-view-switch button {
-        min-height: 26px;
-        padding: 0 9px;
-        border: 0;
-        border-right: 1px solid var(--line-soft);
-        border-radius: 0;
-        background: transparent;
         color: var(--muted);
         font-size: 11px;
         cursor: pointer;
       }
-      .studio-view-switch button:last-child {
-        border-right: 0;
-      }
-      .studio-view-switch button.active {
+      .studio-display-dropdown.active {
         background: var(--elevated);
         color: var(--text);
         font-weight: 600;
-      }
-      .studio-view-switch .sym {
-        color: var(--dim);
-        font-family: var(--mono);
-        font-weight: 500;
-        margin-right: 4px;
       }
       #focus-swimlane.active {
         display: block;
@@ -1187,6 +1168,9 @@
       .swimlane-card {
         margin-bottom: 6px;
         cursor: grab;
+      }
+      .swimlane-card.dragging {
+        opacity: .55;
       }
       .swimlane-card:active {
         cursor: grabbing;
@@ -2784,11 +2768,11 @@
             <span class="meta">规划 -> 执行 -> 评估 -> 验收</span>
             <div class="top-actions">
               <button class="btn active" id="studioGanttModeBtn" title="▱ 甘特规划" onclick="selectStudioGlobalMode('gantt')" style="font-size:11px;min-height:28px;padding:0 9px"><span style="color:var(--dim);font-family:var(--mono);margin-right:4px">▱</span>甘特规划</button>
-              <div class="studio-view-switch" id="studioDisplayMode">
-                <button data-display-mode="board" title="▦ 看板" onclick="selectStudioDisplayMode('board')"><span class="sym">▦</span>看板</button>
-                <button data-display-mode="list" title="☰ 列表" onclick="selectStudioDisplayMode('list')"><span class="sym">☰</span>列表</button>
-                <button data-display-mode="swimlane" title="田 泳道" onclick="selectStudioDisplayMode('swimlane')"><span class="sym">田</span>泳道</button>
-              </div>
+              <select class="studio-display-dropdown" id="studioDisplayDropdown" title="显示模式" onchange="selectStudioDisplayMode(this.value)">
+                <option value="board">▦ 看板</option>
+                <option value="list">☰ 列表</option>
+                <option value="swimlane">田 泳道</option>
+              </select>
               <button class="btn" id="fp-filter-time" style="font-size:11px;min-height:28px;padding:0 9px">时间: 全部 ▾</button>
               <button class="btn" id="fp-filter-goal" style="font-size:11px;min-height:28px;padding:0 9px">目标: 全部 ▾</button>
               <button class="btn" id="fp-filter-source" style="font-size:11px;min-height:28px;padding:0 9px">来源: 全部 ▾</button>
@@ -6539,6 +6523,7 @@ FocusPilot/
       };
       var studioWorkspaceFilter = 'all';
       var currentFocusFilter = 'all';
+      var swimlaneDraggedTaskId = '';
       var tempWorkspaceCounter = 3;
 
       function workspaceTypeInfo(type) {
@@ -6718,11 +6703,12 @@ FocusPilot/
           var renderItems = col.items.slice();
           renderItems.forEach(renderKanbanCard);
           function renderKanbanCard(item) {
+            var cardMeta = getWorkspaceMeta(item.projectId || deriveWorkspaceIdForItem(item));
             var card = document.createElement('div');
             card.className = 'task fp-card';
             card.dataset.taskId = item.id;
             card.dataset.fpSchedule = item.schedule || '';
-            card.dataset.fpWorkspace = meta.name;
+            card.dataset.fpWorkspace = cardMeta.name;
             if (item.month) card.dataset.fpMonth = item.month;
             if (item.executionMode) card.dataset.fpMode = item.executionMode;
             if (item.agentStatus) card.dataset.fpAgent = 'yes';
@@ -6768,6 +6754,7 @@ FocusPilot/
             html += '<div class="swimlane-cell" data-swimlane-workspace="" data-swimlane-status="' + def.status + '"></div>';
           });
           container.innerHTML = html;
+          bindSwimlaneDragAndDrop();
           return;
         }
         workspaceIds.forEach(function(wsId) {
@@ -6775,7 +6762,7 @@ FocusPilot/
           var info = workspaceTypeInfo(meta.type);
           html += '<div class="swimlane-workspace">' + info.icon + ' ' + meta.name + '<span class="sub">' + info.label + ' · ' + visibleItems.filter(function(item) { return (item.projectId || deriveWorkspaceIdForItem(item)) === wsId; }).length + ' 项</span></div>';
           taskStatusDefs.forEach(function(def) {
-            html += '<div class="swimlane-cell" data-swimlane-workspace="' + wsId + '" data-swimlane-status="' + def.status + '" ondragover="handleSwimlaneDragOver(event)" ondragleave="handleSwimlaneDragLeave(event)" ondrop="handleSwimlaneDrop(event)">';
+            html += '<div class="swimlane-cell" data-swimlane-workspace="' + wsId + '" data-swimlane-status="' + def.status + '">';
             visibleItems.filter(function(item) {
               return (item.projectId || deriveWorkspaceIdForItem(item)) === wsId && item.status === def.status;
             }).forEach(function(item) {
@@ -6784,7 +6771,7 @@ FocusPilot/
                 (item.executionMode ? ' data-fp-mode="' + item.executionMode + '"' : '') +
                 (item.agentStatus ? ' data-fp-agent="yes"' : '') +
                 (item.decision ? ' data-fp-decision="yes"' : '') +
-                ' onclick="openTaskDetail(&quot;' + item.id + '&quot;)" ondragstart="handleSwimlaneDragStart(event, &quot;' + item.id + '&quot;)">' +
+                '>' +
                 buildTaskCardHtml(item, true) +
                 '</div>';
             });
@@ -6792,32 +6779,45 @@ FocusPilot/
           });
         });
         container.innerHTML = html;
+        bindSwimlaneDragAndDrop();
       }
 
       function handleSwimlaneDragStart(event, taskId) {
+        swimlaneDraggedTaskId = taskId;
+        if (event.currentTarget) event.currentTarget.classList.add('dragging');
         if (!event.dataTransfer) return;
         event.dataTransfer.setData('text/plain', taskId);
+        event.dataTransfer.setData('application/x-focuspilot-task', taskId);
         event.dataTransfer.effectAllowed = 'move';
+      }
+
+      function handleSwimlaneDragEnd(event) {
+        if (event.currentTarget) event.currentTarget.classList.remove('dragging');
+        document.querySelectorAll('.swimlane-cell.drag-over').forEach(function(cell) {
+          cell.classList.remove('drag-over');
+        });
       }
 
       function handleSwimlaneDragOver(event) {
         event.preventDefault();
         if (event.dataTransfer) event.dataTransfer.dropEffect = 'move';
-        var cell = event.currentTarget;
+        var cell = event.currentTarget || (event.target && event.target.closest('.swimlane-cell'));
         if (cell) cell.classList.add('drag-over');
       }
 
       function handleSwimlaneDragLeave(event) {
-        var cell = event.currentTarget;
+        var cell = event.currentTarget || (event.target && event.target.closest('.swimlane-cell'));
         if (cell) cell.classList.remove('drag-over');
       }
 
       function handleSwimlaneDrop(event) {
         event.preventDefault();
-        var cell = event.currentTarget;
+        var cell = event.currentTarget || (event.target && event.target.closest('.swimlane-cell'));
         if (!cell) return;
         cell.classList.remove('drag-over');
-        var taskId = event.dataTransfer ? event.dataTransfer.getData('text/plain') : '';
+        var taskId = event.dataTransfer ? (event.dataTransfer.getData('application/x-focuspilot-task') || event.dataTransfer.getData('text/plain')) : '';
+        taskId = taskId || swimlaneDraggedTaskId;
+        swimlaneDraggedTaskId = '';
         var targetStatus = cell.dataset.swimlaneStatus;
         var targetWorkspace = cell.dataset.swimlaneWorkspace;
         if (!taskId || !targetStatus || !targetWorkspace) return;
@@ -6842,6 +6842,26 @@ FocusPilot/
           applyStudioWorkspaceContext(currentStudioWorkspace || targetWorkspace);
         }
         showToast('已移动 ' + taskId + ' 到 ' + targetMeta.name + ' · ' + taskStatusDefs.find(function(def) { return def.status === targetStatus; }).label);
+      }
+
+      function bindSwimlaneDragAndDrop() {
+        var container = document.getElementById('fp-swimlane');
+        if (!container) return;
+        container.querySelectorAll('.swimlane-card').forEach(function(card) {
+          card.addEventListener('click', function(event) {
+            openTaskDetail(card.dataset.taskId);
+          });
+          card.addEventListener('dragstart', function(event) {
+            handleSwimlaneDragStart(event, card.dataset.taskId);
+          });
+          card.addEventListener('dragend', handleSwimlaneDragEnd);
+        });
+        container.querySelectorAll('.swimlane-cell').forEach(function(cell) {
+          cell.addEventListener('dragenter', handleSwimlaneDragOver);
+          cell.addEventListener('dragover', handleSwimlaneDragOver);
+          cell.addEventListener('dragleave', handleSwimlaneDragLeave);
+          cell.addEventListener('drop', handleSwimlaneDrop);
+        });
       }
 
       /* ── Also render studioTasksPanel (session right panel) from workItems ── */
@@ -6969,12 +6989,9 @@ FocusPilot/
 
       function setStudioGanttActive(active) {
         var ganttBtn = document.getElementById('studioGanttModeBtn');
+        var displayDropdown = document.getElementById('studioDisplayDropdown');
         if (ganttBtn) ganttBtn.classList.toggle('active', !!active);
-        if (active) {
-          document.querySelectorAll('#studioDisplayMode [data-display-mode]').forEach(function(btn) {
-            btn.classList.remove('active');
-          });
-        }
+        if (displayDropdown) displayDropdown.classList.toggle('active', !active);
       }
 
       function selectStudioGlobalMode(mode) {
@@ -6986,9 +7003,8 @@ FocusPilot/
       function selectStudioDisplayMode(mode) {
         studioGlobalDisplayMode = mode || 'board';
         setStudioGanttActive(false);
-        document.querySelectorAll('#studioDisplayMode [data-display-mode]').forEach(function(btn) {
-          btn.classList.toggle('active', btn.dataset.displayMode === studioGlobalDisplayMode);
-        });
+        var displayDropdown = document.getElementById('studioDisplayDropdown');
+        if (displayDropdown) displayDropdown.value = studioGlobalDisplayMode;
         if (studioGlobalDisplayMode === 'list') {
           renderFocusListFromItems();
           showPanel('focus-list');
