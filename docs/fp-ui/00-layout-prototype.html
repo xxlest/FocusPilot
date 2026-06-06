@@ -2241,21 +2241,12 @@
               <div id="studioPinSep" style="border-bottom:1px solid var(--line-soft);margin:6px 8px"></div>
             </div>
             <!-- 📂 项目 Workspace -->
-            <div style="padding:4px 8px 2px;font-size:10px;font-weight:600;color:var(--dim);text-transform:uppercase;letter-spacing:.04em">Workspace 项目</div>
+            <div style="padding:4px 8px 2px;font-size:10px;font-weight:600;color:var(--dim);text-transform:uppercase;letter-spacing:.04em;display:flex;align-items:center;justify-content:space-between">
+              <span>Workspace 项目</span>
+              <button class="btn" onclick="collapseAllStudioSessionHistory()" style="font-size:10px;min-height:20px;padding:0 6px;color:var(--muted);background:transparent;border-color:var(--line-soft)">全部折叠</button>
+            </div>
             <div id="studioWorkspaceList">
-            <div class="side-item ws-row" data-workspace="FocusPilot" style="font-weight:500;cursor:pointer" onclick="setCurrentWorkspace(this.dataset.workspace)">
-              <span>📂 FocusPilot</span><span class="count" style="cursor:pointer;display:flex;gap:8px"><span onclick="event.stopPropagation();openWorkspaceMenu(event,this.closest('.ws-row').dataset.workspace)" title="项目菜单">···</span><span onclick="event.stopPropagation();openNewSessionModal(this.closest('.ws-row').dataset.workspace)" title="在此项目中新建对话">+</span></span>
-            </div>
-            <div class="side-item indent studio-session" oncontextmenu="openSessionMenu(event,this);return false" onclick="selectStudioSession(this)" data-workspace="FocusPilot" data-session="代码审查" data-session-id="s2" data-runtime="✳ Claude Code" style="font-size:11px">
-              <span>🔍 代码审查</span><span class="count"><span style="color:var(--green)">✅ 1h</span></span>
-            </div>
-            <div class="side-item indent studio-session" oncontextmenu="openSessionMenu(event,this);return false" onclick="selectStudioSession(this)" data-workspace="FocusPilot" data-session="Bug fix #12" data-session-id="s3" data-runtime="⚡ Codex CLI" style="font-size:11px">
-              <span>⚡ Bug fix #12</span><span class="count"><span style="color:var(--accent)">● 15m</span></span>
-            </div>
-            <div class="side-item ws-row" data-workspace="PilotOne" style="font-weight:500;cursor:pointer" onclick="setCurrentWorkspace(this.dataset.workspace)">
-              <span>📂 PilotOne</span><span class="count" style="cursor:pointer;display:flex;gap:8px"><span onclick="event.stopPropagation();openWorkspaceMenu(event,this.closest('.ws-row').dataset.workspace)" title="项目菜单">···</span><span onclick="event.stopPropagation();openNewSessionModal(this.closest('.ws-row').dataset.workspace)" title="在此项目中新建对话">+</span></span>
-            </div>
-            <div class="side-item indent" style="font-size:11px;color:var(--dim)">暂无对话</div>
+              <div class="side-item indent" style="font-size:11px;color:var(--dim)">Workspace 会按筛选条件动态渲染</div>
             </div>
             <div style="border-bottom:1px solid var(--line-soft);margin:8px 8px"></div>
             <!-- 添加项目文件夹 -->
@@ -3499,9 +3490,9 @@
           </div>
           <div class="work panel" id="focus-board">
             <div class="kanban" id="fp-kanban" style="grid-template-columns:repeat(6,minmax(200px,1fr))">
-              <!-- Backlog -->
+              <!-- 待规划 -->
               <div class="lane fp-col" data-fp-col="backlog">
-                <h3><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--dim);margin-right:4px;vertical-align:middle"></span> Backlog <span class="fp-col-count">2</span></h3>
+                <h3><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--dim);margin-right:4px;vertical-align:middle"></span> 待规划 <span class="fp-col-count">2</span></h3>
                 <div class="task fp-card" data-task-id="FP-006" onclick="openTaskDetail()" data-fp-schedule="month" data-fp-month="6" data-fp-mode="auto">
                   <div style="font-size:10px;font-family:var(--mono);color:var(--dim);margin-bottom:2px">FP-006</div>
                   <div class="task-title">主题系统适配</div>
@@ -3528,9 +3519,9 @@
                 </div>
                 <div style="display:flex;align-items:center;justify-content:center;gap:4px;padding:8px;border-radius:var(--radius);border:1px dashed var(--line);color:var(--dim);font-size:12px;cursor:pointer;margin-top:4px" onclick="openNewTaskModal()">＋ 新建任务</div>
               </div>
-              <!-- Todo -->
+              <!-- 待办 -->
               <div class="lane fp-col" data-fp-col="todo">
-                <h3><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--muted);margin-right:4px;vertical-align:middle"></span> Todo <span class="fp-col-count">3</span></h3>
+                <h3><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--muted);margin-right:4px;vertical-align:middle"></span> 待办 <span class="fp-col-count">3</span></h3>
                 <div class="task fp-card" data-task-id="FP-003" onclick="openTaskDetail()" data-fp-schedule="week" data-fp-month="5" data-fp-mode="auto">
                   <div style="font-size:10px;font-family:var(--mono);color:var(--dim);margin-bottom:2px">FP-003</div>
                   <div class="task-title">Agent Pull 执行管道</div>
@@ -3568,9 +3559,9 @@
                 </div>
                 <div style="display:flex;align-items:center;justify-content:center;gap:4px;padding:8px;border-radius:var(--radius);border:1px dashed var(--line);color:var(--dim);font-size:12px;cursor:pointer;margin-top:4px" onclick="openNewTaskModal()">＋ 新建任务</div>
               </div>
-              <!-- In Progress -->
+              <!-- 进行中 -->
               <div class="lane fp-col" data-fp-col="progress">
-                <h3><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--accent);margin-right:4px;vertical-align:middle"></span> In Progress <span class="fp-col-count">2</span></h3>
+                <h3><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--accent);margin-right:4px;vertical-align:middle"></span> 进行中 <span class="fp-col-count">2</span></h3>
                 <div class="task fp-card" data-task-id="FP-002" onclick="openTaskDetail()" data-fp-schedule="week" data-fp-month="5" data-fp-mode="auto" data-fp-agent="yes" style="border-color:var(--accent-line)">
                   <div style="font-size:10px;font-family:var(--mono);color:var(--dim);margin-bottom:2px">FP-002</div>
                   <div class="task-title">看板状态模型实现</div>
@@ -3597,9 +3588,9 @@
                   </div>
                 </div>
               </div>
-              <!-- In Evaluation -->
+              <!-- 审核中 -->
               <div class="lane fp-col" data-fp-col="evaluation">
-                <h3><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--purple);margin-right:4px;vertical-align:middle"></span> Evaluation <span class="fp-col-count">1</span></h3>
+                <h3><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--purple);margin-right:4px;vertical-align:middle"></span> 审核中 <span class="fp-col-count">1</span></h3>
                 <div class="task fp-card" data-task-id="FP-005" onclick="openTaskDetailTab('fp-t-eval')" data-fp-schedule="week" data-fp-month="5" data-fp-mode="auto" data-fp-decision="yes" style="border-color:rgba(167,139,250,.3)">
                   <div style="font-size:10px;font-family:var(--mono);color:var(--dim);margin-bottom:2px">FP-005</div>
                   <div class="task-title">规划引擎接口设计</div>
@@ -3614,9 +3605,9 @@
                   </div>
                 </div>
               </div>
-              <!-- Done -->
+              <!-- 已完成 -->
               <div class="lane fp-col" data-fp-col="done">
-                <h3><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--green);margin-right:4px;vertical-align:middle"></span> Done <span class="fp-col-count">2</span></h3>
+                <h3><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--green);margin-right:4px;vertical-align:middle"></span> 已完成 <span class="fp-col-count">2</span></h3>
                 <div class="task fp-card" data-task-id="FP-001" style="opacity:.7" data-fp-schedule="" data-fp-mode="auto">
                   <div style="font-size:10px;font-family:var(--mono);color:var(--dim);margin-bottom:2px">FP-001</div>
                   <div class="task-title" style="text-decoration:line-through">数据模型设计</div>
@@ -3640,9 +3631,9 @@
                   </div>
                 </div>
               </div>
-              <!-- Blocked/Cancelled (collapsed) -->
+              <!-- 已阻塞 -->
               <div class="lane fp-col" data-fp-col="blocked" style="opacity:.6;min-width:140px">
-                <h3 style="cursor:pointer"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:rgba(249,115,22,.7);margin-right:4px;vertical-align:middle"></span> Blocked <span class="fp-col-count">1</span> <span style="float:right;font-size:10px;color:var(--dim)">▸</span></h3>
+                <h3 style="cursor:pointer"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:rgba(249,115,22,.7);margin-right:4px;vertical-align:middle"></span> 已阻塞 <span class="fp-col-count">1</span> <span style="float:right;font-size:10px;color:var(--dim)">▸</span></h3>
                 <div class="task fp-card" data-task-id="FP-008" style="border-left:2px solid rgba(249,115,22,.7);display:none" data-fp-schedule="" data-fp-mode="auto">
                   <div style="font-size:10px;font-family:var(--mono);color:var(--dim);margin-bottom:2px">FP-008</div>
                   <div class="task-title">配置迁移脚本</div>
@@ -4005,24 +3996,7 @@
 
             <!-- 对话列表 (左侧主区域) -->
             <div id="studio-project-sessions" style="padding:16px 20px;overflow-y:auto">
-              <div style="display:flex;flex-direction:column;gap:6px">
-                <div style="background:var(--surface);border:1px solid var(--line-soft);border-radius:var(--radius);padding:10px 14px;cursor:pointer;display:flex;align-items:center;gap:10px" onclick="document.querySelector('.studio-session[data-session-id=s1]').click()">
-                  <span style="font-size:14px">🧑‍💻</span>
-                  <div style="flex:1;min-width:0"><div style="font-size:12px;font-weight:500">重构 auth</div><div style="font-size:10px;color:var(--dim)">✳ Claude Code · 3 分钟前</div></div>
-                  <span style="font-size:10px;padding:2px 6px;background:var(--accent-bg);color:var(--accent);border-radius:4px">活跃</span>
-                </div>
-                <div style="background:var(--surface);border:1px solid var(--line-soft);border-radius:var(--radius);padding:10px 14px;cursor:pointer;display:flex;align-items:center;gap:10px" onclick="document.querySelector('.studio-session[data-session-id=s2]').click()">
-                  <span style="font-size:14px">🔍</span>
-                  <div style="flex:1;min-width:0"><div style="font-size:12px;font-weight:500">代码审查</div><div style="font-size:10px;color:var(--dim)">✳ Claude Code · 1 小时前</div></div>
-                  <span style="font-size:10px;padding:2px 6px;background:rgba(74,222,128,.15);color:var(--green);border-radius:4px">完成</span>
-                </div>
-                <div style="background:var(--surface);border:1px solid var(--line-soft);border-radius:var(--radius);padding:10px 14px;cursor:pointer;display:flex;align-items:center;gap:10px" onclick="document.querySelector('.studio-session[data-session-id=s3]').click()">
-                  <span style="font-size:14px">⚡</span>
-                  <div style="flex:1;min-width:0"><div style="font-size:12px;font-weight:500">Bug fix #12</div><div style="font-size:10px;color:var(--dim)">⚡ Codex CLI · 15 分钟前</div></div>
-                  <span style="font-size:10px;padding:2px 6px;background:var(--accent-bg);color:var(--accent);border-radius:4px">活跃</span>
-                </div>
-              </div>
-              <div style="display:flex;align-items:center;justify-content:center;gap:4px;padding:8px;border-radius:var(--radius);border:1px dashed var(--line);color:var(--dim);font-size:12px;cursor:pointer;margin-top:12px" onclick="openNewSessionModal(currentStudioWorkspace)">＋ 新建对话</div>
+              <div style="padding:18px 12px;text-align:center;color:var(--dim);font-size:12px;background:var(--surface);border:1px dashed var(--line);border-radius:var(--radius)">对话历史会按最近活动动态渲染</div>
             </div>
 
             <!-- 右侧 Inspector 面板 -->
@@ -6547,12 +6521,12 @@ FocusPilot/
       function renderKanbanFromItems(filter) {
         ensureWorkspaceRegistryFromItems();
         var statusColumns = {
-          backlog: { label: 'Backlog', color: 'var(--dim)', items: [] },
-          todo: { label: 'Todo', color: 'var(--muted)', items: [] },
-          in_progress: { label: 'In Progress', color: 'var(--accent)', items: [] },
-          in_evaluation: { label: 'Evaluation', color: 'var(--purple)', items: [] },
-          done: { label: 'Done', color: 'var(--green)', items: [] },
-          blocked: { label: 'Blocked', color: 'rgba(249,115,22,.7)', items: [] }
+          backlog: { label: '待规划', color: 'var(--dim)', items: [] },
+          todo: { label: '待办', color: 'var(--muted)', items: [] },
+          in_progress: { label: '进行中', color: 'var(--accent)', items: [] },
+          in_evaluation: { label: '审核中', color: 'var(--purple)', items: [] },
+          done: { label: '已完成', color: 'var(--green)', items: [] },
+          blocked: { label: '已阻塞', color: 'rgba(249,115,22,.7)', items: [] }
         };
         workItems.forEach(function(item) {
           if (statusColumns[item.status]) {
@@ -6621,6 +6595,7 @@ FocusPilot/
             card.className = 'task fp-card';
             card.dataset.taskId = item.id;
             card.dataset.fpSchedule = item.schedule || '';
+            card.dataset.fpWorkspace = meta.name;
             if (item.month) card.dataset.fpMonth = item.month;
             if (item.executionMode) card.dataset.fpMode = item.executionMode;
             if (item.agentStatus) card.dataset.fpAgent = 'yes';
@@ -6646,6 +6621,9 @@ FocusPilot/
               html += '<span>👤 ' + (item.status === 'done' ? '手动完成' : '手动执行') + '</span>';
             }
             html += '<span style="font-family:var(--mono)">' + (item.status === 'done' && item.date ? '✓ ' + item.date : (item.date || '—')) + '</span>';
+            html += '</div>';
+            html += '<div class="fp-card-workspace" style="display:flex;align-items:center;gap:4px;margin-top:5px;padding-top:5px;border-top:1px solid var(--line-soft);font-size:10px;color:var(--dim);min-width:0">';
+            html += '<span style="flex-shrink:0">Workspace</span><span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--muted)">' + wsInfo.icon + ' ' + meta.name + '</span>';
             html += '</div>';
             card.innerHTML = html;
             if (status === 'blocked') card.style.display = 'none';
@@ -6738,11 +6716,14 @@ FocusPilot/
         item.status = 'in_progress';
         item.agentStatus = '排队执行';
         item.executionSessionId = currentStudioSessionId;
+        session.lastActivityAt = new Date().toISOString();
         session.messages.push({ role: 'user', text: '执行任务 ' + item.id + '：' + item.title });
         session.messages.push({ role: 'agent', text: '已加入当前对话执行队列，开始处理项目任务：' + item.title });
         renderStudioChat(currentStudioSessionId);
         renderStudioTasksPanelFromItems(currentStudioWorkspace);
         renderProjectInspectorTasks(currentStudioWorkspace);
+        renderProjectSessions(currentStudioWorkspace);
+        renderStudioWorkspaceList();
         renderKanbanFromItems();
         if (typeof renderFocusListFromItems === 'function') renderFocusListFromItems();
         showToast('任务 ' + item.id + ' 已发送到当前对话执行');
@@ -8069,6 +8050,76 @@ FocusPilot/
         renderStudioWorkspaceList();
       }
 
+      var studioSessionHistoryLimit = 5;
+      var studioSessionHistoryExpanded = {};
+
+      function studioMinutesAgo(minutes) {
+        return new Date(Date.now() - minutes * 60 * 1000).toISOString();
+      }
+
+      function getStudioSessionActivityMs(session) {
+        if (!session) return 0;
+        var raw = session.lastActivityAt || session.updatedAt || session.createdAt || '';
+        var parsed = Date.parse(raw);
+        return isNaN(parsed) ? 0 : parsed;
+      }
+
+      function formatStudioRelativeTime(value) {
+        var parsed = Date.parse(value || '');
+        if (isNaN(parsed)) return '刚刚';
+        var diffMinutes = Math.max(1, Math.floor((Date.now() - parsed) / (60 * 1000)));
+        if (diffMinutes < 60) return diffMinutes + ' 分钟前';
+        var diffHours = Math.floor(diffMinutes / 60);
+        if (diffHours < 24) return diffHours + ' 小时前';
+        var diffDays = Math.floor(diffHours / 24);
+        if (diffDays < 7) return diffDays + ' 天前';
+        if (diffDays < 30) return Math.floor(diffDays / 7) + ' 周前';
+        return Math.floor(diffDays / 30) + ' 个月前';
+      }
+
+      function getStudioSessionsForWorkspace(workspaceId) {
+        return Object.keys(studioSessions).map(function(sid) {
+          return Object.assign({ sid: sid }, studioSessions[sid]);
+        }).filter(function(s) {
+          return s.workspaceId === workspaceId;
+        }).sort(function(a, b) {
+          return getStudioSessionActivityMs(b) - getStudioSessionActivityMs(a);
+        });
+      }
+
+      function getVisibleStudioSessionsForWorkspace(workspaceId) {
+        var sessions = getStudioSessionsForWorkspace(workspaceId);
+        var expanded = !!studioSessionHistoryExpanded[workspaceId];
+        return {
+          all: sessions,
+          visible: expanded ? sessions : sessions.slice(0, studioSessionHistoryLimit),
+          expanded: expanded,
+          hiddenCount: Math.max(0, sessions.length - studioSessionHistoryLimit)
+        };
+      }
+
+      function toggleStudioSessionHistory(workspaceId) {
+        studioSessionHistoryExpanded[workspaceId] = !studioSessionHistoryExpanded[workspaceId];
+        renderStudioWorkspaceList();
+        renderProjectSessions(currentStudioWorkspace || workspaceId);
+      }
+
+      function collapseAllStudioSessionHistory() {
+        Object.keys(studioSessionHistoryExpanded).forEach(function(workspaceId) {
+          studioSessionHistoryExpanded[workspaceId] = false;
+        });
+        renderStudioWorkspaceList();
+        renderProjectSessions(currentStudioWorkspace);
+      }
+
+      function renderStudioSessionHistoryToggle(workspaceId, history, compact) {
+        if (!history || history.hiddenCount <= 0) return '';
+        var label = history.expanded ? '折叠显示' : '展开显示';
+        var padding = compact ? 'padding:4px 8px 4px 28px' : 'padding:8px 12px';
+        var margin = compact ? '' : 'margin-top:4px;';
+        return '<div onclick="toggleStudioSessionHistory(\'' + workspaceId + '\')" style="' + padding + ';' + margin + ';font-size:11px;color:var(--dim);cursor:pointer;border-radius:var(--radius);text-align:left">' + label + '</div>';
+      }
+
       function renderStudioWorkspaceList() {
         ensureWorkspaceRegistryFromItems();
         var container = document.getElementById('studioWorkspaceList');
@@ -8095,19 +8146,19 @@ FocusPilot/
           html += '<span>' + info.icon + ' ' + meta.name + '<span class="subline">' + info.label + ' · ' + tasks.length + ' 任务</span></span>';
           html += '<span class="count" style="cursor:pointer;display:flex;gap:8px"><span onclick="event.stopPropagation();openWorkspaceMenu(event,\'' + id + '\')" title="Workspace 菜单">...</span><span onclick="event.stopPropagation();openNewSessionModal(\'' + id + '\')" title="在此 Workspace 新建对话">+</span></span>';
           html += '</div>';
-          var sessions = Object.keys(studioSessions).map(function(sid) {
-            return Object.assign({ sid: sid }, studioSessions[sid]);
-          }).filter(function(s) { return s.workspaceId === id; });
-          if (!sessions.length) {
+          var history = getVisibleStudioSessionsForWorkspace(id);
+          var sessions = history.visible;
+          if (!history.all.length) {
             html += '<div class="side-item indent" style="font-size:11px;color:var(--dim)">暂无对话</div>';
           }
           sessions.forEach(function(s) {
             var isActive = currentStudioSessionId === s.sid;
-            var badge = s.status === 'done' ? '<span style="color:var(--green)">✅ 1h</span>' : '<span style="color:var(--accent)">● 15m</span>';
+            var relativeTime = formatStudioRelativeTime(s.lastActivityAt);
             html += '<div class="side-item indent studio-session' + (isActive ? ' active' : '') + '" oncontextmenu="openSessionMenu(event,this);return false" onclick="selectStudioSession(this)" data-workspace="' + id + '" data-session="' + s.name + '" data-session-id="' + s.sid + '" data-runtime="' + s.agent + '" style="font-size:11px">';
-            html += '<span>' + (s.agentIcon || '💬') + ' ' + s.name + '</span><span class="count">' + badge + '</span>';
+            html += '<span>' + (s.agentIcon || '💬') + ' ' + s.name + '</span><span class="count" style="font-size:10px;color:var(--dim)">' + relativeTime + '</span>';
             html += '</div>';
           });
+          html += renderStudioSessionHistoryToggle(id, history, true);
         });
         container.innerHTML = html;
       }
@@ -8116,23 +8167,23 @@ FocusPilot/
 	        var container = document.getElementById('studio-project-sessions');
 	        if (!container) return;
 	        var meta = getWorkspaceMeta(projectId);
-	        var rows = Object.keys(studioSessions).map(function(sid) {
-	          return Object.assign({ sid: sid }, studioSessions[sid]);
-	        }).filter(function(row) { return row.workspaceId === projectId; });
+	        var history = getVisibleStudioSessionsForWorkspace(projectId);
+	        var rows = history.visible;
 	        var html = '<div style="display:flex;flex-direction:column;gap:6px">';
-	        if (!rows.length) {
+	        if (!history.all.length) {
 	          html += '<div style="padding:18px 12px;text-align:center;color:var(--dim);font-size:12px;background:var(--surface);border:1px dashed var(--line);border-radius:var(--radius)">还没有对话</div>';
 	        }
 	        rows.forEach(function(row) {
 	          var active = currentStudioSessionId === row.sid;
 	          var statusText = active ? '当前' : (row.status === 'done' ? '完成' : '历史');
 	          var statusColor = active ? 'var(--accent)' : (row.status === 'done' ? 'var(--green)' : 'var(--dim)');
-	          html += '<div style="background:var(--surface);border:1px solid var(--line-soft);border-radius:var(--radius);padding:10px 14px;cursor:pointer;display:flex;align-items:center;gap:10px' + (active ? ';border-left:2px solid var(--accent)' : '') + '" onclick="selectStudioSessionById(\'' + row.sid + '\')">';
+	          html += '<div class="studio-session' + (active ? ' active' : '') + '" data-workspace="' + projectId + '" data-session="' + row.name + '" data-session-id="' + row.sid + '" data-runtime="' + row.agent + '" style="background:var(--surface);border:1px solid var(--line-soft);border-radius:var(--radius);padding:10px 14px;cursor:pointer;display:flex;align-items:center;gap:10px' + (active ? ';border-left:2px solid var(--accent)' : '') + '" onclick="selectStudioSessionById(\'' + row.sid + '\')">';
 	          html += '<span style="font-size:14px">' + (row.agentIcon || (row.agent && row.agent.indexOf('Codex') >= 0 ? '⚡' : '🧑‍💻')) + '</span>';
-	          html += '<div style="flex:1;min-width:0"><div style="font-size:12px;font-weight:500">' + row.name + '</div><div style="font-size:10px;color:var(--dim)">' + row.agent + ' · ' + meta.name + '</div></div>';
+	          html += '<div style="flex:1;min-width:0"><div style="font-size:12px;font-weight:500">' + row.name + '</div><div style="font-size:10px;color:var(--dim)">' + row.agent + ' · ' + formatStudioRelativeTime(row.lastActivityAt) + '</div></div>';
 	          html += '<span style="font-size:10px;padding:2px 6px;background:var(--accent-bg);color:' + statusColor + ';border-radius:4px">' + statusText + '</span>';
 	          html += '</div>';
 	        });
+	        html += renderStudioSessionHistoryToggle(projectId, history, false);
 	        html += '</div>';
 	        html += '<div style="display:flex;align-items:center;justify-content:center;gap:4px;padding:8px;border-radius:var(--radius);border:1px dashed var(--line);color:var(--dim);font-size:12px;cursor:pointer;margin-top:12px" onclick="openNewSessionModal(currentStudioWorkspace)">＋ 新建对话</div>';
 	        container.innerHTML = html;
@@ -8418,9 +8469,33 @@ FocusPilot/
       /* ── Studio: Session mock 数据（按 sessionId 索引） ── */
 	      var currentStudioWorkspace = 'FocusPilot';
 	      var currentStudioSessionId = '';
+      function createStudioSessionFixture(name, workspaceId, minutesAgo, runtime, status) {
+        var isCodex = runtime && runtime.indexOf('Codex') >= 0;
+        var icon = isCodex ? '⚡' : '✳';
+        var agentName = isCodex ? 'Codex CLI' : 'Claude Code';
+        return {
+          name: name,
+          workspaceId: workspaceId,
+          status: status || 'done',
+          agent: runtime || '✳ Claude Code',
+          agentIcon: icon,
+          agentName: agentName,
+          model: isCodex ? 'codex' : 'claude-opus-4',
+          preset: '',
+          lastActivityAt: studioMinutesAgo(minutesAgo),
+          messages: [
+            { role: 'user', text: name },
+            { role: 'agent', text: '已打开历史对话，可以继续在当前 Workspace 中执行。' }
+          ],
+          diffFiles: [],
+          diffContent: [],
+          terminalLines: '$ ',
+          terminalTabs: ['Terminal 1']
+        };
+      }
       var studioSessions = {
         s1: {
-          name: '重构 auth', workspaceId: 'FocusPilot', status: 'active', agent: '✳ Claude Code', agentIcon: '✳', agentName: 'Claude Code', model: 'claude-opus-4', preset: '代码工程师 preset',
+          name: '重构 auth', workspaceId: 'FocusPilot', status: 'active', agent: '✳ Claude Code', agentIcon: '✳', agentName: 'Claude Code', model: 'claude-opus-4', preset: '代码工程师 preset', lastActivityAt: studioMinutesAgo(3),
           messages: [
             { role: 'user', text: '帮我把 animateRow 的动画改成 0.2s ease-out' },
             { role: 'agent', text: '好的，我来修改 KanbanDataSource 中的动画参数。', diff: 'KanbanDataSource.swift' },
@@ -8443,7 +8518,7 @@ FocusPilot/
           terminalTabs: ['Terminal 1', 'Terminal 2']
         },
         s2: {
-          name: '代码审查', workspaceId: 'FocusPilot', status: 'done', agent: '✳ Claude Code', agentIcon: '✳', agentName: 'Claude Code', model: 'claude-opus-4', preset: '代码审查 preset',
+          name: '代码审查', workspaceId: 'FocusPilot', status: 'done', agent: '✳ Claude Code', agentIcon: '✳', agentName: 'Claude Code', model: 'claude-opus-4', preset: '代码审查 preset', lastActivityAt: studioMinutesAgo(65),
           messages: [
             { role: 'user', text: '审查 PR #42 的安全性' },
             { role: 'agent', text: '我已经完成了 PR #42 的审查，发现 2 个问题：\n1. SQL 查询未使用参数化绑定\n2. 用户输入未做 XSS 过滤', diff: 'AuthService.swift' }
@@ -8461,7 +8536,7 @@ FocusPilot/
           terminalTabs: ['Terminal 1']
         },
         s3: {
-          name: 'Bug fix #12', workspaceId: 'FocusPilot', status: 'active', agent: '⚡ Codex CLI', agentIcon: '⚡', agentName: 'Codex CLI', model: 'codex', preset: '',
+          name: 'Bug fix #12', workspaceId: 'FocusPilot', status: 'active', agent: '⚡ Codex CLI', agentIcon: '⚡', agentName: 'Codex CLI', model: 'codex', preset: '', lastActivityAt: studioMinutesAgo(15),
           messages: [
             { role: 'user', text: '修复 issue #12：登录页面在暗色模式下文字不可见' },
             { role: 'agent', text: '已找到问题：LoginView.swift 中 textColor 使用了固定的 .black，暗色模式下不可见。已修改为 .labelColor。', diff: 'LoginView.swift' }
@@ -8477,6 +8552,21 @@ FocusPilot/
           terminalTabs: ['Terminal 1']
         }
       };
+
+      Object.assign(studioSessions, {
+        s4: createStudioSessionFixture('项目视图 Inspector 修复', 'FocusPilot', 120, '⚡ Codex CLI', 'done'),
+        s5: createStudioSessionFixture('Workspace 任务同步', 'FocusPilot', 60 * 26, '✳ Claude Code', 'done'),
+        s6: createStudioSessionFixture('看板泳道菜单', 'FocusPilot', 60 * 24 * 3, '⚡ Codex CLI', 'done'),
+        s7: createStudioSessionFixture('Settings 合并清理', 'FocusPilot', 60 * 24 * 10, '✳ Claude Code', 'done'),
+        s8: createStudioSessionFixture('PRD 结构校对', 'FocusPilot', 60 * 24 * 45, '⚡ Codex CLI', 'done'),
+        s9: createStudioSessionFixture('AICrew 执行记录', 'FocusPilot', 60 * 24 * 70, '✳ Claude Code', 'done'),
+        s10: createStudioSessionFixture('PilotOne 启动排查', 'PilotOne', 8, '⚡ Codex CLI', 'active'),
+        s11: createStudioSessionFixture('PilotOne API 梳理', 'PilotOne', 85, '✳ Claude Code', 'done'),
+        s12: createStudioSessionFixture('PilotOne Git 清理', 'PilotOne', 60 * 7, '⚡ Codex CLI', 'done'),
+        s13: createStudioSessionFixture('PilotOne 任务导入', 'PilotOne', 60 * 24 * 2, '✳ Claude Code', 'done'),
+        s14: createStudioSessionFixture('PilotOne 发布检查', 'PilotOne', 60 * 24 * 8, '⚡ Codex CLI', 'done'),
+        s15: createStudioSessionFixture('PilotOne 月度复盘', 'PilotOne', 60 * 24 * 40, '✳ Claude Code', 'done')
+      });
 
       function renderStudioChat(sid) {
         var data = studioSessions[sid];
@@ -8765,7 +8855,7 @@ FocusPilot/
       }
 
       /* ── Studio: 新建对话闭环 ── */
-      var sessionCounter = 4;
+      var sessionCounter = 20;
       function createSessionFromModal() {
         var ws = currentSessionWorkspace || currentStudioWorkspace || '';
         if (!ws) return;
@@ -8776,7 +8866,7 @@ FocusPilot/
         var sid = 's' + (sessionCounter + 10);
         sessionCounter++;
         studioSessions[sid] = {
-          name: sessionName, workspaceId: ws, status: 'active', agent: runtime, agentIcon: runtime.charAt(0), agentName: runtimeLabel.replace(/^[✳⚡◆]\s*/, ''), model: '', preset: '',
+          name: sessionName, workspaceId: ws, status: 'active', agent: runtime, agentIcon: runtime.charAt(0), agentName: runtimeLabel.replace(/^[✳⚡◆]\s*/, ''), model: '', preset: '', lastActivityAt: new Date().toISOString(),
           messages: [],
           diffFiles: [],
           diffContent: [],
@@ -8903,6 +8993,7 @@ FocusPilot/
           var newName = prompt('重命名对话 "' + oldName + '"：', oldName);
 	          if (newName && newName !== oldName) {
 	            el.dataset.session = newName;
+	            if (el.dataset.sessionId && studioSessions[el.dataset.sessionId]) studioSessions[el.dataset.sessionId].name = newName;
 	            var span = el.querySelector('span');
 	            var prefix = el.dataset.pinned ? '📌 ' : (el.dataset.runtime ? el.dataset.runtime.charAt(0) + ' ' : '💬 ');
 	            if (span) span.textContent = prefix + newName;

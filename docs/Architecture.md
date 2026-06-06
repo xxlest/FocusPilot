@@ -1000,6 +1000,7 @@ struct StudioSession: Identifiable, Codable {
     var crewMemberID: String?
     var runtime: RuntimeType                // claude_code | codex_cli | gemini_cli
     var status: SessionStatus               // active | idle | done | ended
+    var lastActivityAt: Date                // 最近对话/任务投递时间；项目视图按此倒序展示最近 5 条
 }
 ```
 

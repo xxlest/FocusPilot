@@ -141,6 +141,7 @@ Free:   Group → ... → Task (→ Sub-task)
 ```
 
 **7 种状态**（Multica 标准 7 态）：backlog / todo / in_progress / in_evaluation / done / blocked / cancelled。
+看板主甬道展示其中 6 个操作状态，中文名称固定为：待规划 / 待办 / 进行中 / 审核中 / 已完成 / 已阻塞；`cancelled` 作为终止状态进入归档/历史，不在主看板常驻展示。
 
 ### 2.5 ExecutionRun
 
@@ -410,11 +411,12 @@ WorkItem (Task)
 │  ── 项目视图 Tab ──                  │
 │  🔍 搜索对话...                      │
 │  📥 Triage          (3)              │
-│  ── 项目 ──────────────────── [+]   │
+│  ── Workspace 项目 ───── [全部折叠] │
 │  ▾ 📂 FocusPilot                    │
-│     💬 重构 auth        ● 3m        │
-│     💬 代码审查          ✅ 1h       │
-│     💬 Bug fix #12      ● 15m       │
+│     ✳ 重构 auth        3 分钟前     │
+│     ⚡ Bug fix #12     15 分钟前    │
+│     ✳ 代码审查         1 小时前     │
+│     ... 展开显示                    │
 │  ▸ 📂 PilotOne                      │
 │  [+ 添加项目]                        │
 │  ── 自动化 ────────────── [▾ 折叠]  │
@@ -452,6 +454,14 @@ WorkItem (Task)
 - **💬 对话**：该 Workspace 的 Studio Session 数量
 - **🔄 自动化**：该 Workspace 的 Automation 规则数量
 
+对话历史采用 Codex 风格折叠规则：
+- 默认每个 Workspace 只展示最近 5 条 Session，按 `last_activity_at` 倒序排列
+- 超过 5 条时，在第 5 条后显示低视觉权重的灰色小字 `展开显示`
+- 点击 `展开显示` 后展示该 Workspace 的全部 Session，并立即切换为 `折叠显示`
+- 点击 `折叠显示` 后恢复为最近 5 条
+- Workspace 项目列表提供 `全部折叠`，一次性收起所有 Workspace 的 Session 历史
+- 每条 Session 显示相对时间：分钟 → 小时 → 天 → 周 → 月
+
 ---
 
 ## 7. 主区域
@@ -474,14 +484,14 @@ WorkItem (Task)
 **三个视图**：
 
 - **规划视图**：四级同构甘特（全局 月级 / 本月 周级 / 本周 天级 / 今日 小时级）
-- **看板视图**：仅展示 executable/hybrid 角色 WorkItem，按七态分列；每个泳道标题右侧提供 `+` 新建任务和 `...` 操作菜单，`...` 可切换“按 Workspace 分组排序”
+- **看板视图**：仅展示 executable/hybrid 角色 WorkItem，按 6 个主甬道分列（待规划 / 待办 / 进行中 / 审核中 / 已完成 / 已阻塞）；每张卡片底部最后一行显示所属 Workspace 名称；每个泳道标题右侧提供 `+` 新建任务和 `...` 操作菜单，`...` 可切换“按 Workspace 分组排序”
 - **列表视图**：全量表格化展示，支持多维排序和分组
 
 详细规格继承自原 Focus 设计（见 [03-focus.md](03-focus.md) 历史参考 §6-§7）。
 
 ### 7.2 场景 B：选中某个 Workspace 项目（未进入 Session）
 
-项目视图把三类 Workspace 统一当作可进入的项目实体：临时 Workspace、本地项目 Workspace、Git 远程 Workspace。主区域显示 Workspace 概览 + Session 列表，右侧 Inspector 显示该 Workspace 下的任务投影。
+项目视图把三类 Workspace 统一当作可进入的项目实体：临时 Workspace、本地项目 Workspace、Git 远程 Workspace。主区域显示 Workspace 概览 + Session 历史列表，右侧 Inspector 显示该 Workspace 下的任务投影。
 
 ```
 ┌─ 主区域 ──────────────────────────────┬─ 右面板（可显隐）──────┐
@@ -489,11 +499,12 @@ WorkItem (Task)
 │  📁 FocusPilot         [📋 任务列表]  │  📋 Workspace 任务列表 │
 │  ──────────────────────────────────── │  ──────────────────── │
 │                                       │  ● FP-002 看板拖拽 P0  │
-│  对话列表                              │  ○ FP-003 列表视图 P1  │
+│  对话历史                              │  ○ FP-003 列表视图 P1  │
 │  ┌─────────────────────────────────┐ │  ✓ FP-001 数据模型     │
-│  │ 🧑‍💻 重构 auth     ● 3m  ✳ CC    │ │                       │
-│  │ 🔍 代码审查       ✅ 1h  ✳ CC    │ │  [+ 新建任务]          │
-│  │ ⚡ Bug fix #12    ● 15m ⚡ Codex │ │                       │
+│  │ ✳ 重构 auth        3 分钟前      │ │                       │
+│  │ ⚡ Bug fix #12     15 分钟前     │ │  [+ 新建任务]          │
+│  │ ✳ 代码审查         1 小时前      │ │                       │
+│  │ ... 展开显示                     │ │                       │
 │  └─────────────────────────────────┘ │  任务列表展示当前       │
 │                                       │  workspace_id 下的     │
 │  [+ 新建对话]                         │  WorkItem 投影         │
@@ -502,10 +513,11 @@ WorkItem (Task)
 ```
 
 **关键交互**：
-- 主区域以 Session 列表为主，点击 Session 进入对话执行视图（场景 C）
+- 主区域以 Session 历史列表为主，默认展示最近 5 条；超过 5 条通过 `展开显示 / 折叠显示` 切换
+- 点击 Session 进入对话执行视图（场景 C），同时更新聊天区、Diff、Terminal、右侧 Inspector 和当前 Workspace 上下文
 - 右面板通过顶栏 `[📋 任务列表]` 按钮可显隐
 - 侧栏项目视图提供类型筛选：所有 / 临时项目 / 本地项目 / Git 远程项目
-- 任务列表展示该 `workspace_id` 下的 WorkItem（从统一 workItems 数据源过滤）
+- 任务列表展示该 `workspace_id` 下的 WorkItem（从统一 workItems 数据源过滤），不按 Session 归属
 - 点击任务 → 打开 Task 详情（场景 D）
 - 在看板视图创建且绑定该 Workspace 的任务，同步出现在这里
 - 在项目任务列表中新建任务，同步出现在看板视图
