@@ -1092,6 +1092,105 @@
         display: flex;
         flex-direction: column;
       }
+      .studio-view-switch {
+        display: inline-flex;
+        align-items: center;
+        height: 28px;
+        border: 1px solid var(--line-soft);
+        border-radius: var(--radius);
+        background: var(--surface);
+        overflow: hidden;
+      }
+      .studio-view-switch button {
+        min-height: 26px;
+        padding: 0 9px;
+        border: 0;
+        border-right: 1px solid var(--line-soft);
+        border-radius: 0;
+        background: transparent;
+        color: var(--muted);
+        font-size: 11px;
+        cursor: pointer;
+      }
+      .studio-view-switch button:last-child {
+        border-right: 0;
+      }
+      .studio-view-switch button.active {
+        background: var(--elevated);
+        color: var(--text);
+        font-weight: 600;
+      }
+      .studio-view-switch .sym {
+        color: var(--dim);
+        font-family: var(--mono);
+        font-weight: 500;
+        margin-right: 4px;
+      }
+      #focus-swimlane.active {
+        display: block;
+      }
+      .swimlane-board {
+        min-width: 1120px;
+        padding: 0 18px 18px;
+        overflow: auto;
+      }
+      .swimlane-grid {
+        display: grid;
+        grid-template-columns: 180px repeat(6, minmax(150px, 1fr));
+        border: 1px solid var(--line-soft);
+        border-radius: var(--radius);
+        overflow: hidden;
+        background: var(--surface);
+      }
+      .swimlane-head,
+      .swimlane-workspace,
+      .swimlane-cell {
+        border-right: 1px solid var(--line-soft);
+        border-bottom: 1px solid var(--line-soft);
+      }
+      .swimlane-head {
+        min-height: 34px;
+        padding: 9px 10px;
+        background: var(--elevated);
+        color: var(--dim);
+        font-size: 10px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: .04em;
+      }
+      .swimlane-workspace {
+        min-height: 96px;
+        padding: 10px;
+        background: var(--surface-2);
+        color: var(--text);
+        font-size: 12px;
+        font-weight: 600;
+      }
+      .swimlane-workspace .sub {
+        display: block;
+        margin-top: 4px;
+        color: var(--dim);
+        font-size: 10px;
+        font-family: var(--mono);
+        font-weight: 400;
+      }
+      .swimlane-cell {
+        min-height: 96px;
+        padding: 8px;
+        background: var(--bg);
+      }
+      .swimlane-cell.drag-over {
+        outline: 1px solid var(--accent);
+        outline-offset: -2px;
+        background: var(--accent-bg);
+      }
+      .swimlane-card {
+        margin-bottom: 6px;
+        cursor: grab;
+      }
+      .swimlane-card:active {
+        cursor: grabbing;
+      }
       #fp-year > div:first-child > div:nth-child(2) > div:first-child,
       #fp-year > div:first-child [data-fp-plan-month] > div:first-child,
       #fp-year > div:first-child .fp-plan-task > div:first-child {
@@ -2684,15 +2783,12 @@
             <h1>Studio</h1>
             <span class="meta">规划 -> 执行 -> 评估 -> 验收</span>
             <div class="top-actions">
-              <button class="btn active" id="studioGanttModeBtn" onclick="selectStudioGlobalMode('gantt')" style="font-size:11px;min-height:28px;padding:0 9px">甘特规划</button>
-              <label style="display:inline-flex;align-items:center;gap:6px;height:28px;border:1px solid var(--line-soft);border-radius:var(--radius);background:var(--surface);padding:0 8px;font-size:11px;color:var(--dim)">
-                <span>展示方式</span>
-                <select id="studioDisplayMode" onchange="selectStudioDisplayMode(this.value)" style="height:22px;border:0;background:transparent;color:var(--text);outline:0;font-size:11px;padding:0">
-                  <option value="board" data-display-mode="board">看板</option>
-                  <option value="list" data-display-mode="list">列表</option>
-                  <option value="swimlane" data-display-mode="swimlane">泳道</option>
-                </select>
-              </label>
+              <button class="btn active" id="studioGanttModeBtn" title="▱ 甘特规划" onclick="selectStudioGlobalMode('gantt')" style="font-size:11px;min-height:28px;padding:0 9px"><span style="color:var(--dim);font-family:var(--mono);margin-right:4px">▱</span>甘特规划</button>
+              <div class="studio-view-switch" id="studioDisplayMode">
+                <button data-display-mode="board" title="▦ 看板" onclick="selectStudioDisplayMode('board')"><span class="sym">▦</span>看板</button>
+                <button data-display-mode="list" title="☰ 列表" onclick="selectStudioDisplayMode('list')"><span class="sym">☰</span>列表</button>
+                <button data-display-mode="swimlane" title="田 泳道" onclick="selectStudioDisplayMode('swimlane')"><span class="sym">田</span>泳道</button>
+              </div>
               <button class="btn" id="fp-filter-time" style="font-size:11px;min-height:28px;padding:0 9px">时间: 全部 ▾</button>
               <button class="btn" id="fp-filter-goal" style="font-size:11px;min-height:28px;padding:0 9px">目标: 全部 ▾</button>
               <button class="btn" id="fp-filter-source" style="font-size:11px;min-height:28px;padding:0 9px">来源: 全部 ▾</button>
@@ -3647,6 +3743,11 @@
                   </div>
                 </div>
               </div>
+            </div>
+          </div>
+          <div class="work panel" id="focus-swimlane" style="overflow:auto">
+            <div class="swimlane-board">
+              <div id="fp-swimlane" class="swimlane-grid"></div>
             </div>
           </div>
           <div class="work panel" id="focus-list" style="overflow:auto;padding:0 18px 18px">
@@ -6437,7 +6538,7 @@ FocusPilot/
         'git-focuspilot-ai': { id: 'git-focuspilot-ai', name: 'Git · FocusPilot AI', type: 'git_project', icon: '🔗', path: '~/FocusPilotWorkspaces/git-focuspilot-ai', branch: 'feature/planning-engine', remote: 'github.com/xxlest/FocusPilot.git' }
       };
       var studioWorkspaceFilter = 'all';
-      var kanbanSortMode = 'default';
+      var currentFocusFilter = 'all';
       var tempWorkspaceCounter = 3;
 
       function workspaceTypeInfo(type) {
@@ -6521,17 +6622,72 @@ FocusPilot/
         return id;
       }
 
+      var taskStatusDefs = [
+        { status: 'backlog', label: '待规划', color: 'var(--dim)' },
+        { status: 'todo', label: '待办', color: 'var(--muted)' },
+        { status: 'in_progress', label: '进行中', color: 'var(--accent)' },
+        { status: 'in_evaluation', label: '审核中', color: 'var(--purple)' },
+        { status: 'done', label: '已完成', color: 'var(--green)' },
+        { status: 'blocked', label: '已阻塞', color: 'rgba(249,115,22,.7)' }
+      ];
+
+      function itemMatchesFocusFilter(item, filter) {
+        filter = filter || currentFocusFilter || 'all';
+        if (filter === 'all') return true;
+        var monthSet = ['month', 'week', 'today'];
+        var weekSet = ['week', 'today'];
+        var curMonth = String(DEMO_TODAY.getMonth() + 1);
+        if (filter === 'month') {
+          return item.month ? item.month === curMonth : monthSet.indexOf(item.schedule) !== -1;
+        }
+        if (filter === 'week') return weekSet.indexOf(item.schedule) !== -1;
+        if (filter === 'today') return item.schedule === 'today';
+        if (filter === 'agent') return !!item.agentStatus;
+        if (filter === 'decision') return !!item.decision;
+        return true;
+      }
+
+      function buildTaskCardHtml(item, compact) {
+        var priorityColor = item.priority === 'p0' ? 'var(--red)' : (item.priority === 'p1' ? 'var(--amber)' : 'var(--dim)');
+        var priorityBorder = item.priority === 'p0' ? 'rgba(248,113,113,.3)' : (item.priority === 'p1' ? 'rgba(242,196,15,.3)' : 'rgba(112,120,135,.3)');
+        var modeLabel = item.executionMode === 'auto' ? 'auto' : (item.executionMode === 'manual' ? 'manual' : (item.executionMode === 'dialog' ? 'dialog' : ''));
+        var modeColor = item.executionMode === 'auto' ? 'var(--accent)' : (item.executionMode === 'manual' ? 'var(--purple)' : 'var(--muted)');
+        var modeBorder = item.executionMode === 'auto' ? 'var(--accent-line)' : (item.executionMode === 'manual' ? 'rgba(167,139,250,.3)' : 'var(--line)');
+        var meta = getWorkspaceMeta(item.projectId);
+        var wsInfo = workspaceTypeInfo(meta.type);
+        var html = '<div style="font-size:10px;font-family:var(--mono);color:var(--dim);margin-bottom:2px">' + item.id + '</div>';
+        html += '<div class="task-title"' + (item.status === 'done' ? ' style="text-decoration:line-through"' : '') + '>' + item.title + '</div>';
+        html += '<div class="task-meta" style="flex-wrap:wrap;gap:4px">';
+        html += '<span class="pill" style="font-size:9px;padding:1px 5px;border-color:' + priorityBorder + ';color:' + priorityColor + '">' + item.priority.toUpperCase() + '</span>';
+        if (modeLabel) html += '<span class="pill" style="font-size:9px;padding:1px 5px;border-color:' + modeBorder + ';color:' + modeColor + '">' + modeLabel + '</span>';
+        if (!compact) html += '<span class="pill" title="' + meta.name + '" style="font-size:9px;padding:1px 5px;border-color:var(--line-soft);color:var(--dim)">' + wsInfo.icon + ' ' + wsInfo.label + '</span>';
+        if (item.goal && !compact) html += '<span style="font-size:10px;color:var(--dim)">&rarr; ' + item.goal + '</span>';
+        if (item.agentStatus) html += '<span class="pill blue" style="font-size:9px;padding:1px 5px;font-weight:600">' + item.agentStatus + '</span>';
+        if (item.decision) html += '<span class="pill amber" style="font-size:9px;padding:1px 5px;font-weight:600">等你决策</span>';
+        html += '</div>';
+        if (!compact) {
+          html += '<div style="display:flex;align-items:center;justify-content:space-between;margin-top:6px;padding-top:6px;border-top:1px solid var(--line-soft);font-size:10px;color:var(--dim)">';
+          if (item.agent) {
+            html += '<span' + (item.agentStatus ? ' style="color:var(--accent)"' : '') + '>🧑‍💻 ' + item.agent + '</span>';
+          } else {
+            html += '<span>👤 ' + (item.status === 'done' ? '手动完成' : '手动执行') + '</span>';
+          }
+          html += '<span style="font-family:var(--mono)">' + (item.status === 'done' && item.date ? '✓ ' + item.date : (item.date || '—')) + '</span>';
+          html += '</div>';
+          html += '<div class="fp-card-workspace" style="display:flex;align-items:center;gap:4px;margin-top:5px;padding-top:5px;border-top:1px solid var(--line-soft);font-size:10px;color:var(--dim);min-width:0">';
+          html += '<span style="flex-shrink:0">Workspace</span><span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--muted)">' + wsInfo.icon + ' ' + meta.name + '</span>';
+          html += '</div>';
+        }
+        return html;
+      }
+
       /* ── Render: Kanban Board from workItems ── */
       function renderKanbanFromItems(filter) {
         ensureWorkspaceRegistryFromItems();
-        var statusColumns = {
-          backlog: { label: '待规划', color: 'var(--dim)', items: [] },
-          todo: { label: '待办', color: 'var(--muted)', items: [] },
-          in_progress: { label: '进行中', color: 'var(--accent)', items: [] },
-          in_evaluation: { label: '审核中', color: 'var(--purple)', items: [] },
-          done: { label: '已完成', color: 'var(--green)', items: [] },
-          blocked: { label: '已阻塞', color: 'rgba(249,115,22,.7)', items: [] }
-        };
+        var statusColumns = {};
+        taskStatusDefs.forEach(function(def) {
+          statusColumns[def.status] = { label: def.label, color: def.color, items: [] };
+        });
         workItems.forEach(function(item) {
           if (statusColumns[item.status]) {
             statusColumns[item.status].items.push(item);
@@ -6540,8 +6696,8 @@ FocusPilot/
         var kanban = document.getElementById('fp-kanban');
         if (!kanban) return;
         kanban.innerHTML = '';
-        var statusOrder = ['backlog', 'todo', 'in_progress', 'in_evaluation', 'done', 'blocked'];
-        statusOrder.forEach(function(status) {
+        taskStatusDefs.forEach(function(def) {
+          var status = def.status;
           var col = statusColumns[status];
           var lane = document.createElement('div');
           lane.className = 'lane fp-col';
@@ -6557,44 +6713,11 @@ FocusPilot/
           addLaneBtn.textContent = '+';
           addLaneBtn.style.cssText = 'width:22px;height:22px;border:1px solid var(--line-soft);border-radius:50%;background:var(--surface);color:var(--dim);cursor:pointer;font-size:13px;line-height:1';
           addLaneBtn.onclick = function(event) { event.stopPropagation(); openNewTaskModal({ source: 'kanban-lane', status: status }); };
-          var laneMenuBtn = document.createElement('button');
-          laneMenuBtn.title = '泳道操作';
-          laneMenuBtn.textContent = '...';
-          laneMenuBtn.style.cssText = 'width:22px;height:22px;border:1px solid var(--line-soft);border-radius:50%;background:var(--surface);color:var(--dim);cursor:pointer;font-size:12px;line-height:1';
-          laneMenuBtn.onclick = function(event) { openKanbanLaneMenu(event, status); };
           h3.appendChild(addLaneBtn);
-          h3.appendChild(laneMenuBtn);
           lane.appendChild(h3);
           var renderItems = col.items.slice();
-          if (kanbanSortMode === 'workspace') {
-            var groups = {};
-            renderItems.forEach(function(item) {
-              var wsId = item.projectId || deriveWorkspaceIdForItem(item);
-              if (!groups[wsId]) groups[wsId] = [];
-              groups[wsId].push(item);
-            });
-            Object.keys(groups).sort(function(a, b) {
-              return getWorkspaceMeta(a).name.localeCompare(getWorkspaceMeta(b).name);
-            }).forEach(function(wsId) {
-              var meta = getWorkspaceMeta(wsId);
-              var info = workspaceTypeInfo(meta.type);
-              var groupHead = document.createElement('div');
-              groupHead.style.cssText = 'display:flex;align-items:center;gap:5px;margin:6px 0 2px;padding:3px 6px;border-radius:var(--radius);background:var(--bg);font-size:10px;color:var(--dim);font-weight:600';
-              groupHead.innerHTML = '<span>' + info.icon + '</span><span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + meta.name + '</span><span style="font-family:var(--mono);font-weight:400">' + groups[wsId].length + '</span>';
-              lane.appendChild(groupHead);
-              groups[wsId].forEach(renderKanbanCard);
-            });
-          } else {
-            renderItems.forEach(renderKanbanCard);
-          }
+          renderItems.forEach(renderKanbanCard);
           function renderKanbanCard(item) {
-            var priorityColor = item.priority === 'p0' ? 'var(--red)' : (item.priority === 'p1' ? 'var(--amber)' : 'var(--dim)');
-            var priorityBorder = item.priority === 'p0' ? 'rgba(248,113,113,.3)' : (item.priority === 'p1' ? 'rgba(242,196,15,.3)' : 'rgba(112,120,135,.3)');
-            var modeLabel = item.executionMode === 'auto' ? 'auto' : (item.executionMode === 'manual' ? 'manual' : (item.executionMode === 'dialog' ? 'dialog' : ''));
-            var modeColor = item.executionMode === 'auto' ? 'var(--accent)' : (item.executionMode === 'manual' ? 'var(--purple)' : 'var(--muted)');
-            var modeBorder = item.executionMode === 'auto' ? 'var(--accent-line)' : (item.executionMode === 'manual' ? 'rgba(167,139,250,.3)' : 'var(--line)');
-            var meta = getWorkspaceMeta(item.projectId);
-            var wsInfo = workspaceTypeInfo(meta.type);
             var card = document.createElement('div');
             card.className = 'task fp-card';
             card.dataset.taskId = item.id;
@@ -6608,28 +6731,7 @@ FocusPilot/
             if (item.agentStatus) card.style.borderColor = 'var(--accent-line)';
             if (item.decision) card.style.borderColor = 'rgba(167,139,250,.3)';
             card.onclick = function() { openTaskDetail(item.id); };
-            var html = '<div style="font-size:10px;font-family:var(--mono);color:var(--dim);margin-bottom:2px">' + item.id + '</div>';
-            html += '<div class="task-title"' + (item.status === 'done' ? ' style="text-decoration:line-through"' : '') + '>' + item.title + '</div>';
-            html += '<div class="task-meta" style="flex-wrap:wrap;gap:4px">';
-            html += '<span class="pill" style="font-size:9px;padding:1px 5px;border-color:' + priorityBorder + ';color:' + priorityColor + '">' + item.priority.toUpperCase() + '</span>';
-            if (modeLabel) html += '<span class="pill" style="font-size:9px;padding:1px 5px;border-color:' + modeBorder + ';color:' + modeColor + '">' + modeLabel + '</span>';
-            html += '<span class="pill" title="' + meta.name + '" style="font-size:9px;padding:1px 5px;border-color:var(--line-soft);color:var(--dim)">' + wsInfo.icon + ' ' + wsInfo.label + '</span>';
-            if (item.goal) html += '<span style="font-size:10px;color:var(--dim)">&rarr; ' + item.goal + '</span>';
-            if (item.agentStatus) html += '<span class="pill blue" style="font-size:9px;padding:1px 5px;font-weight:600">' + item.agentStatus + '</span>';
-            if (item.decision) html += '<span class="pill amber" style="font-size:9px;padding:1px 5px;font-weight:600">等你决策</span>';
-            html += '</div>';
-            html += '<div style="display:flex;align-items:center;justify-content:space-between;margin-top:6px;padding-top:6px;border-top:1px solid var(--line-soft);font-size:10px;color:var(--dim)">';
-            if (item.agent) {
-              html += '<span' + (item.agentStatus ? ' style="color:var(--accent)"' : '') + '>🧑‍💻 ' + item.agent + '</span>';
-            } else {
-              html += '<span>👤 ' + (item.status === 'done' ? '手动完成' : '手动执行') + '</span>';
-            }
-            html += '<span style="font-family:var(--mono)">' + (item.status === 'done' && item.date ? '✓ ' + item.date : (item.date || '—')) + '</span>';
-            html += '</div>';
-            html += '<div class="fp-card-workspace" style="display:flex;align-items:center;gap:4px;margin-top:5px;padding-top:5px;border-top:1px solid var(--line-soft);font-size:10px;color:var(--dim);min-width:0">';
-            html += '<span style="flex-shrink:0">Workspace</span><span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--muted)">' + wsInfo.icon + ' ' + meta.name + '</span>';
-            html += '</div>';
-            card.innerHTML = html;
+            card.innerHTML = buildTaskCardHtml(item, false);
             if (status === 'blocked') card.style.display = 'none';
             lane.appendChild(card);
           }
@@ -6645,38 +6747,101 @@ FocusPilot/
         });
       }
 
-      function openKanbanLaneMenu(event, status) {
-        event.preventDefault();
-        event.stopPropagation();
-        var menu = document.getElementById('kanbanLaneMenu');
-        if (!menu) return;
-        menu.dataset.status = status || '';
-        menu.querySelector('[data-kanban-sort="workspace"]').textContent = (kanbanSortMode === 'workspace' ? '✓ ' : '') + '按 Workspace 分组排序';
-        menu.querySelector('[data-kanban-sort="default"]').textContent = (kanbanSortMode === 'default' ? '✓ ' : '') + '默认排序';
-        var rect = event.target.getBoundingClientRect();
-        menu.style.left = rect.left + 'px';
-        menu.style.top = (rect.bottom + 4) + 'px';
-        menu.style.display = 'block';
-        setTimeout(function() {
-          document.addEventListener('click', function closeMenu() {
-            menu.style.display = 'none';
-            document.removeEventListener('click', closeMenu);
+      function renderSwimlaneFromItems() {
+        ensureWorkspaceRegistryFromItems();
+        var container = document.getElementById('fp-swimlane');
+        if (!container) return;
+        var visibleItems = workItems.filter(function(item) { return itemMatchesFocusFilter(item, currentFocusFilter); });
+        var workspaceIds = [];
+        visibleItems.forEach(function(item) {
+          var wsId = item.projectId || deriveWorkspaceIdForItem(item);
+          if (workspaceIds.indexOf(wsId) === -1) workspaceIds.push(wsId);
+        });
+        workspaceIds.sort(function(a, b) { return getWorkspaceMeta(a).name.localeCompare(getWorkspaceMeta(b).name); });
+        var html = '<div class="swimlane-head">Workspace</div>';
+        taskStatusDefs.forEach(function(def) {
+          html += '<div class="swimlane-head"><span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:' + def.color + ';margin-right:5px"></span>' + def.label + '</div>';
+        });
+        if (workspaceIds.length === 0) {
+          html += '<div class="swimlane-workspace"><span class="sub">无匹配任务</span></div>';
+          taskStatusDefs.forEach(function(def) {
+            html += '<div class="swimlane-cell" data-swimlane-workspace="" data-swimlane-status="' + def.status + '"></div>';
           });
-        }, 0);
+          container.innerHTML = html;
+          return;
+        }
+        workspaceIds.forEach(function(wsId) {
+          var meta = getWorkspaceMeta(wsId);
+          var info = workspaceTypeInfo(meta.type);
+          html += '<div class="swimlane-workspace">' + info.icon + ' ' + meta.name + '<span class="sub">' + info.label + ' · ' + visibleItems.filter(function(item) { return (item.projectId || deriveWorkspaceIdForItem(item)) === wsId; }).length + ' 项</span></div>';
+          taskStatusDefs.forEach(function(def) {
+            html += '<div class="swimlane-cell" data-swimlane-workspace="' + wsId + '" data-swimlane-status="' + def.status + '" ondragover="handleSwimlaneDragOver(event)" ondragleave="handleSwimlaneDragLeave(event)" ondrop="handleSwimlaneDrop(event)">';
+            visibleItems.filter(function(item) {
+              return (item.projectId || deriveWorkspaceIdForItem(item)) === wsId && item.status === def.status;
+            }).forEach(function(item) {
+              html += '<div class="task fp-card swimlane-card" draggable="true" data-task-id="' + item.id + '" data-fp-schedule="' + (item.schedule || '') + '" data-fp-workspace="' + meta.name + '"' +
+                (item.month ? ' data-fp-month="' + item.month + '"' : '') +
+                (item.executionMode ? ' data-fp-mode="' + item.executionMode + '"' : '') +
+                (item.agentStatus ? ' data-fp-agent="yes"' : '') +
+                (item.decision ? ' data-fp-decision="yes"' : '') +
+                ' onclick="openTaskDetail(&quot;' + item.id + '&quot;)" ondragstart="handleSwimlaneDragStart(event, &quot;' + item.id + '&quot;)">' +
+                buildTaskCardHtml(item, true) +
+                '</div>';
+            });
+            html += '</div>';
+          });
+        });
+        container.innerHTML = html;
       }
 
-      function setKanbanSortMode(mode) {
-        kanbanSortMode = mode === 'workspace' ? 'workspace' : 'default';
-        var select = document.getElementById('studioDisplayMode');
-        var boardPanel = document.getElementById('focus-board');
-        if (select && boardPanel && boardPanel.classList.contains('active')) {
-          select.value = kanbanSortMode === 'workspace' ? 'swimlane' : 'board';
-          studioGlobalDisplayMode = select.value;
-          setStudioGanttActive(false);
-        }
-        var menu = document.getElementById('kanbanLaneMenu');
-        if (menu) menu.style.display = 'none';
+      function handleSwimlaneDragStart(event, taskId) {
+        if (!event.dataTransfer) return;
+        event.dataTransfer.setData('text/plain', taskId);
+        event.dataTransfer.effectAllowed = 'move';
+      }
+
+      function handleSwimlaneDragOver(event) {
+        event.preventDefault();
+        if (event.dataTransfer) event.dataTransfer.dropEffect = 'move';
+        var cell = event.currentTarget;
+        if (cell) cell.classList.add('drag-over');
+      }
+
+      function handleSwimlaneDragLeave(event) {
+        var cell = event.currentTarget;
+        if (cell) cell.classList.remove('drag-over');
+      }
+
+      function handleSwimlaneDrop(event) {
+        event.preventDefault();
+        var cell = event.currentTarget;
+        if (!cell) return;
+        cell.classList.remove('drag-over');
+        var taskId = event.dataTransfer ? event.dataTransfer.getData('text/plain') : '';
+        var targetStatus = cell.dataset.swimlaneStatus;
+        var targetWorkspace = cell.dataset.swimlaneWorkspace;
+        if (!taskId || !targetStatus || !targetWorkspace) return;
+        var item = workItems.find(function(candidate) { return candidate.id === taskId; });
+        if (!item) return;
+        var previousWorkspace = item.projectId;
+        var targetMeta = getWorkspaceMeta(targetWorkspace);
+        item.status = targetStatus;
+        item.projectId = targetWorkspace;
+        item.workspaceType = targetMeta.type;
         renderKanbanFromItems();
+        renderFocusListFromItems();
+        renderSwimlaneFromItems();
+        renderStudioWorkspaceList();
+        if (previousWorkspace) {
+          renderStudioTasksPanelFromItems(previousWorkspace);
+          renderProjectInspectorTasks(previousWorkspace);
+        }
+        renderStudioTasksPanelFromItems(targetWorkspace);
+        renderProjectInspectorTasks(targetWorkspace);
+        if (currentStudioWorkspace === previousWorkspace || currentStudioWorkspace === targetWorkspace) {
+          applyStudioWorkspaceContext(currentStudioWorkspace || targetWorkspace);
+        }
+        showToast('已移动 ' + taskId + ' 到 ' + targetMeta.name + ' · ' + taskStatusDefs.find(function(def) { return def.status === targetStatus; }).label);
       }
 
       /* ── Also render studioTasksPanel (session right panel) from workItems ── */
@@ -6805,6 +6970,11 @@ FocusPilot/
       function setStudioGanttActive(active) {
         var ganttBtn = document.getElementById('studioGanttModeBtn');
         if (ganttBtn) ganttBtn.classList.toggle('active', !!active);
+        if (active) {
+          document.querySelectorAll('#studioDisplayMode [data-display-mode]').forEach(function(btn) {
+            btn.classList.remove('active');
+          });
+        }
       }
 
       function selectStudioGlobalMode(mode) {
@@ -6816,13 +6986,19 @@ FocusPilot/
       function selectStudioDisplayMode(mode) {
         studioGlobalDisplayMode = mode || 'board';
         setStudioGanttActive(false);
-        var select = document.getElementById('studioDisplayMode');
-        if (select && select.value !== studioGlobalDisplayMode) select.value = studioGlobalDisplayMode;
+        document.querySelectorAll('#studioDisplayMode [data-display-mode]').forEach(function(btn) {
+          btn.classList.toggle('active', btn.dataset.displayMode === studioGlobalDisplayMode);
+        });
         if (studioGlobalDisplayMode === 'list') {
+          renderFocusListFromItems();
           showPanel('focus-list');
           return;
         }
-        kanbanSortMode = studioGlobalDisplayMode === 'swimlane' ? 'workspace' : 'default';
+        if (studioGlobalDisplayMode === 'swimlane') {
+          renderSwimlaneFromItems();
+          showPanel('focus-swimlane');
+          return;
+        }
         renderKanbanFromItems();
         showPanel('focus-board');
       }
@@ -7642,11 +7818,12 @@ FocusPilot/
       /* ── Demo 基准日期（所有视图日期/周号/today line 统一从此派生） ── */
       const DEMO_TODAY = new Date(2026, 4, 27); // 2026-05-27 周三
 
-      /* ── Studio 任务视图：侧边栏 Scope 联动甘特 + 展示方式筛选 ── */
+      /* ── Studio 任务视图：侧边栏 Scope 联动甘特 + 显示模式筛选 ── */
       function applyFocusFilter(el) {
         el.closest('.side-scroll').querySelectorAll('[data-focus-filter]').forEach(i => i.classList.remove('active'));
         el.classList.add('active');
         const filter = el.dataset.focusFilter;
+        currentFocusFilter = filter || 'all';
         const modeMap = { today: 'fp-day', week: 'fp-week', month: 'fp-month' };
         const targetId = modeMap[filter] || 'fp-year';
         document.querySelectorAll('.fp-sub').forEach(p => { p.style.display = 'none'; p.classList.remove('active'); });
@@ -7760,6 +7937,7 @@ FocusPilot/
           if (gh) gh.style.display = hasVisible ? '' : 'none';
           table.style.display = hasVisible ? '' : 'none';
         });
+        renderSwimlaneFromItems();
       }
 
       /* ── Focus: Task Detail ── */
@@ -10188,6 +10366,7 @@ FocusPilot/
         workItems.push(newItem);
         // Refresh kanban
         renderKanbanFromItems();
+        renderSwimlaneFromItems();
         // Refresh focus list
         if (typeof renderFocusListFromItems === 'function') renderFocusListFromItems();
         renderStudioWorkspaceList();
@@ -10293,6 +10472,7 @@ FocusPilot/
       /* ═══ Initialize: Render kanban from workItems data ═══ */
 	      ensureWorkspaceRegistryFromItems();
 	      renderKanbanFromItems();
+	      renderSwimlaneFromItems();
 	      renderFocusListFromItems();
 	      renderStudioWorkspaceList();
 	      applyStudioWorkspaceContext('FocusPilot');
@@ -10309,12 +10489,6 @@ FocusPilot/
       <div onclick="workspaceMenuAction('archive')" style="padding:6px 12px;cursor:pointer;color:var(--text)" onmouseover="this.style.background='var(--elevated)'" onmouseout="this.style.background=''">📦 归档所有对话</div>
       <div onclick="workspaceMenuAction('remove')" style="padding:6px 12px;cursor:pointer;color:var(--red)" onmouseover="this.style.background='var(--elevated)'" onmouseout="this.style.background=''">🗑 移除项目</div>
     </div>
-    <div id="kanbanLaneMenu" style="display:none;position:fixed;z-index:70;background:var(--surface);border:1px solid var(--line);border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,.4);min-width:190px;padding:4px 0;font-size:11px">
-      <div style="padding:6px 12px;font-size:10px;color:var(--dim);font-weight:600;border-bottom:1px solid var(--line-soft);margin-bottom:2px">泳道排序</div>
-      <div data-kanban-sort="workspace" onclick="setKanbanSortMode('workspace')" style="padding:6px 12px;cursor:pointer;color:var(--text)" onmouseover="this.style.background='var(--elevated)'" onmouseout="this.style.background=''">按 Workspace 分组排序</div>
-      <div data-kanban-sort="default" onclick="setKanbanSortMode('default')" style="padding:6px 12px;cursor:pointer;color:var(--text)" onmouseover="this.style.background='var(--elevated)'" onmouseout="this.style.background=''">默认排序</div>
-    </div>
-
     <!-- ═══ Studio: Session 右键菜单 popover ═══ -->
     <div id="studioSessionMenu" style="display:none;position:fixed;z-index:70;background:var(--surface);border:1px solid var(--line);border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,.4);min-width:160px;padding:4px 0;font-size:11px">
       <div class="sm-title" style="padding:6px 12px;font-size:10px;color:var(--dim);font-weight:600;border-bottom:1px solid var(--line-soft);margin-bottom:2px">对话</div>
