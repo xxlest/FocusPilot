@@ -456,10 +456,11 @@ WorkItem (Task)
 
 对话历史采用 Codex 风格折叠规则：
 - 默认每个 Workspace 只展示最近 5 条 Session，按 `last_activity_at` 倒序排列
+- 点击 Workspace 项目名称会折叠 / 展开该 Workspace 下的全部对话历史，折叠态使用 `▸`，展开态使用 `▾`
 - 超过 5 条时，在第 5 条后显示低视觉权重的灰色小字 `展开显示`
 - 点击 `展开显示` 后展示该 Workspace 的全部 Session，并立即切换为 `折叠显示`
 - 点击 `折叠显示` 后恢复为最近 5 条
-- Workspace 项目列表提供 `全部折叠`，一次性收起所有 Workspace 的 Session 历史
+- Workspace 项目列表提供 `全部折叠`，一次性折叠所有 Workspace 项目；折叠后不显示该项目下的 Session 历史
 - 每条 Session 显示相对时间：分钟 → 小时 → 天 → 周 → 月
 
 ---

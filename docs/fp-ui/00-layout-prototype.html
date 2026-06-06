@@ -8082,6 +8082,7 @@ FocusPilot/
 
       var studioSessionHistoryLimit = 5;
       var studioSessionHistoryExpanded = {};
+      var studioWorkspaceFolded = {};
 
       function studioMinutesAgo(minutes) {
         return new Date(Date.now() - minutes * 60 * 1000).toISOString();
@@ -8134,7 +8135,21 @@ FocusPilot/
         renderProjectSessions(currentStudioWorkspace || workspaceId);
       }
 
+      function toggleStudioWorkspaceFold(workspaceId) {
+        if (!workspaceId) return;
+        studioWorkspaceFolded[workspaceId] = !studioWorkspaceFolded[workspaceId];
+        if (currentStudioWorkspace !== workspaceId) {
+          setCurrentWorkspace(workspaceId);
+          return;
+        }
+        renderStudioWorkspaceList();
+      }
+
       function collapseAllStudioSessionHistory() {
+        ensureWorkspaceRegistryFromItems();
+        Object.keys(workspaceRegistry).forEach(function(workspaceId) {
+          studioWorkspaceFolded[workspaceId] = true;
+        });
         Object.keys(studioSessionHistoryExpanded).forEach(function(workspaceId) {
           studioSessionHistoryExpanded[workspaceId] = false;
         });
@@ -8171,11 +8186,13 @@ FocusPilot/
           var meta = getWorkspaceMeta(id);
           var tasks = getItemsForWorkspace(id);
           var info = workspaceTypeInfo(meta.type);
+          var folded = !!studioWorkspaceFolded[id];
           var activeStyle = currentStudioWorkspace === id ? ';background:var(--elevated);border-left:2px solid var(--accent)' : '';
-          html += '<div class="side-item ws-row" data-workspace="' + id + '" data-workspace-type="' + meta.type + '" style="font-weight:500;cursor:pointer' + activeStyle + '" onclick="setCurrentWorkspace(this.dataset.workspace)">';
-          html += '<span>' + info.icon + ' ' + meta.name + '<span class="subline">' + info.label + ' · ' + tasks.length + ' 任务</span></span>';
+          html += '<div class="side-item ws-row" data-workspace="' + id + '" data-workspace-type="' + meta.type + '" style="font-weight:500;cursor:pointer' + activeStyle + '" onclick="toggleStudioWorkspaceFold(this.dataset.workspace)">';
+          html += '<span><span style="display:inline-block;width:12px;color:var(--dim)">' + (folded ? '▸' : '▾') + '</span>' + info.icon + ' ' + meta.name + '<span class="subline">' + info.label + ' · ' + tasks.length + ' 任务</span></span>';
           html += '<span class="count" style="cursor:pointer;display:flex;gap:8px"><span onclick="event.stopPropagation();openWorkspaceMenu(event,\'' + id + '\')" title="Workspace 菜单">...</span><span onclick="event.stopPropagation();openNewSessionModal(\'' + id + '\')" title="在此 Workspace 新建对话">+</span></span>';
           html += '</div>';
+          if (folded) return;
           var history = getVisibleStudioSessionsForWorkspace(id);
           var sessions = history.visible;
           if (!history.all.length) {
