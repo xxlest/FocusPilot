@@ -2223,7 +2223,15 @@
           <!-- ═══ 项目视图 Tab 内容 ═══ -->
           <div class="side-scroll studio-side-content" id="studioSideProject" style="display:none">
             <!-- ── 项目 ── -->
-            <div style="padding:0 8px 8px"><input class="search" placeholder="🔍 搜索对话..." style="width:100%" /></div>
+            <div style="padding:0 8px 8px"><input class="search" placeholder="🔍 搜索 Workspace / 对话..." style="width:100%" /></div>
+            <div style="padding:0 8px 8px">
+              <div style="display:flex;gap:4px;flex-wrap:wrap" id="studioWorkspaceFilterBar">
+                <button class="btn studio-ws-filter active" data-ws-filter="all" onclick="setStudioWorkspaceFilter('all')" style="font-size:10px;min-height:24px;padding:0 8px;background:var(--elevated);color:var(--text)">所有</button>
+                <button class="btn studio-ws-filter" data-ws-filter="temporary" onclick="setStudioWorkspaceFilter('temporary')" style="font-size:10px;min-height:24px;padding:0 8px;color:var(--muted)">临时</button>
+                <button class="btn studio-ws-filter" data-ws-filter="local_project" onclick="setStudioWorkspaceFilter('local_project')" style="font-size:10px;min-height:24px;padding:0 8px;color:var(--muted)">本地</button>
+                <button class="btn studio-ws-filter" data-ws-filter="git_project" onclick="setStudioWorkspaceFilter('git_project')" style="font-size:10px;min-height:24px;padding:0 8px;color:var(--muted)">Git</button>
+              </div>
+            </div>
             <!-- 📌 置顶区 -->
             <div id="studioPinArea">
               <div id="studioPinHeader" style="padding:4px 8px 2px;font-size:10px;font-weight:600;color:var(--dim);text-transform:uppercase;letter-spacing:.04em">置顶</div>
@@ -2233,7 +2241,8 @@
               <div id="studioPinSep" style="border-bottom:1px solid var(--line-soft);margin:6px 8px"></div>
             </div>
             <!-- 📂 项目 Workspace -->
-            <div style="padding:4px 8px 2px;font-size:10px;font-weight:600;color:var(--dim);text-transform:uppercase;letter-spacing:.04em">项目</div>
+            <div style="padding:4px 8px 2px;font-size:10px;font-weight:600;color:var(--dim);text-transform:uppercase;letter-spacing:.04em">Workspace 项目</div>
+            <div id="studioWorkspaceList">
             <div class="side-item ws-row" data-workspace="FocusPilot" style="font-weight:500;cursor:pointer" onclick="setCurrentWorkspace(this.dataset.workspace)">
               <span>📂 FocusPilot</span><span class="count" style="cursor:pointer;display:flex;gap:8px"><span onclick="event.stopPropagation();openWorkspaceMenu(event,this.closest('.ws-row').dataset.workspace)" title="项目菜单">···</span><span onclick="event.stopPropagation();openNewSessionModal(this.closest('.ws-row').dataset.workspace)" title="在此项目中新建对话">+</span></span>
             </div>
@@ -2247,6 +2256,7 @@
               <span>📂 PilotOne</span><span class="count" style="cursor:pointer;display:flex;gap:8px"><span onclick="event.stopPropagation();openWorkspaceMenu(event,this.closest('.ws-row').dataset.workspace)" title="项目菜单">···</span><span onclick="event.stopPropagation();openNewSessionModal(this.closest('.ws-row').dataset.workspace)" title="在此项目中新建对话">+</span></span>
             </div>
             <div class="side-item indent" style="font-size:11px;color:var(--dim)">暂无对话</div>
+            </div>
             <div style="border-bottom:1px solid var(--line-soft);margin:8px 8px"></div>
             <!-- 添加项目文件夹 -->
             <div onclick="openNewWorkspaceModal()" style="display:flex;align-items:center;justify-content:center;gap:4px;padding:8px;margin:0 8px;border-radius:var(--radius);border:1px dashed var(--line);color:var(--dim);font-size:11px;cursor:pointer">+ 添加项目文件夹</div>
@@ -6430,19 +6440,112 @@ FocusPilot/
         { id: 'FP-002', title: '看板状态模型实现', status: 'in_progress', priority: 'p0', projectId: 'FocusPilot', workspaceType: 'local_project', executionMode: 'auto', schedule: 'week', month: '5', goal: '5月/FP 0.0.1', agent: '代码工程师', agentStatus: 'Agent 执行中', date: '05-25' },
         { id: 'FP-003', title: 'Agent Pull 执行管道', status: 'todo', priority: 'p1', projectId: 'FocusPilot', workspaceType: 'local_project', executionMode: 'auto', schedule: 'week', month: '5', goal: '5月/AI', agent: '代码工程师', date: '05-28' },
         { id: 'FP-004', title: 'Terminal 手动执行模式', status: 'todo', priority: 'p1', projectId: 'FocusPilot', workspaceType: 'local_project', executionMode: 'manual', schedule: 'week', month: '5', goal: '5月/AI', agent: '', date: '05-29' },
-        { id: 'FP-005', title: '规划引擎接口设计', status: 'in_evaluation', priority: 'p0', projectId: 'FocusPilot', workspaceType: 'git_project', executionMode: 'auto', schedule: 'week', month: '5', goal: '5月/AI', agent: '代码工程师', decision: true, date: '05-26' },
+        { id: 'FP-005', title: '规划引擎接口设计', status: 'in_evaluation', priority: 'p0', projectId: 'git-focuspilot-ai', workspaceType: 'git_project', executionMode: 'auto', schedule: 'week', month: '5', goal: '5月/AI', agent: '代码工程师', decision: true, date: '05-26' },
         { id: 'FP-006', title: '主题系统适配', status: 'backlog', priority: 'p2', projectId: 'FocusPilot', workspaceType: 'local_project', executionMode: 'auto', schedule: 'month', month: '6', goal: '6月/FP 0.0.1', agent: '代码工程师' },
         { id: 'FP-007', title: 'PRD 文档整合', status: 'done', priority: 'p1', projectId: 'FocusPilot', workspaceType: 'local_project', executionMode: 'manual', schedule: '', month: '', goal: '4月/FP 0.0.1', agent: '', date: '04-16' },
         { id: 'FP-008', title: '配置迁移脚本', status: 'blocked', priority: 'p1', projectId: 'FocusPilot', workspaceType: 'local_project', executionMode: 'auto', schedule: '', month: '', goal: '', agent: '代码工程师' },
         { id: 'FP-009', title: 'Anki 同步接口设计', status: 'backlog', priority: 'p2', projectId: 'FocusPilot', workspaceType: 'local_project', executionMode: 'auto', schedule: 'month', month: '6', goal: '6月/FP 0.0.1', agent: '代码工程师' },
-        { id: 'FP-010', title: '整理本周会议记录', status: 'todo', priority: 'p2', projectId: 'FocusPilot', workspaceType: 'temporary', executionMode: 'manual', schedule: 'today', month: '', goal: '', agent: '', date: '05-27' },
-        { id: 'FP-011', title: '研究 Multica 执行模型', status: 'in_progress', priority: 'p1', projectId: 'FocusPilot', workspaceType: 'temporary', executionMode: 'manual', schedule: 'today', month: '', goal: '', agent: '', date: '05-27' },
+        { id: 'FP-010', title: '整理本周会议记录', status: 'todo', priority: 'p2', projectId: 'tmp-20260527-01', workspaceType: 'temporary', executionMode: 'manual', schedule: 'today', month: '', goal: '', agent: '', date: '05-27' },
+        { id: 'FP-011', title: '研究 Multica 执行模型', status: 'in_progress', priority: 'p1', projectId: 'tmp-20260527-01', workspaceType: 'temporary', executionMode: 'manual', schedule: 'today', month: '', goal: '', agent: '', date: '05-27' },
         { id: 'PO-001', title: '首页重构', status: 'todo', priority: 'p1', projectId: 'PilotOne', workspaceType: 'local_project', executionMode: 'none', schedule: 'week', month: '', goal: '', agent: '' },
-        { id: 'PO-002', title: 'API 文档更新', status: 'in_progress', priority: 'p1', projectId: 'PilotOne', workspaceType: 'temporary', executionMode: 'dialog', schedule: 'today', month: '', goal: '', agent: '代码工程师' },
+        { id: 'PO-002', title: 'API 文档更新', status: 'in_progress', priority: 'p1', projectId: 'tmp-pilotone-api', workspaceType: 'temporary', executionMode: 'dialog', schedule: 'today', month: '', goal: '', agent: '代码工程师' },
       ];
+
+      var workspaceRegistry = {
+        'FocusPilot': { id: 'FocusPilot', name: 'FocusPilot', type: 'local_project', icon: '📁', path: '~/Workspace/FocusPilot', branch: 'main', remote: 'origin/main (同步)' },
+        'PilotOne': { id: 'PilotOne', name: 'PilotOne', type: 'local_project', icon: '📁', path: '~/Workspace/PilotOne', branch: 'develop', remote: 'origin/develop (同步)' },
+        'tmp-20260527-01': { id: 'tmp-20260527-01', name: '临时项目 tmp-20260527-01', type: 'temporary', icon: '📦', path: '~/FocusPilotWorkspaces/tmp-20260527-01', branch: '—', remote: '本地临时目录' },
+        'tmp-pilotone-api': { id: 'tmp-pilotone-api', name: '临时项目 tmp-pilotone-api', type: 'temporary', icon: '📦', path: '~/FocusPilotWorkspaces/tmp-pilotone-api', branch: '—', remote: '本地临时目录' },
+        'git-focuspilot-ai': { id: 'git-focuspilot-ai', name: 'Git · FocusPilot AI', type: 'git_project', icon: '🔗', path: '~/FocusPilotWorkspaces/git-focuspilot-ai', branch: 'feature/planning-engine', remote: 'github.com/xxlest/FocusPilot.git' }
+      };
+      var studioWorkspaceFilter = 'all';
+      var kanbanSortMode = 'default';
+      var tempWorkspaceCounter = 3;
+
+      function workspaceTypeInfo(type) {
+        var map = {
+          temporary: { label: '临时项目', icon: '📦', radio: 'temp', tone: 'var(--amber)' },
+          local_project: { label: '本地项目', icon: '📁', radio: 'local', tone: 'var(--accent)' },
+          git_project: { label: 'Git 远程项目', icon: '🔗', radio: 'git', tone: 'var(--purple)' }
+        };
+        return map[type] || map.local_project;
+      }
+
+      function normalizeWorkspaceType(type) {
+        if (type === 'temp') return 'temporary';
+        if (type === 'local') return 'local_project';
+        if (type === 'git') return 'git_project';
+        return type || 'temporary';
+      }
+
+      function registerWorkspace(id, type, attrs) {
+        if (!id) return null;
+        type = normalizeWorkspaceType(type);
+        var info = workspaceTypeInfo(type);
+        var existing = workspaceRegistry[id] || {};
+        workspaceRegistry[id] = Object.assign({
+          id: id,
+          name: existing.name || (type === 'local_project' ? id : info.label + ' ' + id),
+          type: type,
+          icon: info.icon,
+          path: existing.path || ('~/FocusPilotWorkspaces/' + id),
+          branch: existing.branch || (type === 'git_project' ? 'main' : '—'),
+          remote: existing.remote || (type === 'git_project' ? '远程 Git 仓库' : (type === 'temporary' ? '本地临时目录' : '本地项目目录'))
+        }, existing, attrs || {}, { id: id, type: type, icon: (attrs && attrs.icon) || existing.icon || info.icon });
+        return workspaceRegistry[id];
+      }
+
+      function ensureWorkspaceRegistryFromItems() {
+        workItems.forEach(function(item) {
+          var id = item.projectId || deriveWorkspaceIdForItem(item);
+          item.projectId = id;
+          registerWorkspace(id, item.workspaceType);
+        });
+      }
+
+      function getWorkspaceMeta(id) {
+        if (!id) return registerWorkspace('tmp-unsorted', 'temporary', { name: '临时项目 tmp-unsorted' });
+        return workspaceRegistry[id] || registerWorkspace(id, 'temporary');
+      }
+
+      function deriveWorkspaceIdForItem(item) {
+        if (item.projectId) return item.projectId;
+        if (item.workspaceType === 'git_project') return 'git-workspace';
+        if (item.workspaceType === 'local_project') return 'local-workspace';
+        return 'tmp-unsorted';
+      }
+
+      function workspaceRadioForType(type) {
+        return workspaceTypeInfo(normalizeWorkspaceType(type)).radio;
+      }
+
+      function getItemsForWorkspace(workspaceId) {
+        return workItems.filter(function(item) { return (item.projectId || deriveWorkspaceIdForItem(item)) === workspaceId; });
+      }
+
+      function createTempWorkspaceId() {
+        var id;
+        do {
+          id = 'tmp-' + String(DEMO_TODAY.getFullYear()) + String(DEMO_TODAY.getMonth() + 1).padStart(2, '0') + String(DEMO_TODAY.getDate()).padStart(2, '0') + '-' + String(tempWorkspaceCounter++).padStart(2, '0');
+        } while (workspaceRegistry[id]);
+        registerWorkspace(id, 'temporary', { name: '临时项目 ' + id });
+        return id;
+      }
+
+      function createGitWorkspaceId(url) {
+        var cleaned = (url || '').trim();
+        var repo = cleaned ? cleaned.split('/').pop().replace(/\.git$/, '') : 'remote-task';
+        var idBase = 'git-' + repo.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+        var id = idBase || 'git-remote-task';
+        var n = 2;
+        while (workspaceRegistry[id]) id = idBase + '-' + n++;
+        registerWorkspace(id, 'git_project', { name: 'Git · ' + repo, remote: cleaned || '远程 Git 仓库', path: '~/FocusPilotWorkspaces/' + id });
+        return id;
+      }
 
       /* ── Render: Kanban Board from workItems ── */
       function renderKanbanFromItems(filter) {
+        ensureWorkspaceRegistryFromItems();
         var statusColumns = {
           backlog: { label: 'Backlog', color: 'var(--dim)', items: [] },
           todo: { label: 'Todo', color: 'var(--muted)', items: [] },
@@ -6467,14 +6570,53 @@ FocusPilot/
           lane.dataset.fpCol = status === 'in_progress' ? 'progress' : (status === 'in_evaluation' ? 'evaluation' : status);
           if (status === 'blocked') { lane.style.opacity = '.6'; lane.style.minWidth = '140px'; }
           var h3 = document.createElement('h3');
-          h3.innerHTML = '<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:' + col.color + ';margin-right:4px;vertical-align:middle"></span> ' + col.label + ' <span class="fp-col-count">' + col.items.length + '</span>';
+          h3.style.display = 'flex';
+          h3.style.alignItems = 'center';
+          h3.style.gap = '6px';
+          h3.innerHTML = '<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:' + col.color + ';flex-shrink:0"></span><span style="flex:1">' + col.label + ' <span class="fp-col-count">' + col.items.length + '</span></span>';
+          var addLaneBtn = document.createElement('button');
+          addLaneBtn.title = '新建任务';
+          addLaneBtn.textContent = '+';
+          addLaneBtn.style.cssText = 'width:22px;height:22px;border:1px solid var(--line-soft);border-radius:50%;background:var(--surface);color:var(--dim);cursor:pointer;font-size:13px;line-height:1';
+          addLaneBtn.onclick = function(event) { event.stopPropagation(); openNewTaskModal({ source: 'kanban-lane', status: status }); };
+          var laneMenuBtn = document.createElement('button');
+          laneMenuBtn.title = '泳道操作';
+          laneMenuBtn.textContent = '...';
+          laneMenuBtn.style.cssText = 'width:22px;height:22px;border:1px solid var(--line-soft);border-radius:50%;background:var(--surface);color:var(--dim);cursor:pointer;font-size:12px;line-height:1';
+          laneMenuBtn.onclick = function(event) { openKanbanLaneMenu(event, status); };
+          h3.appendChild(addLaneBtn);
+          h3.appendChild(laneMenuBtn);
           lane.appendChild(h3);
-          col.items.forEach(function(item) {
+          var renderItems = col.items.slice();
+          if (kanbanSortMode === 'workspace') {
+            var groups = {};
+            renderItems.forEach(function(item) {
+              var wsId = item.projectId || deriveWorkspaceIdForItem(item);
+              if (!groups[wsId]) groups[wsId] = [];
+              groups[wsId].push(item);
+            });
+            Object.keys(groups).sort(function(a, b) {
+              return getWorkspaceMeta(a).name.localeCompare(getWorkspaceMeta(b).name);
+            }).forEach(function(wsId) {
+              var meta = getWorkspaceMeta(wsId);
+              var info = workspaceTypeInfo(meta.type);
+              var groupHead = document.createElement('div');
+              groupHead.style.cssText = 'display:flex;align-items:center;gap:5px;margin:6px 0 2px;padding:3px 6px;border-radius:var(--radius);background:var(--bg);font-size:10px;color:var(--dim);font-weight:600';
+              groupHead.innerHTML = '<span>' + info.icon + '</span><span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + meta.name + '</span><span style="font-family:var(--mono);font-weight:400">' + groups[wsId].length + '</span>';
+              lane.appendChild(groupHead);
+              groups[wsId].forEach(renderKanbanCard);
+            });
+          } else {
+            renderItems.forEach(renderKanbanCard);
+          }
+          function renderKanbanCard(item) {
             var priorityColor = item.priority === 'p0' ? 'var(--red)' : (item.priority === 'p1' ? 'var(--amber)' : 'var(--dim)');
             var priorityBorder = item.priority === 'p0' ? 'rgba(248,113,113,.3)' : (item.priority === 'p1' ? 'rgba(242,196,15,.3)' : 'rgba(112,120,135,.3)');
             var modeLabel = item.executionMode === 'auto' ? 'auto' : (item.executionMode === 'manual' ? 'manual' : (item.executionMode === 'dialog' ? 'dialog' : ''));
             var modeColor = item.executionMode === 'auto' ? 'var(--accent)' : (item.executionMode === 'manual' ? 'var(--purple)' : 'var(--muted)');
             var modeBorder = item.executionMode === 'auto' ? 'var(--accent-line)' : (item.executionMode === 'manual' ? 'rgba(167,139,250,.3)' : 'var(--line)');
+            var meta = getWorkspaceMeta(item.projectId);
+            var wsInfo = workspaceTypeInfo(meta.type);
             var card = document.createElement('div');
             card.className = 'task fp-card';
             card.dataset.taskId = item.id;
@@ -6492,6 +6634,7 @@ FocusPilot/
             html += '<div class="task-meta" style="flex-wrap:wrap;gap:4px">';
             html += '<span class="pill" style="font-size:9px;padding:1px 5px;border-color:' + priorityBorder + ';color:' + priorityColor + '">' + item.priority.toUpperCase() + '</span>';
             if (modeLabel) html += '<span class="pill" style="font-size:9px;padding:1px 5px;border-color:' + modeBorder + ';color:' + modeColor + '">' + modeLabel + '</span>';
+            html += '<span class="pill" title="' + meta.name + '" style="font-size:9px;padding:1px 5px;border-color:var(--line-soft);color:var(--dim)">' + wsInfo.icon + ' ' + wsInfo.label + '</span>';
             if (item.goal) html += '<span style="font-size:10px;color:var(--dim)">&rarr; ' + item.goal + '</span>';
             if (item.agentStatus) html += '<span class="pill blue" style="font-size:9px;padding:1px 5px;font-weight:600">' + item.agentStatus + '</span>';
             if (item.decision) html += '<span class="pill amber" style="font-size:9px;padding:1px 5px;font-weight:600">等你决策</span>';
@@ -6507,25 +6650,55 @@ FocusPilot/
             card.innerHTML = html;
             if (status === 'blocked') card.style.display = 'none';
             lane.appendChild(card);
-          });
+          }
           // Add "新建任务" button (except for blocked/done)
           if (status !== 'blocked' && status !== 'done' && status !== 'in_evaluation') {
             var addBtn = document.createElement('div');
             addBtn.style.cssText = 'display:flex;align-items:center;justify-content:center;gap:4px;padding:8px;border-radius:var(--radius);border:1px dashed var(--line);color:var(--dim);font-size:12px;cursor:pointer;margin-top:4px';
             addBtn.textContent = '＋ 新建任务';
-            addBtn.onclick = function() { openNewTaskModal(); };
+            addBtn.onclick = function() { openNewTaskModal({ source: 'kanban-lane', status: status }); };
             lane.appendChild(addBtn);
           }
           kanban.appendChild(lane);
         });
       }
 
+      function openKanbanLaneMenu(event, status) {
+        event.preventDefault();
+        event.stopPropagation();
+        var menu = document.getElementById('kanbanLaneMenu');
+        if (!menu) return;
+        menu.dataset.status = status || '';
+        menu.querySelector('[data-kanban-sort="workspace"]').textContent = (kanbanSortMode === 'workspace' ? '✓ ' : '') + '按 Workspace 分组排序';
+        menu.querySelector('[data-kanban-sort="default"]').textContent = (kanbanSortMode === 'default' ? '✓ ' : '') + '默认排序';
+        var rect = event.target.getBoundingClientRect();
+        menu.style.left = rect.left + 'px';
+        menu.style.top = (rect.bottom + 4) + 'px';
+        menu.style.display = 'block';
+        setTimeout(function() {
+          document.addEventListener('click', function closeMenu() {
+            menu.style.display = 'none';
+            document.removeEventListener('click', closeMenu);
+          });
+        }, 0);
+      }
+
+      function setKanbanSortMode(mode) {
+        kanbanSortMode = mode === 'workspace' ? 'workspace' : 'default';
+        var menu = document.getElementById('kanbanLaneMenu');
+        if (menu) menu.style.display = 'none';
+        renderKanbanFromItems();
+      }
+
       /* ── Also render studioTasksPanel (session right panel) from workItems ── */
       function renderStudioTasksPanelFromItems(projectId) {
         var panel = document.getElementById('studioTasksPanel');
         if (!panel) return;
-        var filtered = workItems.filter(function(item) { return item.projectId === projectId; });
-        var listHtml = '<div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--dim);margin-bottom:8px">当前项目任务</div>';
+        var filtered = getItemsForWorkspace(projectId);
+        var meta = getWorkspaceMeta(projectId);
+        var info = workspaceTypeInfo(meta.type);
+        var listHtml = '<div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--dim);margin-bottom:4px">当前 Workspace 任务</div>';
+        listHtml += '<div style="font-size:10px;color:var(--dim);margin-bottom:8px">' + info.icon + ' ' + meta.name + ' · ' + info.label + '</div>';
         listHtml += '<div style="display:flex;flex-direction:column;gap:4px">';
         filtered.forEach(function(item) {
           var statusIcon = item.status === 'done' ? '<span style="color:var(--green);font-size:9px">✓</span>' :
@@ -7715,15 +7888,17 @@ FocusPilot/
 
       /* ── Focus: New Task Modal ── */
       var _newTaskContext = null;
+      var _newTaskWorkspaceLocked = false;
       function openNewTaskModal(context) {
         _newTaskContext = context || null;
         document.getElementById('fpNewTaskModal').style.display = 'flex';
         selectExecMode('none');
         var workspaceSection = document.getElementById('fp-new-task-workspace-section');
         var isProjectScoped = context && (context.source === 'project' || context.source === 'session') && context.projectId;
-        if (workspaceSection) workspaceSection.style.display = isProjectScoped ? 'none' : '';
         if (isProjectScoped) {
-          selectWorkspace('local');
+          var meta = getWorkspaceMeta(context.projectId);
+          selectWorkspace(workspaceRadioForType(meta.type), true);
+          setWorkspaceReadonly(context.projectId);
           var sel = document.getElementById('ws-local-project');
           if (sel) {
             for (var i = 0; i < sel.options.length; i++) {
@@ -7731,20 +7906,53 @@ FocusPilot/
             }
           }
         } else {
-          selectWorkspace('temp');
+          setWorkspaceReadonly('');
+          if (context && context.source === 'kanban-lane') {
+            var scheduleEl = document.getElementById('fp-task-schedule');
+            if (scheduleEl) scheduleEl.value = context.status === 'backlog' ? 'Backlog' : scheduleEl.value;
+          }
+          selectWorkspace('temp', true);
         }
       }
       function closeNewTaskModal() {
         _newTaskContext = null;
-        var workspaceSection = document.getElementById('fp-new-task-workspace-section');
-        if (workspaceSection) workspaceSection.style.display = '';
+        setWorkspaceReadonly('');
         document.getElementById('fpNewTaskModal').style.display = 'none';
       }
       document.getElementById('fpNewTaskModal').addEventListener('click', closeNewTaskModal);
 
       // Workspace 选择
-      function selectWorkspace(type) {
+      function selectWorkspace(type, force) {
+        if (_newTaskWorkspaceLocked && !force) return;
         document.querySelectorAll('input[name="fp-ws"]').forEach(function(r) { r.checked = r.value === type; });
+      }
+
+      function setWorkspaceReadonly(workspaceId) {
+        var section = document.getElementById('fp-new-task-workspace-section');
+        if (!section) return;
+        var locked = !!workspaceId;
+        _newTaskWorkspaceLocked = locked;
+        section.style.display = '';
+        section.style.opacity = locked ? '.68' : '1';
+        section.style.background = locked ? 'var(--surface-2)' : 'var(--bg)';
+        section.style.cursor = locked ? 'not-allowed' : '';
+        section.querySelectorAll('input, select').forEach(function(el) {
+          el.disabled = locked;
+        });
+        section.querySelectorAll('label').forEach(function(label) {
+          label.style.cursor = locked ? 'not-allowed' : 'pointer';
+        });
+        var old = document.getElementById('fp-new-task-workspace-readonly');
+        if (old) old.remove();
+        if (locked) {
+          var meta = getWorkspaceMeta(workspaceId);
+          var info = workspaceTypeInfo(meta.type);
+          var note = document.createElement('div');
+          note.id = 'fp-new-task-workspace-readonly';
+          note.style.cssText = 'display:flex;align-items:center;justify-content:space-between;gap:8px;margin:0 0 8px;padding:6px 8px;border:1px solid var(--line-soft);border-radius:var(--radius);background:var(--surface);font-size:10px;color:var(--dim)';
+          note.innerHTML = '<span>当前 Workspace</span><span style="color:var(--text);font-family:var(--mono);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + info.icon + ' ' + meta.name + '</span>';
+          section.insertBefore(note, section.children[1] || null);
+        }
       }
 
       // 执行方式切换（3模式 + 2开关）
@@ -7849,33 +8057,79 @@ FocusPilot/
 	        return !!(projectWorkspace && projectWorkspace.style.display !== 'none' && sessionView && sessionView.style.display !== 'none');
 	      }
 
+      function setStudioWorkspaceFilter(filter) {
+        studioWorkspaceFilter = filter || 'all';
+        document.querySelectorAll('#studioWorkspaceFilterBar .studio-ws-filter').forEach(function(btn) {
+          var active = btn.dataset.wsFilter === studioWorkspaceFilter;
+          btn.classList.toggle('active', active);
+          btn.style.background = active ? 'var(--elevated)' : 'transparent';
+          btn.style.color = active ? 'var(--text)' : 'var(--muted)';
+          btn.style.borderColor = active ? 'var(--line)' : 'var(--line-soft)';
+        });
+        renderStudioWorkspaceList();
+      }
+
+      function renderStudioWorkspaceList() {
+        ensureWorkspaceRegistryFromItems();
+        var container = document.getElementById('studioWorkspaceList');
+        if (!container) return;
+        var ids = Object.keys(workspaceRegistry).filter(function(id) {
+          return studioWorkspaceFilter === 'all' || workspaceRegistry[id].type === studioWorkspaceFilter;
+        }).sort(function(a, b) {
+          var weight = { temporary: 0, local_project: 1, git_project: 2 };
+          var ma = workspaceRegistry[a], mb = workspaceRegistry[b];
+          var wa = weight[ma.type] || 9, wb = weight[mb.type] || 9;
+          if (wa !== wb) return wa - wb;
+          return ma.name.localeCompare(mb.name);
+        });
+        var html = '';
+        if (!ids.length) {
+          html = '<div class="side-item indent" style="font-size:11px;color:var(--dim)">没有匹配的 Workspace</div>';
+        }
+        ids.forEach(function(id) {
+          var meta = getWorkspaceMeta(id);
+          var tasks = getItemsForWorkspace(id);
+          var info = workspaceTypeInfo(meta.type);
+          var activeStyle = currentStudioWorkspace === id ? ';background:var(--elevated);border-left:2px solid var(--accent)' : '';
+          html += '<div class="side-item ws-row" data-workspace="' + id + '" data-workspace-type="' + meta.type + '" style="font-weight:500;cursor:pointer' + activeStyle + '" onclick="setCurrentWorkspace(this.dataset.workspace)">';
+          html += '<span>' + info.icon + ' ' + meta.name + '<span class="subline">' + info.label + ' · ' + tasks.length + ' 任务</span></span>';
+          html += '<span class="count" style="cursor:pointer;display:flex;gap:8px"><span onclick="event.stopPropagation();openWorkspaceMenu(event,\'' + id + '\')" title="Workspace 菜单">...</span><span onclick="event.stopPropagation();openNewSessionModal(\'' + id + '\')" title="在此 Workspace 新建对话">+</span></span>';
+          html += '</div>';
+          var sessions = Object.keys(studioSessions).map(function(sid) {
+            return Object.assign({ sid: sid }, studioSessions[sid]);
+          }).filter(function(s) { return s.workspaceId === id; });
+          if (!sessions.length) {
+            html += '<div class="side-item indent" style="font-size:11px;color:var(--dim)">暂无对话</div>';
+          }
+          sessions.forEach(function(s) {
+            var isActive = currentStudioSessionId === s.sid;
+            var badge = s.status === 'done' ? '<span style="color:var(--green)">✅ 1h</span>' : '<span style="color:var(--accent)">● 15m</span>';
+            html += '<div class="side-item indent studio-session' + (isActive ? ' active' : '') + '" oncontextmenu="openSessionMenu(event,this);return false" onclick="selectStudioSession(this)" data-workspace="' + id + '" data-session="' + s.name + '" data-session-id="' + s.sid + '" data-runtime="' + s.agent + '" style="font-size:11px">';
+            html += '<span>' + (s.agentIcon || '💬') + ' ' + s.name + '</span><span class="count">' + badge + '</span>';
+            html += '</div>';
+          });
+        });
+        container.innerHTML = html;
+      }
+
 	      function renderProjectSessions(projectId) {
 	        var container = document.getElementById('studio-project-sessions');
 	        if (!container) return;
-	        var rows = [];
-	        var seen = {};
-	        document.querySelectorAll('#studioSideProject .studio-session[data-workspace="' + projectId + '"]').forEach(function(row) {
-	          var sid = row.dataset.sessionId || '';
-	          if (!sid || seen[sid]) return;
-	          seen[sid] = true;
-	          rows.push({
-	            sid: sid,
-	            name: row.dataset.session || '未命名对话',
-	            runtime: row.dataset.runtime || 'Agent',
-	            active: row.classList.contains('active'),
-	            pinned: !!row.dataset.pinned
-	          });
-	        });
+	        var meta = getWorkspaceMeta(projectId);
+	        var rows = Object.keys(studioSessions).map(function(sid) {
+	          return Object.assign({ sid: sid }, studioSessions[sid]);
+	        }).filter(function(row) { return row.workspaceId === projectId; });
 	        var html = '<div style="display:flex;flex-direction:column;gap:6px">';
 	        if (!rows.length) {
 	          html += '<div style="padding:18px 12px;text-align:center;color:var(--dim);font-size:12px;background:var(--surface);border:1px dashed var(--line);border-radius:var(--radius)">还没有对话</div>';
 	        }
 	        rows.forEach(function(row) {
-	          var statusText = row.active ? '当前' : (row.pinned ? '置顶' : '历史');
-	          var statusColor = row.active ? 'var(--accent)' : (row.pinned ? 'var(--amber)' : 'var(--dim)');
-	          html += '<div style="background:var(--surface);border:1px solid var(--line-soft);border-radius:var(--radius);padding:10px 14px;cursor:pointer;display:flex;align-items:center;gap:10px' + (row.active ? ';border-left:2px solid var(--accent)' : '') + '" onclick="selectStudioSessionById(\'' + row.sid + '\')">';
-	          html += '<span style="font-size:14px">' + (row.runtime.indexOf('Codex') >= 0 ? '⚡' : '🧑‍💻') + '</span>';
-	          html += '<div style="flex:1;min-width:0"><div style="font-size:12px;font-weight:500">' + row.name + '</div><div style="font-size:10px;color:var(--dim)">' + row.runtime + ' · ' + projectId + '</div></div>';
+	          var active = currentStudioSessionId === row.sid;
+	          var statusText = active ? '当前' : (row.status === 'done' ? '完成' : '历史');
+	          var statusColor = active ? 'var(--accent)' : (row.status === 'done' ? 'var(--green)' : 'var(--dim)');
+	          html += '<div style="background:var(--surface);border:1px solid var(--line-soft);border-radius:var(--radius);padding:10px 14px;cursor:pointer;display:flex;align-items:center;gap:10px' + (active ? ';border-left:2px solid var(--accent)' : '') + '" onclick="selectStudioSessionById(\'' + row.sid + '\')">';
+	          html += '<span style="font-size:14px">' + (row.agentIcon || (row.agent && row.agent.indexOf('Codex') >= 0 ? '⚡' : '🧑‍💻')) + '</span>';
+	          html += '<div style="flex:1;min-width:0"><div style="font-size:12px;font-weight:500">' + row.name + '</div><div style="font-size:10px;color:var(--dim)">' + row.agent + ' · ' + meta.name + '</div></div>';
 	          html += '<span style="font-size:10px;padding:2px 6px;background:var(--accent-bg);color:' + statusColor + ';border-radius:4px">' + statusText + '</span>';
 	          html += '</div>';
 	        });
@@ -7886,9 +8140,11 @@ FocusPilot/
 
 	      function applyStudioWorkspaceContext(ws) {
 	        if (!ws) return;
+	        ensureWorkspaceRegistryFromItems();
 	        currentStudioWorkspace = ws;
+	        var meta = getWorkspaceMeta(ws);
 	        var projectTitle = document.getElementById('studioProjectTitle');
-	        if (projectTitle) projectTitle.innerHTML = '📂 ' + ws;
+	        if (projectTitle) projectTitle.innerHTML = meta.icon + ' ' + meta.name;
 	        renderStudioTasksPanelFromItems(ws);
 	        renderProjectInspectorTasks(ws);
 	        renderProjectInspectorEnv(ws);
@@ -7896,6 +8152,7 @@ FocusPilot/
 	        renderProjectInspectorGit(ws);
 	        renderStudioEnvPanel(ws);
 	        renderProjectSessions(ws);
+	        renderStudioWorkspaceList();
 	      }
 
       /* ── Studio: Project Inspector Panel (grid-based right panel for project context view) ── */
@@ -7931,8 +8188,11 @@ FocusPilot/
       function renderProjectInspectorTasks(projectId) {
         var container = document.getElementById('projectInspectorTasks');
         if (!container) return;
-        var filtered = workItems.filter(function(item) { return item.projectId === projectId; });
-        var html = '<div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--dim);margin-bottom:8px">📂 ' + projectId + ' (' + filtered.length + ')</div>';
+        var filtered = getItemsForWorkspace(projectId);
+        var meta = getWorkspaceMeta(projectId);
+        var info = workspaceTypeInfo(meta.type);
+        var html = '<div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--dim);margin-bottom:8px">' + info.icon + ' ' + meta.name + ' (' + filtered.length + ')</div>';
+        html += '<div style="font-size:10px;color:var(--dim);margin-bottom:8px">' + info.label + ' · <span style="font-family:var(--mono)">' + meta.path + '</span></div>';
         html += '<div style="display:flex;flex-direction:column;gap:4px">';
         filtered.forEach(function(item) {
           var statusIcon = item.status === 'done' ? '<span style="color:var(--green);font-size:9px">✓</span>' :
@@ -7955,13 +8215,25 @@ FocusPilot/
       /* ── Dynamic environment tab ── */
       var projectEnvData = {
         'FocusPilot': { wsType: '📁 本地项目', path: '~/Workspace/FocusPilot', branch: 'main', commit: '5374e4f · 2h前', changes: '3 个文件', automations: '2 规则 · 1 运行中' },
-        'PilotOne': { wsType: '📁 本地项目', path: '~/Workspace/PilotOne', branch: 'develop', commit: 'b19e02f · 1d前', changes: '0 个文件', automations: '1 规则 · 空闲' }
+        'PilotOne': { wsType: '📁 本地项目', path: '~/Workspace/PilotOne', branch: 'develop', commit: 'b19e02f · 1d前', changes: '0 个文件', automations: '1 规则 · 空闲' },
+        'git-focuspilot-ai': { wsType: '🔗 Git 远程项目', path: '~/FocusPilotWorkspaces/git-focuspilot-ai', branch: 'feature/planning-engine', commit: 'remote clone · 32m前', changes: '1 个文件', automations: 'PR 流程待创建' }
       };
+      function getWorkspaceEnv(projectId) {
+        var meta = getWorkspaceMeta(projectId);
+        var info = workspaceTypeInfo(meta.type);
+        return projectEnvData[projectId] || {
+          wsType: info.icon + ' ' + info.label,
+          path: meta.path,
+          branch: meta.branch || '—',
+          commit: meta.type === 'temporary' ? '临时 Workspace · 未提交' : '—',
+          changes: getItemsForWorkspace(projectId).length + ' 个任务',
+          automations: meta.type === 'temporary' ? '无自动化' : '空闲'
+        };
+      }
 	      function renderProjectInspectorEnv(projectId) {
 	        var container = document.getElementById('projectInspectorEnv');
 	        if (!container) return;
-        var env = projectEnvData[projectId];
-        if (!env) { container.innerHTML = '<div style="font-size:11px;color:var(--dim);padding:12px 0;text-align:center">暂无环境信息</div>'; return; }
+        var env = getWorkspaceEnv(projectId);
         var html = '<div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--dim);margin-bottom:8px">项目环境</div>';
         html += '<div style="display:flex;flex-direction:column;gap:6px;font-size:11px">';
         html += '<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--line-soft)"><span style="color:var(--dim)">Workspace</span><span>' + env.wsType + '</span></div>';
@@ -7980,11 +8252,7 @@ FocusPilot/
 	      function renderStudioEnvPanel(projectId) {
 	        var container = document.getElementById('studioEnvPanel');
 	        if (!container) return;
-	        var env = projectEnvData[projectId];
-	        if (!env) {
-	          container.innerHTML = '<div style="font-size:11px;color:var(--dim);padding:16px 0;text-align:center">暂无环境信息</div>';
-	          return;
-	        }
+	        var env = getWorkspaceEnv(projectId);
 	        var sessionLabel = currentStudioSessionId ? ('Session ' + currentStudioSessionId) : '未进入 Session';
 	        var html = '<div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--dim);margin-bottom:8px">当前工作区</div>';
 	        html += '<div style="display:flex;flex-direction:column;gap:6px;font-size:11px">';
@@ -8051,8 +8319,13 @@ FocusPilot/
       function renderProjectInspectorGit(projectId) {
         var container = document.getElementById('projectInspectorGit');
         if (!container) return;
-        var data = projectGitData[projectId];
-        if (!data) { container.innerHTML = '<div style="font-size:11px;color:var(--dim);padding:16px 0;text-align:center">暂无 Git 信息</div>'; return; }
+        var meta = getWorkspaceMeta(projectId);
+        var data = projectGitData[projectId] || {
+          branch: meta.type === 'temporary' ? '—' : (meta.branch || 'main'),
+          remote: meta.remote || (meta.type === 'temporary' ? '本地临时目录' : '—'),
+          changedFiles: [],
+          changesSummary: meta.type === 'temporary' ? '无 Git 工作流' : '0 个'
+        };
         var html = '<div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--dim);margin-bottom:8px">Git 状态</div>';
         html += '<div style="display:flex;flex-direction:column;gap:4px;font-size:11px;margin-bottom:12px">';
         html += '<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--line-soft)"><span style="color:var(--dim)">分支</span><span style="font-family:var(--mono);font-size:10px">' + data.branch + '</span></div>';
@@ -8147,7 +8420,7 @@ FocusPilot/
 	      var currentStudioSessionId = '';
       var studioSessions = {
         s1: {
-          name: '重构 auth', agent: '✳ Claude Code', agentIcon: '✳', agentName: 'Claude Code', model: 'claude-opus-4', preset: '代码工程师 preset',
+          name: '重构 auth', workspaceId: 'FocusPilot', status: 'active', agent: '✳ Claude Code', agentIcon: '✳', agentName: 'Claude Code', model: 'claude-opus-4', preset: '代码工程师 preset',
           messages: [
             { role: 'user', text: '帮我把 animateRow 的动画改成 0.2s ease-out' },
             { role: 'agent', text: '好的，我来修改 KanbanDataSource 中的动画参数。', diff: 'KanbanDataSource.swift' },
@@ -8170,7 +8443,7 @@ FocusPilot/
           terminalTabs: ['Terminal 1', 'Terminal 2']
         },
         s2: {
-          name: '代码审查', agent: '✳ Claude Code', agentIcon: '✳', agentName: 'Claude Code', model: 'claude-opus-4', preset: '代码审查 preset',
+          name: '代码审查', workspaceId: 'FocusPilot', status: 'done', agent: '✳ Claude Code', agentIcon: '✳', agentName: 'Claude Code', model: 'claude-opus-4', preset: '代码审查 preset',
           messages: [
             { role: 'user', text: '审查 PR #42 的安全性' },
             { role: 'agent', text: '我已经完成了 PR #42 的审查，发现 2 个问题：\n1. SQL 查询未使用参数化绑定\n2. 用户输入未做 XSS 过滤', diff: 'AuthService.swift' }
@@ -8188,7 +8461,7 @@ FocusPilot/
           terminalTabs: ['Terminal 1']
         },
         s3: {
-          name: 'Bug fix #12', agent: '⚡ Codex CLI', agentIcon: '⚡', agentName: 'Codex CLI', model: 'codex', preset: '',
+          name: 'Bug fix #12', workspaceId: 'FocusPilot', status: 'active', agent: '⚡ Codex CLI', agentIcon: '⚡', agentName: 'Codex CLI', model: 'codex', preset: '',
           messages: [
             { role: 'user', text: '修复 issue #12：登录页面在暗色模式下文字不可见' },
             { role: 'agent', text: '已找到问题：LoginView.swift 中 textColor 使用了固定的 .black，暗色模式下不可见。已修改为 .labelColor。', diff: 'LoginView.swift' }
@@ -8306,14 +8579,16 @@ FocusPilot/
         } else {
           el.classList.add('active');
         }
-	        var workspace = el.dataset.workspace || '';
+	        var sessionData = sid ? studioSessions[sid] : null;
+	        var workspace = (sessionData && sessionData.workspaceId) || el.dataset.workspace || '';
 	        var runtime = el.dataset.runtime || '';
 	        var sessionName = el.dataset.session || '';
 	        applyStudioWorkspaceContext(workspace);
+	        var meta = getWorkspaceMeta(workspace);
 	        var title = document.getElementById('studioTopbarTitle');
         var emptyTop = document.getElementById('studioEmptyTopbar');
         if (title) {
-          title.innerHTML = '📂 ' + workspace +
+          title.innerHTML = meta.icon + ' ' + meta.name +
             ' <span style="color:var(--dim);font-weight:400">·</span> ' +
             '<span style="font-weight:500">' + sessionName + '</span> ' +
             '<span style="color:var(--dim);font-weight:400">·</span> ' +
@@ -8338,6 +8613,7 @@ FocusPilot/
 	        // Switch to session view (chat/diff/terminal)
 	        switchToProjectWorkspace();
 	        showProjectTab('session');
+	        renderStudioWorkspaceList();
 	      }
 	      function selectStudioSessionById(sid) {
 	        var row = document.querySelector('.studio-session[data-session-id="' + sid + '"]');
@@ -8363,22 +8639,11 @@ FocusPilot/
       function addWorkspaceFromModal() {
         var path = document.getElementById('wsPathDisplay').textContent;
         var name = path.split('/').pop();
-        var list = document.getElementById('studioSideProject');
-        var anchor = list.querySelector('[onclick*="openNewWorkspaceModal"]');
-        if (anchor && name) {
-          var wsRow = document.createElement('div');
-          wsRow.className = 'side-item ws-row';
-          wsRow.dataset.workspace = name;
-          wsRow.style.cssText = 'font-weight:500;cursor:pointer';
-          wsRow.onclick = function() { setCurrentWorkspace(this.dataset.workspace); };
-          wsRow.innerHTML = '<span>📂 ' + name + '</span><span class="count" style="cursor:pointer;display:flex;gap:8px"><span onclick="event.stopPropagation();openWorkspaceMenu(event,this.closest(\'.ws-row\').dataset.workspace)" title="项目菜单">···</span><span onclick="event.stopPropagation();openNewSessionModal(this.closest(\'.ws-row\').dataset.workspace)" title="新建对话">+</span></span>';
-          var emptyRow = document.createElement('div');
-          emptyRow.className = 'side-item indent';
-          emptyRow.style.cssText = 'font-size:11px;color:var(--dim)';
-          emptyRow.textContent = '暂无对话';
-          anchor.parentNode.insertBefore(wsRow, anchor);
-          anchor.parentNode.insertBefore(emptyRow, anchor);
+        if (name) {
+          registerWorkspace(name, 'local_project', { name: name, path: path, branch: 'main', remote: '本地项目目录' });
           currentStudioWorkspace = name;
+          renderStudioWorkspaceList();
+          applyStudioWorkspaceContext(name);
         }
         closeNewWorkspaceModal();
         document.getElementById('wsPathDisplay').textContent = '点击右侧选择文件夹...';
@@ -8404,9 +8669,10 @@ FocusPilot/
       function openWorkspaceMenu(event, workspace) {
         event.stopPropagation();
         currentStudioWorkspace = workspace;
+        var meta = getWorkspaceMeta(workspace);
         var menu = document.getElementById('studioWorkspaceMenu');
         menu.dataset.workspace = workspace;
-        menu.querySelector('.wm-title').textContent = '📂 ' + workspace;
+        menu.querySelector('.wm-title').textContent = meta.icon + ' ' + meta.name;
         var isPinned = !!document.querySelector('.ws-row[data-workspace="' + workspace + '"][data-pinned]');
         var pinBtn = document.getElementById('wmPinToggle');
         pinBtn.textContent = isPinned ? '📌 取消置顶' : '📌 置顶项目';
@@ -8510,37 +8776,16 @@ FocusPilot/
         var sid = 's' + (sessionCounter + 10);
         sessionCounter++;
         studioSessions[sid] = {
-          name: sessionName, agent: runtime, agentIcon: runtime.charAt(0), agentName: runtimeLabel.replace(/^[✳⚡◆]\s*/, ''), model: '', preset: '',
+          name: sessionName, workspaceId: ws, status: 'active', agent: runtime, agentIcon: runtime.charAt(0), agentName: runtimeLabel.replace(/^[✳⚡◆]\s*/, ''), model: '', preset: '',
           messages: [],
           diffFiles: [],
           diffContent: [],
           terminalLines: '$ ',
           terminalTabs: ['Terminal 1']
         };
-        var wsItems = document.querySelectorAll('#studioSideProject .side-item');
-        var targetWs = null;
-        wsItems.forEach(function(item) {
-          var span = item.querySelector('span');
-          if (span && span.textContent.indexOf('📂 ' + ws) === 0) targetWs = item;
-        });
-        if (targetWs) {
-          var emptyHint = targetWs.nextElementSibling;
-          if (emptyHint && emptyHint.textContent.trim() === '暂无对话') emptyHint.remove();
-          var newRow = document.createElement('div');
-          newRow.className = 'side-item indent studio-session';
-          newRow.dataset.workspace = ws;
-          newRow.dataset.session = sessionName;
-          newRow.dataset.sessionId = sid;
-          newRow.dataset.runtime = runtime;
-          newRow.style.cssText = 'font-size:11px;cursor:pointer';
-          newRow.onclick = function() { selectStudioSession(this); };
-          newRow.oncontextmenu = function(e) { openSessionMenu(e, this); return false; };
-          newRow.innerHTML = '<span>' + runtime.charAt(0) + ' ' + sessionName + '</span><span class="count"><span style="color:var(--accent)">● 0m</span></span>';
-          var next = targetWs.nextElementSibling;
-          while (next && next.classList.contains('indent') && next.classList.contains('studio-session')) { next = next.nextElementSibling; }
-          targetWs.parentNode.insertBefore(newRow, next);
-          selectStudioSession(newRow);
-        }
+        renderStudioWorkspaceList();
+        var newRow = document.querySelector('.studio-session[data-session-id="' + sid + '"]');
+        if (newRow) selectStudioSession(newRow);
         closeNewSessionModal();
       }
 
@@ -9706,15 +9951,23 @@ FocusPilot/
         // Read description
         var descInput = modal.querySelector('textarea[placeholder="描述任务内容..."]');
         var description = descInput ? descInput.value.trim() : '';
-        // Project-scoped creation uses the selected project's workspace.
+        // Project-scoped creation uses the selected Workspace and keeps it read-only.
         var isProjectScopedCreate = _newTaskContext && (_newTaskContext.source === 'project' || _newTaskContext.source === 'session') && _newTaskContext.projectId;
         var wsRadio = modal.querySelector('input[name="fp-ws"]:checked');
-        var wsType = isProjectScopedCreate ? 'local' : (wsRadio ? wsRadio.value : 'temp');
+        var contextMeta = isProjectScopedCreate ? getWorkspaceMeta(_newTaskContext.projectId) : null;
+        var wsType = isProjectScopedCreate ? workspaceRadioForType(contextMeta.type) : (wsRadio ? wsRadio.value : 'temp');
         var wsTypeMap = { temp: 'temporary', local: 'local_project', git: 'git_project' };
         var workspaceType = wsTypeMap[wsType] || 'temporary';
         // Read project: context projectId as default, user selection can override
         var projectId = (_newTaskContext && _newTaskContext.projectId) ? _newTaskContext.projectId : '';
-        if (wsType === 'local') {
+        if (isProjectScopedCreate) {
+          projectId = _newTaskContext.projectId;
+        } else if (wsType === 'temp') {
+          projectId = createTempWorkspaceId();
+        } else if (wsType === 'git') {
+          var gitUrl = document.getElementById('ws-git-url');
+          projectId = createGitWorkspaceId(gitUrl ? gitUrl.value : '');
+        } else if (wsType === 'local') {
           var projSel = document.getElementById('ws-local-project');
           if (projSel && projSel.selectedIndex > 0) {
             projectId = projSel.options[projSel.selectedIndex].text;
@@ -9723,10 +9976,12 @@ FocusPilot/
             if (!(_newTaskContext && _newTaskContext.projectId)) projectId = '';
           }
         }
+        if (projectId) registerWorkspace(projectId, workspaceType);
         // Read schedule (by ID)
         var scheduleMap = {'今天':'today','本周':'week','本月':'month','Backlog':'backlog'};
         var scheduleEl = document.getElementById('fp-task-schedule');
         var schedule = scheduleEl ? (scheduleMap[scheduleEl.options[scheduleEl.selectedIndex].text] || 'backlog') : 'backlog';
+        var explicitStatus = _newTaskContext && _newTaskContext.source === 'kanban-lane' && _newTaskContext.status ? _newTaskContext.status : '';
         // Read priority (by ID)
         var priorityMap = {'P0 — 紧急':'p0','P1 — 重要':'p1','P2 — 普通':'p2'};
         var priorityEl = document.getElementById('fp-task-priority');
@@ -9750,9 +10005,9 @@ FocusPilot/
           id: newId,
           title: title,
           description: description,
-          status: opts.start ? (executionMode === 'auto' ? 'in_progress' : 'todo') : 'todo',
+          status: opts.start ? (executionMode === 'auto' ? 'in_progress' : (explicitStatus || 'todo')) : (explicitStatus || 'todo'),
           priority: priority,
-          projectId: projectId || (wsType === 'temp' ? '' : ''),
+          projectId: projectId,
           workspaceType: workspaceType,
           executionMode: executionMode,
           schedule: schedule,
@@ -9771,10 +10026,15 @@ FocusPilot/
         renderKanbanFromItems();
         // Refresh focus list
         if (typeof renderFocusListFromItems === 'function') renderFocusListFromItems();
+        renderStudioWorkspaceList();
         // Refresh project task lists if applicable
         if (projectId) {
           renderStudioTasksPanelFromItems(projectId);
           renderProjectInspectorTasks(projectId);
+          if (currentStudioWorkspace === projectId) {
+            renderProjectInspectorEnv(projectId);
+            renderStudioEnvPanel(projectId);
+          }
         }
         // Close modal
         closeNewTaskModal();
@@ -9867,8 +10127,10 @@ FocusPilot/
       }
 
       /* ═══ Initialize: Render kanban from workItems data ═══ */
+	      ensureWorkspaceRegistryFromItems();
 	      renderKanbanFromItems();
 	      renderFocusListFromItems();
+	      renderStudioWorkspaceList();
 	      applyStudioWorkspaceContext('FocusPilot');
     </script>
 
@@ -9882,6 +10144,11 @@ FocusPilot/
       <div style="border-top:1px solid var(--line-soft);margin:2px 0"></div>
       <div onclick="workspaceMenuAction('archive')" style="padding:6px 12px;cursor:pointer;color:var(--text)" onmouseover="this.style.background='var(--elevated)'" onmouseout="this.style.background=''">📦 归档所有对话</div>
       <div onclick="workspaceMenuAction('remove')" style="padding:6px 12px;cursor:pointer;color:var(--red)" onmouseover="this.style.background='var(--elevated)'" onmouseout="this.style.background=''">🗑 移除项目</div>
+    </div>
+    <div id="kanbanLaneMenu" style="display:none;position:fixed;z-index:70;background:var(--surface);border:1px solid var(--line);border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,.4);min-width:190px;padding:4px 0;font-size:11px">
+      <div style="padding:6px 12px;font-size:10px;color:var(--dim);font-weight:600;border-bottom:1px solid var(--line-soft);margin-bottom:2px">泳道排序</div>
+      <div data-kanban-sort="workspace" onclick="setKanbanSortMode('workspace')" style="padding:6px 12px;cursor:pointer;color:var(--text)" onmouseover="this.style.background='var(--elevated)'" onmouseout="this.style.background=''">按 Workspace 分组排序</div>
+      <div data-kanban-sort="default" onclick="setKanbanSortMode('default')" style="padding:6px 12px;cursor:pointer;color:var(--text)" onmouseover="this.style.background='var(--elevated)'" onmouseout="this.style.background=''">默认排序</div>
     </div>
 
     <!-- ═══ Studio: Session 右键菜单 popover ═══ -->

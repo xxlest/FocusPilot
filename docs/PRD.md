@@ -232,12 +232,13 @@ Task 的 frontmatter 通过 `status` + `scheduled_date` / `due_date` 形成**双
 | `month` | 本月目标 | 📆 本月目标 |
 | `backlog` | 待排期 | 📥 Backlog |
 
-**Task 创建规则**：每个 Task 必须有归属项目。两个创建入口：
+**Task 创建规则**：每个 Task 必须有 Workspace。Project 是资产归属，可与 Workspace 独立；临时任务和 Git 远程任务可以只归属对应 Workspace，不强制挂到本地 Project。
 
 | 入口 | 交互 | 归属项目 |
 |------|------|---------|
-| Dashboard「+ 新建任务」 | 输入内容 → 选择归属项目 → 选择时间维度 | 必选 |
-| 项目树内右键创建 | 在某个项目/Epic/Phase 下创建 | 自动继承 |
+| Dashboard / Studio 看板「+ 新建任务」 | 输入内容 → 选择 Workspace（临时 / 本地项目 / Git 远程）→ 选择时间维度 | Workspace 必选，Project 可选 |
+| Studio 项目视图 / Session 右面板创建 | 当前 Workspace 已确定，创建弹窗灰色只读展示当前 Workspace | 自动继承当前 Workspace |
+| 项目树内右键创建 | 在某个项目/Epic/Phase 下创建 | 自动继承本地 Project Workspace |
 
 #### Focus 页面三视图
 

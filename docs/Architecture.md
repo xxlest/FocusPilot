@@ -894,7 +894,7 @@ struct WorkItem: Identifiable, Codable {
     var workspaceRef: WorkspaceRef
 
     // 归属（独立于 Workspace）
-    var projectID: String?                  // 资产归属
+    var projectID: String?                  // 资产归属；临时/Git Workspace 可为空或独立于本地 Project
     var goalID: String?                     // 规划归属
 
     // 执行状态
@@ -919,15 +919,23 @@ enum ExecutionMode: String, Codable {
 
 ```swift
 struct WorkspaceRef: Codable {
-    var type: WorkspaceType                 // temporary | local_project（V2: remote_git）
+    var id: String                          // Workspace 项目 ID；项目视图和看板共享同一任务池的过滤键
+    var type: WorkspaceType                 // temporary | local_project | git_project
     var path: String                        // 稳定路径，创建时分配
     var materialized: Bool                  // 延迟物化：首次使用时创建真实目录
 }
 
 enum WorkspaceType: String, Codable {
-    case temporary, local_project
+    case temporary, local_project, git_project
 }
 ```
+
+**Workspace 项目规则**：
+- 看板视图和项目视图共享同一批 WorkItem，均通过 `workspaceRef.id` 过滤和同步状态
+- 临时 Workspace：系统生成 ID，并在默认 Workspace 根目录下物化
+- 本地项目 Workspace：`workspaceRef.id` 与本地 Project/目录一致
+- Git 远程 Workspace：远程 repo clone 到默认 Workspace 根目录下，并以生成的 Git Workspace ID 执行
+- 在项目视图或 Session 右面板中新建任务时，Workspace 已由当前上下文确定；创建弹窗只读显示当前 Workspace，不允许改选
 
 ### ExecutionRun
 
@@ -987,7 +995,7 @@ enum LeaseStatus: String, Codable {
 struct StudioSession: Identifiable, Codable {
     let id: String
     var title: String
-    var projectID: String
+    var workspaceID: String                 // 所属 Workspace；Session 不拥有任务，只提供执行/对话上下文
     var workdir: String
     var crewMemberID: String?
     var runtime: RuntimeType                // claude_code | codex_cli | gemini_cli
