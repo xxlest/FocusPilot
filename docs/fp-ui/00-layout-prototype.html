@@ -2243,7 +2243,7 @@
             <!-- 📂 项目 Workspace -->
             <div style="padding:4px 8px 2px;font-size:10px;font-weight:600;color:var(--dim);text-transform:uppercase;letter-spacing:.04em;display:flex;align-items:center;justify-content:space-between">
               <span>Workspace 项目</span>
-              <button class="btn" onclick="collapseAllStudioSessionHistory()" style="font-size:10px;min-height:20px;padding:0 6px;color:var(--muted);background:transparent;border-color:var(--line-soft)">全部折叠</button>
+              <button class="btn" id="studioWorkspaceFoldToggle" onclick="toggleAllStudioWorkspacesFold()" style="font-size:10px;min-height:20px;padding:0 6px;color:var(--muted);background:transparent;border-color:var(--line-soft)">全部折叠</button>
             </div>
             <div id="studioWorkspaceList">
               <div class="side-item indent" style="font-size:11px;color:var(--dim)">Workspace 会按筛选条件动态渲染</div>
@@ -8145,12 +8145,37 @@ FocusPilot/
         renderStudioWorkspaceList();
       }
 
+      function areAllStudioWorkspacesFolded() {
+        ensureWorkspaceRegistryFromItems();
+        var ids = Object.keys(workspaceRegistry);
+        return ids.length > 0 && ids.every(function(workspaceId) {
+          return !!studioWorkspaceFolded[workspaceId];
+        });
+      }
+
+      function updateStudioWorkspaceFoldToggleButton() {
+        var btn = document.getElementById('studioWorkspaceFoldToggle');
+        if (!btn) return;
+        var allFolded = areAllStudioWorkspacesFolded();
+        btn.textContent = allFolded ? '全部展开' : '全部折叠';
+        btn.title = allFolded ? '展开所有项目对话历史' : '折叠所有项目对话历史';
+      }
+
+      function toggleAllStudioWorkspacesFold() {
+        ensureWorkspaceRegistryFromItems();
+        var shouldExpand = areAllStudioWorkspacesFolded();
+        Object.keys(workspaceRegistry).forEach(function(workspaceId) {
+          studioWorkspaceFolded[workspaceId] = !shouldExpand;
+          studioSessionHistoryExpanded[workspaceId] = shouldExpand;
+        });
+        renderStudioWorkspaceList();
+        renderProjectSessions(currentStudioWorkspace);
+      }
+
       function collapseAllStudioSessionHistory() {
         ensureWorkspaceRegistryFromItems();
         Object.keys(workspaceRegistry).forEach(function(workspaceId) {
           studioWorkspaceFolded[workspaceId] = true;
-        });
-        Object.keys(studioSessionHistoryExpanded).forEach(function(workspaceId) {
           studioSessionHistoryExpanded[workspaceId] = false;
         });
         renderStudioWorkspaceList();
@@ -8169,6 +8194,7 @@ FocusPilot/
         ensureWorkspaceRegistryFromItems();
         var container = document.getElementById('studioWorkspaceList');
         if (!container) return;
+        updateStudioWorkspaceFoldToggleButton();
         var ids = Object.keys(workspaceRegistry).filter(function(id) {
           return studioWorkspaceFilter === 'all' || workspaceRegistry[id].type === studioWorkspaceFilter;
         }).sort(function(a, b) {
