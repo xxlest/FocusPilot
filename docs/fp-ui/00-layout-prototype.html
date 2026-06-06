@@ -2151,10 +2151,10 @@
           </div>
           <!-- ── Studio 侧边栏 Tab 切换 ── -->
           <div style="display:flex;gap:0;border-bottom:1px solid var(--line);margin-bottom:0" id="studioSideTabBar">
-            <button class="btn studio-side-tab active" data-studio-side="kanban" onclick="switchStudioSideTab('kanban')" style="flex:1;border-radius:0;border-bottom:2px solid var(--accent);font-size:12px;font-weight:600;padding:7px 0;background:transparent;color:var(--text)">📋 看板视图</button>
+            <button class="btn studio-side-tab active" data-studio-side="kanban" onclick="switchStudioSideTab('kanban')" style="flex:1;border-radius:0;border-bottom:2px solid var(--accent);font-size:12px;font-weight:600;padding:7px 0;background:transparent;color:var(--text)">📋 任务视图</button>
             <button class="btn studio-side-tab" data-studio-side="project" onclick="switchStudioSideTab('project')" style="flex:1;border-radius:0;border-bottom:2px solid transparent;font-size:12px;font-weight:500;padding:7px 0;background:transparent;color:var(--muted)">📂 项目视图</button>
           </div>
-          <!-- ═══ 看板视图 Tab 内容 ═══ -->
+          <!-- ═══ 任务视图 Tab 内容 ═══ -->
           <div class="side-scroll studio-side-content" id="studioSideKanban" style="display:block">
             <!-- ── 全局视图 ── -->
             <div style="padding:4px 8px 2px;font-size:10px;font-weight:600;color:var(--dim);text-transform:uppercase;letter-spacing:.04em">范围筛选</div>
@@ -2684,11 +2684,15 @@
             <h1>Studio</h1>
             <span class="meta">规划 -> 执行 -> 评估 -> 验收</span>
             <div class="top-actions">
-              <div class="seg" data-scope="focusView">
-                <button class="active" data-target="focus-plan">规划</button
-                ><button data-target="focus-board">看板</button
-                ><button data-target="focus-list">列表</button>
-              </div>
+              <button class="btn active" id="studioGanttModeBtn" onclick="selectStudioGlobalMode('gantt')" style="font-size:11px;min-height:28px;padding:0 9px">甘特规划</button>
+              <label style="display:inline-flex;align-items:center;gap:6px;height:28px;border:1px solid var(--line-soft);border-radius:var(--radius);background:var(--surface);padding:0 8px;font-size:11px;color:var(--dim)">
+                <span>展示方式</span>
+                <select id="studioDisplayMode" onchange="selectStudioDisplayMode(this.value)" style="height:22px;border:0;background:transparent;color:var(--text);outline:0;font-size:11px;padding:0">
+                  <option value="board" data-display-mode="board">看板</option>
+                  <option value="list" data-display-mode="list">列表</option>
+                  <option value="swimlane" data-display-mode="swimlane">泳道</option>
+                </select>
+              </label>
               <button class="btn" id="fp-filter-time" style="font-size:11px;min-height:28px;padding:0 9px">时间: 全部 ▾</button>
               <button class="btn" id="fp-filter-goal" style="font-size:11px;min-height:28px;padding:0 9px">目标: 全部 ▾</button>
               <button class="btn" id="fp-filter-source" style="font-size:11px;min-height:28px;padding:0 9px">来源: 全部 ▾</button>
@@ -6663,6 +6667,13 @@ FocusPilot/
 
       function setKanbanSortMode(mode) {
         kanbanSortMode = mode === 'workspace' ? 'workspace' : 'default';
+        var select = document.getElementById('studioDisplayMode');
+        var boardPanel = document.getElementById('focus-board');
+        if (select && boardPanel && boardPanel.classList.contains('active')) {
+          select.value = kanbanSortMode === 'workspace' ? 'swimlane' : 'board';
+          studioGlobalDisplayMode = select.value;
+          setStudioGanttActive(false);
+        }
         var menu = document.getElementById('kanbanLaneMenu');
         if (menu) menu.style.display = 'none';
         renderKanbanFromItems();
@@ -6778,7 +6789,7 @@ FocusPilot/
 	
 	      normalizePageMounts()
 	
-	      function showPanel(target) {
+      function showPanel(target) {
         const panel = document.getElementById(target)
         if (!panel) return
         const parent = panel.parentElement
@@ -6787,6 +6798,33 @@ FocusPilot/
           .forEach((item) =>
             item.classList.toggle("active", item.id === target),
           )
+      }
+
+      var studioGlobalDisplayMode = 'gantt';
+
+      function setStudioGanttActive(active) {
+        var ganttBtn = document.getElementById('studioGanttModeBtn');
+        if (ganttBtn) ganttBtn.classList.toggle('active', !!active);
+      }
+
+      function selectStudioGlobalMode(mode) {
+        studioGlobalDisplayMode = mode === 'gantt' ? 'gantt' : studioGlobalDisplayMode;
+        setStudioGanttActive(studioGlobalDisplayMode === 'gantt');
+        showPanel('focus-plan');
+      }
+
+      function selectStudioDisplayMode(mode) {
+        studioGlobalDisplayMode = mode || 'board';
+        setStudioGanttActive(false);
+        var select = document.getElementById('studioDisplayMode');
+        if (select && select.value !== studioGlobalDisplayMode) select.value = studioGlobalDisplayMode;
+        if (studioGlobalDisplayMode === 'list') {
+          showPanel('focus-list');
+          return;
+        }
+        kanbanSortMode = studioGlobalDisplayMode === 'swimlane' ? 'workspace' : 'default';
+        renderKanbanFromItems();
+        showPanel('focus-board');
       }
 
       function setHomeChatState(state) {
@@ -6815,12 +6853,9 @@ FocusPilot/
             }
             // If a specific view is requested (e.g., focus-list), switch to it
             if (el.dataset.studioView) {
-              var viewBtn = document.querySelector('.seg[data-scope="focusView"] button[data-target="' + el.dataset.studioView + '"]');
-              if (viewBtn) {
-                viewBtn.closest('.seg').querySelectorAll('button').forEach(function(b) { b.classList.remove('active'); });
-                viewBtn.classList.add('active');
-                showPanel(el.dataset.studioView);
-              }
+              if (el.dataset.studioView === 'focus-plan') selectStudioGlobalMode('gantt');
+              if (el.dataset.studioView === 'focus-board') selectStudioDisplayMode('board');
+              if (el.dataset.studioView === 'focus-list') selectStudioDisplayMode('list');
             }
           }
         })
@@ -7333,18 +7368,13 @@ FocusPilot/
       function openCrewTaskInFocus(taskId) {
         showPage('studio');
         switchToGlobalWorkspace();
-        // Switch sidebar to kanban view
+        // Switch sidebar to task view
         switchStudioSideTab('kanban');
         // reset filter to 'all' so target card is visible
         var allFilter = document.querySelector('[data-focus-filter="all"]');
         if (allFilter) applyFocusFilter(allFilter);
-        // switch to kanban view
-        var boardBtn = document.querySelector('.seg[data-scope="focusView"] button[data-target="focus-board"]');
-        if (boardBtn) {
-          boardBtn.closest('.seg').querySelectorAll('button').forEach(function(b) { b.classList.remove('active'); });
-          boardBtn.classList.add('active');
-          showPanel('focus-board');
-        }
+        // switch to board display mode
+        selectStudioDisplayMode('board');
         // find and highlight the target card
         var card = document.querySelector('.fp-card[data-task-id="' + taskId + '"]');
         if (card) {
@@ -7612,7 +7642,7 @@ FocusPilot/
       /* ── Demo 基准日期（所有视图日期/周号/today line 统一从此派生） ── */
       const DEMO_TODAY = new Date(2026, 4, 27); // 2026-05-27 周三
 
-      /* ── Focus: 侧边栏筛选联动（Scope 自动驱动模式切换 + 看板/列表筛选） ── */
+      /* ── Studio 任务视图：侧边栏 Scope 联动甘特 + 展示方式筛选 ── */
       function applyFocusFilter(el) {
         el.closest('.side-scroll').querySelectorAll('[data-focus-filter]').forEach(i => i.classList.remove('active'));
         el.classList.add('active');
@@ -7958,7 +7988,7 @@ FocusPilot/
         }
       }
 
-      /* ── Studio: Sidebar Tab Switch (看板视图 / 项目视图) ── */
+      /* ── Studio: Sidebar Tab Switch (任务视图 / 项目视图) ── */
       function switchStudioSideTab(tab) {
         // Update tab bar active state
         document.querySelectorAll('#studioSideTabBar .studio-side-tab').forEach(function(btn) {

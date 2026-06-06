@@ -931,7 +931,8 @@ enum WorkspaceType: String, Codable {
 ```
 
 **Workspace 项目规则**：
-- 看板视图和项目视图共享同一批 WorkItem，均通过 `workspaceRef.id` 过滤和同步状态
+- Studio 任务视图和项目视图共享同一批 WorkItem，均通过 `workspaceRef.id` 过滤和同步状态；任务视图内的看板 / 列表 / 泳道只是同一 Scope 的展示方式
+- 跨项目看板卡片底部必须展示 `workspaceRef.id` 对应的 Workspace 名称，避免只显示类型图标导致归属不清
 - 临时 Workspace：系统生成 ID，并在默认 Workspace 根目录下物化
 - 本地项目 Workspace：`workspaceRef.id` 与本地 Project/目录一致
 - Git 远程 Workspace：远程 repo clone 到默认 Workspace 根目录下，并以生成的 Git Workspace ID 执行
