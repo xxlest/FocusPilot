@@ -1107,6 +1107,21 @@
         color: var(--text);
         font-weight: 600;
       }
+      .studio-filter-select {
+        min-height: 28px;
+        padding: 0 24px 0 9px;
+        border: 1px solid var(--line-soft);
+        border-radius: var(--radius);
+        background: var(--surface);
+        color: var(--muted);
+        font-size: 11px;
+        cursor: pointer;
+      }
+      .studio-filter-select.active {
+        background: var(--elevated);
+        color: var(--text);
+        font-weight: 600;
+      }
       #focus-swimlane.active {
         display: block;
       }
@@ -2773,9 +2788,22 @@
                 <option value="list">☰ 列表</option>
                 <option value="swimlane">田 泳道</option>
               </select>
-              <button class="btn" id="fp-filter-time" style="font-size:11px;min-height:28px;padding:0 9px">时间: 全部 ▾</button>
-              <button class="btn" id="fp-filter-goal" style="font-size:11px;min-height:28px;padding:0 9px">目标: 全部 ▾</button>
-              <button class="btn" id="fp-filter-source" style="font-size:11px;min-height:28px;padding:0 9px">来源: 全部 ▾</button>
+              <select class="studio-filter-select" id="fp-filter-time" title="时间筛选" onchange="setStudioToolbarFilter('time', this.value)">
+                <option value="all">时间: 全部</option>
+                <option value="today">时间: 今天</option>
+                <option value="week">时间: 本周</option>
+                <option value="month">时间: 本月</option>
+                <option value="backlog">时间: Backlog</option>
+              </select>
+              <select class="studio-filter-select" id="fp-filter-goal" title="目标筛选" onchange="setStudioToolbarFilter('goal', this.value)">
+                <option value="all">目标: 全部</option>
+              </select>
+              <select class="studio-filter-select" id="fp-filter-source" title="来源筛选" onchange="setStudioToolbarFilter('source', this.value)">
+                <option value="all">来源: 全部</option>
+                <option value="local_project">来源: 本地项目</option>
+                <option value="git_project">来源: Git 远程</option>
+                <option value="temporary">来源: 临时创建</option>
+              </select>
               <button class="btn primary" onclick="openNewTaskModal()">新建 Task</button>
             </div>
           </header>
@@ -6523,6 +6551,7 @@ FocusPilot/
       };
       var studioWorkspaceFilter = 'all';
       var currentFocusFilter = 'all';
+      var studioToolbarFilters = { time: 'all', goal: 'all', source: 'all' };
       var swimlaneDraggedTaskId = '';
       var tempWorkspaceCounter = 3;
 
@@ -6632,6 +6661,84 @@ FocusPilot/
         return true;
       }
 
+      function itemMatchesToolbarTime(item, timeFilter) {
+        timeFilter = timeFilter || 'all';
+        if (timeFilter === 'all') return true;
+        var monthSet = ['month', 'week', 'today'];
+        var weekSet = ['week', 'today'];
+        var curMonth = String(DEMO_TODAY.getMonth() + 1);
+        if (timeFilter === 'month') {
+          return item.month ? item.month === curMonth : monthSet.indexOf(item.schedule) !== -1;
+        }
+        if (timeFilter === 'week') return weekSet.indexOf(item.schedule) !== -1;
+        if (timeFilter === 'today') return item.schedule === 'today';
+        if (timeFilter === 'backlog') return item.schedule === 'backlog' || item.status === 'backlog';
+        return true;
+      }
+
+      function itemMatchesStudioTaskFilters(item) {
+        var filters = studioToolbarFilters || {};
+        if (!itemMatchesFocusFilter(item, currentFocusFilter)) return false;
+        if (!itemMatchesToolbarTime(item, filters.time)) return false;
+        if (filters.goal && filters.goal !== 'all' && (item.goal || '') !== filters.goal) return false;
+        if (filters.source && filters.source !== 'all') {
+          var meta = getWorkspaceMeta(item.projectId || deriveWorkspaceIdForItem(item));
+          if (meta.type !== filters.source && item.workspaceType !== filters.source) return false;
+        }
+        return true;
+      }
+
+      function refreshStudioTaskViews() {
+        renderKanbanFromItems();
+        renderFocusListFromItems();
+        renderSwimlaneFromItems();
+      }
+
+      function setStudioToolbarFilter(kind, value) {
+        studioToolbarFilters[kind] = value || 'all';
+        applyStudioTaskFilters();
+      }
+
+      function applyStudioTaskFilters() {
+        updateStudioToolbarFilterState();
+        refreshStudioTaskViews();
+      }
+
+      function updateStudioToolbarFilterState() {
+        var time = document.getElementById('fp-filter-time');
+        var goal = document.getElementById('fp-filter-goal');
+        var source = document.getElementById('fp-filter-source');
+        if (time) {
+          time.value = studioToolbarFilters.time || 'all';
+          time.classList.toggle('active', time.value !== 'all');
+        }
+        if (goal) {
+          goal.value = studioToolbarFilters.goal || 'all';
+          goal.classList.toggle('active', goal.value !== 'all');
+        }
+        if (source) {
+          source.value = studioToolbarFilters.source || 'all';
+          source.classList.toggle('active', source.value !== 'all');
+        }
+      }
+
+      function populateStudioToolbarFilters() {
+        var goal = document.getElementById('fp-filter-goal');
+        if (!goal) return;
+        var selected = studioToolbarFilters.goal || 'all';
+        var goals = [];
+        workItems.forEach(function(item) {
+          if (item.goal && goals.indexOf(item.goal) === -1) goals.push(item.goal);
+        });
+        goals.sort();
+        goal.innerHTML = '<option value="all">目标: 全部</option>' + goals.map(function(name) {
+          return '<option value="' + name + '">目标: ' + name + '</option>';
+        }).join('');
+        if (goals.indexOf(selected) === -1) selected = 'all';
+        studioToolbarFilters.goal = selected;
+        updateStudioToolbarFilterState();
+      }
+
       function buildTaskCardHtml(item, compact) {
         var priorityColor = item.priority === 'p0' ? 'var(--red)' : (item.priority === 'p1' ? 'var(--amber)' : 'var(--dim)');
         var priorityBorder = item.priority === 'p0' ? 'rgba(248,113,113,.3)' : (item.priority === 'p1' ? 'rgba(242,196,15,.3)' : 'rgba(112,120,135,.3)');
@@ -6673,7 +6780,7 @@ FocusPilot/
         taskStatusDefs.forEach(function(def) {
           statusColumns[def.status] = { label: def.label, color: def.color, items: [] };
         });
-        workItems.forEach(function(item) {
+        workItems.filter(itemMatchesStudioTaskFilters).forEach(function(item) {
           if (statusColumns[item.status]) {
             statusColumns[item.status].items.push(item);
           }
@@ -6737,7 +6844,7 @@ FocusPilot/
         ensureWorkspaceRegistryFromItems();
         var container = document.getElementById('fp-swimlane');
         if (!container) return;
-        var visibleItems = workItems.filter(function(item) { return itemMatchesFocusFilter(item, currentFocusFilter); });
+        var visibleItems = workItems.filter(itemMatchesStudioTaskFilters);
         var workspaceIds = [];
         visibleItems.forEach(function(item) {
           var wsId = item.projectId || deriveWorkspaceIdForItem(item);
@@ -7845,8 +7952,7 @@ FocusPilot/
         document.querySelectorAll('.fp-sub').forEach(p => { p.style.display = 'none'; p.classList.remove('active'); });
         const target = document.getElementById(targetId);
         if (target) { target.style.display = 'grid'; target.classList.add('active'); }
-        const timeLabels = { all: '全部', month: '本月', today: '今天', week: '本周' };
-        document.getElementById('fp-filter-time').textContent = '时间: ' + (timeLabels[filter] || '全部') + ' ▾';
+        updateStudioToolbarFilterState();
         const monthSet = ['month', 'week', 'today'];
         const weekSet = ['week', 'today'];
         var curMonth = (filter === 'month') ? String(DEMO_TODAY.getMonth() + 1) : '';
@@ -7953,7 +8059,7 @@ FocusPilot/
           if (gh) gh.style.display = hasVisible ? '' : 'none';
           table.style.display = hasVisible ? '' : 'none';
         });
-        renderSwimlaneFromItems();
+        refreshStudioTaskViews();
       }
 
       /* ── Focus: Task Detail ── */
@@ -10380,11 +10486,8 @@ FocusPilot/
         }
         // Push to workItems
         workItems.push(newItem);
-        // Refresh kanban
-        renderKanbanFromItems();
-        renderSwimlaneFromItems();
-        // Refresh focus list
-        if (typeof renderFocusListFromItems === 'function') renderFocusListFromItems();
+        populateStudioToolbarFilters();
+        refreshStudioTaskViews();
         renderStudioWorkspaceList();
         // Refresh project task lists if applicable
         if (projectId) {
@@ -10424,7 +10527,7 @@ FocusPilot/
         // Group items by goal/month for display
         var groups = {};
         var ungrouped = [];
-        workItems.forEach(function(item) {
+        workItems.filter(itemMatchesStudioTaskFilters).forEach(function(item) {
           var gKey = item.goal || (item.month ? item.month + '月' : '');
           if (gKey) {
             if (!groups[gKey]) groups[gKey] = [];
@@ -10487,9 +10590,8 @@ FocusPilot/
 
       /* ═══ Initialize: Render kanban from workItems data ═══ */
 	      ensureWorkspaceRegistryFromItems();
-	      renderKanbanFromItems();
-	      renderSwimlaneFromItems();
-	      renderFocusListFromItems();
+	      populateStudioToolbarFilters();
+	      refreshStudioTaskViews();
 	      renderStudioWorkspaceList();
 	      applyStudioWorkspaceContext('FocusPilot');
     </script>
