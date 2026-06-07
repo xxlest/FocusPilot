@@ -1236,6 +1236,60 @@
         gap: 12px;
         min-width: 820px;
       }
+      .kanban.kanban-workspace-grid {
+        grid-template-columns: 190px repeat(6, minmax(178px, 1fr)) !important;
+        gap: 0 !important;
+        min-width: 1260px;
+        border: 1px solid var(--line-soft);
+        border-radius: var(--radius);
+        overflow: auto;
+        background: var(--surface);
+      }
+      .kanban-workspace-head,
+      .kanban-workspace-name,
+      .kanban-workspace-cell {
+        border-right: 1px solid var(--line-soft);
+        border-bottom: 1px solid var(--line-soft);
+      }
+      .kanban-workspace-head {
+        min-height: 36px;
+        padding: 9px 10px;
+        background: var(--elevated);
+        color: var(--dim);
+        font-size: 10px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: .04em;
+      }
+      .kanban-workspace-name {
+        min-height: 104px;
+        padding: 10px;
+        background: var(--surface-2);
+        color: var(--text);
+        font-size: 12px;
+        font-weight: 650;
+      }
+      .kanban-workspace-name .sub {
+        display: block;
+        margin-top: 4px;
+        color: var(--dim);
+        font-size: 10px;
+        font-family: var(--mono);
+        font-weight: 400;
+      }
+      .kanban-workspace-cell {
+        min-height: 104px;
+        padding: 8px;
+        background: var(--bg);
+      }
+      .kanban-workspace-cell .task {
+        margin-bottom: 6px;
+      }
+      .kanban-workspace-empty {
+        color: var(--dim);
+        font-size: 10px;
+        font-family: var(--mono);
+      }
       .lane {
         min-height: 460px;
         border: 1px solid var(--kanban-lane-border);
@@ -2788,6 +2842,7 @@
                 <option value="list">☰ 列表</option>
                 <option value="swimlane">田 泳道</option>
               </select>
+              <button class="btn" id="fp-kanban-workspace-toggle" title="按 Workspace 展示看板" onclick="toggleKanbanWorkspaceRows()" style="font-size:11px;min-height:28px;padding:0 9px;color:var(--muted)"><span style="color:var(--dim);font-family:var(--mono);margin-right:4px">▤</span>Workspace</button>
               <select class="studio-filter-select" id="fp-filter-time" title="时间筛选" onchange="setStudioToolbarFilter('time', this.value)">
                 <option value="all">时间: 全部</option>
                 <option value="today">时间: 今天</option>
@@ -6552,6 +6607,7 @@ FocusPilot/
       var studioWorkspaceFilter = 'all';
       var currentFocusFilter = 'all';
       var studioToolbarFilters = { time: 'all', goal: 'all', source: 'all' };
+      var kanbanWorkspaceRowsEnabled = false;
       var swimlaneDraggedTaskId = '';
       var tempWorkspaceCounter = 3;
 
@@ -6774,19 +6830,129 @@ FocusPilot/
       }
 
       /* ── Render: Kanban Board from workItems ── */
+      function createKanbanCard(item) {
+        var cardMeta = getWorkspaceMeta(item.projectId || deriveWorkspaceIdForItem(item));
+        var card = document.createElement('div');
+        card.className = 'task fp-card';
+        card.dataset.taskId = item.id;
+        card.dataset.fpSchedule = item.schedule || '';
+        card.dataset.fpWorkspace = cardMeta.name;
+        if (item.month) card.dataset.fpMonth = item.month;
+        if (item.executionMode) card.dataset.fpMode = item.executionMode;
+        if (item.agentStatus) card.dataset.fpAgent = 'yes';
+        if (item.decision) card.dataset.fpDecision = 'yes';
+        if (item.status === 'done') card.style.opacity = '.7';
+        if (item.agentStatus) card.style.borderColor = 'var(--accent-line)';
+        if (item.decision) card.style.borderColor = 'rgba(167,139,250,.3)';
+        card.onclick = function() { openTaskDetail(item.id); };
+        card.innerHTML = buildTaskCardHtml(item, false);
+        return card;
+      }
+
+      function setKanbanWorkspaceToggleState() {
+        var toggle = document.getElementById('fp-kanban-workspace-toggle');
+        if (!toggle) return;
+        toggle.classList.toggle('active', kanbanWorkspaceRowsEnabled);
+        toggle.style.background = kanbanWorkspaceRowsEnabled ? 'var(--elevated)' : '';
+        toggle.style.color = kanbanWorkspaceRowsEnabled ? 'var(--text)' : 'var(--muted)';
+      }
+
+      function toggleKanbanWorkspaceRows() {
+        kanbanWorkspaceRowsEnabled = !kanbanWorkspaceRowsEnabled;
+        setKanbanWorkspaceToggleState();
+        renderKanbanFromItems();
+      }
+
+      function renderKanbanWorkspaceRows(visibleItems) {
+        var kanban = document.getElementById('fp-kanban');
+        if (!kanban) return;
+        kanban.classList.add('kanban-workspace-grid');
+        kanban.innerHTML = '';
+        var workspaceIds = [];
+        visibleItems.forEach(function(item) {
+          var wsId = item.projectId || deriveWorkspaceIdForItem(item);
+          if (workspaceIds.indexOf(wsId) === -1) workspaceIds.push(wsId);
+        });
+        workspaceIds.sort(function(a, b) { return getWorkspaceMeta(a).name.localeCompare(getWorkspaceMeta(b).name); });
+
+        var workspaceHead = document.createElement('div');
+        workspaceHead.className = 'kanban-workspace-head';
+        workspaceHead.textContent = 'Workspace';
+        kanban.appendChild(workspaceHead);
+        taskStatusDefs.forEach(function(def) {
+          var head = document.createElement('div');
+          head.className = 'kanban-workspace-head';
+          var count = visibleItems.filter(function(item) { return item.status === def.status; }).length;
+          head.innerHTML = '<span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:' + def.color + ';margin-right:5px"></span>' + def.label + ' <span class="fp-col-count">' + count + '</span>';
+          kanban.appendChild(head);
+        });
+
+        if (workspaceIds.length === 0) {
+          var emptyName = document.createElement('div');
+          emptyName.className = 'kanban-workspace-name';
+          emptyName.innerHTML = '<span class="sub">无匹配任务</span>';
+          kanban.appendChild(emptyName);
+          taskStatusDefs.forEach(function(def) {
+            var emptyCell = document.createElement('div');
+            emptyCell.className = 'kanban-workspace-cell';
+            emptyCell.setAttribute('data-kanban-workspace-row', '');
+            emptyCell.setAttribute('data-kanban-status', def.status);
+            emptyCell.innerHTML = '<span class="kanban-workspace-empty">—</span>';
+            kanban.appendChild(emptyCell);
+          });
+          return;
+        }
+
+        workspaceIds.forEach(function(wsId) {
+          var meta = getWorkspaceMeta(wsId);
+          var info = workspaceTypeInfo(meta.type);
+          var rowItems = visibleItems.filter(function(item) {
+            return (item.projectId || deriveWorkspaceIdForItem(item)) === wsId;
+          });
+          var nameCell = document.createElement('div');
+          nameCell.className = 'kanban-workspace-name';
+          nameCell.setAttribute('data-kanban-workspace-row', wsId);
+          nameCell.innerHTML = info.icon + ' ' + meta.name + '<span class="sub">' + info.label + ' · ' + rowItems.length + ' 项</span>';
+          kanban.appendChild(nameCell);
+
+          taskStatusDefs.forEach(function(def) {
+            var cell = document.createElement('div');
+            cell.className = 'kanban-workspace-cell';
+            cell.setAttribute('data-kanban-workspace-row', wsId);
+            cell.setAttribute('data-kanban-status', def.status);
+            var cellItems = rowItems.filter(function(item) { return item.status === def.status; });
+            if (cellItems.length === 0) {
+              cell.innerHTML = '<span class="kanban-workspace-empty">—</span>';
+            } else {
+              cellItems.forEach(function(item) {
+                cell.appendChild(createKanbanCard(item));
+              });
+            }
+            kanban.appendChild(cell);
+          });
+        });
+      }
+
       function renderKanbanFromItems(filter) {
         ensureWorkspaceRegistryFromItems();
+        setKanbanWorkspaceToggleState();
+        var visibleItems = workItems.filter(itemMatchesStudioTaskFilters);
+        if (kanbanWorkspaceRowsEnabled) {
+          renderKanbanWorkspaceRows(visibleItems);
+          return;
+        }
         var statusColumns = {};
         taskStatusDefs.forEach(function(def) {
           statusColumns[def.status] = { label: def.label, color: def.color, items: [] };
         });
-        workItems.filter(itemMatchesStudioTaskFilters).forEach(function(item) {
+        visibleItems.forEach(function(item) {
           if (statusColumns[item.status]) {
             statusColumns[item.status].items.push(item);
           }
         });
         var kanban = document.getElementById('fp-kanban');
         if (!kanban) return;
+        kanban.classList.remove('kanban-workspace-grid');
         kanban.innerHTML = '';
         taskStatusDefs.forEach(function(def) {
           var status = def.status;
@@ -6808,26 +6974,11 @@ FocusPilot/
           h3.appendChild(addLaneBtn);
           lane.appendChild(h3);
           var renderItems = col.items.slice();
-          renderItems.forEach(renderKanbanCard);
-          function renderKanbanCard(item) {
-            var cardMeta = getWorkspaceMeta(item.projectId || deriveWorkspaceIdForItem(item));
-            var card = document.createElement('div');
-            card.className = 'task fp-card';
-            card.dataset.taskId = item.id;
-            card.dataset.fpSchedule = item.schedule || '';
-            card.dataset.fpWorkspace = cardMeta.name;
-            if (item.month) card.dataset.fpMonth = item.month;
-            if (item.executionMode) card.dataset.fpMode = item.executionMode;
-            if (item.agentStatus) card.dataset.fpAgent = 'yes';
-            if (item.decision) card.dataset.fpDecision = 'yes';
-            if (item.status === 'done') card.style.opacity = '.7';
-            if (item.agentStatus) card.style.borderColor = 'var(--accent-line)';
-            if (item.decision) card.style.borderColor = 'rgba(167,139,250,.3)';
-            card.onclick = function() { openTaskDetail(item.id); };
-            card.innerHTML = buildTaskCardHtml(item, false);
+          renderItems.forEach(function(item) {
+            var card = createKanbanCard(item);
             if (status === 'blocked') card.style.display = 'none';
             lane.appendChild(card);
-          }
+          });
           // Add "新建任务" button (except for blocked/done)
           if (status !== 'blocked' && status !== 'done' && status !== 'in_evaluation') {
             var addBtn = document.createElement('div');
