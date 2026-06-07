@@ -129,7 +129,7 @@
 |--------|------|------|---------|---------|------|
 | 🏠 | **Home** | 全局概览入口：摘要数字条 + 重点列表 + 对话视图 | **可开发** | [01-home.md](fp-ui/01-home.md) | [00-layout-prototype.html](fp-ui/00-layout-prototype.html) |
 | 📂 | **Projects** | 记忆与输入管理层：Inbox 收集（Tab）+ 项目资产沉淀（Tab） | **可开发** | [05-area-projects.md](fp-ui/05-area-projects.md) | [00-layout-prototype.html](fp-ui/00-layout-prototype.html) |
-| 💻 | **Studio** | 跨项目 AI 工作台：任务视图（甘特规划 + 看板/列表/泳道展示，泳道支持 Workspace/执行 Agent 分组）+ 项目视图（工作项/对话/Diff/终端）+ Workspace + ExecutionRun | **可开发** | [04-studio.md](fp-ui/04-studio.md) | [00-layout-prototype.html](fp-ui/00-layout-prototype.html) |
+| 💻 | **Studio** | 跨项目 AI 工作台：任务视图（默认看板 + 泳道/列表/时间轴视图，泳道支持 Workspace/执行 Agent 分组）+ 项目视图（工作项/对话/Diff/终端）+ Workspace + ExecutionRun | **可开发** | [04-studio.md](fp-ui/04-studio.md) | [00-layout-prototype.html](fp-ui/00-layout-prototype.html) |
 | 🧠 | **Review** | 复习与内化中心：今日复习 / 内化挑战 / 卡片库 / 统计 | **可开发** | [06-review.md](fp-ui/06-review.md) | [00-layout-prototype.html](fp-ui/00-layout-prototype.html)、[06-review-today-prototype.html](fp-ui/06-review-today-prototype.html)、[06-review-challenge-prototype.html](fp-ui/06-review-challenge-prototype.html) |
 | 🤖 | AICrew | Agent 团队管理（成员 / Runtime 侧栏分段 + 成员动态 / 配置 / 执行记录） | **可开发** | [07-ai-crew.md](fp-ui/07-ai-crew.md) | [00-layout-prototype.html](fp-ui/00-layout-prototype.html) |
 | ⚙️ | Settings | 全局配置：Studio/AICrew/Projects/通用 | **可开发** | [08-settings.md](fp-ui/08-settings.md) | [00-layout-prototype.html](fp-ui/00-layout-prototype.html) |

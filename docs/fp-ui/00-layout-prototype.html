@@ -1107,6 +1107,15 @@
         color: var(--text);
         font-weight: 600;
       }
+      .studio-display-dropdown optgroup {
+        color: var(--dim);
+        font-size: 10px;
+        font-weight: 600;
+      }
+      .studio-display-dropdown option {
+        color: var(--text);
+        background: var(--surface);
+      }
       .studio-filter-select {
         min-height: 28px;
         padding: 0 24px 0 9px;
@@ -2841,11 +2850,15 @@
             <h1>Studio</h1>
             <span class="meta">规划 -> 执行 -> 评估 -> 验收</span>
             <div class="top-actions">
-              <button class="btn active" id="studioGanttModeBtn" title="▱ 甘特规划" onclick="selectStudioGlobalMode('gantt')" style="font-size:11px;min-height:28px;padding:0 9px"><span style="color:var(--dim);font-family:var(--mono);margin-right:4px">▱</span>甘特规划</button>
-              <select class="studio-display-dropdown" id="studioDisplayDropdown" title="显示模式" onchange="selectStudioDisplayMode(this.value)">
-                <option value="board">▦ 看板</option>
-                <option value="list">☰ 列表</option>
-                <option value="swimlane">田 泳道</option>
+              <select class="studio-display-dropdown active" id="studioDisplayDropdown" title="视图模式" onchange="selectStudioDisplayMode(this.value)">
+                <optgroup label="执行视图">
+                  <option value="board" selected>▦ 看板</option>
+                  <option value="swimlane">田 泳道</option>
+                  <option value="list">☰ 列表</option>
+                </optgroup>
+                <optgroup label="规划视图">
+                  <option value="gantt">▱ 时间轴</option>
+                </optgroup>
               </select>
               <select class="studio-display-dropdown" id="fp-swimlane-group-select" title="泳道分组" onchange="setSwimlaneGroupMode(this.value)" style="display:none">
                 <option value="workspace">▤ Workspace</option>
@@ -2870,7 +2883,7 @@
               <button class="btn primary" onclick="openNewTaskModal()">新建 Task</button>
             </div>
           </header>
-          <div class="work panel active" id="focus-plan">
+          <div class="work panel" id="focus-plan">
             <!-- 规划子模式由侧边栏 Scope 自动驱动，无手动子 Tab -->
             <!-- 年度：目标树+甘特 -->
             <div class="fp-sub active" id="fp-year" style="display:grid;grid-template-columns:380px 1fr;gap:0;border-radius:var(--radius);overflow:hidden;flex:1;">
@@ -3663,7 +3676,7 @@
               </div>
             </div>
           </div>
-          <div class="work panel" id="focus-board">
+          <div class="work panel active" id="focus-board">
             <div class="kanban" id="fp-kanban" style="grid-template-columns:repeat(6,minmax(200px,1fr))">
               <!-- 待规划 -->
               <div class="lane fp-col" data-fp-col="backlog">
@@ -7294,28 +7307,28 @@ FocusPilot/
           )
       }
 
-      var studioGlobalDisplayMode = 'gantt';
+      var studioGlobalDisplayMode = 'board';
 
-      function setStudioGanttActive(active) {
-        var ganttBtn = document.getElementById('studioGanttModeBtn');
+      function setStudioDisplayActive() {
         var displayDropdown = document.getElementById('studioDisplayDropdown');
-        if (ganttBtn) ganttBtn.classList.toggle('active', !!active);
-        if (displayDropdown) displayDropdown.classList.toggle('active', !active);
+        if (displayDropdown) {
+          displayDropdown.value = studioGlobalDisplayMode;
+          displayDropdown.classList.add('active');
+        }
       }
 
       function selectStudioGlobalMode(mode) {
-        studioGlobalDisplayMode = mode === 'gantt' ? 'gantt' : studioGlobalDisplayMode;
-        setStudioGanttActive(studioGlobalDisplayMode === 'gantt');
-        syncSwimlaneGroupControlVisibility();
-        showPanel('focus-plan');
+        selectStudioDisplayMode(mode === 'gantt' ? 'gantt' : studioGlobalDisplayMode);
       }
 
       function selectStudioDisplayMode(mode) {
         studioGlobalDisplayMode = mode || 'board';
-        setStudioGanttActive(false);
-        var displayDropdown = document.getElementById('studioDisplayDropdown');
-        if (displayDropdown) displayDropdown.value = studioGlobalDisplayMode;
+        setStudioDisplayActive();
         syncSwimlaneGroupControlVisibility();
+        if (studioGlobalDisplayMode === 'gantt') {
+          showPanel('focus-plan');
+          return;
+        }
         if (studioGlobalDisplayMode === 'list') {
           renderFocusListFromItems();
           showPanel('focus-list');
@@ -10796,7 +10809,7 @@ FocusPilot/
 	      ensureWorkspaceRegistryFromItems();
 	      populateStudioToolbarFilters();
 	      refreshStudioTaskViews();
-	      syncSwimlaneGroupControlVisibility();
+	      selectStudioDisplayMode('board');
 	      renderStudioWorkspaceList();
 	      applyStudioWorkspaceContext('FocusPilot');
     </script>
