@@ -1184,11 +1184,16 @@
         margin-bottom: 6px;
         cursor: grab;
       }
+      .fp-card.dragging,
       .swimlane-card.dragging {
         opacity: .55;
       }
       .swimlane-card:active {
         cursor: grabbing;
+      }
+      #fp-kanban .lane.drag-over {
+        background: var(--accent-bg);
+        border-color: var(--accent-line);
       }
       #fp-year > div:first-child > div:nth-child(2) > div:first-child,
       #fp-year > div:first-child [data-fp-plan-month] > div:first-child,
@@ -2842,7 +2847,10 @@
                 <option value="list">☰ 列表</option>
                 <option value="swimlane">田 泳道</option>
               </select>
-              <button class="btn" id="fp-kanban-workspace-toggle" title="按 Workspace 展示看板" onclick="toggleKanbanWorkspaceRows()" style="display:none;font-size:11px;min-height:28px;padding:0 9px;color:var(--muted)"><span style="color:var(--dim);font-family:var(--mono);margin-right:4px">▤</span>Workspace</button>
+              <select class="studio-display-dropdown" id="fp-swimlane-group-select" title="泳道分组" onchange="setSwimlaneGroupMode(this.value)" style="display:none">
+                <option value="workspace">▤ Workspace</option>
+                <option value="agent">◉ 执行 Agent</option>
+              </select>
               <select class="studio-filter-select" id="fp-filter-time" title="时间筛选" onchange="setStudioToolbarFilter('time', this.value)">
                 <option value="all">时间: 全部</option>
                 <option value="today">时间: 今天</option>
@@ -6607,8 +6615,9 @@ FocusPilot/
       var studioWorkspaceFilter = 'all';
       var currentFocusFilter = 'all';
       var studioToolbarFilters = { time: 'all', goal: 'all', source: 'all' };
-      var kanbanWorkspaceRowsEnabled = false;
+      var swimlaneGroupMode = 'workspace';
       var swimlaneDraggedTaskId = '';
+      var kanbanDraggedTaskId = '';
       var tempWorkspaceCounter = 3;
 
       function workspaceTypeInfo(type) {
@@ -6834,6 +6843,7 @@ FocusPilot/
         var cardMeta = getWorkspaceMeta(item.projectId || deriveWorkspaceIdForItem(item));
         var card = document.createElement('div');
         card.className = 'task fp-card';
+        card.draggable = true;
         card.dataset.taskId = item.id;
         card.dataset.fpSchedule = item.schedule || '';
         card.dataset.fpWorkspace = cardMeta.name;
@@ -6844,122 +6854,105 @@ FocusPilot/
         if (item.status === 'done') card.style.opacity = '.7';
         if (item.agentStatus) card.style.borderColor = 'var(--accent-line)';
         if (item.decision) card.style.borderColor = 'rgba(167,139,250,.3)';
-        card.onclick = function() { openTaskDetail(item.id); };
+        card.onclick = function() {
+          if (card.dataset.dragged === 'true') return;
+          openTaskDetail(item.id);
+        };
+        card.addEventListener('dragstart', function(event) {
+          kanbanDraggedTaskId = item.id;
+          card.classList.add('dragging');
+          card.dataset.dragged = 'true';
+          if (event.dataTransfer) {
+            event.dataTransfer.setData('text/plain', item.id);
+            event.dataTransfer.setData('application/x-focuspilot-task', item.id);
+            event.dataTransfer.effectAllowed = 'move';
+          }
+        });
+        card.addEventListener('dragend', function() {
+          card.classList.remove('dragging');
+          document.querySelectorAll('#fp-kanban .lane.drag-over').forEach(function(lane) {
+            lane.classList.remove('drag-over');
+          });
+          setTimeout(function() { card.dataset.dragged = 'false'; }, 0);
+        });
         card.innerHTML = buildTaskCardHtml(item, false);
         return card;
       }
 
-      function setKanbanWorkspaceToggleState() {
-        var toggle = document.getElementById('fp-kanban-workspace-toggle');
-        if (!toggle) return;
-        toggle.classList.toggle('active', kanbanWorkspaceRowsEnabled);
-        toggle.setAttribute('aria-pressed', kanbanWorkspaceRowsEnabled ? 'true' : 'false');
-        toggle.style.background = kanbanWorkspaceRowsEnabled ? 'var(--elevated)' : '';
-        toggle.style.color = kanbanWorkspaceRowsEnabled ? 'var(--text)' : 'var(--muted)';
+      function syncSwimlaneGroupControlVisibility() {
+        var group = document.getElementById('fp-swimlane-group-select');
+        var isSwimlaneMode = studioGlobalDisplayMode === 'swimlane';
+        if (group) {
+          group.style.display = isSwimlaneMode ? '' : 'none';
+          group.disabled = !isSwimlaneMode;
+          group.value = swimlaneGroupMode;
+          group.classList.toggle('active', isSwimlaneMode);
+        }
       }
 
-      function syncKanbanWorkspaceToggleVisibility() {
-        var toggle = document.getElementById('fp-kanban-workspace-toggle');
-        var isBoardMode = studioGlobalDisplayMode === 'board';
-        if (!isBoardMode) {
-          kanbanWorkspaceRowsEnabled = false;
-        }
-        if (toggle) {
-          toggle.style.display = isBoardMode ? '' : 'none';
-          toggle.disabled = !isBoardMode;
-        }
-        setKanbanWorkspaceToggleState();
+      function setSwimlaneGroupMode(mode) {
+        swimlaneGroupMode = mode === 'agent' ? 'agent' : 'workspace';
+        syncSwimlaneGroupControlVisibility();
+        renderSwimlaneFromItems();
       }
 
-      function toggleKanbanWorkspaceRows() {
-        if (studioGlobalDisplayMode !== 'board') {
-          kanbanWorkspaceRowsEnabled = false;
-          syncKanbanWorkspaceToggleVisibility();
-          return;
-        }
-        kanbanWorkspaceRowsEnabled = !kanbanWorkspaceRowsEnabled;
-        setKanbanWorkspaceToggleState();
+      function refreshTaskProjectionsForMove(previousWorkspace, targetWorkspace) {
         renderKanbanFromItems();
+        renderFocusListFromItems();
+        renderSwimlaneFromItems();
+        renderStudioWorkspaceList();
+        if (previousWorkspace) {
+          renderStudioTasksPanelFromItems(previousWorkspace);
+          renderProjectInspectorTasks(previousWorkspace);
+        }
+        if (targetWorkspace && targetWorkspace !== previousWorkspace) {
+          renderStudioTasksPanelFromItems(targetWorkspace);
+          renderProjectInspectorTasks(targetWorkspace);
+        }
+        if (currentStudioWorkspace === previousWorkspace || currentStudioWorkspace === targetWorkspace) {
+          applyStudioWorkspaceContext(currentStudioWorkspace || targetWorkspace);
+        }
       }
 
-      function renderKanbanWorkspaceRows(visibleItems) {
-        var kanban = document.getElementById('fp-kanban');
-        if (!kanban) return;
-        kanban.classList.add('kanban-workspace-grid');
-        kanban.innerHTML = '';
-        var workspaceIds = [];
-        visibleItems.forEach(function(item) {
-          var wsId = item.projectId || deriveWorkspaceIdForItem(item);
-          if (workspaceIds.indexOf(wsId) === -1) workspaceIds.push(wsId);
-        });
-        workspaceIds.sort(function(a, b) { return getWorkspaceMeta(a).name.localeCompare(getWorkspaceMeta(b).name); });
+      function moveWorkItemToStatus(taskId, targetStatus) {
+        var item = workItems.find(function(candidate) { return candidate.id === taskId; });
+        if (!item || !targetStatus || item.status === targetStatus) return item || null;
+        var previousWorkspace = item.projectId;
+        item.status = targetStatus;
+        refreshTaskProjectionsForMove(previousWorkspace, item.projectId);
+        return item;
+      }
 
-        var workspaceHead = document.createElement('div');
-        workspaceHead.className = 'kanban-workspace-head';
-        workspaceHead.textContent = 'Workspace';
-        kanban.appendChild(workspaceHead);
-        taskStatusDefs.forEach(function(def) {
-          var head = document.createElement('div');
-          head.className = 'kanban-workspace-head';
-          var count = visibleItems.filter(function(item) { return item.status === def.status; }).length;
-          head.innerHTML = '<span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:' + def.color + ';margin-right:5px"></span>' + def.label + ' <span class="fp-col-count">' + count + '</span>';
-          kanban.appendChild(head);
-        });
+      function handleKanbanDragOver(event) {
+        event.preventDefault();
+        if (event.dataTransfer) event.dataTransfer.dropEffect = 'move';
+        var lane = event.currentTarget || (event.target && event.target.closest('.lane'));
+        if (lane) lane.classList.add('drag-over');
+      }
 
-        if (workspaceIds.length === 0) {
-          var emptyName = document.createElement('div');
-          emptyName.className = 'kanban-workspace-name';
-          emptyName.innerHTML = '<span class="sub">无匹配任务</span>';
-          kanban.appendChild(emptyName);
-          taskStatusDefs.forEach(function(def) {
-            var emptyCell = document.createElement('div');
-            emptyCell.className = 'kanban-workspace-cell';
-            emptyCell.setAttribute('data-kanban-workspace-row', '');
-            emptyCell.setAttribute('data-kanban-status', def.status);
-            emptyCell.innerHTML = '<span class="kanban-workspace-empty">—</span>';
-            kanban.appendChild(emptyCell);
-          });
-          return;
-        }
+      function handleKanbanDragLeave(event) {
+        var lane = event.currentTarget || (event.target && event.target.closest('.lane'));
+        if (lane) lane.classList.remove('drag-over');
+      }
 
-        workspaceIds.forEach(function(wsId) {
-          var meta = getWorkspaceMeta(wsId);
-          var info = workspaceTypeInfo(meta.type);
-          var rowItems = visibleItems.filter(function(item) {
-            return (item.projectId || deriveWorkspaceIdForItem(item)) === wsId;
-          });
-          var nameCell = document.createElement('div');
-          nameCell.className = 'kanban-workspace-name';
-          nameCell.setAttribute('data-kanban-workspace-row', wsId);
-          nameCell.innerHTML = info.icon + ' ' + meta.name + '<span class="sub">' + info.label + ' · ' + rowItems.length + ' 项</span>';
-          kanban.appendChild(nameCell);
-
-          taskStatusDefs.forEach(function(def) {
-            var cell = document.createElement('div');
-            cell.className = 'kanban-workspace-cell';
-            cell.setAttribute('data-kanban-workspace-row', wsId);
-            cell.setAttribute('data-kanban-status', def.status);
-            var cellItems = rowItems.filter(function(item) { return item.status === def.status; });
-            if (cellItems.length === 0) {
-              cell.innerHTML = '<span class="kanban-workspace-empty">—</span>';
-            } else {
-              cellItems.forEach(function(item) {
-                cell.appendChild(createKanbanCard(item));
-              });
-            }
-            kanban.appendChild(cell);
-          });
-        });
+      function handleKanbanDrop(event) {
+        event.preventDefault();
+        var lane = event.currentTarget || (event.target && event.target.closest('.lane'));
+        if (!lane) return;
+        lane.classList.remove('drag-over');
+        var taskId = event.dataTransfer ? (event.dataTransfer.getData('application/x-focuspilot-task') || event.dataTransfer.getData('text/plain')) : '';
+        taskId = taskId || kanbanDraggedTaskId;
+        kanbanDraggedTaskId = '';
+        var targetStatus = lane.dataset.kanbanStatus;
+        var item = moveWorkItemToStatus(taskId, targetStatus);
+        if (!item) return;
+        var statusDef = taskStatusDefs.find(function(def) { return def.status === targetStatus; });
+        showToast('已移动 ' + taskId + ' 到 ' + (statusDef ? statusDef.label : targetStatus));
       }
 
       function renderKanbanFromItems(filter) {
         ensureWorkspaceRegistryFromItems();
-        setKanbanWorkspaceToggleState();
         var visibleItems = workItems.filter(itemMatchesStudioTaskFilters);
-        if (kanbanWorkspaceRowsEnabled) {
-          renderKanbanWorkspaceRows(visibleItems);
-          return;
-        }
         var statusColumns = {};
         taskStatusDefs.forEach(function(def) {
           statusColumns[def.status] = { label: def.label, color: def.color, items: [] };
@@ -6979,6 +6972,11 @@ FocusPilot/
           var lane = document.createElement('div');
           lane.className = 'lane fp-col';
           lane.dataset.fpCol = status === 'in_progress' ? 'progress' : (status === 'in_evaluation' ? 'evaluation' : status);
+          lane.dataset.kanbanStatus = status;
+          lane.addEventListener('dragenter', handleKanbanDragOver);
+          lane.addEventListener('dragover', handleKanbanDragOver);
+          lane.addEventListener('dragleave', handleKanbanDragLeave);
+          lane.addEventListener('drop', handleKanbanDrop);
           if (status === 'blocked') { lane.style.opacity = '.6'; lane.style.minWidth = '140px'; }
           var h3 = document.createElement('h3');
           h3.style.display = 'flex';
@@ -7010,39 +7008,74 @@ FocusPilot/
         });
       }
 
+      function getSwimlaneAgentKey(item) {
+        return item.agent ? item.agent : '__manual__';
+      }
+
+      function getSwimlaneGroupKey(item) {
+        if (swimlaneGroupMode === 'agent') return getSwimlaneAgentKey(item);
+        return item.projectId || deriveWorkspaceIdForItem(item);
+      }
+
+      function getSwimlaneGroupMeta(groupKey, visibleItems) {
+        if (swimlaneGroupMode === 'agent') {
+          var name = groupKey === '__manual__' ? '手动执行' : groupKey;
+          var count = visibleItems.filter(function(item) { return getSwimlaneAgentKey(item) === groupKey; }).length;
+          return {
+            key: groupKey,
+            label: (groupKey === '__manual__' ? '👤 ' : '🧑‍💻 ') + name,
+            sub: (groupKey === '__manual__' ? '未分配 Agent' : '执行 Agent') + ' · ' + count + ' 项'
+          };
+        }
+        var meta = getWorkspaceMeta(groupKey);
+        var info = workspaceTypeInfo(meta.type);
+        var wsCount = visibleItems.filter(function(item) { return (item.projectId || deriveWorkspaceIdForItem(item)) === groupKey; }).length;
+        return {
+          key: groupKey,
+          label: info.icon + ' ' + meta.name,
+          sub: info.label + ' · ' + wsCount + ' 项',
+          workspace: meta
+        };
+      }
+
       function renderSwimlaneFromItems() {
         ensureWorkspaceRegistryFromItems();
         var container = document.getElementById('fp-swimlane');
         if (!container) return;
         var visibleItems = workItems.filter(itemMatchesStudioTaskFilters);
-        var workspaceIds = [];
+        var groupKeys = [];
         visibleItems.forEach(function(item) {
-          var wsId = item.projectId || deriveWorkspaceIdForItem(item);
-          if (workspaceIds.indexOf(wsId) === -1) workspaceIds.push(wsId);
+          var groupKey = getSwimlaneGroupKey(item);
+          if (groupKeys.indexOf(groupKey) === -1) groupKeys.push(groupKey);
         });
-        workspaceIds.sort(function(a, b) { return getWorkspaceMeta(a).name.localeCompare(getWorkspaceMeta(b).name); });
-        var html = '<div class="swimlane-head">Workspace</div>';
+        groupKeys.sort(function(a, b) {
+          return getSwimlaneGroupMeta(a, visibleItems).label.localeCompare(getSwimlaneGroupMeta(b, visibleItems).label);
+        });
+        var leadLabel = swimlaneGroupMode === 'agent' ? '执行 Agent' : 'Workspace';
+        var html = '<div class="swimlane-head">' + leadLabel + '</div>';
         taskStatusDefs.forEach(function(def) {
           html += '<div class="swimlane-head"><span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:' + def.color + ';margin-right:5px"></span>' + def.label + '</div>';
         });
-        if (workspaceIds.length === 0) {
+        if (groupKeys.length === 0) {
           html += '<div class="swimlane-workspace"><span class="sub">无匹配任务</span></div>';
           taskStatusDefs.forEach(function(def) {
-            html += '<div class="swimlane-cell" data-swimlane-workspace="" data-swimlane-status="' + def.status + '"></div>';
+            html += '<div class="swimlane-cell" data-swimlane-group="" data-swimlane-workspace="" data-swimlane-agent="" data-swimlane-status="' + def.status + '"></div>';
           });
           container.innerHTML = html;
           bindSwimlaneDragAndDrop();
           return;
         }
-        workspaceIds.forEach(function(wsId) {
-          var meta = getWorkspaceMeta(wsId);
-          var info = workspaceTypeInfo(meta.type);
-          html += '<div class="swimlane-workspace">' + info.icon + ' ' + meta.name + '<span class="sub">' + info.label + ' · ' + visibleItems.filter(function(item) { return (item.projectId || deriveWorkspaceIdForItem(item)) === wsId; }).length + ' 项</span></div>';
+        groupKeys.forEach(function(groupKey) {
+          var groupMeta = getSwimlaneGroupMeta(groupKey, visibleItems);
+          html += '<div class="swimlane-workspace">' + groupMeta.label + '<span class="sub">' + groupMeta.sub + '</span></div>';
           taskStatusDefs.forEach(function(def) {
-            html += '<div class="swimlane-cell" data-swimlane-workspace="' + wsId + '" data-swimlane-status="' + def.status + '">';
+            var workspaceAttr = swimlaneGroupMode === 'workspace' ? groupKey : '';
+            var agentAttr = swimlaneGroupMode === 'agent' ? groupKey : '';
+            html += '<div class="swimlane-cell" data-swimlane-group="' + groupKey + '" data-swimlane-workspace="' + workspaceAttr + '" data-swimlane-agent="' + agentAttr + '" data-swimlane-status="' + def.status + '">';
             visibleItems.filter(function(item) {
-              return (item.projectId || deriveWorkspaceIdForItem(item)) === wsId && item.status === def.status;
+              return getSwimlaneGroupKey(item) === groupKey && item.status === def.status;
             }).forEach(function(item) {
+              var meta = getWorkspaceMeta(item.projectId || deriveWorkspaceIdForItem(item));
               html += '<div class="task fp-card swimlane-card" draggable="true" data-task-id="' + item.id + '" data-fp-schedule="' + (item.schedule || '') + '" data-fp-workspace="' + meta.name + '"' +
                 (item.month ? ' data-fp-month="' + item.month + '"' : '') +
                 (item.executionMode ? ' data-fp-mode="' + item.executionMode + '"' : '') +
@@ -7097,28 +7130,27 @@ FocusPilot/
         swimlaneDraggedTaskId = '';
         var targetStatus = cell.dataset.swimlaneStatus;
         var targetWorkspace = cell.dataset.swimlaneWorkspace;
-        if (!taskId || !targetStatus || !targetWorkspace) return;
+        var targetAgent = cell.dataset.swimlaneAgent;
+        if (!taskId || !targetStatus) return;
         var item = workItems.find(function(candidate) { return candidate.id === taskId; });
         if (!item) return;
+        if (swimlaneGroupMode === 'workspace' && !targetWorkspace) return;
+        if (swimlaneGroupMode === 'agent' && !targetAgent) return;
         var previousWorkspace = item.projectId;
-        var targetMeta = getWorkspaceMeta(targetWorkspace);
         item.status = targetStatus;
-        item.projectId = targetWorkspace;
-        item.workspaceType = targetMeta.type;
-        renderKanbanFromItems();
-        renderFocusListFromItems();
-        renderSwimlaneFromItems();
-        renderStudioWorkspaceList();
-        if (previousWorkspace) {
-          renderStudioTasksPanelFromItems(previousWorkspace);
-          renderProjectInspectorTasks(previousWorkspace);
+        if (swimlaneGroupMode === 'agent') {
+          item.agent = targetAgent === '__manual__' ? '' : targetAgent;
+        } else {
+          var targetMeta = getWorkspaceMeta(targetWorkspace);
+          item.projectId = targetWorkspace;
+          item.workspaceType = targetMeta.type;
         }
-        renderStudioTasksPanelFromItems(targetWorkspace);
-        renderProjectInspectorTasks(targetWorkspace);
-        if (currentStudioWorkspace === previousWorkspace || currentStudioWorkspace === targetWorkspace) {
-          applyStudioWorkspaceContext(currentStudioWorkspace || targetWorkspace);
-        }
-        showToast('已移动 ' + taskId + ' 到 ' + targetMeta.name + ' · ' + taskStatusDefs.find(function(def) { return def.status === targetStatus; }).label);
+        refreshTaskProjectionsForMove(previousWorkspace, item.projectId);
+        var statusLabel = taskStatusDefs.find(function(def) { return def.status === targetStatus; }).label;
+        var targetLabel = swimlaneGroupMode === 'agent'
+          ? (targetAgent === '__manual__' ? '手动执行' : targetAgent)
+          : getWorkspaceMeta(item.projectId).name;
+        showToast('已移动 ' + taskId + ' 到 ' + targetLabel + ' · ' + statusLabel);
       }
 
       function bindSwimlaneDragAndDrop() {
@@ -7274,7 +7306,7 @@ FocusPilot/
       function selectStudioGlobalMode(mode) {
         studioGlobalDisplayMode = mode === 'gantt' ? 'gantt' : studioGlobalDisplayMode;
         setStudioGanttActive(studioGlobalDisplayMode === 'gantt');
-        syncKanbanWorkspaceToggleVisibility();
+        syncSwimlaneGroupControlVisibility();
         showPanel('focus-plan');
       }
 
@@ -7283,7 +7315,7 @@ FocusPilot/
         setStudioGanttActive(false);
         var displayDropdown = document.getElementById('studioDisplayDropdown');
         if (displayDropdown) displayDropdown.value = studioGlobalDisplayMode;
-        syncKanbanWorkspaceToggleVisibility();
+        syncSwimlaneGroupControlVisibility();
         if (studioGlobalDisplayMode === 'list') {
           renderFocusListFromItems();
           showPanel('focus-list');
@@ -10764,7 +10796,7 @@ FocusPilot/
 	      ensureWorkspaceRegistryFromItems();
 	      populateStudioToolbarFilters();
 	      refreshStudioTaskViews();
-	      syncKanbanWorkspaceToggleVisibility();
+	      syncSwimlaneGroupControlVisibility();
 	      renderStudioWorkspaceList();
 	      applyStudioWorkspaceContext('FocusPilot');
     </script>
