@@ -933,7 +933,7 @@ enum WorkspaceType: String, Codable {
 **Workspace 项目规则**：
 - Studio 任务视图和项目视图共享同一批 WorkItem，均通过 `workspaceRef.id` 过滤和同步状态；任务视图内的看板 / 列表 / 泳道只是同一 Scope 的显示模式
 - Studio 任务视图顶部 `时间 / 目标 / 来源` 是同一 Scope 下的二级筛选状态，分别映射 `schedule`、`goal`、Workspace 类型，并复用同一 predicate 刷新看板、列表和泳道
-- 看板支持 `kanbanWorkspaceRowsEnabled` 行分组开关；关闭时渲染 6 个状态列，打开时复用同一过滤结果渲染 Workspace 名字列 + 6 个状态列的矩阵，不改变任务状态或 Workspace 归属
+- 看板支持 `kanbanWorkspaceRowsEnabled` 行分组开关；关闭时渲染 6 个状态列，打开时复用同一过滤结果渲染 Workspace 名字列 + 6 个状态列的矩阵，不改变任务状态或 Workspace 归属；该开关只在 `displayMode=board` 时可见，切到甘特 / 列表 / 泳道时自动重置为关闭
 - 泳道视图是 Workspace × 状态二维投影；卡片跨单元格拖拽时必须同时更新 `status` 与 `workspaceRef.id`，再刷新看板、列表、泳道和项目任务投影
 - 跨项目看板卡片底部必须展示 `workspaceRef.id` 对应的 Workspace 名称，避免只显示类型图标导致归属不清
 - 临时 Workspace：系统生成 ID，并在默认 Workspace 根目录下物化

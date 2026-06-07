@@ -2842,7 +2842,7 @@
                 <option value="list">☰ 列表</option>
                 <option value="swimlane">田 泳道</option>
               </select>
-              <button class="btn" id="fp-kanban-workspace-toggle" title="按 Workspace 展示看板" onclick="toggleKanbanWorkspaceRows()" style="font-size:11px;min-height:28px;padding:0 9px;color:var(--muted)"><span style="color:var(--dim);font-family:var(--mono);margin-right:4px">▤</span>Workspace</button>
+              <button class="btn" id="fp-kanban-workspace-toggle" title="按 Workspace 展示看板" onclick="toggleKanbanWorkspaceRows()" style="display:none;font-size:11px;min-height:28px;padding:0 9px;color:var(--muted)"><span style="color:var(--dim);font-family:var(--mono);margin-right:4px">▤</span>Workspace</button>
               <select class="studio-filter-select" id="fp-filter-time" title="时间筛选" onchange="setStudioToolbarFilter('time', this.value)">
                 <option value="all">时间: 全部</option>
                 <option value="today">时间: 今天</option>
@@ -6853,11 +6853,30 @@ FocusPilot/
         var toggle = document.getElementById('fp-kanban-workspace-toggle');
         if (!toggle) return;
         toggle.classList.toggle('active', kanbanWorkspaceRowsEnabled);
+        toggle.setAttribute('aria-pressed', kanbanWorkspaceRowsEnabled ? 'true' : 'false');
         toggle.style.background = kanbanWorkspaceRowsEnabled ? 'var(--elevated)' : '';
         toggle.style.color = kanbanWorkspaceRowsEnabled ? 'var(--text)' : 'var(--muted)';
       }
 
+      function syncKanbanWorkspaceToggleVisibility() {
+        var toggle = document.getElementById('fp-kanban-workspace-toggle');
+        var isBoardMode = studioGlobalDisplayMode === 'board';
+        if (!isBoardMode) {
+          kanbanWorkspaceRowsEnabled = false;
+        }
+        if (toggle) {
+          toggle.style.display = isBoardMode ? '' : 'none';
+          toggle.disabled = !isBoardMode;
+        }
+        setKanbanWorkspaceToggleState();
+      }
+
       function toggleKanbanWorkspaceRows() {
+        if (studioGlobalDisplayMode !== 'board') {
+          kanbanWorkspaceRowsEnabled = false;
+          syncKanbanWorkspaceToggleVisibility();
+          return;
+        }
         kanbanWorkspaceRowsEnabled = !kanbanWorkspaceRowsEnabled;
         setKanbanWorkspaceToggleState();
         renderKanbanFromItems();
@@ -7255,6 +7274,7 @@ FocusPilot/
       function selectStudioGlobalMode(mode) {
         studioGlobalDisplayMode = mode === 'gantt' ? 'gantt' : studioGlobalDisplayMode;
         setStudioGanttActive(studioGlobalDisplayMode === 'gantt');
+        syncKanbanWorkspaceToggleVisibility();
         showPanel('focus-plan');
       }
 
@@ -7263,6 +7283,7 @@ FocusPilot/
         setStudioGanttActive(false);
         var displayDropdown = document.getElementById('studioDisplayDropdown');
         if (displayDropdown) displayDropdown.value = studioGlobalDisplayMode;
+        syncKanbanWorkspaceToggleVisibility();
         if (studioGlobalDisplayMode === 'list') {
           renderFocusListFromItems();
           showPanel('focus-list');
@@ -10743,6 +10764,7 @@ FocusPilot/
 	      ensureWorkspaceRegistryFromItems();
 	      populateStudioToolbarFilters();
 	      refreshStudioTaskViews();
+	      syncKanbanWorkspaceToggleVisibility();
 	      renderStudioWorkspaceList();
 	      applyStudioWorkspaceContext('FocusPilot');
     </script>
