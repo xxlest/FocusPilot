@@ -932,7 +932,8 @@ enum WorkspaceType: String, Codable {
 
 **Workspace 项目规则**：
 - Studio 任务视图和项目视图共享同一批 WorkItem，均通过 `workspaceRef.id` 过滤和同步状态；任务视图内的时间轴 / 看板 / 泳道 / 列表只是同一 Scope 的显示模式
-- Studio 任务视图顶部 `studioDisplayDropdown` 是唯一视图模式入口，默认 `board`；菜单按 `执行视图`（board / swimlane / list）在上、`规划视图`（gantt 时间轴）在下分组展示。顶部 `时间 / 目标 / 来源` 是同一 Scope 下的二级筛选状态，分别映射 `schedule`、`goal`、Workspace 类型，并复用同一 predicate 刷新时间轴、看板、列表和泳道
+- Studio 任务视图顶部 `studioDisplayDropdown` 是唯一视图模式入口，默认 `board`；菜单按 `执行视图`（board / swimlane / list）在上、`规划视图`（gantt 时间轴）在下分组展示。左侧 Scope 负责时间范围和时间粒度；顶部只保留 `目标 / 来源` 二级筛选，分别映射 `goal`、Workspace 类型，并复用同一 predicate 刷新时间轴、看板、列表和泳道
+- 时间轴通过 `timelineGroupMode` 切换行轴：`goal` 展示目标树甘特，`project` 按 `workspaceRef.id` / `projectId` 聚合为 Workspace/项目行，并继续复用当前 Scope、目标、来源筛选
 - 看板视图固定为 6 个状态列，不再暴露分组按钮；卡片拖到其他状态列时只更新 `status`，再刷新看板、列表、泳道和项目任务投影
 - 泳道视图通过 `swimlaneGroupMode` 切换行轴：`workspace` 渲染 Workspace × 状态，卡片跨单元格拖拽时同时更新 `status` 与 `workspaceRef.id`；`agent` 渲染执行 Agent × 状态，卡片跨单元格拖拽时同时更新 `status` 与 `primaryAgentID/agent` 投影
 - 跨项目看板卡片底部必须展示 `workspaceRef.id` 对应的 Workspace 名称，避免只显示类型图标导致归属不清
