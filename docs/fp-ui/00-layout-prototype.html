@@ -1108,13 +1108,32 @@
         font-weight: 600;
       }
       .studio-display-dropdown optgroup {
-        color: var(--dim);
+        color: var(--text);
         font-size: 10px;
-        font-weight: 600;
+        font-weight: 700;
+        letter-spacing: 0.05em;
       }
       .studio-display-dropdown option {
         color: var(--text);
         background: var(--surface);
+        font-weight: 400;
+        letter-spacing: normal;
+      }
+      .view-local-bar {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px 0 14px;
+      }
+      #focus-plan > .view-local-bar {
+        padding: 12px 18px;
+        flex-shrink: 0;
+      }
+      .view-local-bar .vlb-label {
+        font-size: 11px;
+        font-weight: 700;
+        color: var(--text);
+        letter-spacing: .04em;
       }
       .studio-filter-select {
         min-height: 28px;
@@ -3119,20 +3138,6 @@
                   <option value="gantt">▱ 时间轴</option>
                 </optgroup>
               </select>
-              <select class="studio-display-dropdown" id="fp-timeline-group-select" title="时间轴分组" onchange="setTimelineGroupMode(this.value)" style="display:none">
-                <optgroup label="分组方式">
-                  <option value="goal">▱ 按目标</option>
-                  <option value="project">▤ 按项目</option>
-                </optgroup>
-              </select>
-              <select class="studio-display-dropdown" id="fp-swimlane-group-select" title="泳道分组" onchange="setSwimlaneGroupMode(this.value)" style="display:none">
-                <optgroup label="分组方式">
-                  <option value="workspace">▤ Workspace</option>
-                  <option value="agent">◉ 执行 Agent</option>
-                  <option value="parent">↳ 父级任务</option>
-                  <option value="owner">◎ 负责人</option>
-                </optgroup>
-              </select>
               <select class="studio-filter-select" id="fp-filter-goal" title="目标筛选" onchange="setStudioToolbarFilter('goal', this.value)">
                 <option value="all">目标: 全部</option>
               </select>
@@ -3144,6 +3149,13 @@
             </div>
           </header>
           <div class="work panel" id="focus-plan">
+            <div class="view-local-bar">
+              <span class="vlb-label">分组方式</span>
+              <select class="studio-display-dropdown active" id="fp-timeline-group-select" title="时间轴分组" onchange="setTimelineGroupMode(this.value)">
+                <option value="goal">▱ 按目标</option>
+                <option value="project">▤ 按项目</option>
+              </select>
+            </div>
             <!-- 规划子模式由侧边栏 Scope 自动驱动，无手动子 Tab -->
             <!-- 年度：目标树+甘特 -->
             <div class="fp-sub active" id="fp-year" style="display:grid;grid-template-columns:380px 1fr;gap:0;border-radius:var(--radius);overflow:hidden;flex:1;">
@@ -4097,6 +4109,15 @@
           </div>
           <div class="work panel" id="focus-swimlane" style="overflow:auto">
             <div class="swimlane-board">
+              <div class="view-local-bar">
+                <span class="vlb-label">分组方式</span>
+                <select class="studio-display-dropdown active" id="fp-swimlane-group-select" title="泳道分组" onchange="setSwimlaneGroupMode(this.value)">
+                  <option value="workspace">▤ Workspace</option>
+                  <option value="agent">◉ 执行 Agent</option>
+                  <option value="parent">↳ 父级任务</option>
+                  <option value="owner">◎ 负责人</option>
+                </select>
+              </div>
               <div id="fp-swimlane" class="swimlane-grid"></div>
             </div>
           </div>
@@ -7448,15 +7469,13 @@ FocusPilot/
         container.innerHTML = leftHtml + rightHtml;
       }
 
+      function syncViewLocalGroupSelect(selectId, mode) {
+        var select = document.getElementById(selectId);
+        if (select) select.value = mode;
+      }
+
       function syncTimelineGroupControlVisibility() {
-        var group = document.getElementById('fp-timeline-group-select');
-        var isTimelineMode = studioGlobalDisplayMode === 'gantt';
-        if (group) {
-          group.style.display = isTimelineMode ? '' : 'none';
-          group.disabled = !isTimelineMode;
-          group.value = timelineGroupMode;
-          group.classList.toggle('active', isTimelineMode);
-        }
+        syncViewLocalGroupSelect('fp-timeline-group-select', timelineGroupMode);
         renderTimelineProjectGrouping();
       }
 
@@ -7466,14 +7485,7 @@ FocusPilot/
       }
 
       function syncSwimlaneGroupControlVisibility() {
-        var group = document.getElementById('fp-swimlane-group-select');
-        var isSwimlaneMode = studioGlobalDisplayMode === 'swimlane';
-        if (group) {
-          group.style.display = isSwimlaneMode ? '' : 'none';
-          group.disabled = !isSwimlaneMode;
-          group.value = swimlaneGroupMode;
-          group.classList.toggle('active', isSwimlaneMode);
-        }
+        syncViewLocalGroupSelect('fp-swimlane-group-select', swimlaneGroupMode);
       }
 
       function setSwimlaneGroupMode(mode) {
