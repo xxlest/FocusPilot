@@ -127,7 +127,7 @@
 
 | 活动栏 | 页面 | 说明 | 规格状态 | 规格文档 | 原型 |
 |--------|------|------|---------|---------|------|
-| 🏠 | **Home** | 全局概览入口：摘要数字条 + 重点列表 + 对话视图 | **可开发** | [01-home.md](fp-ui/01-home.md) | [00-layout-prototype.html](fp-ui/00-layout-prototype.html) |
+| 🏠 | **Home** | 全局概览入口：摘要数字条 + 重点列表 + 对话视图（与快捷助手/Studio Session 同源） | **可开发** | [01-home.md](fp-ui/01-home.md) | [00-layout-prototype.html](fp-ui/00-layout-prototype.html) |
 | 📂 | **Projects** | 记忆与输入管理层：Inbox 收集（Tab）+ 项目资产沉淀（Tab） | **可开发** | [05-area-projects.md](fp-ui/05-area-projects.md) | [00-layout-prototype.html](fp-ui/00-layout-prototype.html) |
 | 💻 | **Studio** | 跨项目 AI 工作台：任务视图（默认看板 + 泳道/列表/时间轴视图，时间轴支持按目标/项目分组，泳道支持 Workspace/执行 Agent 分组）+ 项目视图（工作项/对话/Diff/终端）+ Workspace + ExecutionRun | **可开发** | [04-studio.md](fp-ui/04-studio.md) | [00-layout-prototype.html](fp-ui/00-layout-prototype.html) |
 | 🧠 | **Review** | 复习与内化中心：今日复习 / 内化挑战 / 卡片库 / 统计 | **可开发** | [06-review.md](fp-ui/06-review.md) | [00-layout-prototype.html](fp-ui/00-layout-prototype.html)、[06-review-today-prototype.html](fp-ui/06-review-today-prototype.html)、[06-review-challenge-prototype.html](fp-ui/06-review-challenge-prototype.html) |
@@ -157,7 +157,7 @@
 
 | 原型文件 | 覆盖范围 | 说明 |
 |---------|---------|------|
-| [00-layout-prototype.html](fp-ui/00-layout-prototype.html) | 全局壳层 + 各页面工作区 | 活动栏+侧边栏+工作区，可切换所有页面；覆盖 Home / Projects（含 Inbox Tab）/ Studio（含原 Focus 全局视图）/ Review / AICrew / Settings |
+| [00-layout-prototype.html](fp-ui/00-layout-prototype.html) | 全局壳层 + 各页面工作区 | 活动栏+侧边栏+工作区，可切换所有页面；覆盖 Home / Projects（含 Inbox Tab）/ Studio（含原 Focus 全局视图）/ Review / AICrew / Settings，并包含右下角全局快捷对话助手 |
 | [03-focus-prototype.html](fp-ui/03-focus-prototype.html) | Focus 深水流程（历史参考） | 规划三模式+看板+列表+Task 详情页+新建弹窗。核心结构已合入壳层母版，复杂状态继续作为专项参考 |
 | [03-focus-session-prototype.html](fp-ui/03-focus-session-prototype.html) | Focus Session（专项参考） | Session 模式原型。保留为专项流程参考，不再维护全局壳层 |
 | [06-review-today-prototype.html](fp-ui/06-review-today-prototype.html) | Review 今日复习（专项参考） | 队列概览、逐卡复习、完成后引导内化。核心状态已合入壳层母版，专项文件保留为流程参考 |

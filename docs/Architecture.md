@@ -932,10 +932,11 @@ enum WorkspaceType: String, Codable {
 
 **Workspace 项目规则**：
 - Studio 任务视图和项目视图共享同一批 WorkItem，均通过 `workspaceRef.id` 过滤和同步状态；任务视图内的时间轴 / 看板 / 泳道 / 列表只是同一 Scope 的显示模式
-- Studio 任务视图顶部 `studioDisplayDropdown` 是唯一视图模式入口，默认 `board`；菜单按 `执行视图`（board / swimlane / list）在上、`规划视图`（gantt 时间轴）在下分组展示。左侧 Scope 负责时间范围和时间粒度；顶部只保留 `目标 / 来源` 二级筛选，分别映射 `goal`、Workspace 类型，并复用同一 predicate 刷新时间轴、看板、列表和泳道
-- 时间轴通过 `timelineGroupMode` 切换行轴：`goal` 展示目标树甘特，`project` 按 `workspaceRef.id` / `projectId` 聚合为 Workspace/项目行，并继续复用当前 Scope、目标、来源筛选
+- Studio 任务视图顶部 `studioDisplayDropdown` 是唯一视图模式入口，默认 `board`；菜单按 `执行视图`（board / swimlane / list）在上、`规划视图`（gantt 时间轴）在下分组展示。左侧 Scope 负责时间范围和时间粒度；顶部保留 `目标` 筛选，并把旧 `来源` 替换为组合 `筛选` 入口，支持按项目、Agent、优先级、标签、负责人、创建者进行二级多选过滤，复用同一 predicate 刷新时间轴、看板、列表和泳道
+- 时间轴通过 `timelineGroupMode` 切换行轴：`goal` 展示目标树甘特，`project` 按 `workspaceRef.id` / `projectId` 聚合为 Workspace/项目行，并继续复用当前 Scope、目标、组合筛选
 - 看板视图固定为 6 个状态列，不再暴露分组按钮；卡片拖到其他状态列时只更新 `status`，再刷新看板、列表、泳道和项目任务投影
-- 泳道视图通过 `swimlaneGroupMode` 切换行轴：`workspace` 渲染 Workspace × 状态，卡片跨单元格拖拽时同时更新 `status` 与 `workspaceRef.id`；`agent` 渲染执行 Agent × 状态，卡片跨单元格拖拽时同时更新 `status` 与 `primaryAgentID/agent` 投影
+- 泳道视图通过 `swimlaneGroupMode` 切换行轴：`workspace` 渲染 Workspace × 状态，卡片跨单元格拖拽时同时更新 `status` 与 `workspaceRef.id`；`agent` 渲染执行 Agent × 状态，卡片跨单元格拖拽时同时更新 `status` 与 `primaryAgentID/agent` 投影；`parent` 和 `owner` 分别按父级任务、负责人聚合，拖拽时同步对应字段与状态；每个泳道分组维护折叠/展开状态
+- 列表视图提供行首复选框、多选状态和批量操作入口，可批量更新 `status`、`priority`、`owner` 或删除 WorkItem
 - 跨项目看板卡片底部必须展示 `workspaceRef.id` 对应的 Workspace 名称，避免只显示类型图标导致归属不清
 - 临时 Workspace：系统生成 ID，并在默认 Workspace 根目录下物化
 - 本地项目 Workspace：`workspaceRef.id` 与本地 Project/目录一致
@@ -997,6 +998,12 @@ enum LeaseStatus: String, Codable {
 ### StudioSession
 
 ```swift
+enum SessionEntrySource: String, Codable {
+    case studio
+    case home
+    case quickChat = "quick_chat"
+}
+
 struct StudioSession: Identifiable, Codable {
     let id: String
     var title: String
@@ -1004,10 +1011,27 @@ struct StudioSession: Identifiable, Codable {
     var workdir: String
     var crewMemberID: String?
     var runtime: RuntimeType                // claude_code | codex_cli | gemini_cli
+    var entrySource: SessionEntrySource     // studio | home | quick_chat
     var status: SessionStatus               // active | idle | done | ended
     var lastActivityAt: Date                // 最近对话/任务投递时间；项目视图按此倒序展示最近 5 条
 }
 ```
+
+`SessionEntrySource` 只记录创建入口，不决定历史归属。历史归属始终由 `workspaceID` 决定：Studio 当前 Workspace 发起的快捷对话写入当前 Workspace；其他页面的快捷对话写入固定临时 Workspace `tmp-quick-chat`。
+
+### QuickChatState
+
+```swift
+struct QuickChatState {
+    var isPanelOpen: Bool
+    var activeSessionID: String?
+    var draftTitle: String                  // 无 activeSessionID 时固定显示 "新对话"
+    var historySelectValue: String?         // 仅指向 StudioSession.id；空值表示未选择历史
+    var defaultWorkspaceID: String          // Studio 当前 Workspace 或 tmp-quick-chat
+}
+```
+
+快捷助手、Home 对话视图和 Studio 项目视图共享 `StudioSession` 仓库。快捷助手只保存 UI 状态；标题区历史下拉只用于选择已有 `StudioSession`，不承载新建动作；历史候选按 Workspace 分组，并显示 Workspace 项目符号。点击 `+` 进入 `新对话` 草稿，发送首条消息时才创建 Session，并用首条内容提取标题；之后 Agent 锁定并复用该 Session 的 transcript。
 
 ### Task / Session / Run 关系
 

@@ -1,0 +1,1518 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>FocusPilot Floating Ball Prototype</title>
+    <style>
+      :root {
+        --bg: #151618;
+        --desktop: #202226;
+        --surface: rgba(246, 245, 241, 0.94);
+        --surface-2: #ebeae7;
+        --ink: #242528;
+        --muted: #74777d;
+        --dim: #999ca2;
+        --line: rgba(0, 0, 0, 0.1);
+        --line-dark: rgba(255, 255, 255, 0.13);
+        --red: #ef5047;
+        --blue: #147af3;
+        --green: #31c75a;
+        --amber: #d99a27;
+        --radius: 8px;
+        --font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "PingFang SC", sans-serif;
+        --shadow: 0 28px 90px rgba(0, 0, 0, 0.38);
+      }
+
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        color: #f1f1ef;
+        font-family: var(--font);
+        -webkit-font-smoothing: antialiased;
+        background:
+          radial-gradient(circle at 16% 10%, rgba(239, 80, 71, 0.18), transparent 28%),
+          radial-gradient(circle at 82% 12%, rgba(49, 199, 90, 0.12), transparent 28%),
+          linear-gradient(145deg, #121315 0%, #24272b 52%, #111214 100%);
+      }
+
+      button, input, textarea, select { font: inherit; color: inherit; }
+      button { cursor: pointer; }
+
+      .page {
+        width: min(1380px, calc(100vw - 44px));
+        margin: 0 auto;
+        padding: 24px 0 34px;
+      }
+
+      .head {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 18px;
+        align-items: end;
+        margin-bottom: 18px;
+      }
+
+      .head h1 {
+        margin: 0 0 7px;
+        font-size: 22px;
+        letter-spacing: 0;
+      }
+
+      .head p {
+        margin: 0;
+        color: rgba(241, 241, 239, 0.68);
+        font-size: 13px;
+        line-height: 1.65;
+      }
+
+      .mode-switch {
+        display: flex;
+        gap: 6px;
+        padding: 4px;
+        border: 1px solid var(--line-dark);
+        border-radius: var(--radius);
+        background: rgba(255, 255, 255, 0.06);
+      }
+
+      .mode-switch button {
+        border: 0;
+        border-radius: 6px;
+        background: transparent;
+        color: rgba(241, 241, 239, 0.66);
+        padding: 7px 10px;
+        font-size: 12px;
+        white-space: nowrap;
+      }
+
+      .mode-switch button.active {
+        color: #fff;
+        background: rgba(239, 80, 71, 0.24);
+      }
+
+      .prototype {
+        border: 1px solid var(--line-dark);
+        border-radius: var(--radius);
+        background: rgba(17, 18, 20, 0.76);
+        box-shadow: var(--shadow);
+        overflow: hidden;
+      }
+
+      .prototype-head {
+        min-height: 62px;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 16px;
+        align-items: center;
+        padding: 14px 18px;
+        border-bottom: 1px solid var(--line-dark);
+        background: rgba(255, 255, 255, 0.045);
+      }
+
+      .prototype-title b {
+        display: block;
+        font-size: 16px;
+        margin-bottom: 4px;
+      }
+
+      .prototype-title span {
+        color: rgba(241, 241, 239, 0.58);
+        font-size: 12px;
+      }
+
+      .summary {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        justify-content: end;
+      }
+
+      .chip {
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 999px;
+        padding: 5px 8px;
+        background: rgba(255, 255, 255, 0.055);
+        color: rgba(241, 241, 239, 0.72);
+        font-size: 11px;
+      }
+
+      .stage {
+        position: relative;
+        height: min(720px, calc(100vh - 190px));
+        min-height: 620px;
+        background:
+          linear-gradient(rgba(255,255,255,.035) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(255,255,255,.035) 1px, transparent 1px),
+          var(--desktop);
+        background-size: 30px 30px;
+        overflow: hidden;
+      }
+
+      .mock-window {
+        position: absolute;
+        left: 28px;
+        top: 62px;
+        right: 118px;
+        bottom: 44px;
+        border: 1px solid rgba(255, 255, 255, 0.09);
+        border-radius: var(--radius);
+        background: rgba(26, 28, 31, 0.88);
+        overflow: hidden;
+      }
+
+      .window-bar {
+        height: 36px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 0 12px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        color: rgba(241, 241, 239, 0.42);
+        font-size: 11px;
+      }
+
+      .dot {
+        width: 9px;
+        height: 9px;
+        border-radius: 50%;
+        background: rgba(241, 241, 239, 0.32);
+      }
+
+      .shell {
+        height: calc(100% - 36px);
+        display: grid;
+        grid-template-columns: 52px 230px minmax(0, 1fr);
+      }
+
+      .rail, .side, .workspace {
+        min-width: 0;
+        border-right: 1px solid rgba(255, 255, 255, 0.08);
+      }
+
+      .rail {
+        display: grid;
+        align-content: start;
+        justify-items: center;
+        gap: 9px;
+        padding: 12px 0;
+      }
+
+      .rail i {
+        width: 31px;
+        height: 31px;
+        border-radius: 7px;
+        display: grid;
+        place-items: center;
+        color: rgba(241, 241, 239, 0.6);
+        background: rgba(255, 255, 255, 0.045);
+        font-style: normal;
+        font-size: 12px;
+      }
+
+      .side {
+        padding: 14px 12px;
+      }
+
+      .side h3, .workspace h3 {
+        margin: 0 0 12px;
+        font-size: 13px;
+      }
+
+      .side-row {
+        height: 34px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        padding: 0 10px;
+        margin-bottom: 7px;
+        border-radius: 7px;
+        color: rgba(241, 241, 239, 0.68);
+        background: rgba(255, 255, 255, 0.045);
+        font-size: 12px;
+      }
+
+      .side-row.active {
+        color: #fff;
+        background: rgba(239, 80, 71, 0.18);
+      }
+
+      .workspace {
+        border-right: 0;
+        padding: 16px;
+      }
+
+      .board {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 10px;
+        height: calc(100% - 34px);
+      }
+
+      .lane {
+        min-width: 0;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: var(--radius);
+        background: rgba(255, 255, 255, 0.035);
+        padding: 10px;
+      }
+
+      .lane b {
+        display: block;
+        color: rgba(241, 241, 239, 0.78);
+        font-size: 12px;
+        margin-bottom: 10px;
+      }
+
+      .task-card {
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 7px;
+        background: rgba(255, 255, 255, 0.055);
+        padding: 9px;
+        margin-bottom: 8px;
+        font-size: 12px;
+      }
+
+      .task-card span {
+        display: block;
+        margin-top: 5px;
+        color: rgba(241, 241, 239, 0.42);
+        font-size: 10px;
+      }
+
+      .focus-bar {
+        position: absolute;
+        left: 88px;
+        right: 28px;
+        top: 14px;
+        min-height: 34px;
+        display: none;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 10px;
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        border-radius: 12px;
+        background: rgba(246, 245, 241, 0.94);
+        color: var(--ink);
+        box-shadow: 0 14px 42px rgba(0, 0, 0, 0.22);
+        z-index: 18;
+      }
+
+      body.bar-pinned .focus-bar,
+      body[data-mode="focus"] .focus-bar,
+      body[data-mode="rest"] .focus-bar {
+        display: flex;
+      }
+
+      .focus-bar.resting {
+        border-color: rgba(49, 199, 90, 0.34);
+        background: #e8f6ea;
+      }
+
+      .bar-group {
+        position: relative;
+      }
+
+      .bar-btn {
+        height: 26px;
+        border: 0;
+        border-radius: 7px;
+        background: transparent;
+        color: var(--ink);
+        padding: 0 8px;
+        white-space: nowrap;
+        font-size: 12px;
+      }
+
+      .bar-btn:hover {
+        background: rgba(0, 0, 0, 0.06);
+      }
+
+      .bar-time {
+        margin-left: auto;
+        font-size: 22px;
+        font-weight: 800;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .bar-progress {
+        position: absolute;
+        left: 12px;
+        right: 12px;
+        bottom: 2px;
+        height: 4px;
+        border-radius: 999px;
+        background: rgba(0, 0, 0, 0.08);
+        overflow: hidden;
+      }
+
+      .bar-progress i {
+        display: block;
+        width: 62%;
+        height: 100%;
+        background: var(--red);
+      }
+
+      .focus-bar.resting .bar-progress i {
+        width: 28%;
+        background: var(--green);
+      }
+
+      .bar-menu {
+        position: absolute;
+        left: 0;
+        top: 31px;
+        width: 280px;
+        display: none;
+        padding: 8px;
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        background: var(--surface);
+        color: var(--ink);
+        box-shadow: 0 18px 50px rgba(0, 0, 0, 0.24);
+        z-index: 30;
+      }
+
+      .bar-group:hover .bar-menu {
+        display: block;
+      }
+
+      .mini-task {
+        width: 100%;
+        border: 0;
+        border-radius: 7px;
+        background: transparent;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 8px;
+        align-items: center;
+        padding: 8px;
+        color: var(--ink);
+        text-align: left;
+        font-size: 12px;
+      }
+
+      .mini-task:hover {
+        background: rgba(239, 80, 71, 0.1);
+      }
+
+      .mini-task small {
+        color: var(--muted);
+      }
+
+      .floating-zone {
+        position: absolute;
+        right: 24px;
+        top: 178px;
+        width: min(682px, calc(100% - 48px));
+        min-height: 396px;
+        z-index: 22;
+        pointer-events: none;
+      }
+
+      .float-stack {
+        position: absolute;
+        right: 0;
+        top: 126px;
+        display: grid;
+        justify-items: end;
+        gap: 10px;
+        pointer-events: auto;
+      }
+
+      .ball {
+        position: relative;
+        width: 58px;
+        height: 58px;
+        border: 1px solid rgba(255, 255, 255, 0.42);
+        border-radius: 18px;
+        background:
+          radial-gradient(circle at 32% 24%, rgba(255,255,255,.76), transparent 18%),
+          radial-gradient(circle at 46% 45%, #62a4ff 0%, #147af3 58%, #0f53b7 100%);
+        box-shadow: 0 18px 46px rgba(0, 0, 0, 0.34), 0 0 0 7px rgba(20, 122, 243, 0.1);
+        transform: translateZ(0);
+        transition: transform 0.16s ease;
+      }
+
+      .ball::before {
+        content: "";
+        position: absolute;
+        inset: 16px 13px 12px;
+        border: 4px solid rgba(255, 255, 255, 0.88);
+        border-left-color: rgba(255, 255, 255, 0.16);
+        border-bottom-color: rgba(255, 255, 255, 0.38);
+        border-radius: 50%;
+        transform: rotate(-20deg);
+      }
+
+      .ball-ring {
+        position: absolute;
+        inset: -6px;
+        display: none;
+        border: 3px solid var(--red);
+        border-left-color: rgba(239, 80, 71, 0.16);
+        border-radius: 22px;
+        transform: rotate(38deg);
+      }
+
+      body[data-mode="focus"] .ball-ring,
+      body[data-mode="rest"] .ball-ring {
+        display: block;
+      }
+
+      body[data-mode="rest"] .ball-ring {
+        border-color: var(--green);
+        border-left-color: rgba(49, 199, 90, 0.18);
+      }
+
+      .ball-badge {
+        position: absolute;
+        right: -7px;
+        top: -7px;
+        min-width: 20px;
+        height: 20px;
+        display: grid;
+        place-items: center;
+        border: 2px solid #202226;
+        border-radius: 999px;
+        background: var(--red);
+        color: #fff;
+        font-size: 10px;
+        font-weight: 800;
+      }
+
+      .float-menu {
+        position: absolute;
+        right: 0;
+        top: 0;
+        width: 632px;
+        opacity: 0;
+        transform: translateY(18px) scale(0.96);
+        pointer-events: none;
+        transition: opacity 0.15s ease, transform 0.18s ease;
+      }
+
+      .floating-zone:hover .float-menu,
+      .floating-zone.open .float-menu {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+        pointer-events: none;
+      }
+
+      .floating-zone:hover .ball,
+      .floating-zone.open .ball {
+        transform: scale(1.04);
+      }
+
+      .float-panel {
+        width: 312px;
+        margin-left: auto;
+        pointer-events: auto;
+        border: 1px solid var(--line);
+        border-radius: 26px;
+        background: var(--surface);
+        color: var(--ink);
+        box-shadow: 0 26px 80px rgba(0, 0, 0, 0.34);
+        overflow: hidden;
+      }
+
+      .float-overview {
+        display: flex;
+        gap: 7px;
+        padding: 14px 16px 8px;
+        color: var(--muted);
+        font-size: 11px;
+      }
+
+      .float-overview span {
+        border-radius: 999px;
+        background: rgba(0, 0, 0, 0.055);
+        padding: 4px 7px;
+      }
+
+      .float-actions {
+        padding: 6px 12px 12px;
+      }
+
+      .action-row {
+        position: relative;
+      }
+
+      .float-action {
+        width: 100%;
+        min-height: 48px;
+        border: 0;
+        border-radius: 12px;
+        background: transparent;
+        display: grid;
+        grid-template-columns: 32px minmax(0, 1fr) auto;
+        gap: 10px;
+        align-items: center;
+        padding: 7px 10px;
+        color: var(--ink);
+        text-align: left;
+        font-size: 15px;
+        font-weight: 700;
+      }
+
+      .float-action small {
+        display: block;
+        margin-top: 3px;
+        color: var(--muted);
+        font-size: 11px;
+        font-weight: 500;
+      }
+
+      .float-action:hover {
+        background: rgba(20, 122, 243, 0.09);
+      }
+
+      .action-icon {
+        width: 28px;
+        height: 28px;
+        display: grid;
+        place-items: center;
+        border-radius: 9px;
+        background: rgba(0, 0, 0, 0.065);
+        color: #44474d;
+        font-weight: 800;
+      }
+
+      .sub-menu {
+        position: absolute;
+        right: 100%;
+        top: 0;
+        width: 308px;
+        display: none;
+        padding: 9px;
+        margin-right: 10px;
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        background: var(--surface);
+        box-shadow: 0 20px 64px rgba(0, 0, 0, 0.3);
+        pointer-events: auto;
+      }
+
+      .action-row:hover .sub-menu,
+      .action-row.submenu-open .sub-menu {
+        display: block;
+      }
+
+      .sub-title {
+        padding: 5px 7px 8px;
+        color: var(--muted);
+        font-size: 11px;
+        font-weight: 800;
+      }
+
+      .chat-strip {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 46px;
+        align-items: center;
+        gap: 8px;
+        min-height: 58px;
+        padding: 8px 10px 10px 16px;
+        border-top: 1px solid var(--line);
+        background: rgba(255, 255, 255, 0.68);
+      }
+
+      .chat-strip button {
+        height: 42px;
+        border: 0;
+        border-radius: 999px;
+        background: transparent;
+        color: #777a80;
+        text-align: left;
+        font-size: 17px;
+      }
+
+      .avatar {
+        width: 42px;
+        height: 42px;
+        display: grid;
+        place-items: center;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #ebf4ff, #d6e7ff);
+        border: 1px solid rgba(0, 0, 0, 0.08);
+        color: var(--blue);
+        font-weight: 900;
+      }
+
+      .modal-backdrop {
+        position: fixed;
+        inset: 0;
+        display: none;
+        place-items: center;
+        background: rgba(0, 0, 0, 0.24);
+        z-index: 50;
+      }
+
+      .modal-backdrop.open {
+        display: grid;
+      }
+
+      .modal {
+        width: min(640px, calc(100% - 34px));
+        max-height: calc(100% - 38px);
+        overflow: auto;
+        border: 1px solid var(--line);
+        border-radius: 24px;
+        background: var(--surface);
+        color: var(--ink);
+        box-shadow: 0 30px 90px rgba(0, 0, 0, 0.38);
+        padding: 26px;
+      }
+
+      .modal-logo {
+        width: 74px;
+        height: 74px;
+        margin: 0 auto 20px;
+        border-radius: 22px;
+        background:
+          radial-gradient(circle at 32% 24%, rgba(255,255,255,.76), transparent 18%),
+          radial-gradient(circle at 46% 45%, #62a4ff 0%, #147af3 58%, #0f53b7 100%);
+        box-shadow: 0 10px 28px rgba(0, 0, 0, 0.14);
+        position: relative;
+      }
+
+      .modal-logo::before {
+        content: "";
+        position: absolute;
+        inset: 21px 17px 17px;
+        border: 5px solid rgba(255, 255, 255, 0.9);
+        border-left-color: rgba(255, 255, 255, 0.18);
+        border-bottom-color: rgba(255, 255, 255, 0.42);
+        border-radius: 50%;
+        transform: rotate(-20deg);
+      }
+
+      .modal h2 {
+        margin: 0 0 12px;
+        text-align: center;
+        font-size: 24px;
+      }
+
+      .modal .lead {
+        margin: 0 0 20px;
+        text-align: center;
+        color: #3f4248;
+        font-size: 20px;
+        line-height: 1.45;
+        font-weight: 700;
+      }
+
+      .choice-list {
+        display: grid;
+        gap: 10px;
+        margin: 18px 0;
+      }
+
+      .choice {
+        display: grid;
+        grid-template-columns: 28px minmax(0, 1fr) auto;
+        gap: 12px;
+        align-items: start;
+        padding: 8px;
+        border-radius: 12px;
+        cursor: pointer;
+      }
+
+      .choice:hover {
+        background: rgba(0, 0, 0, 0.045);
+      }
+
+      .radio {
+        width: 26px;
+        height: 26px;
+        border-radius: 50%;
+        background: #dedddb;
+        position: relative;
+      }
+
+      .choice.active .radio {
+        background: var(--blue);
+      }
+
+      .choice.active .radio::after {
+        content: "";
+        position: absolute;
+        inset: 9px;
+        border-radius: 50%;
+        background: #fff;
+      }
+
+      .choice strong {
+        display: block;
+        font-size: 20px;
+      }
+
+      .choice small {
+        display: block;
+        margin-top: 4px;
+        color: #7a7d83;
+        font-size: 14px;
+        line-height: 1.45;
+      }
+
+      .choice .time {
+        font-size: 18px;
+        font-weight: 700;
+        white-space: nowrap;
+      }
+
+      .divider {
+        height: 1px;
+        background: var(--line);
+        margin: 10px 0;
+      }
+
+      .custom-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        align-items: center;
+        padding: 4px 8px 8px 48px;
+        color: #3f4248;
+        font-size: 17px;
+      }
+
+      .stepper {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+      }
+
+      .round-btn {
+        width: 36px;
+        height: 36px;
+        border: 0;
+        border-radius: 50%;
+        background: #dedddb;
+        color: #2f3033;
+        font-size: 18px;
+        font-weight: 800;
+      }
+
+      .num {
+        min-width: 52px;
+        height: 36px;
+        display: grid;
+        place-items: center;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        background: #fff;
+        font-weight: 800;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .info {
+        color: #8a8d92;
+        font-size: 13px;
+        margin: 10px 0 22px;
+      }
+
+      .modal-actions {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+        max-width: 460px;
+        margin: 0 auto;
+      }
+
+      .modal-actions button {
+        height: 54px;
+        border: 0;
+        border-radius: 999px;
+        font-size: 20px;
+        font-weight: 800;
+      }
+
+      .cancel {
+        background: #dedddb;
+        color: #222326;
+      }
+
+      .primary {
+        background: var(--red);
+        color: #fff;
+      }
+
+      .primary.green {
+        background: var(--green);
+      }
+
+      .primary.blue {
+        background: var(--blue);
+      }
+
+      .rest-steps {
+        margin: 18px 0 22px;
+        border-radius: 16px;
+        background: #e9e8e5;
+        padding: 16px 20px;
+      }
+
+      .rest-steps b {
+        display: block;
+        color: #8a8d92;
+        margin-bottom: 12px;
+      }
+
+      .step {
+        display: grid;
+        grid-template-columns: 22px minmax(0, 1fr);
+        gap: 10px;
+        align-items: start;
+        margin: 12px 0;
+        color: #7a7d83;
+        font-size: 17px;
+      }
+
+      .step.active {
+        color: var(--green);
+        font-weight: 800;
+      }
+
+      .step i {
+        width: 18px;
+        height: 18px;
+        margin-top: 2px;
+        border-radius: 50%;
+        border: 2px solid currentColor;
+        font-style: normal;
+      }
+
+      .quick-chat-window {
+        position: absolute;
+        right: 388px;
+        bottom: 36px;
+        width: 510px;
+        height: 570px;
+        display: none;
+        grid-template-rows: 52px 72px 1fr 82px;
+        border: 1px solid var(--line);
+        border-radius: 18px;
+        background: var(--surface);
+        color: var(--ink);
+        box-shadow: 0 26px 86px rgba(0, 0, 0, 0.36);
+        overflow: hidden;
+        z-index: 44;
+      }
+
+      .quick-chat-window.open {
+        display: grid;
+      }
+
+      .chat-head {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 0 14px;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .chat-head button,
+      .send-btn {
+        width: 32px;
+        height: 32px;
+        border: 0;
+        border-radius: 9px;
+        background: rgba(0, 0, 0, 0.06);
+        color: #36383d;
+      }
+
+      .chat-title {
+        flex: 1;
+        min-width: 0;
+      }
+
+      .chat-title b {
+        display: block;
+        font-size: 13px;
+      }
+
+      .chat-title span {
+        color: var(--muted);
+        font-size: 11px;
+      }
+
+      .scope-strip {
+        display: flex;
+        gap: 7px;
+        align-items: center;
+        padding: 12px 14px;
+        border-bottom: 1px solid var(--line);
+        overflow-x: auto;
+      }
+
+      .scope-strip button {
+        border: 0;
+        border-radius: 999px;
+        background: rgba(0, 0, 0, 0.06);
+        color: #4b4e54;
+        padding: 7px 10px;
+        white-space: nowrap;
+        font-size: 12px;
+      }
+
+      .scope-strip button.active {
+        background: rgba(20, 122, 243, 0.12);
+        color: var(--blue);
+        font-weight: 800;
+      }
+
+      .chat-thread {
+        padding: 16px;
+        overflow-y: auto;
+        background: #f7f6f2;
+      }
+
+      .msg {
+        max-width: 84%;
+        width: fit-content;
+        padding: 10px 12px;
+        margin-bottom: 11px;
+        border-radius: 14px;
+        font-size: 13px;
+        line-height: 1.65;
+      }
+
+      .msg.user {
+        margin-left: auto;
+        background: #e7e6e2;
+      }
+
+      .msg.agent {
+        background: #fff;
+        border: 1px solid var(--line);
+      }
+
+      .chat-compose {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 38px;
+        gap: 8px;
+        padding: 12px;
+        border-top: 1px solid var(--line);
+      }
+
+      .chat-compose textarea {
+        min-width: 0;
+        resize: none;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        padding: 10px;
+        background: #fff;
+        color: var(--ink);
+      }
+
+      .toast {
+        position: absolute;
+        left: 50%;
+        bottom: 22px;
+        transform: translateX(-50%) translateY(20px);
+        opacity: 0;
+        pointer-events: none;
+        border-radius: 999px;
+        background: rgba(20, 21, 23, 0.88);
+        color: #fff;
+        padding: 10px 14px;
+        font-size: 12px;
+        transition: opacity 0.16s ease, transform 0.16s ease;
+        z-index: 70;
+      }
+
+      .toast.show {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+      }
+
+      .notes {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 10px;
+        padding: 14px 18px 18px;
+        border-top: 1px solid var(--line-dark);
+        background: rgba(255, 255, 255, 0.025);
+      }
+
+      .note {
+        min-height: 76px;
+        border: 1px solid var(--line-dark);
+        border-radius: var(--radius);
+        padding: 10px;
+        color: rgba(241, 241, 239, 0.64);
+        background: rgba(255, 255, 255, 0.04);
+        font-size: 12px;
+        line-height: 1.55;
+      }
+
+      .note b {
+        display: block;
+        color: #fff;
+        margin-bottom: 5px;
+      }
+
+      @media (max-width: 960px) {
+        .page { width: min(760px, calc(100vw - 24px)); }
+        .head, .prototype-head { grid-template-columns: 1fr; }
+        .stage { min-height: 820px; height: auto; }
+        .mock-window { left: 16px; right: 16px; top: 72px; bottom: 250px; opacity: 0.62; }
+        .shell { grid-template-columns: 46px minmax(0, 1fr); }
+        .workspace { display: none; }
+        .floating-zone { right: 18px; top: 132px; width: calc(100% - 36px); }
+        .focus-bar { left: 16px; right: 16px; flex-wrap: wrap; }
+        .quick-chat-window { left: 16px; right: 16px; bottom: 18px; width: auto; }
+        .sub-menu {
+          position: static;
+          width: auto;
+          margin: 4px 0 8px 42px;
+          box-shadow: none;
+        }
+        .notes { grid-template-columns: 1fr; }
+      }
+    </style>
+  </head>
+  <body data-mode="normal">
+    <main class="page">
+      <header class="head">
+        <div>
+          <h1>FocusPilot 聚焦浮球完整方案</h1>
+          <p>参考豆包的悬浮展开形态，但把能力收束为全局项目问答、任务状态、开始专注、引导休息和快速跳转。快捷聊天助手面向所有项目，不默认绑定当前 Workspace 或当前任务。</p>
+        </div>
+        <div class="mode-switch" aria-label="演示状态">
+          <button class="active" type="button" data-demo-mode="normal">常规</button>
+          <button type="button" data-demo-mode="focus">专注中</button>
+          <button type="button" data-demo-mode="rest">休息中</button>
+          <button type="button" data-demo-mode="bar">状态条置顶</button>
+        </div>
+      </header>
+
+      <section class="prototype">
+        <div class="prototype-head">
+          <div class="prototype-title">
+            <b>Doubao 式 hover 浮层 + FocusPilot 全局执行中枢</b>
+            <span>移到右侧小浮球上自动展开；底部问答框打开全局聊天助手；运行状态条可置顶。</span>
+          </div>
+          <div class="summary">
+            <span class="chip">运行中 2</span>
+            <span class="chip">待验收 3</span>
+            <span class="chip">今日聚焦 5</span>
+            <span class="chip">番茄钟 35+7</span>
+          </div>
+        </div>
+
+        <div class="stage" id="stage">
+          <div class="focus-bar" id="focusBar">
+            <div class="bar-group">
+              <button class="bar-btn" type="button">运行中 2</button>
+              <div class="bar-menu">
+                <div class="sub-title">正在运行的任务</div>
+                <button class="mini-task" type="button" data-task-jump="FP-104"><span>FP-104 浮球 hover 面板实现<small>Codex · FocusPilot · 62%</small></span><small>打开</small></button>
+                <button class="mini-task" type="button" data-task-jump="FP-088"><span>FP-088 Studio 状态投影<small>Claude Code · PilotOne · 31%</small></span><small>打开</small></button>
+              </div>
+            </div>
+            <div class="bar-group">
+              <button class="bar-btn" type="button">待验收 3</button>
+              <div class="bar-menu">
+                <div class="sub-title">等待验收</div>
+                <button class="mini-task" type="button" data-task-jump="FP-097"><span>FP-097 看板 Workspace 行<small>FocusPilot · 审核中</small></span><small>验收</small></button>
+                <button class="mini-task" type="button" data-task-jump="KB-031"><span>KB-031 资料卡片归档<small>VaultOne · 审核中</small></span><small>验收</small></button>
+              </div>
+            </div>
+            <div class="bar-group">
+              <button class="bar-btn" type="button">今日聚焦 5</button>
+              <div class="bar-menu">
+                <div class="sub-title">今日聚焦实时状态</div>
+                <button class="mini-task" type="button" data-task-jump="FP-104"><span>浮球原型定稿<small>进行中 · FocusPilot</small></span><small>62%</small></button>
+                <button class="mini-task" type="button" data-task-jump="FP-112"><span>PRD 同步检查<small>待办 · FocusPilot</small></span><small>待办</small></button>
+                <button class="mini-task" type="button" data-task-jump="FP-097"><span>看板 Workspace 行验收<small>等待验收</small></span><small>验收</small></button>
+              </div>
+            </div>
+            <button class="bar-btn" type="button">已完成 4</button>
+            <button class="bar-btn" id="barTimerAction" type="button">番茄钟</button>
+            <strong class="bar-time" id="barTime">35:00</strong>
+            <div class="bar-progress"><i></i></div>
+          </div>
+
+          <div class="mock-window">
+            <div class="window-bar"><i class="dot"></i><i class="dot"></i><i class="dot"></i><span>FocusPilot · Studio · 今日聚焦 / 看板</span></div>
+            <div class="shell">
+              <nav class="rail" aria-label="页面">
+                <i>H</i><i>P</i><i>S</i><i>R</i><i>A</i>
+              </nav>
+              <aside class="side">
+                <h3>任务视图</h3>
+                <div class="side-row active"><span>今日聚焦</span><b>5</b></div>
+                <div class="side-row"><span>本周计划</span><b>18</b></div>
+                <div class="side-row"><span>执行中</span><b>2</b></div>
+                <div class="side-row"><span>等我验收</span><b>3</b></div>
+                <div class="side-row"><span>已阻塞</span><b>1</b></div>
+              </aside>
+              <section class="workspace">
+                <h3>今日聚焦 · 看板</h3>
+                <div class="board">
+                  <div class="lane"><b>待办</b><div class="task-card">PRD 同步检查<span>FocusPilot · 今天</span></div><div class="task-card">运行状态条规则<span>FocusPilot · 今天</span></div></div>
+                  <div class="lane"><b>进行中</b><div class="task-card">浮球原型定稿<span>Codex · 62%</span></div></div>
+                  <div class="lane"><b>审核中</b><div class="task-card">看板 Workspace 行<span>待验收</span></div></div>
+                  <div class="lane"><b>已完成</b><div class="task-card">快捷聊天历史<span>今天 10:18</span></div></div>
+                </div>
+              </section>
+            </div>
+          </div>
+
+          <div class="floating-zone" id="floatingZone">
+            <div class="float-menu">
+              <div class="float-panel">
+                <div class="float-overview">
+                  <span>运行中 2</span>
+                  <span>待验收 3</span>
+                  <span>今日 5</span>
+                </div>
+                <div class="float-actions">
+                  <div class="action-row">
+                    <button class="float-action" type="button" data-open-modal="focus">
+                      <span class="action-icon">▶</span>
+                      <span>开始专注<small>深度专注 / 常规节奏 / 轻度脑力 / 自定义</small></span>
+                      <span>›</span>
+                    </button>
+                  </div>
+                  <div class="action-row">
+                    <button class="float-action" type="button" data-open-modal="rest">
+                      <span class="action-icon">休</span>
+                      <span>休息<small>轻度恢复 / 标准恢复 / 深度恢复 / 自由休息</small></span>
+                      <span>›</span>
+                    </button>
+                  </div>
+                  <div class="action-row">
+                    <button class="float-action" type="button" id="pinBarBtn">
+                      <span class="action-icon">顶</span>
+                      <span>运行状态<small id="pinBarText">置顶 Focus Bar，显示所有项目实时状态</small></span>
+                      <span>⌃</span>
+                    </button>
+                  </div>
+                  <div class="action-row">
+                    <button class="float-action" type="button">
+                      <span class="action-icon">今</span>
+                      <span>今日聚焦<small>hover 查看今日所有任务及状态</small></span>
+                      <span>›</span>
+                    </button>
+                    <div class="sub-menu">
+                      <div class="sub-title">今日聚焦 · 按状态分组</div>
+                      <button class="mini-task" type="button" data-task-jump="FP-104"><span>进行中 · 浮球原型定稿<small>FocusPilot · Codex · 62%</small></span><small>打开</small></button>
+                      <button class="mini-task" type="button" data-task-jump="FP-112"><span>待办 · PRD 同步检查<small>FocusPilot · 今天</small></span><small>打开</small></button>
+                      <button class="mini-task" type="button" data-task-jump="FP-097"><span>等待验收 · 看板 Workspace 行<small>FocusPilot · 审核中</small></span><small>验收</small></button>
+                      <button class="mini-task" type="button" data-task-jump="OPS-018"><span>已阻塞 · API 授权回调<small>PilotOne · blocked</small></span><small>打开</small></button>
+                    </div>
+                  </div>
+                  <div class="action-row">
+                    <button class="float-action" type="button">
+                      <span class="action-icon">周</span>
+                      <span>本周聚焦<small>今天 / 明天 / 本周稍后 / 已逾期</small></span>
+                      <span>›</span>
+                    </button>
+                    <div class="sub-menu">
+                      <div class="sub-title">本周聚焦 · 按时间分组</div>
+                      <button class="mini-task" type="button" data-task-jump="FP-104"><span>今天 · 浮球原型定稿<small>进行中</small></span><small>打开</small></button>
+                      <button class="mini-task" type="button" data-task-jump="FP-130"><span>明天 · 状态条实现计划<small>待办</small></span><small>打开</small></button>
+                      <button class="mini-task" type="button" data-task-jump="KB-041"><span>本周稍后 · Review 卡片批处理<small>VaultOne</small></span><small>打开</small></button>
+                      <button class="mini-task" type="button" data-task-jump="OPS-018"><span>已逾期 · API 授权回调<small>blocked</small></span><small>打开</small></button>
+                    </div>
+                  </div>
+                </div>
+                <div class="chat-strip">
+                  <button type="button" id="openChatFromStrip">问问 FocusPilot...</button>
+                  <div class="avatar">F</div>
+                </div>
+              </div>
+            </div>
+            <div class="float-stack">
+              <div class="ball" aria-label="FocusPilot 浮球"><i class="ball-ring"></i><b class="ball-badge">3</b></div>
+            </div>
+          </div>
+
+          <section class="quick-chat-window" id="chatWindow" aria-label="快捷聊天助手">
+            <div class="chat-head">
+              <button type="button" id="newChatBtn" title="新建会话">+</button>
+              <div class="chat-title">
+                <b>全局快捷聊天助手</b>
+                <span>面向全部项目、全部 Workspace、全部运行状态</span>
+              </div>
+              <button type="button" id="expandChatBtn" title="展开到主界面">↗</button>
+              <button type="button" id="closeChatBtn" title="关闭">−</button>
+            </div>
+            <div class="scope-strip">
+              <button class="active" type="button" data-chat-scope="全部项目">全部项目</button>
+              <button type="button" data-chat-scope="今日聚焦">今日聚焦</button>
+              <button type="button" data-chat-scope="本周聚焦">本周聚焦</button>
+              <button type="button" data-chat-scope="运行中">运行中</button>
+              <button type="button" data-chat-scope="等待验收">等待验收</button>
+            </div>
+            <div class="chat-thread" id="chatThread">
+              <div class="msg user">现在所有项目里，哪些任务等我验收？</div>
+              <div class="msg agent">全局共有 3 个等待验收任务：FocusPilot 的看板 Workspace 行、VaultOne 的资料卡片归档、PilotOne 的客户画像模板。你可以在状态条里直接处理，也可以点击任务跳到 Studio 看板。</div>
+              <div class="msg user">今天还有什么最该处理？</div>
+              <div class="msg agent">今日聚焦剩 5 项。建议先处理 FP-104 浮球原型定稿，因为它正在运行且会影响后续 PRD 同步。</div>
+            </div>
+            <div class="chat-compose">
+              <textarea id="chatInput" placeholder="问所有项目、运行记录、今日/本周聚焦..."></textarea>
+              <button class="send-btn" id="sendChatBtn" type="button">↑</button>
+            </div>
+          </section>
+
+          <div class="modal-backdrop" id="focusModal">
+            <section class="modal" role="dialog" aria-label="开始专注">
+              <div class="modal-logo"></div>
+              <h2>开始专注</h2>
+              <p class="lead">选择匹配当前任务的节奏，让每段时间都有效</p>
+              <div class="choice-list" data-choice-group="focus">
+                <div class="choice active" data-focus-label="常规节奏" data-work="35" data-rest="7"><i class="radio"></i><div><strong>常规节奏</strong><small>平衡专注与恢复，适合日常写作、代码审查、文档整理</small></div><span class="time">35 min 工作 · 7 min 休息</span></div>
+                <div class="choice" data-focus-label="深度专注" data-work="25" data-rest="5"><i class="radio"></i><div><strong>深度专注</strong><small>经典番茄节奏，适合编码调试、方案设计、深度阅读</small></div><span class="time">25 min 工作 · 5 min 休息</span></div>
+                <div class="choice" data-focus-label="轻度脑力" data-work="50" data-rest="10"><i class="radio"></i><div><strong>轻度脑力</strong><small>低认知负荷长周期任务，如素材收集、笔记归档</small></div><span class="time">50 min 工作 · 10 min 休息</span></div>
+              </div>
+              <div class="divider"></div>
+              <div class="choice" data-custom-focus><i class="radio"></i><div><strong>自定义</strong><small>复用当前 FocusPilot 的工作/休息时长配置</small></div></div>
+              <div class="custom-row">
+                <span>工作</span><span class="stepper"><button class="round-btn" type="button" data-step="work" data-delta="-1">−</button><b class="num" id="workNum">35</b><button class="round-btn" type="button" data-step="work" data-delta="1">+</button></span>
+                <span>休息</span><span class="stepper"><button class="round-btn" type="button" data-step="rest" data-delta="-1">−</button><b class="num" id="restNum">7</b><button class="round-btn" type="button" data-step="rest" data-delta="1">+</button></span>
+              </div>
+              <div class="info">ⓘ 了解各方案的适用场景与科学依据</div>
+              <div class="modal-actions">
+                <button class="cancel" type="button" data-close-modal>取消</button>
+                <button class="primary" id="startFocusBtn" type="button">开始</button>
+              </div>
+            </section>
+          </div>
+
+          <div class="modal-backdrop" id="restModal">
+            <section class="modal" role="dialog" aria-label="选择休息方式">
+              <div class="modal-logo"></div>
+              <h2>选择休息方式</h2>
+              <p class="lead">放下工作，让身体和大脑充分恢复</p>
+              <div class="choice-list" data-choice-group="rest">
+                <div class="choice" data-rest-label="轻度恢复" data-rest-minutes="5"><i class="radio"></i><div><strong>轻度恢复</strong><small>远眺 · 深呼吸 · 坐姿核心激活 · 补水</small></div><span class="time">~5 分钟</span></div>
+                <div class="choice active" data-rest-label="标准恢复" data-rest-minutes="7"><i class="radio"></i><div><strong>标准恢复</strong><small>闭眼远眺 · 深呼吸 · 走动 · 站立核心激活 · 补水</small></div><span class="time">~7 分钟</span></div>
+                <div class="choice" data-rest-label="深度恢复" data-rest-minutes="10"><i class="radio"></i><div><strong>深度恢复</strong><small>冥想 · 腹式呼吸 · 走动 · 全链路核心激活 · 补水</small></div><span class="time">~10 分钟</span></div>
+                <div class="choice" data-rest-label="自由休息" data-rest-minutes="7"><i class="radio"></i><div><strong>自由休息</strong><small>不跟步骤，按自己节奏恢复</small></div><span class="time">7 分钟</span></div>
+              </div>
+              <div class="info">ⓘ 了解三维恢复（眼睛 · 大脑 · 肌肉）的科学依据</div>
+              <div class="modal-actions">
+                <button class="cancel" type="button" data-close-modal>取消</button>
+                <button class="primary green" id="startRestBtn" type="button">开始休息</button>
+              </div>
+            </section>
+          </div>
+
+          <div class="modal-backdrop" id="restGuideModal">
+            <section class="modal" role="dialog" aria-label="引导休息">
+              <div class="modal-logo"></div>
+              <h2>引导休息 · 闭眼远眺 · 步骤 1/5</h2>
+              <p class="lead">闭眼 60 秒，然后远眺 20 秒</p>
+              <div class="rest-steps">
+                <b>标准恢复 · 6m59s</b>
+                <div class="step active"><i></i><span>闭眼远眺 · 1m19s<br><small>闭眼 60 秒，然后远眺 20 秒</small></span></div>
+                <div class="step"><i></i><span>深呼吸 · 1m40s</span></div>
+                <div class="step"><i></i><span>起身走动 · 1m20s</span></div>
+                <div class="step"><i></i><span>站立核心激活 · 1m30s</span></div>
+                <div class="step"><i></i><span>补水远眺 · 1m10s</span></div>
+              </div>
+              <div class="modal-actions">
+                <button class="cancel" type="button" data-close-modal>停止</button>
+                <button class="primary blue" type="button" data-close-modal>暂停</button>
+              </div>
+            </section>
+          </div>
+
+          <div class="toast" id="toast">已打开 Studio · 今日聚焦 · 看板，并定位任务</div>
+        </div>
+
+        <div class="notes">
+          <div class="note"><b>全局聊天</b>快捷助手面向全部项目与全部 Workspace，默认不绑定当前任务，只提供范围筛选。</div>
+          <div class="note"><b>专注/休息</b>开始专注和休息都是一级快捷指令，复用现有 FocusByTime 的预设、自由休息和引导恢复逻辑。</div>
+          <div class="note"><b>Focus Bar</b>运行中、已完成、待验收、今日聚焦和番茄钟都在顶部状态条轻量处理，可置顶或取消置顶。</div>
+          <div class="note"><b>跳转规则</b>今日/本周任务菜单点击后进入 Studio，看板视图自动定位对应任务详情。</div>
+        </div>
+      </section>
+    </main>
+
+    <script>
+      const body = document.body;
+      const toast = document.getElementById("toast");
+      const focusBar = document.getElementById("focusBar");
+      const floatingZone = document.getElementById("floatingZone");
+      const floatStack = document.querySelector(".float-stack");
+      const floatPanel = document.querySelector(".float-panel");
+      const pinBarText = document.getElementById("pinBarText");
+      const barTime = document.getElementById("barTime");
+      const barTimerAction = document.getElementById("barTimerAction");
+      const chatWindow = document.getElementById("chatWindow");
+      const chatThread = document.getElementById("chatThread");
+      const chatInput = document.getElementById("chatInput");
+
+      function showToast(text) {
+        toast.textContent = text;
+        toast.classList.add("show");
+        window.clearTimeout(showToast.timer);
+        showToast.timer = window.setTimeout(() => toast.classList.remove("show"), 1900);
+      }
+
+      let floatingCloseTimer;
+      function openFloatingMenu() {
+        window.clearTimeout(floatingCloseTimer);
+        floatingZone.classList.add("open");
+      }
+      function scheduleFloatingClose() {
+        window.clearTimeout(floatingCloseTimer);
+        floatingCloseTimer = window.setTimeout(() => floatingZone.classList.remove("open"), 240);
+      }
+      [floatStack, floatPanel].forEach((node) => {
+        node.addEventListener("mouseenter", openFloatingMenu);
+        node.addEventListener("mouseleave", scheduleFloatingClose);
+      });
+      document.querySelector(".ball").addEventListener("click", () => {
+        window.clearTimeout(floatingCloseTimer);
+        floatingZone.classList.toggle("open");
+      });
+      document.querySelectorAll(".action-row").forEach((row) => {
+        if (!row.querySelector(".sub-menu")) return;
+        row.querySelector(".float-action").addEventListener("click", () => {
+          document.querySelectorAll(".action-row.submenu-open").forEach((item) => {
+            if (item !== row) item.classList.remove("submenu-open");
+          });
+          row.classList.toggle("submenu-open");
+        });
+      });
+
+      function setMode(mode) {
+        body.dataset.mode = mode === "bar" ? "normal" : mode;
+        body.classList.toggle("bar-pinned", mode === "bar" || mode === "focus" || mode === "rest");
+        focusBar.classList.toggle("resting", mode === "rest");
+        if (mode === "focus") {
+          barTime.textContent = "35:00";
+          barTimerAction.textContent = "常规节奏";
+        } else if (mode === "rest") {
+          barTime.textContent = "01:11";
+          barTimerAction.textContent = "闭眼远眺 · 1/5";
+        } else if (mode === "normal") {
+          barTime.textContent = "35:00";
+          barTimerAction.textContent = "番茄钟";
+        }
+        pinBarText.textContent = body.classList.contains("bar-pinned")
+          ? "取消置顶 Focus Bar"
+          : "置顶 Focus Bar，显示所有项目实时状态";
+        document.querySelectorAll("[data-demo-mode]").forEach((btn) => btn.classList.toggle("active", btn.dataset.demoMode === mode));
+      }
+
+      document.querySelectorAll("[data-demo-mode]").forEach((btn) => {
+        btn.addEventListener("click", () => setMode(btn.dataset.demoMode));
+      });
+
+      document.getElementById("pinBarBtn").addEventListener("click", () => {
+        body.classList.toggle("bar-pinned");
+        pinBarText.textContent = body.classList.contains("bar-pinned")
+          ? "取消置顶 Focus Bar"
+          : "置顶 Focus Bar，显示所有项目实时状态";
+      });
+
+      function openModal(id) {
+        document.getElementById(id).classList.add("open");
+      }
+
+      function closeModals() {
+        document.querySelectorAll(".modal-backdrop").forEach((modal) => modal.classList.remove("open"));
+      }
+
+      document.querySelectorAll("[data-open-modal]").forEach((btn) => {
+        btn.addEventListener("click", () => openModal(btn.dataset.openModal + "Modal"));
+      });
+
+      document.querySelectorAll("[data-close-modal]").forEach((btn) => {
+        btn.addEventListener("click", closeModals);
+      });
+
+      document.querySelectorAll(".choice-list .choice").forEach((choice) => {
+        choice.addEventListener("click", () => {
+          choice.parentElement.querySelectorAll(".choice").forEach((item) => item.classList.remove("active"));
+          choice.classList.add("active");
+          if (choice.dataset.work) {
+            document.getElementById("workNum").textContent = choice.dataset.work;
+            document.getElementById("restNum").textContent = choice.dataset.rest;
+          }
+        });
+      });
+
+      document.querySelector("[data-custom-focus]").addEventListener("click", (event) => {
+        event.currentTarget.classList.add("active");
+        document.querySelectorAll('[data-choice-group="focus"] .choice').forEach((item) => item.classList.remove("active"));
+      });
+
+      document.querySelectorAll("[data-step]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const target = btn.dataset.step === "work" ? "workNum" : "restNum";
+          const min = btn.dataset.step === "work" ? 5 : 1;
+          const next = Math.max(min, Number(document.getElementById(target).textContent) + Number(btn.dataset.delta));
+          document.getElementById(target).textContent = next;
+          document.querySelector("[data-custom-focus]").click();
+        });
+      });
+
+      document.getElementById("startFocusBtn").addEventListener("click", () => {
+        closeModals();
+        setMode("focus");
+        showToast("已开始专注，Focus Bar 显示当前节奏");
+      });
+
+      document.getElementById("startRestBtn").addEventListener("click", () => {
+        closeModals();
+        setMode("rest");
+        openModal("restGuideModal");
+      });
+
+      document.getElementById("openChatFromStrip").addEventListener("click", () => {
+        chatWindow.classList.add("open");
+        chatInput.focus();
+      });
+
+      document.getElementById("closeChatBtn").addEventListener("click", () => {
+        chatWindow.classList.remove("open");
+      });
+
+      document.getElementById("newChatBtn").addEventListener("click", () => {
+        chatThread.innerHTML = '<div class="msg agent">已创建全局新会话。你可以直接询问所有项目、运行记录、今日聚焦或等待验收任务。</div>';
+        chatInput.focus();
+      });
+
+      document.getElementById("expandChatBtn").addEventListener("click", () => {
+        showToast("将展开到 Home 全局对话视图");
+      });
+
+      document.querySelectorAll("[data-chat-scope]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          document.querySelectorAll("[data-chat-scope]").forEach((item) => item.classList.toggle("active", item === btn));
+          chatThread.insertAdjacentHTML("beforeend", '<div class="msg agent">范围已切换为「' + btn.dataset.chatScope + '」。这只是查询范围，不会绑定当前 Workspace 或当前任务。</div>');
+          chatThread.scrollTop = chatThread.scrollHeight;
+        });
+      });
+
+      document.getElementById("sendChatBtn").addEventListener("click", () => {
+        const text = chatInput.value.trim();
+        if (!text) return;
+        const userMsg = document.createElement("div");
+        userMsg.className = "msg user";
+        userMsg.textContent = text;
+        const agentMsg = document.createElement("div");
+        agentMsg.className = "msg agent";
+        agentMsg.textContent = "我会在全部项目范围内查询，并返回可直接处理的任务列表。这个快捷助手不默认绑定当前 Workspace 或当前任务。";
+        chatThread.append(userMsg, agentMsg);
+        chatInput.value = "";
+        chatThread.scrollTop = chatThread.scrollHeight;
+      });
+
+      document.querySelectorAll("[data-task-jump]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          showToast("已打开 Studio · 看板，并定位 " + btn.dataset.taskJump);
+        });
+      });
+    </script>
+  </body>
+</html>

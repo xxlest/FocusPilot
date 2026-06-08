@@ -1098,7 +1098,7 @@
         border: 1px solid var(--line-soft);
         border-radius: var(--radius);
         background: var(--surface);
-        color: var(--muted);
+        color: var(--text);
         font-size: 11px;
         cursor: pointer;
       }
@@ -1130,6 +1130,81 @@
         background: var(--elevated);
         color: var(--text);
         font-weight: 600;
+      }
+      .studio-filter-menu-wrap {
+        position: relative;
+        display: inline-flex;
+      }
+      .studio-filter-menu {
+        position: absolute;
+        top: 34px;
+        right: 0;
+        z-index: 72;
+        width: 420px;
+        max-width: calc(100vw - 32px);
+        display: none;
+        grid-template-columns: 158px minmax(0, 1fr);
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        box-shadow: 0 16px 44px rgba(0,0,0,.34);
+        overflow: hidden;
+      }
+      .studio-filter-menu.open { display: grid; }
+      .studio-filter-cats {
+        padding: 6px;
+        border-right: 1px solid var(--line-soft);
+        background: var(--bg);
+      }
+      .studio-filter-cat,
+      .studio-filter-option {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        min-height: 28px;
+        padding: 5px 8px;
+        border-radius: var(--radius);
+        font-size: 11px;
+        color: var(--muted);
+        cursor: pointer;
+      }
+      .studio-filter-cat.active,
+      .studio-filter-option:hover {
+        background: var(--elevated);
+        color: var(--text);
+      }
+      .studio-filter-cat-count {
+        margin-left: auto;
+        min-width: 18px;
+        height: 18px;
+        border-radius: 9px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background: var(--accent-bg);
+        color: var(--accent);
+        font-size: 10px;
+        font-family: var(--mono);
+      }
+      .studio-filter-options {
+        padding: 8px;
+        max-height: 300px;
+        overflow-y: auto;
+      }
+      .studio-filter-option input {
+        width: 14px;
+        height: 14px;
+        accent-color: var(--accent);
+      }
+      .studio-filter-menu-foot {
+        grid-column: 1 / -1;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 8px;
+        padding: 7px 8px;
+        border-top: 1px solid var(--line-soft);
+        background: var(--surface);
       }
       #focus-swimlane.active {
         display: block;
@@ -1171,6 +1246,22 @@
         font-size: 12px;
         font-weight: 600;
       }
+      .swimlane-workspace.folded,
+      .swimlane-cell.folded {
+        min-height: 44px;
+      }
+      .swimlane-group-toggle {
+        width: 20px;
+        height: 20px;
+        border: 1px solid var(--line-soft);
+        border-radius: 50%;
+        background: var(--surface);
+        color: var(--dim);
+        cursor: pointer;
+        font-size: 10px;
+        line-height: 1;
+        flex-shrink: 0;
+      }
       .swimlane-workspace .sub {
         display: block;
         margin-top: 4px;
@@ -1183,6 +1274,10 @@
         min-height: 96px;
         padding: 8px;
         background: var(--bg);
+      }
+      .swimlane-cell.folded {
+        color: var(--dim);
+        font-size: 10px;
       }
       .swimlane-cell.drag-over {
         outline: 1px solid var(--accent);
@@ -1448,6 +1543,195 @@
       .message.agent {
         background: var(--surface);
         border: 1px solid var(--line);
+      }
+      .quick-chat-trigger {
+        position: fixed;
+        right: 24px;
+        bottom: 24px;
+        width: 58px;
+        height: 58px;
+        border-radius: 50%;
+        border: 1px solid var(--line);
+        background: var(--surface);
+        color: var(--text);
+        box-shadow: 0 12px 32px rgba(0, 0, 0, .28);
+        display: grid;
+        place-items: center;
+        cursor: pointer;
+        z-index: 80;
+      }
+      .quick-chat-trigger:hover {
+        background: var(--surface-2);
+        border-color: var(--accent-line);
+      }
+      .quick-chat-trigger .bubble {
+        width: 28px;
+        height: 22px;
+        border: 2px solid var(--muted);
+        border-radius: 14px;
+        position: relative;
+      }
+      .quick-chat-trigger .bubble:after {
+        content: "";
+        position: absolute;
+        left: 5px;
+        bottom: -6px;
+        width: 9px;
+        height: 9px;
+        border-left: 2px solid var(--muted);
+        border-bottom: 2px solid var(--muted);
+        border-bottom-left-radius: 8px;
+        transform: rotate(-18deg);
+        background: var(--surface);
+      }
+      .quick-chat-panel {
+        position: fixed;
+        right: 24px;
+        bottom: 92px;
+        width: min(520px, calc(100vw - 32px));
+        height: min(680px, calc(100vh - 48px));
+        display: none;
+        grid-template-rows: auto auto 1fr auto;
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        box-shadow: 0 22px 70px rgba(0, 0, 0, .36);
+        overflow: hidden;
+        z-index: 79;
+      }
+      .quick-chat-panel.open { display: grid; }
+      .quick-chat-head {
+        height: 52px;
+        padding: 0 14px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        border-bottom: 1px solid var(--line-soft);
+      }
+      .quick-chat-title {
+        flex: 1;
+        min-width: 0;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 13px;
+        font-weight: 700;
+      }
+      .quick-chat-title span {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .quick-chat-history-select {
+        flex: 1;
+        min-width: 0;
+        height: 32px;
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        background: var(--surface-2);
+        color: var(--text);
+        padding: 0 8px;
+        outline: 0;
+        font-size: 12px;
+      }
+      .quick-chat-history {
+        max-height: 172px;
+        overflow-y: auto;
+        padding: 10px 12px;
+        border-bottom: 1px solid var(--line-soft);
+        background: var(--bg);
+      }
+      .quick-chat-history-section { margin-bottom: 8px; }
+      .quick-chat-history-title {
+        padding: 3px 2px 5px;
+        font-size: 10px;
+        font-weight: 700;
+        color: var(--dim);
+        text-transform: uppercase;
+        letter-spacing: .04em;
+      }
+      .quick-chat-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 9px;
+        border-radius: var(--radius);
+        cursor: pointer;
+        color: var(--muted);
+        border: 1px solid transparent;
+      }
+      .quick-chat-row-icon {
+        width: 22px;
+        height: 22px;
+        display: grid;
+        place-items: center;
+        border-radius: 7px;
+        background: var(--surface-2);
+        flex: 0 0 auto;
+      }
+      .quick-chat-row:hover,
+      .quick-chat-row.active {
+        background: var(--surface);
+        color: var(--text);
+        border-color: var(--line-soft);
+      }
+      .quick-chat-row.active { border-left-color: var(--accent); }
+      .quick-chat-row-main {
+        flex: 1;
+        min-width: 0;
+      }
+      .quick-chat-row-main strong {
+        display: block;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        font-size: 12px;
+        color: var(--text);
+      }
+      .quick-chat-row-main small {
+        display: block;
+        margin-top: 2px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        font-size: 10px;
+        color: var(--dim);
+      }
+      .quick-chat-thread {
+        min-height: 0;
+        overflow-y: auto;
+        padding: 16px 18px;
+      }
+      .quick-chat-composer {
+        padding: 12px 14px;
+        border-top: 1px solid var(--line-soft);
+        display: grid;
+        grid-template-columns: minmax(120px, 150px) minmax(0, 1fr) 36px;
+        gap: 8px;
+        align-items: end;
+        background: var(--surface);
+      }
+      .quick-chat-composer textarea {
+        min-height: 38px;
+        max-height: 110px;
+        resize: vertical;
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        background: var(--bg);
+        color: var(--text);
+        padding: 9px 10px;
+        outline: 0;
+        font-family: var(--sans);
+        font-size: 12px;
+        line-height: 1.45;
+      }
+      .quick-chat-empty {
+        min-height: 220px;
+        display: grid;
+        place-items: center;
+        color: var(--dim);
+        font-size: 12px;
+        text-align: center;
       }
       .composer {
         border: 1px solid var(--line);
@@ -2285,25 +2569,9 @@
               + 新建对话
             </button>
             <div class="label">置顶</div>
-            <div class="side-item active" data-open-chat>
-              <span
-                >✳ FocusPilot 调试<span class="subline">3 分钟前</span></span
-              >
-            </div>
+            <div id="homeChatPinnedList"></div>
             <div class="label">最近</div>
-            <div class="side-item" data-open-chat>
-              <span
-                >✳ 市场分析报告<span class="subline"
-                  >2 小时前 · 研究员</span
-                ></span
-              >
-            </div>
-            <div class="side-item" data-open-chat>
-              <span>✳ 周报整理<span class="subline">昨天</span></span>
-            </div>
-            <div class="side-item" data-open-chat>
-              <span>✳ API 设计讨论<span class="subline">昨天</span></span>
-            </div>
+            <div id="homeChatRecentList"></div>
           </div>
         </section>
 
@@ -2801,13 +3069,15 @@
                   <div class="chat-mark">✳</div>
                   <h2>FocusPilot</h2>
                   <div class="composer with-agent" style="width: 100%">
-                    <select class="agent-select">
-                      <option>🤖 通用</option>
-                      <option>🔎 研究员</option>
-                      <option>🧭 规划师</option>
+                    <select class="agent-select" id="homeNewChatAgent">
+                      <option value="🤖 通用">🤖 通用</option>
+                      <option value="✳ Claude Code">✳ Claude Code</option>
+                      <option value="⚡ Codex CLI">⚡ Codex CLI</option>
+                      <option value="🔎 研究员">🔎 研究员</option>
+                      <option value="🧭 规划师">🧭 规划师</option>
                     </select>
-                    <textarea placeholder="描述你想做的事..."></textarea>
-                    <button class="btn primary">发送</button>
+                    <textarea id="homeNewChatInput" placeholder="描述你想做的事..."></textarea>
+                    <button class="btn primary" onclick="sendHomeChatMessage()">发送</button>
                   </div>
                 </div>
               </div>
@@ -2815,26 +3085,15 @@
             <div class="chat-state active" id="home-chat-thread">
               <div class="card chat-shell">
                 <div class="chat-title">
-                  <h3>市场分析报告</h3>
-                  <span class="pill blue">🤖 研究员 🔒</span>
+                  <h3 id="homeChatTitle">市场分析报告</h3>
+                  <span class="pill blue" id="homeChatAgentPill">🤖 研究员 🔒</span>
                 </div>
-                <div class="chat-thread">
-                  <div class="message user">帮我分析一下 Q2 的客户数据。</div>
-                  <div class="message agent">
-                    我会先整理客户新增、留存和收入贡献，再给出本周可以推进的 3
-                    个行动建议。
-                  </div>
-                  <div class="message user">优先看新增和流失原因。</div>
-                  <div class="message agent">
-                    Q2 新增客户 23 个，同比增长 15%。流失主要集中在试用后 14
-                    天内，建议把 onboarding 检查点前移到第 3 天和第 7 天。
-                  </div>
-                </div>
+                <div class="chat-thread" id="homeChatThread"></div>
                 <div class="card-body">
                   <div class="composer with-agent">
-                    <span class="pill">🤖 研究员 🔒</span>
-                    <textarea placeholder="继续提问..."></textarea>
-                    <button class="btn primary">发送</button>
+                    <span class="pill" id="homeChatComposerAgent">🤖 研究员 🔒</span>
+                    <textarea id="homeChatInput" placeholder="继续提问..."></textarea>
+                    <button class="btn primary" onclick="sendHomeChatMessage()">发送</button>
                   </div>
                 </div>
               </div>
@@ -2861,22 +3120,26 @@
                 </optgroup>
               </select>
               <select class="studio-display-dropdown" id="fp-timeline-group-select" title="时间轴分组" onchange="setTimelineGroupMode(this.value)" style="display:none">
-                <option value="goal">▱ 按目标</option>
-                <option value="project">▤ 按项目</option>
+                <optgroup label="分组方式">
+                  <option value="goal">▱ 按目标</option>
+                  <option value="project">▤ 按项目</option>
+                </optgroup>
               </select>
               <select class="studio-display-dropdown" id="fp-swimlane-group-select" title="泳道分组" onchange="setSwimlaneGroupMode(this.value)" style="display:none">
-                <option value="workspace">▤ Workspace</option>
-                <option value="agent">◉ 执行 Agent</option>
+                <optgroup label="分组方式">
+                  <option value="workspace">▤ Workspace</option>
+                  <option value="agent">◉ 执行 Agent</option>
+                  <option value="parent">↳ 父级任务</option>
+                  <option value="owner">◎ 负责人</option>
+                </optgroup>
               </select>
               <select class="studio-filter-select" id="fp-filter-goal" title="目标筛选" onchange="setStudioToolbarFilter('goal', this.value)">
                 <option value="all">目标: 全部</option>
               </select>
-              <select class="studio-filter-select" id="fp-filter-source" title="来源筛选" onchange="setStudioToolbarFilter('source', this.value)">
-                <option value="all">来源: 全部</option>
-                <option value="local_project">来源: 本地项目</option>
-                <option value="git_project">来源: Git 远程</option>
-                <option value="temporary">来源: 临时创建</option>
-              </select>
+              <div class="studio-filter-menu-wrap" id="studioTaskFilterWrap">
+                <button class="studio-filter-select" id="studioTaskFilterButton" title="任务过滤条件" onclick="toggleStudioTaskFilterMenu(event)">筛选</button>
+                <div class="studio-filter-menu" id="studioTaskFilterMenu"></div>
+              </div>
               <button class="btn primary" onclick="openNewTaskModal()">新建 Task</button>
             </div>
           </header>
@@ -6428,6 +6691,31 @@ FocusPilot/
       </main>
     </div>
 
+    <button id="quickChatTrigger" class="quick-chat-trigger" onclick="openQuickChatPanel()" title="快捷对话助手" aria-label="快捷对话助手">
+      <span class="bubble"></span>
+    </button>
+    <div id="quickChatPanel" class="quick-chat-panel" aria-label="快捷对话助手面板">
+      <div class="quick-chat-head">
+        <button class="btn icon" onclick="startQuickChatDraft()" title="新建对话">+</button>
+        <select id="quickChatHistorySelect" class="quick-chat-history-select" onchange="handleQuickChatHistorySelect(this.value)" aria-label="选择历史对话"></select>
+        <button class="btn icon" onclick="expandQuickChatToHome()" title="展开到首页对话">↗</button>
+        <button class="btn icon" onclick="closeQuickChatPanel()" title="最小化">−</button>
+      </div>
+      <div id="quickChatHistory" class="quick-chat-history"></div>
+      <div id="quickChatThread" class="quick-chat-thread"></div>
+      <div class="quick-chat-composer">
+        <select class="agent-select" id="quickChatAgent">
+          <option value="🤖 通用">🤖 通用</option>
+          <option value="✳ Claude Code">✳ Claude Code</option>
+          <option value="⚡ Codex CLI">⚡ Codex CLI</option>
+          <option value="🔎 研究员">🔎 研究员</option>
+          <option value="🧭 规划师">🧭 规划师</option>
+        </select>
+        <textarea id="quickChatInput" placeholder="输入消息..."></textarea>
+        <button class="btn primary icon" onclick="sendQuickChatMessage()" title="发送">↑</button>
+      </div>
+    </div>
+
     <div class="modal-backdrop" id="crew-new-modal">
       <div class="modal" style="width:min(520px,calc(100vw - 48px))">
         <div class="card-head" style="padding:18px 20px 14px">
@@ -6620,17 +6908,22 @@ FocusPilot/
       var workspaceRegistry = {
         'FocusPilot': { id: 'FocusPilot', name: 'FocusPilot', type: 'local_project', icon: '📁', path: '~/Workspace/FocusPilot', branch: 'main', remote: 'origin/main (同步)' },
         'PilotOne': { id: 'PilotOne', name: 'PilotOne', type: 'local_project', icon: '📁', path: '~/Workspace/PilotOne', branch: 'develop', remote: 'origin/develop (同步)' },
+        'tmp-quick-chat': { id: 'tmp-quick-chat', name: '快捷对话临时项目', type: 'temporary', icon: '💬', path: '~/FocusPilotWorkspaces/tmp-quick-chat', branch: '—', remote: '本地临时目录' },
         'tmp-20260527-01': { id: 'tmp-20260527-01', name: '临时项目 tmp-20260527-01', type: 'temporary', icon: '📦', path: '~/FocusPilotWorkspaces/tmp-20260527-01', branch: '—', remote: '本地临时目录' },
         'tmp-pilotone-api': { id: 'tmp-pilotone-api', name: '临时项目 tmp-pilotone-api', type: 'temporary', icon: '📦', path: '~/FocusPilotWorkspaces/tmp-pilotone-api', branch: '—', remote: '本地临时目录' },
         'git-focuspilot-ai': { id: 'git-focuspilot-ai', name: 'Git · FocusPilot AI', type: 'git_project', icon: '🔗', path: '~/FocusPilotWorkspaces/git-focuspilot-ai', branch: 'feature/planning-engine', remote: 'github.com/xxlest/FocusPilot.git' }
       };
       var studioWorkspaceFilter = 'all';
       var currentFocusFilter = 'all';
-      var studioToolbarFilters = { time: 'all', goal: 'all', source: 'all' };
+      var studioToolbarFilters = { time: 'all', goal: 'all' };
+      var studioTaskFilterActiveCategory = 'project';
+      var studioTaskFilterSelections = { project: [], agent: [], priority: [], tag: [], owner: [], creator: [] };
       var timelineGroupMode = 'goal';
       var swimlaneGroupMode = 'workspace';
+      var swimlaneCollapsedGroups = {};
       var swimlaneDraggedTaskId = '';
       var kanbanDraggedTaskId = '';
+      var selectedListTaskIds = [];
       var tempWorkspaceCounter = 3;
 
       function workspaceTypeInfo(type) {
@@ -6667,6 +6960,7 @@ FocusPilot/
       }
 
       function ensureWorkspaceRegistryFromItems() {
+        normalizeWorkItemMetadata();
         workItems.forEach(function(item) {
           var id = item.projectId || deriveWorkspaceIdForItem(item);
           item.projectId = id;
@@ -6684,6 +6978,27 @@ FocusPilot/
         if (item.workspaceType === 'git_project') return 'git-workspace';
         if (item.workspaceType === 'local_project') return 'local-workspace';
         return 'tmp-unsorted';
+      }
+
+      function inferWorkItemTags(item) {
+        var tags = [];
+        var text = ((item.title || '') + ' ' + (item.goal || '')).toLowerCase();
+        if (item.workspaceType === 'temporary') tags.push('临时');
+        if (item.workspaceType === 'git_project') tags.push('Git');
+        if (/prd|文档|doc/.test(text)) tags.push('文档');
+        if (/设计|模型|接口|api|脚本|terminal|看板|同步|系统/.test(text)) tags.push('工程');
+        if (/研究|multica|调研/.test(text)) tags.push('研究');
+        if (tags.length === 0) tags.push('执行');
+        return tags.filter(function(tag, index) { return tags.indexOf(tag) === index; });
+      }
+
+      function normalizeWorkItemMetadata() {
+        workItems.forEach(function(item, index) {
+          if (!Array.isArray(item.tags) || item.tags.length === 0) item.tags = inferWorkItemTags(item);
+          if (!item.owner) item.owner = item.agent || (index % 4 === 0 ? 'Bruce' : (index % 4 === 1 ? '代码工程师' : (index % 4 === 2 ? '产品经理' : '设计师')));
+          if (!item.creator) item.creator = index % 3 === 0 ? 'Bruce' : (index % 3 === 1 ? '系统' : 'AICrew');
+          if (!item.parent) item.parent = item.goal || item.projectId || deriveWorkspaceIdForItem(item) || '独立任务';
+        });
       }
 
       function workspaceRadioForType(type) {
@@ -6754,15 +7069,164 @@ FocusPilot/
         return true;
       }
 
+      var studioTaskFilterCategories = [
+        { key: 'project', label: '项目' },
+        { key: 'agent', label: 'Agent' },
+        { key: 'priority', label: '优先级' },
+        { key: 'tag', label: '标签' },
+        { key: 'owner', label: '负责人' },
+        { key: 'creator', label: '创建者' }
+      ];
+
+      function getPriorityLabel(priority) {
+        var map = { p0: 'P0 — 紧急', p1: 'P1 — 重要', p2: 'P2 — 普通' };
+        return map[priority] || (priority ? String(priority).toUpperCase() : '未设置');
+      }
+
+      function getItemFilterValues(item, kind) {
+        if (kind === 'project') return [item.projectId || deriveWorkspaceIdForItem(item)];
+        if (kind === 'agent') return [item.agent || '未分配'];
+        if (kind === 'priority') return [item.priority || 'p2'];
+        if (kind === 'tag') return Array.isArray(item.tags) ? item.tags : [];
+        if (kind === 'owner') return [item.owner || '未分配'];
+        if (kind === 'creator') return [item.creator || '未知'];
+        return [];
+      }
+
+      function formatStudioFilterValue(kind, value) {
+        if (kind === 'project') return getWorkspaceMeta(value).name;
+        if (kind === 'priority') return getPriorityLabel(value);
+        return value || '未设置';
+      }
+
+      function getStudioTaskFilterOptions(kind) {
+        ensureWorkspaceRegistryFromItems();
+        var values = [];
+        workItems.forEach(function(item) {
+          getItemFilterValues(item, kind).forEach(function(value) {
+            if (value && values.indexOf(value) === -1) values.push(value);
+          });
+        });
+        if (kind === 'priority') {
+          var order = ['p0', 'p1', 'p2'];
+          values.sort(function(a, b) { return order.indexOf(a) - order.indexOf(b); });
+        } else {
+          values.sort(function(a, b) {
+            return formatStudioFilterValue(kind, a).localeCompare(formatStudioFilterValue(kind, b));
+          });
+        }
+        return values.map(function(value) {
+          return { value: value, label: formatStudioFilterValue(kind, value) };
+        });
+      }
+
+      function getStudioTaskSelectedCount(kind) {
+        return (studioTaskFilterSelections[kind] || []).length;
+      }
+
+      function getStudioTaskTotalSelectedCount() {
+        return studioTaskFilterCategories.reduce(function(total, category) {
+          return total + getStudioTaskSelectedCount(category.key);
+        }, 0);
+      }
+
+      function itemMatchesAdvancedStudioFilters(item) {
+        return studioTaskFilterCategories.every(function(category) {
+          var selected = studioTaskFilterSelections[category.key] || [];
+          if (selected.length === 0) return true;
+          var values = getItemFilterValues(item, category.key);
+          return selected.some(function(value) { return values.indexOf(value) !== -1; });
+        });
+      }
+
+      function renderStudioTaskFilterMenu() {
+        var menu = document.getElementById('studioTaskFilterMenu');
+        if (!menu) return;
+        var active = studioTaskFilterActiveCategory || 'project';
+        var activeCategory = studioTaskFilterCategories.find(function(category) { return category.key === active; }) || studioTaskFilterCategories[0];
+        var catsHtml = '<div class="studio-filter-cats">';
+        studioTaskFilterCategories.forEach(function(category) {
+          var count = getStudioTaskSelectedCount(category.key);
+          catsHtml += '<div class="studio-filter-cat' + (category.key === activeCategory.key ? ' active' : '') + '" onmouseenter="setStudioTaskFilterCategory(\'' + category.key + '\')" onclick="setStudioTaskFilterCategory(\'' + category.key + '\')">';
+          catsHtml += '<span>' + category.label + '</span>';
+          if (count > 0) catsHtml += '<span class="studio-filter-cat-count">' + count + '</span>';
+          catsHtml += '</div>';
+        });
+        catsHtml += '</div>';
+        var options = getStudioTaskFilterOptions(activeCategory.key);
+        var selected = studioTaskFilterSelections[activeCategory.key] || [];
+        var optionsHtml = '<div class="studio-filter-options">';
+        optionsHtml += '<div style="display:flex;align-items:center;justify-content:space-between;margin:0 0 6px;font-size:11px;color:var(--dim)"><strong style="color:var(--muted)">' + activeCategory.label + '</strong><button class="btn" style="height:24px;font-size:10px" onclick="clearStudioTaskFilterKind(\'' + activeCategory.key + '\')">清空本栏</button></div>';
+        if (options.length === 0) {
+          optionsHtml += '<div style="padding:16px 8px;color:var(--dim);font-size:11px;text-align:center">暂无可选条件</div>';
+        } else {
+          options.forEach(function(option) {
+            var checked = selected.indexOf(option.value) !== -1;
+            optionsHtml += '<label class="studio-filter-option">';
+            optionsHtml += '<input type="checkbox" data-filter-kind="' + activeCategory.key + '" data-filter-value="' + escapeTimelineHtml(option.value) + '" onchange="toggleStudioTaskFilterValueFromInput(event)"' + (checked ? ' checked' : '') + '>';
+            optionsHtml += '<span style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + escapeTimelineHtml(option.label) + '</span>';
+            optionsHtml += '</label>';
+          });
+        }
+        optionsHtml += '</div>';
+        var total = getStudioTaskTotalSelectedCount();
+        menu.innerHTML = catsHtml + optionsHtml +
+          '<div class="studio-filter-menu-foot"><span style="font-size:11px;color:var(--dim)">已选 ' + total + ' 个条件</span><div style="display:flex;gap:6px"><button class="btn" style="height:24px;font-size:10px" onclick="clearAllStudioTaskFilters()">全部清空</button><button class="btn primary" style="height:24px;font-size:10px" onclick="closeStudioTaskFilterMenu()">完成</button></div></div>';
+      }
+
+      function toggleStudioTaskFilterMenu(event) {
+        if (event) event.stopPropagation();
+        var menu = document.getElementById('studioTaskFilterMenu');
+        if (!menu) return;
+        renderStudioTaskFilterMenu();
+        menu.classList.toggle('open');
+      }
+
+      function closeStudioTaskFilterMenu() {
+        var menu = document.getElementById('studioTaskFilterMenu');
+        if (menu) menu.classList.remove('open');
+      }
+
+      function setStudioTaskFilterCategory(kind) {
+        var next = kind || 'project';
+        if (studioTaskFilterActiveCategory === next) return;
+        studioTaskFilterActiveCategory = next;
+        renderStudioTaskFilterMenu();
+      }
+
+      function toggleStudioTaskFilterValue(kind, value) {
+        if (!studioTaskFilterSelections[kind]) studioTaskFilterSelections[kind] = [];
+        var selected = studioTaskFilterSelections[kind];
+        var idx = selected.indexOf(value);
+        if (idx === -1) selected.push(value);
+        else selected.splice(idx, 1);
+        applyStudioTaskFilters();
+      }
+
+      function toggleStudioTaskFilterValueFromInput(event) {
+        var input = event && event.currentTarget;
+        if (!input) return;
+        toggleStudioTaskFilterValue(input.dataset.filterKind, input.dataset.filterValue);
+      }
+
+      function clearStudioTaskFilterKind(kind) {
+        studioTaskFilterSelections[kind] = [];
+        applyStudioTaskFilters();
+      }
+
+      function clearAllStudioTaskFilters() {
+        studioTaskFilterCategories.forEach(function(category) {
+          studioTaskFilterSelections[category.key] = [];
+        });
+        applyStudioTaskFilters();
+      }
+
       function itemMatchesStudioTaskFilters(item) {
         var filters = studioToolbarFilters || {};
         if (!itemMatchesFocusFilter(item, currentFocusFilter)) return false;
         if (!itemMatchesToolbarTime(item, filters.time)) return false;
         if (filters.goal && filters.goal !== 'all' && (item.goal || '') !== filters.goal) return false;
-        if (filters.source && filters.source !== 'all') {
-          var meta = getWorkspaceMeta(item.projectId || deriveWorkspaceIdForItem(item));
-          if (meta.type !== filters.source && item.workspaceType !== filters.source) return false;
-        }
+        if (!itemMatchesAdvancedStudioFilters(item)) return false;
         return true;
       }
 
@@ -6785,18 +7249,22 @@ FocusPilot/
 
       function updateStudioToolbarFilterState() {
         var goal = document.getElementById('fp-filter-goal');
-        var source = document.getElementById('fp-filter-source');
+        var filterButton = document.getElementById('studioTaskFilterButton');
         if (goal) {
           goal.value = studioToolbarFilters.goal || 'all';
           goal.classList.toggle('active', goal.value !== 'all');
         }
-        if (source) {
-          source.value = studioToolbarFilters.source || 'all';
-          source.classList.toggle('active', source.value !== 'all');
+        if (filterButton) {
+          var total = getStudioTaskTotalSelectedCount();
+          filterButton.textContent = total > 0 ? '筛选 · ' + total : '筛选';
+          filterButton.classList.toggle('active', total > 0);
         }
+        var menu = document.getElementById('studioTaskFilterMenu');
+        if (menu && menu.classList.contains('open')) renderStudioTaskFilterMenu();
       }
 
       function populateStudioToolbarFilters() {
+        ensureWorkspaceRegistryFromItems();
         var goal = document.getElementById('fp-filter-goal');
         if (!goal) return;
         var selected = studioToolbarFilters.goal || 'all';
@@ -6810,8 +7278,15 @@ FocusPilot/
         }).join('');
         if (goals.indexOf(selected) === -1) selected = 'all';
         studioToolbarFilters.goal = selected;
+        renderStudioTaskFilterMenu();
         updateStudioToolbarFilterState();
       }
+
+      document.addEventListener('click', function(event) {
+        var wrap = document.getElementById('studioTaskFilterWrap');
+        if (!wrap) return;
+        if (!wrap.contains(event.target)) closeStudioTaskFilterMenu();
+      });
 
       function buildTaskCardHtml(item, compact) {
         var priorityColor = item.priority === 'p0' ? 'var(--red)' : (item.priority === 'p1' ? 'var(--amber)' : 'var(--dim)');
@@ -7002,7 +7477,8 @@ FocusPilot/
       }
 
       function setSwimlaneGroupMode(mode) {
-        swimlaneGroupMode = mode === 'agent' ? 'agent' : 'workspace';
+        var allowed = ['workspace', 'agent', 'parent', 'owner'];
+        swimlaneGroupMode = allowed.indexOf(mode) !== -1 ? mode : 'workspace';
         syncSwimlaneGroupControlVisibility();
         renderSwimlaneFromItems();
       }
@@ -7126,6 +7602,8 @@ FocusPilot/
 
       function getSwimlaneGroupKey(item) {
         if (swimlaneGroupMode === 'agent') return getSwimlaneAgentKey(item);
+        if (swimlaneGroupMode === 'parent') return item.parent || item.goal || '独立任务';
+        if (swimlaneGroupMode === 'owner') return item.owner || '未分配';
         return item.projectId || deriveWorkspaceIdForItem(item);
       }
 
@@ -7139,6 +7617,22 @@ FocusPilot/
             sub: (groupKey === '__manual__' ? '未分配 Agent' : '执行 Agent') + ' · ' + count + ' 项'
           };
         }
+        if (swimlaneGroupMode === 'parent') {
+          var parentCount = visibleItems.filter(function(item) { return getSwimlaneGroupKey(item) === groupKey; }).length;
+          return {
+            key: groupKey,
+            label: '↳ ' + groupKey,
+            sub: '父级任务 · ' + parentCount + ' 项'
+          };
+        }
+        if (swimlaneGroupMode === 'owner') {
+          var ownerCount = visibleItems.filter(function(item) { return getSwimlaneGroupKey(item) === groupKey; }).length;
+          return {
+            key: groupKey,
+            label: '◎ ' + groupKey,
+            sub: '负责人 · ' + ownerCount + ' 项'
+          };
+        }
         var meta = getWorkspaceMeta(groupKey);
         var info = workspaceTypeInfo(meta.type);
         var wsCount = visibleItems.filter(function(item) { return (item.projectId || deriveWorkspaceIdForItem(item)) === groupKey; }).length;
@@ -7148,6 +7642,24 @@ FocusPilot/
           sub: info.label + ' · ' + wsCount + ' 项',
           workspace: meta
         };
+      }
+
+      function getSwimlaneGroupStateKey(groupKey) {
+        return swimlaneGroupMode + '::' + groupKey;
+      }
+
+      function isSwimlaneGroupCollapsed(groupKey) {
+        return !!swimlaneCollapsedGroups[getSwimlaneGroupStateKey(groupKey)];
+      }
+
+      function toggleSwimlaneGroupCollapsedFromButton(event) {
+        if (event) event.stopPropagation();
+        var button = event && event.currentTarget;
+        if (!button) return;
+        var groupKey = button.dataset.swimlaneToggleKey || '';
+        var stateKey = getSwimlaneGroupStateKey(groupKey);
+        swimlaneCollapsedGroups[stateKey] = !swimlaneCollapsedGroups[stateKey];
+        renderSwimlaneFromItems();
       }
 
       function renderSwimlaneFromItems() {
@@ -7163,7 +7675,8 @@ FocusPilot/
         groupKeys.sort(function(a, b) {
           return getSwimlaneGroupMeta(a, visibleItems).label.localeCompare(getSwimlaneGroupMeta(b, visibleItems).label);
         });
-        var leadLabel = swimlaneGroupMode === 'agent' ? '执行 Agent' : 'Workspace';
+        var leadLabelMap = { workspace: 'Workspace', agent: '执行 Agent', parent: '父级任务', owner: '负责人' };
+        var leadLabel = leadLabelMap[swimlaneGroupMode] || 'Workspace';
         var html = '<div class="swimlane-head">' + leadLabel + '</div>';
         taskStatusDefs.forEach(function(def) {
           html += '<div class="swimlane-head"><span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:' + def.color + ';margin-right:5px"></span>' + def.label + '</div>';
@@ -7179,24 +7692,34 @@ FocusPilot/
         }
         groupKeys.forEach(function(groupKey) {
           var groupMeta = getSwimlaneGroupMeta(groupKey, visibleItems);
-          html += '<div class="swimlane-workspace">' + groupMeta.label + '<span class="sub">' + groupMeta.sub + '</span></div>';
+          var collapsed = isSwimlaneGroupCollapsed(groupKey);
+          var groupItems = visibleItems.filter(function(item) { return getSwimlaneGroupKey(item) === groupKey; });
+          html += '<div class="swimlane-workspace' + (collapsed ? ' folded' : '') + '">';
+          html += '<div style="display:flex;align-items:center;gap:7px;min-width:0"><button class="swimlane-group-toggle" data-swimlane-toggle-key="' + escapeTimelineHtml(groupKey) + '" onclick="toggleSwimlaneGroupCollapsedFromButton(event)" title="' + (collapsed ? '展开分组' : '折叠分组') + '">' + (collapsed ? '▸' : '▾') + '</button><span style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + escapeTimelineHtml(groupMeta.label) + '</span></div>';
+          html += '<span class="sub">' + escapeTimelineHtml(groupMeta.sub) + '</span></div>';
           taskStatusDefs.forEach(function(def) {
             var workspaceAttr = swimlaneGroupMode === 'workspace' ? groupKey : '';
             var agentAttr = swimlaneGroupMode === 'agent' ? groupKey : '';
-            html += '<div class="swimlane-cell" data-swimlane-group="' + groupKey + '" data-swimlane-workspace="' + workspaceAttr + '" data-swimlane-agent="' + agentAttr + '" data-swimlane-status="' + def.status + '">';
-            visibleItems.filter(function(item) {
-              return getSwimlaneGroupKey(item) === groupKey && item.status === def.status;
-            }).forEach(function(item) {
-              var meta = getWorkspaceMeta(item.projectId || deriveWorkspaceIdForItem(item));
-              html += '<div class="task fp-card swimlane-card" draggable="true" data-task-id="' + item.id + '" data-fp-schedule="' + (item.schedule || '') + '" data-fp-workspace="' + meta.name + '"' +
-                (item.month ? ' data-fp-month="' + item.month + '"' : '') +
-                (item.executionMode ? ' data-fp-mode="' + item.executionMode + '"' : '') +
-                (item.agentStatus ? ' data-fp-agent="yes"' : '') +
-                (item.decision ? ' data-fp-decision="yes"' : '') +
-                '>' +
-                buildTaskCardHtml(item, true) +
-                '</div>';
-            });
+            var parentAttr = swimlaneGroupMode === 'parent' ? groupKey : '';
+            var ownerAttr = swimlaneGroupMode === 'owner' ? groupKey : '';
+            html += '<div class="swimlane-cell' + (collapsed ? ' folded' : '') + '" data-swimlane-group="' + escapeTimelineHtml(groupKey) + '" data-swimlane-workspace="' + escapeTimelineHtml(workspaceAttr) + '" data-swimlane-agent="' + escapeTimelineHtml(agentAttr) + '" data-swimlane-parent="' + escapeTimelineHtml(parentAttr) + '" data-swimlane-owner="' + escapeTimelineHtml(ownerAttr) + '" data-swimlane-status="' + def.status + '">';
+            if (collapsed) {
+              if (def.status === taskStatusDefs[0].status) html += '已折叠 ' + groupItems.length + ' 项';
+            } else {
+              groupItems.filter(function(item) {
+                return item.status === def.status;
+              }).forEach(function(item) {
+                var meta = getWorkspaceMeta(item.projectId || deriveWorkspaceIdForItem(item));
+                html += '<div class="task fp-card swimlane-card" draggable="true" data-task-id="' + item.id + '" data-fp-schedule="' + (item.schedule || '') + '" data-fp-workspace="' + escapeTimelineHtml(meta.name) + '"' +
+                  (item.month ? ' data-fp-month="' + item.month + '"' : '') +
+                  (item.executionMode ? ' data-fp-mode="' + item.executionMode + '"' : '') +
+                  (item.agentStatus ? ' data-fp-agent="yes"' : '') +
+                  (item.decision ? ' data-fp-decision="yes"' : '') +
+                  '>' +
+                  buildTaskCardHtml(item, true) +
+                  '</div>';
+              });
+            }
             html += '</div>';
           });
         });
@@ -7243,15 +7766,23 @@ FocusPilot/
         var targetStatus = cell.dataset.swimlaneStatus;
         var targetWorkspace = cell.dataset.swimlaneWorkspace;
         var targetAgent = cell.dataset.swimlaneAgent;
+        var targetParent = cell.dataset.swimlaneParent;
+        var targetOwner = cell.dataset.swimlaneOwner;
         if (!taskId || !targetStatus) return;
         var item = workItems.find(function(candidate) { return candidate.id === taskId; });
         if (!item) return;
         if (swimlaneGroupMode === 'workspace' && !targetWorkspace) return;
         if (swimlaneGroupMode === 'agent' && !targetAgent) return;
+        if (swimlaneGroupMode === 'parent' && !targetParent) return;
+        if (swimlaneGroupMode === 'owner' && !targetOwner) return;
         var previousWorkspace = item.projectId;
         item.status = targetStatus;
         if (swimlaneGroupMode === 'agent') {
           item.agent = targetAgent === '__manual__' ? '' : targetAgent;
+        } else if (swimlaneGroupMode === 'parent') {
+          item.parent = targetParent;
+        } else if (swimlaneGroupMode === 'owner') {
+          item.owner = targetOwner;
         } else {
           var targetMeta = getWorkspaceMeta(targetWorkspace);
           item.projectId = targetWorkspace;
@@ -7261,7 +7792,7 @@ FocusPilot/
         var statusLabel = taskStatusDefs.find(function(def) { return def.status === targetStatus; }).label;
         var targetLabel = swimlaneGroupMode === 'agent'
           ? (targetAgent === '__manual__' ? '手动执行' : targetAgent)
-          : getWorkspaceMeta(item.projectId).name;
+          : (swimlaneGroupMode === 'parent' ? targetParent : (swimlaneGroupMode === 'owner' ? targetOwner : getWorkspaceMeta(item.projectId).name));
         showToast('已移动 ' + taskId + ' 到 ' + targetLabel + ' · ' + statusLabel);
       }
 
@@ -7523,6 +8054,10 @@ FocusPilot/
 
       document.querySelectorAll("[data-new-chat]").forEach((el) => {
         el.addEventListener("click", () => {
+          if (typeof startHomeNewChat === 'function') {
+            startHomeNewChat();
+            return;
+          }
           document
             .querySelector('[data-scope="homeMode"] [data-target="home-chat"]')
             .click()
@@ -9569,6 +10104,380 @@ FocusPilot/
         var newRow = document.querySelector('.studio-session[data-session-id="' + sid + '"]');
         if (newRow) selectStudioSession(newRow);
         closeNewSessionModal();
+        syncSessionSurfaces(ws);
+      }
+
+      /* ── Global Quick Chat: Home / Quick Panel / Studio Session 同源 ── */
+      var QUICK_CHAT_WORKSPACE_ID = 'tmp-quick-chat';
+      var quickChatActiveSessionId = '';
+      var homeActiveSessionId = '';
+
+      function escapeHtml(value) {
+        return String(value == null ? '' : value)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#039;');
+      }
+
+      function firstSymbol(value) {
+        var parts = Array.from(String(value || '💬').trim());
+        return parts.length ? parts[0] : '💬';
+      }
+
+      function agentNameFromLabel(label) {
+        return String(label || '通用').replace(/^[^\s]+\s*/, '') || '通用';
+      }
+
+      function ensureSelectValue(select, value) {
+        if (!select || !value) return;
+        var exists = Array.from(select.options).some(function(option) { return option.value === value; });
+        if (!exists) {
+          var option = document.createElement('option');
+          option.value = value;
+          option.textContent = value;
+          select.appendChild(option);
+        }
+        select.value = value;
+      }
+
+      function summarizePrompt(text) {
+        var clean = String(text || '').replace(/\s+/g, ' ').trim();
+        if (!clean) return '新对话';
+        return clean.length > 18 ? clean.slice(0, 18) + '...' : clean;
+      }
+
+      function composeMockAgentReply(text, session) {
+        var agent = (session && session.agentName) || 'FocusPilot';
+        return agent + ' 已收到。我会基于当前 Workspace 继续处理：' + summarizePrompt(text);
+      }
+
+      function getAllStudioSessionsSorted() {
+        return Object.keys(studioSessions).map(function(sid) {
+          return Object.assign({ sid: sid }, studioSessions[sid]);
+        }).sort(function(a, b) {
+          return getStudioSessionActivityMs(b) - getStudioSessionActivityMs(a);
+        });
+      }
+
+      function createUnifiedStudioSession(workspaceId, agent, firstText, source) {
+        var ws = workspaceId || QUICK_CHAT_WORKSPACE_ID;
+        var label = agent || '🤖 通用';
+        var sid = 's' + (sessionCounter + 10);
+        sessionCounter++;
+        var agentIcon = firstSymbol(label);
+        var session = {
+          name: summarizePrompt(firstText),
+          workspaceId: ws,
+          status: 'active',
+          agent: label,
+          agentIcon: agentIcon,
+          agentName: agentNameFromLabel(label),
+          model: label.indexOf('Codex') >= 0 ? 'codex' : (label.indexOf('Claude') >= 0 ? 'claude-opus-4' : 'focuspilot-default'),
+          preset: source === 'quick' ? '快捷对话' : '',
+          entrySource: source || 'home',
+          lastActivityAt: new Date().toISOString(),
+          messages: [],
+          diffFiles: [],
+          diffContent: [],
+          terminalLines: '$ ',
+          terminalTabs: ['Terminal 1']
+        };
+        studioSessions[sid] = session;
+        appendMessageToStudioSession(sid, firstText, { skipSync: true });
+        return sid;
+      }
+
+      function appendMessageToStudioSession(sid, text, opts) {
+        var session = studioSessions[sid];
+        if (!session) return '';
+        var clean = String(text || '').trim();
+        if (!clean) return sid;
+        session.messages.push({ role: 'user', text: clean });
+        session.messages.push({ role: 'agent', text: composeMockAgentReply(clean, session) });
+        session.lastActivityAt = new Date().toISOString();
+        if (!opts || !opts.skipSync) syncSessionSurfaces(session.workspaceId);
+        return sid;
+      }
+
+      function renderMessageBubbles(messages, compact) {
+        if (!messages || !messages.length) {
+          return '<div class="quick-chat-empty">开始一次对话，历史会同步到 Home 和 Studio 项目视图。</div>';
+        }
+        var html = '';
+        messages.forEach(function(m) {
+          if (m.role === 'user') {
+            html += '<div class="message user" style="' + (compact ? 'max-width:88%' : '') + '">' + escapeHtml(m.text) + '</div>';
+            return;
+          }
+          var body = '';
+          if (m.text) body += '<div style="white-space:pre-line">' + escapeHtml(m.text) + '</div>';
+          if (m.terminal) body += '<div style="margin-top:8px;background:var(--bg);border:1px solid var(--line-soft);border-radius:var(--radius);padding:8px 10px;font-family:var(--mono);font-size:11px;color:var(--green);white-space:pre-line">' + escapeHtml(m.terminal) + '</div>';
+          if (m.diff) body += '<div style="margin-top:8px;background:var(--bg);border:1px solid var(--line-soft);border-radius:var(--radius);padding:8px 10px;font-family:var(--mono);font-size:11px;color:var(--muted)">已修改: ' + escapeHtml(m.diff) + '</div>';
+          html += '<div class="message agent" style="' + (compact ? 'max-width:92%' : '') + '">' + body + '</div>';
+        });
+        return html;
+      }
+
+      function activateHomeChatTab() {
+        var chatBtn = document.querySelector('[data-scope="homeMode"] [data-target="home-chat"]');
+        if (chatBtn && !chatBtn.classList.contains('active')) chatBtn.click();
+        var chatSide = document.getElementById('home-chat-side');
+        var overviewSide = document.getElementById('home-overview-side');
+        if (chatSide) chatSide.classList.add('active');
+        if (overviewSide) overviewSide.classList.remove('active');
+        showPanel('home-chat');
+      }
+
+      function renderHomeChatList() {
+        var pinned = document.getElementById('homeChatPinnedList');
+        var recent = document.getElementById('homeChatRecentList');
+        if (!pinned || !recent) return;
+        var sessions = getAllStudioSessionsSorted();
+        var pinnedSessions = sessions.filter(function(s) { return !!s.pinned; });
+        var recentSessions = sessions.filter(function(s) { return !s.pinned; });
+        function renderRows(rows, emptyText) {
+          if (!rows.length) return '<div class="side-item" style="font-size:11px;color:var(--dim)">' + emptyText + '</div>';
+          return rows.map(function(s) {
+            var active = homeActiveSessionId === s.sid;
+            var meta = getWorkspaceMeta(s.workspaceId || QUICK_CHAT_WORKSPACE_ID);
+            return '<div class="side-item' + (active ? ' active' : '') + '" onclick="selectHomeSession(\'' + s.sid + '\')">' +
+              '<span>' + escapeHtml((s.agentIcon || '💬') + ' ' + s.name) +
+              '<span class="subline">' + escapeHtml(formatStudioRelativeTime(s.lastActivityAt) + ' · ' + meta.name) + '</span></span>' +
+              '</div>';
+          }).join('');
+        }
+        pinned.innerHTML = renderRows(pinnedSessions, '暂无置顶对话');
+        recent.innerHTML = renderRows(recentSessions, '暂无最近对话');
+      }
+
+      function selectHomeSession(sid) {
+        activateHomeChatTab();
+        renderHomeChatFromSession(sid);
+      }
+
+      function startHomeNewChat() {
+        homeActiveSessionId = '';
+        activateHomeChatTab();
+        setHomeChatState('empty');
+        renderHomeChatList();
+        var input = document.getElementById('homeNewChatInput');
+        if (input) input.focus();
+      }
+
+      function renderHomeChatFromSession(sid) {
+        var session = sid ? studioSessions[sid] : null;
+        if (!session) {
+          homeActiveSessionId = '';
+          setHomeChatState('empty');
+          renderHomeChatList();
+          return;
+        }
+        homeActiveSessionId = sid;
+        setHomeChatState('thread');
+        var title = document.getElementById('homeChatTitle');
+        var pill = document.getElementById('homeChatAgentPill');
+        var composerAgent = document.getElementById('homeChatComposerAgent');
+        var thread = document.getElementById('homeChatThread');
+        if (title) title.textContent = session.name;
+        if (pill) pill.textContent = session.agent + ' 🔒';
+        if (composerAgent) composerAgent.textContent = session.agent + ' 🔒';
+        if (thread) {
+          thread.innerHTML = renderMessageBubbles(session.messages, false);
+          thread.scrollTop = thread.scrollHeight;
+        }
+        renderHomeChatList();
+      }
+
+      function sendHomeChatMessage() {
+        var existing = homeActiveSessionId && studioSessions[homeActiveSessionId];
+        var input = existing ? document.getElementById('homeChatInput') : document.getElementById('homeNewChatInput');
+        var text = input ? input.value.trim() : '';
+        if (!text) return;
+        var sid = homeActiveSessionId;
+        if (!existing) {
+          var agentSelect = document.getElementById('homeNewChatAgent');
+          sid = createUnifiedStudioSession(QUICK_CHAT_WORKSPACE_ID, agentSelect ? agentSelect.value : '🤖 通用', text, 'home');
+        } else {
+          appendMessageToStudioSession(sid, text, { skipSync: true });
+        }
+        if (input) input.value = '';
+        renderHomeChatFromSession(sid);
+        syncSessionSurfaces(studioSessions[sid].workspaceId);
+      }
+
+      function getQuickChatContext() {
+        var activePage = document.querySelector('.nav-btn.active[data-page]');
+        var page = activePage ? activePage.dataset.page : 'home';
+        var workspaceId = (page === 'studio' && currentStudioWorkspace) ? currentStudioWorkspace : QUICK_CHAT_WORKSPACE_ID;
+        var meta = getWorkspaceMeta(workspaceId);
+        return { page: page, workspaceId: workspaceId, meta: meta };
+      }
+
+      function renderQuickChatHistory() {
+        var container = document.getElementById('quickChatHistory');
+        var select = document.getElementById('quickChatHistorySelect');
+        var ctx = getQuickChatContext();
+        var currentRows = getStudioSessionsForWorkspace(ctx.workspaceId);
+        var currentIds = currentRows.map(function(s) { return s.sid; });
+        var globalRows = getAllStudioSessionsSorted().filter(function(s) {
+          return currentIds.indexOf(s.sid) === -1;
+        }).slice(0, 8);
+        var displayedRows = currentRows.concat(globalRows);
+        if (quickChatActiveSessionId && studioSessions[quickChatActiveSessionId] && !displayedRows.some(function(s) { return s.sid === quickChatActiveSessionId; })) {
+          displayedRows.push(Object.assign({ sid: quickChatActiveSessionId }, studioSessions[quickChatActiveSessionId]));
+        }
+        function groupRowsByWorkspace(rows) {
+          var groups = [];
+          var byWorkspace = {};
+          rows.forEach(function(s) {
+            var workspaceId = s.workspaceId || QUICK_CHAT_WORKSPACE_ID;
+            if (!byWorkspace[workspaceId]) {
+              var meta = getWorkspaceMeta(workspaceId);
+              byWorkspace[workspaceId] = { workspaceId: workspaceId, meta: meta, rows: [] };
+              groups.push(byWorkspace[workspaceId]);
+            }
+            byWorkspace[workspaceId].rows.push(s);
+          });
+          return groups;
+        }
+        var workspaceGroups = groupRowsByWorkspace(displayedRows);
+        if (select) {
+          var selectHtml = '<option value="" disabled' + (!quickChatActiveSessionId ? ' selected' : '') + '>选择对话历史</option>';
+          function optionGroup(group) {
+            var rows = group.rows;
+            if (!rows.length) return '';
+            var html = '<optgroup label="' + escapeHtml((group.meta.icon || '▣') + ' ' + group.meta.name) + '">';
+            rows.forEach(function(s) {
+              html += '<option value="' + escapeHtml(s.sid) + '"' + (quickChatActiveSessionId === s.sid ? ' selected' : '') + '>' +
+                escapeHtml((s.agentIcon || '💬') + ' ' + s.name) +
+                '</option>';
+            });
+            return html + '</optgroup>';
+          }
+          select.innerHTML = selectHtml + workspaceGroups.map(optionGroup).join('');
+          select.value = quickChatActiveSessionId && studioSessions[quickChatActiveSessionId] ? quickChatActiveSessionId : '';
+        }
+        if (!container) return;
+        if (!workspaceGroups.length) {
+          container.innerHTML = '<div class="quick-chat-history-section"><div class="quick-chat-history-title">选择对话历史</div><div class="quick-chat-row"><span class="quick-chat-row-icon">▣</span><div class="quick-chat-row-main"><small>暂无历史对话，点击 + 新建</small></div></div></div>';
+          return;
+        }
+        container.innerHTML = workspaceGroups.map(function(group) {
+          var html = '<div class="quick-chat-history-section"><div class="quick-chat-history-title">' + escapeHtml((group.meta.icon || '▣') + ' ' + group.meta.name) + '</div>';
+          group.rows.forEach(function(s) {
+            var active = quickChatActiveSessionId === s.sid;
+            html += '<div class="quick-chat-row' + (active ? ' active' : '') + '" onclick="selectQuickChatSession(\'' + s.sid + '\')">' +
+                '<span class="quick-chat-row-icon">' + escapeHtml(group.meta.icon || '▣') + '</span><div class="quick-chat-row-main">' +
+                '<strong>' + escapeHtml(s.name) + '</strong>' +
+                '<small>' + escapeHtml((s.agent || s.agentName || 'Agent') + ' · ' + formatStudioRelativeTime(s.lastActivityAt)) + '</small>' +
+                '</div></div>';
+          });
+          return html + '</div>';
+        }).join('');
+      }
+
+      function handleQuickChatHistorySelect(value) {
+        if (!value) return;
+        if (studioSessions[value]) selectQuickChatSession(value);
+      }
+
+      function renderQuickChatThread() {
+        var ctx = getQuickChatContext();
+        var thread = document.getElementById('quickChatThread');
+        var agentSelect = document.getElementById('quickChatAgent');
+        var session = quickChatActiveSessionId ? studioSessions[quickChatActiveSessionId] : null;
+        if (agentSelect) {
+          agentSelect.disabled = !!session;
+          if (session) ensureSelectValue(agentSelect, session.agent);
+        }
+        if (!thread) return;
+        if (!session) {
+          thread.innerHTML = '<div class="quick-chat-empty"><div><strong>新对话</strong><br>发送第一条消息后，会自动提取标题，并创建到 ' + escapeHtml(ctx.meta.name) + '。</div></div>';
+          return;
+        }
+        thread.innerHTML = renderMessageBubbles(session.messages, true);
+        thread.scrollTop = thread.scrollHeight;
+      }
+
+      function startQuickChatDraft() {
+        quickChatActiveSessionId = '';
+        var input = document.getElementById('quickChatInput');
+        if (input) input.value = '';
+        renderQuickChatHistory();
+        renderQuickChatThread();
+        if (input) input.focus();
+      }
+
+      function selectQuickChatSession(sid) {
+        quickChatActiveSessionId = sid;
+        renderQuickChatHistory();
+        renderQuickChatThread();
+      }
+
+      function openQuickChatPanel() {
+        var panel = document.getElementById('quickChatPanel');
+        if (!panel) return;
+        panel.classList.add('open');
+        if (!quickChatActiveSessionId || !studioSessions[quickChatActiveSessionId]) {
+          var ctx = getQuickChatContext();
+          var contextFirst = getStudioSessionsForWorkspace(ctx.workspaceId)[0];
+          var globalFirst = getAllStudioSessionsSorted()[0];
+          quickChatActiveSessionId = contextFirst ? contextFirst.sid : (globalFirst ? globalFirst.sid : '');
+        }
+        renderQuickChatHistory();
+        renderQuickChatThread();
+      }
+
+      function closeQuickChatPanel() {
+        var panel = document.getElementById('quickChatPanel');
+        if (panel) panel.classList.remove('open');
+      }
+
+      function sendQuickChatMessage() {
+        var input = document.getElementById('quickChatInput');
+        var text = input ? input.value.trim() : '';
+        if (!text) return;
+        var sid = quickChatActiveSessionId;
+        if (!sid || !studioSessions[sid]) {
+          var ctx = getQuickChatContext();
+          var agentSelect = document.getElementById('quickChatAgent');
+          sid = createUnifiedStudioSession(ctx.workspaceId, agentSelect ? agentSelect.value : '🤖 通用', text, 'quick');
+          quickChatActiveSessionId = sid;
+        } else {
+          appendMessageToStudioSession(sid, text, { skipSync: true });
+        }
+        if (input) input.value = '';
+        renderQuickChatHistory();
+        renderQuickChatThread();
+        syncSessionSurfaces(studioSessions[sid].workspaceId);
+      }
+
+      function expandQuickChatToHome() {
+        var sid = quickChatActiveSessionId;
+        closeQuickChatPanel();
+        showPage('home');
+        activateHomeChatTab();
+        if (sid && studioSessions[sid]) renderHomeChatFromSession(sid);
+        else startHomeNewChat();
+      }
+
+      function syncSessionSurfaces(workspaceId) {
+        renderHomeChatList();
+        if (homeActiveSessionId && studioSessions[homeActiveSessionId]) renderHomeChatFromSession(homeActiveSessionId);
+        renderStudioWorkspaceList();
+        if (currentStudioWorkspace) renderProjectSessions(currentStudioWorkspace);
+        if (currentStudioSessionId && studioSessions[currentStudioSessionId]) {
+          renderStudioChat(currentStudioSessionId);
+          renderStudioDiff(currentStudioSessionId);
+          renderStudioTerminal(currentStudioSessionId);
+        }
+        var quickPanel = document.getElementById('quickChatPanel');
+        if (quickPanel && quickPanel.classList.contains('open')) {
+          renderQuickChatHistory();
+          renderQuickChatThread();
+        }
       }
 
       /* ── Studio: 置顶区可见性 ── */
@@ -10797,6 +11706,10 @@ FocusPilot/
           month: '',
           goal: '',
           agent: agent,
+          owner: agent || 'Bruce',
+          creator: 'Bruce',
+          tags: workspaceType === 'temporary' ? ['临时'] : (workspaceType === 'git_project' ? ['Git', '工程'] : ['工程']),
+          parent: projectId || '独立任务',
           date: '',
           executionSessionId: ''
         };
@@ -10839,14 +11752,138 @@ FocusPilot/
         }, 2000);
       }
 
+      function getVisibleListItems() {
+        ensureWorkspaceRegistryFromItems();
+        return workItems.filter(itemMatchesStudioTaskFilters);
+      }
+
+      function isListTaskSelected(taskId) {
+        return selectedListTaskIds.indexOf(taskId) !== -1;
+      }
+
+      function getSelectedVisibleListTaskIds(visibleItems) {
+        var visibleIds = (visibleItems || getVisibleListItems()).map(function(item) { return item.id; });
+        return selectedListTaskIds.filter(function(id) { return visibleIds.indexOf(id) !== -1; });
+      }
+
+      function toggleListTaskSelection(event, taskId) {
+        if (event) event.stopPropagation();
+        var checked = event && event.currentTarget ? event.currentTarget.checked : !isListTaskSelected(taskId);
+        var idx = selectedListTaskIds.indexOf(taskId);
+        if (checked && idx === -1) selectedListTaskIds.push(taskId);
+        if (!checked && idx !== -1) selectedListTaskIds.splice(idx, 1);
+        renderFocusListFromItems();
+      }
+
+      function toggleAllVisibleListTasks(event) {
+        if (event) event.stopPropagation();
+        var visibleItems = getVisibleListItems();
+        var checked = event && event.currentTarget ? event.currentTarget.checked : false;
+        if (checked) {
+          visibleItems.forEach(function(item) {
+            if (selectedListTaskIds.indexOf(item.id) === -1) selectedListTaskIds.push(item.id);
+          });
+        } else {
+          var visibleIds = visibleItems.map(function(item) { return item.id; });
+          selectedListTaskIds = selectedListTaskIds.filter(function(id) { return visibleIds.indexOf(id) === -1; });
+        }
+        renderFocusListFromItems();
+      }
+
+      function getListBulkOwnerOptions() {
+        var values = getStudioTaskFilterOptions('owner').map(function(option) { return option.value; });
+        ['Bruce', '代码工程师', '产品经理', '设计师'].forEach(function(owner) {
+          if (values.indexOf(owner) === -1) values.push(owner);
+        });
+        return values;
+      }
+
+      function renderListBulkToolbar(visibleItems) {
+        var selectedIds = getSelectedVisibleListTaskIds(visibleItems);
+        var disabled = selectedIds.length === 0 ? ' disabled' : '';
+        var statusOptions = taskStatusDefs.map(function(def) {
+          return '<option value="' + def.status + '">' + def.label + '</option>';
+        }).join('');
+        var ownerOptions = getListBulkOwnerOptions().map(function(owner) {
+          return '<option value="' + escapeTimelineHtml(owner) + '">' + escapeTimelineHtml(owner) + '</option>';
+        }).join('');
+        var html = '<div class="fp-list-bulk-toolbar" style="position:sticky;top:0;z-index:3;display:flex;align-items:center;gap:8px;padding:8px 0 10px;background:var(--bg);border-bottom:1px solid var(--line-soft);margin-bottom:4px">';
+        html += '<span style="font-size:11px;color:var(--dim);min-width:78px">已选 <strong style="color:var(--text);font-family:var(--mono)">' + selectedIds.length + '</strong> 条</span>';
+        html += '<select class="studio-filter-select" title="批量修改状态" onchange="applyListBulkStatus(this.value)"' + disabled + '><option value="">修改状态</option>' + statusOptions + '</select>';
+        html += '<select class="studio-filter-select" title="批量修改优先级" onchange="applyListBulkPriority(this.value)"' + disabled + '><option value="">修改优先级</option><option value="p0">P0 — 紧急</option><option value="p1">P1 — 重要</option><option value="p2">P2 — 普通</option></select>';
+        html += '<select class="studio-filter-select" title="批量修改负责人" onchange="applyListBulkOwner(this.value)"' + disabled + '><option value="">负责人</option>' + ownerOptions + '</select>';
+        html += '<button class="btn" style="height:28px;font-size:11px;color:var(--red)" onclick="deleteSelectedListTasks()" ' + disabled + '>删除</button>';
+        html += '<span style="margin-left:auto;font-size:10px;color:var(--dim);font-family:var(--mono)">' + visibleItems.length + ' visible</span>';
+        html += '</div>';
+        return html;
+      }
+
+      function refreshAfterListBulkAction(message) {
+        selectedListTaskIds = selectedListTaskIds.filter(function(id) {
+          return workItems.some(function(item) { return item.id === id; });
+        });
+        populateStudioToolbarFilters();
+        refreshStudioTaskViews();
+        renderStudioWorkspaceList();
+        if (currentStudioWorkspace) {
+          renderStudioTasksPanelFromItems(currentStudioWorkspace);
+          renderProjectInspectorTasks(currentStudioWorkspace);
+          renderProjectInspectorEnv(currentStudioWorkspace);
+        }
+        showToast(message);
+      }
+
+      function applyListBulkStatus(status) {
+        if (!status) return;
+        var ids = getSelectedVisibleListTaskIds();
+        ids.forEach(function(id) {
+          var item = workItems.find(function(candidate) { return candidate.id === id; });
+          if (item) item.status = status;
+        });
+        var def = taskStatusDefs.find(function(candidate) { return candidate.status === status; });
+        refreshAfterListBulkAction('已修改 ' + ids.length + ' 条状态为 ' + (def ? def.label : status));
+      }
+
+      function applyListBulkPriority(priority) {
+        if (!priority) return;
+        var ids = getSelectedVisibleListTaskIds();
+        ids.forEach(function(id) {
+          var item = workItems.find(function(candidate) { return candidate.id === id; });
+          if (item) item.priority = priority;
+        });
+        refreshAfterListBulkAction('已修改 ' + ids.length + ' 条优先级为 ' + priority.toUpperCase());
+      }
+
+      function applyListBulkOwner(owner) {
+        if (!owner) return;
+        var ids = getSelectedVisibleListTaskIds();
+        ids.forEach(function(id) {
+          var item = workItems.find(function(candidate) { return candidate.id === id; });
+          if (item) item.owner = owner;
+        });
+        refreshAfterListBulkAction('已修改 ' + ids.length + ' 条负责人为 ' + owner);
+      }
+
+      function deleteSelectedListTasks() {
+        var ids = getSelectedVisibleListTaskIds();
+        if (ids.length === 0) return;
+        workItems = workItems.filter(function(item) { return ids.indexOf(item.id) === -1; });
+        selectedListTaskIds = selectedListTaskIds.filter(function(id) { return ids.indexOf(id) === -1; });
+        refreshAfterListBulkAction('已删除 ' + ids.length + ' 条任务');
+      }
+
       /* ═══ renderFocusListFromItems: Render focus-list panel from workItems ═══ */
       function renderFocusListFromItems() {
         var container = document.getElementById('focus-list');
         if (!container) return;
+        selectedListTaskIds = selectedListTaskIds.filter(function(id) {
+          return workItems.some(function(item) { return item.id === id; });
+        });
+        var visibleItems = getVisibleListItems();
         // Group items by goal/month for display
         var groups = {};
         var ungrouped = [];
-        workItems.filter(itemMatchesStudioTaskFilters).forEach(function(item) {
+        visibleItems.forEach(function(item) {
           var gKey = item.goal || (item.month ? item.month + '月' : '');
           if (gKey) {
             if (!groups[gKey]) groups[gKey] = [];
@@ -10855,8 +11892,22 @@ FocusPilot/
             ungrouped.push(item);
           }
         });
-        var html = '';
-        var thRow = '<tr><th style="width:40px;text-align:left;padding:8px 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);border-bottom:1px solid var(--line-soft)">状态</th><th style="text-align:left;padding:8px 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);border-bottom:1px solid var(--line-soft)">标题</th><th style="width:70px;text-align:left;padding:8px 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);border-bottom:1px solid var(--line-soft)">安排</th><th style="width:50px;text-align:left;padding:8px 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);border-bottom:1px solid var(--line-soft)">优先级</th><th style="width:30px;text-align:left;padding:8px 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);border-bottom:1px solid var(--line-soft)">WS</th><th style="width:50px;text-align:left;padding:8px 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);border-bottom:1px solid var(--line-soft)">模式</th><th style="width:90px;text-align:left;padding:8px 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);border-bottom:1px solid var(--line-soft)">项目</th><th style="width:60px;text-align:left;padding:8px 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);border-bottom:1px solid var(--line-soft)">截止</th></tr>';
+        var selectedVisibleIds = getSelectedVisibleListTaskIds(visibleItems);
+        var allVisibleSelected = visibleItems.length > 0 && selectedVisibleIds.length === visibleItems.length;
+        var html = renderListBulkToolbar(visibleItems);
+        var thStyle = 'text-align:left;padding:8px 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);border-bottom:1px solid var(--line-soft)';
+        var thRow = '<tr>';
+        thRow += '<th style="width:30px;' + thStyle + '"><input type="checkbox" id="fp-list-select-all" onclick="event.stopPropagation()" onchange="toggleAllVisibleListTasks(event)"' + (allVisibleSelected ? ' checked' : '') + '></th>';
+        thRow += '<th style="width:40px;' + thStyle + '">状态</th>';
+        thRow += '<th style="' + thStyle + '">标题</th>';
+        thRow += '<th style="width:70px;' + thStyle + '">安排</th>';
+        thRow += '<th style="width:50px;' + thStyle + '">优先级</th>';
+        thRow += '<th style="width:70px;' + thStyle + '">负责人</th>';
+        thRow += '<th style="width:30px;' + thStyle + '">WS</th>';
+        thRow += '<th style="width:50px;' + thStyle + '">模式</th>';
+        thRow += '<th style="width:90px;' + thStyle + '">项目</th>';
+        thRow += '<th style="width:60px;' + thStyle + '">截止</th>';
+        thRow += '</tr>';
 
         function renderGroup(label, items) {
           var r = '<div style="display:flex;align-items:center;gap:8px;padding:12px 0 6px;font-size:12px;font-weight:700;color:var(--muted);border-bottom:1px solid var(--line-soft);margin-top:8px">';
@@ -10868,6 +11919,7 @@ FocusPilot/
         }
 
         function renderListRow(item) {
+          var checked = isListTaskSelected(item.id);
           var statusPill = '';
           if (item.status === 'done') statusPill = '<span class="pill green" style="font-size:10px;padding:1px 6px">✓ 完成</span>';
           else if (item.status === 'in_progress') statusPill = '<span class="pill blue" style="font-size:10px;padding:1px 6px">● 进行</span>';
@@ -10884,14 +11936,16 @@ FocusPilot/
           var modeIcon = item.executionMode === 'auto' ? '🤖' : (item.executionMode === 'dialog' ? '💬' : '🖐');
           var dateText = isDone && item.date ? '✓ ' + item.date : (item.date || '—');
           var dateColor = isDone ? 'var(--green)' : 'var(--muted)';
-          var r = '<tr class="fp-list-row" onclick="openTaskDetail(\'' + item.id + '\')" style="cursor:pointer" data-fp-schedule="' + (item.schedule || '') + '" data-fp-mode="' + (item.executionMode || '') + '">';
+          var r = '<tr class="fp-list-row" onclick="openTaskDetail(\'' + item.id + '\')" style="cursor:pointer" data-task-id="' + item.id + '" data-fp-schedule="' + (item.schedule || '') + '" data-fp-mode="' + (item.executionMode || '') + '">';
+          r += '<td style="padding:8px 10px"><input type="checkbox" class="fp-list-check" onclick="event.stopPropagation()" onchange="toggleListTaskSelection(event,\'' + item.id + '\')"' + (checked ? ' checked' : '') + '></td>';
           r += '<td style="padding:8px 10px">' + statusPill + '</td>';
           r += '<td style="padding:8px 10px;' + (isDone ? 'text-decoration:line-through;color:var(--dim)' : '') + '"><strong style="' + (isDone ? 'color:var(--dim)' : '') + '">' + item.title + '</strong></td>';
           r += '<td style="padding:8px 10px;font-size:12px;color:var(--muted)">' + schedText + '</td>';
           r += '<td style="padding:8px 10px"><span class="pill" style="font-size:9px;padding:1px 5px;border-color:' + pc[1] + ';color:' + pc[0] + '">' + item.priority.toUpperCase() + '</span></td>';
+          r += '<td style="padding:8px 10px;font-size:11px;color:var(--muted)">' + escapeTimelineHtml(item.owner || '—') + '</td>';
           r += '<td style="padding:8px 10px;font-size:12px" title="' + item.workspaceType + '">' + wsIcon + '</td>';
           r += '<td style="padding:8px 10px;font-size:12px">' + modeIcon + '</td>';
-          r += '<td style="padding:8px 10px;font-size:11px;color:var(--muted)">' + (item.projectId || '—') + '</td>';
+          r += '<td style="padding:8px 10px;font-size:11px;color:var(--muted)">' + escapeTimelineHtml(item.projectId || '—') + '</td>';
           r += '<td style="padding:8px 10px;font-size:11px;font-family:var(--mono);color:' + dateColor + '">' + dateText + '</td>';
           r += '</tr>';
           return r;
@@ -10904,6 +11958,9 @@ FocusPilot/
         if (ungrouped.length > 0) {
           html += renderGroup('📋 其他', ungrouped);
         }
+        if (visibleItems.length === 0) {
+          html += '<div style="padding:28px 12px;text-align:center;color:var(--dim);font-size:12px">暂无匹配任务</div>';
+        }
         container.innerHTML = html;
       }
 
@@ -10914,6 +11971,9 @@ FocusPilot/
 	      selectStudioDisplayMode('board');
 	      renderStudioWorkspaceList();
 	      applyStudioWorkspaceContext('FocusPilot');
+	      renderHomeChatList();
+	      var initialHomeSession = getAllStudioSessionsSorted()[0];
+	      if (initialHomeSession) renderHomeChatFromSession(initialHomeSession.sid);
     </script>
 
     <!-- ═══ Studio: Workspace 菜单 popover ═══ -->
