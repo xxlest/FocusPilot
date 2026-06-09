@@ -1,6 +1,6 @@
 # Studio 执行模型重构设计
 
-> **主题**：Studio 看板任务的执行模型（无模式化 + 自动调度 + 对话式详情页）
+> **主题**：Studio 看板任务的执行模型（无模式化 + 两层循环/多 Agent 自治接力 + 对话式详情页）
 > **状态**：设计定稿，待落地
 > **日期**：2026-06-09
 > **关联**：[04-studio.md §3 执行模式](../../fp-ui/04-studio.md)、[PRD §3.1 两阶段模型](../../PRD.md)
@@ -102,12 +102,12 @@
 **规则**：
 
 1. **创建后第一个动作是 Agent 自动执行**（不等人），开场白就是任务描述本身。
-2. **每一轮 🤖 自动执行可自带 🔍 评估子循环**：配了评估 Agent 时，执行→评估→自动修复→再评估，在 N 轮内全自动来回。
+2. **每一轮 🤖 executor 执行后 🔍 reviewer 独立接力评估**：配了评估 Agent 时，executor Run 与 reviewer Run 交替（执行→评估→有意见再执行→再评估），在 N 轮内全自动来回，同一持锁 ping-pong 区间（见 §5.5、§6）。
 3. **人回复 = 触发下一轮自动执行**：人在对话里回一句话，就是"继续"的扳机，Agent 据此再自动跑一轮。"打回继续修"和"人工回复"是同一个动作。
 4. **整页从上往下无限堆叠**：执行结果、评估结果、人工回复按时间顺序追加，像聊天记录。
 5. **回复时序随状态分流**：
-   - 任务在「审核中」（Agent 已停、等人）时回复 → 启动新一轮执行（Run）并申请写锁：拿到锁则进「进行中」（⚡）；锁被同 Workspace 别的任务占用则回 `todo` 入队、显示「🕐 正在排队中」，拿到锁后再进「进行中」（与 §5.2/§5.4 一致）。
-   - 任务在「进行中」（Agent 仍在跑）时回复 → 回复进队列，**本轮（含评估子循环）结束、落「审核中」后**再作为下一轮的输入处理（与聊天体验一致）。
+   - 任务在「审核中」（Agent 已停、等人）时回复 → 启动新一轮 ping-pong 并申请写锁：拿到锁则进「进行中」（⚡）；锁被同 Workspace 别的任务占用则回 `todo` 入队、显示「🕐 正在排队中」，拿到锁后再进「进行中」（与 §5.5/§5.6 一致）。
+   - 任务在「进行中」（Agent 仍在跑）时回复 → 置 `has_pending_input`，**本轮 ping-pong 结束、落「审核中」后**再作为下一轮的输入处理（与聊天体验一致）。
 
 ---
 
@@ -130,7 +130,7 @@
 ```
 
 > 状态枚举沿用 04-studio §2.4 的 7 态（含 `cancelled`）。本图聚焦执行流转的 6 个操作状态，`cancelled` 走归档不在主甬道展示。
-> **命名变更**：原 `in_evaluation` 重命名为 `in_review`——新模型里 AI 评估子循环发生在「进行中」内部，该状态的真实语义是"人工审核/等回复"，旧名 `in_evaluation` 名不副实。中文名「审核中」不变。
+> **命名变更**：原 `in_evaluation` 重命名为 `in_review`——新模型里 AI 评估接力（reviewer Run）发生在「进行中」内部，该状态的真实语义是"人工审核/等回复"，旧名 `in_evaluation` 名不副实。中文名「审核中」不变。
 
 ### 4.2 各状态语义
 
@@ -138,7 +138,7 @@
 |------|--------|---------|------|
 | `backlog` | 待规划 | **不扫描** | 规划区。任务有名称 + 描述，人（或多人对话）在描述里把目标需求规划丰富好，再拖到「待办」 |
 | `todo` | 待办 | **拖入即扫描** | 调度器扫到 → 拿到写锁就进「进行中」；没拿到（同 Workspace 写锁被占）停这里，显示「🕐 正在排队中」 |
-| `in_progress` | 进行中 | 执行中 | 执行 Agent 跑（含评估循环），显示「⚡ 正在工作」；进入「审核中」时当前 Run 完成、释放 lease（见 §5.4） |
+| `in_progress` | 进行中 | 执行中 | executor↔reviewer ping-pong 在跑（同一持锁区间），显示「⚡ 正在工作」；落「审核中」时释放 lease（见 §5.5） |
 | `in_review` | 审核中 | 等人回复 | 自动执行一轮跑完一律落这里。人**回复**→ 弹回「进行中」再跑；人**满意**→ 拖到「已完成」 |
 | `done` | 已完成 | — | 人工拖入确认。AI 产出必须经人审查再交付（删除原"验收开关"） |
 | `blocked` | 已阻塞 | — | 外部依赖阻塞，解除后回 `blocked_from_status`（见 §4.4） |
@@ -156,76 +156,106 @@
 ### 4.4 已阻塞（blocked）的触发与恢复
 
 - **进入**：仅**人工**标记 blocked（V1 不做 Agent 自检自动阻塞）。执行 Agent 卡住时表现为评估循环耗尽 → 落「审核中」交人，由人判断是否标 blocked。
-- **记录来源**：标 blocked 时写 `blocked_from_status`（通常是 `todo` 或 `in_review`）。若任务正在「进行中」被标 blocked，当前 Run 按 aborted 处理、释放 lease（见 §5.4）。
+- **记录来源**：标 blocked 时写 `blocked_from_status`（通常是 `todo` 或 `in_review`）。若任务正在「进行中」被标 blocked，当前 ping-pong 的 Run 按 aborted 处理、释放 lease（见 §5.5）。
 - **恢复**：解除阻塞 → 回到 `blocked_from_status`；若回到 `todo` 则重新进入自动调度队列，不自动续跑上一个 Run。
 
 ---
 
-## 5. 自动调度器
+## 5. 执行引擎：两层循环 + 多 Agent 自治队列
 
-### 5.1 触发条件
+执行引擎建模为**多个自治 worker（执行 Agent / 评估 Agent 各算一个）通过任务状态标记互相接力**的黑板（blackboard）/生产者-消费者架构。executor 与 reviewer 是对称的自治 worker：各自扫描"哪些任务归我、该不该入我的队"，靠任务上的协调标记字段（§5.3）接力，互不直接调用。
 
-- 周期性扫描所有 `todo` 状态、且**配置了执行 Agent** 的任务。
-- 留空执行 Agent 的手动卡片**不被扫描**。
+### 5.1 两层循环
+
+- **第一层（状态层扫描）**：周期性遍历看板，只扫 `todo / in_progress / in_review` 三态（§5.4），捞出候选任务。
+- **第二层（任务层判定）**：对每个候选任务，各 Agent 按自己的判据决定是否入队：
+  - **(a) 新任务**：从未执行过（无 `last_run_id`）→ executor 入队 → 执行完落「审核中」。
+  - **(b) 新回复 = 新需求**：审核中/队列里发现 `has_pending_input` → executor 入队再执行。
+  - **(c) 执行中补需求**：正跑时用户又回复 → 本轮 ping-pong 跑完后检查 `has_pending_input`，有则再执行；多条回复合并为一个需求批次（§5.6）。
+
+### 5.2 多 Agent 队列的落地方式（K1：逻辑多队列 / 物理单循环）
+
+语义上"每个 Agent 跑自己的扫描 + 自己的队列"；**实现上 V1 采用单个调度循环承载所有 Agent 的逻辑队列**，每个 Agent 一条逻辑队列：
+
+- 语义与"每 Agent 一个独立线程"完全等价，但**避免多线程并发读写同一份任务状态的竞态**（executor 写结果 / reviewer 读，reviewer 写意见 / executor 读）。
+- 物理去中心化（每 Agent 独立线程/进程）留待 V2，届时需对任务状态加锁/事务。
 - 扫描间隔可在 Settings 配置（默认值待定，量级为秒）。
 
-### 5.2 调度流程
+### 5.3 协调标记字段（K2，模型命门）
+
+两个 Agent 靠任务状态接力，定义以下字段（落库见 §7.2）：
+
+| 字段 | 写者 | 读者 | 作用 |
+|------|------|------|------|
+| `has_pending_input` | 用户回复时置 true | executor | 驱动 (b)(c) 再执行；executor 取走后清零 |
+| `last_run_id` | executor 完成时写 | reviewer | reviewer 判"有新结果" |
+| `last_reviewed_run_id` | reviewer 完成时写 | reviewer | `last_run_id != last_reviewed_run_id` → 需 review |
+| `review_round` | reviewer 自增 | executor & reviewer | 对比 N，判是否继续 ping-pong |
+
+- **executor 入队判据**：`has_pending_input == true`，或（新任务且无 `last_run_id`），或（reviewer 留下未解决意见且 `review_round < N`）。
+- **reviewer 入队判据**：配了评估 Agent 且 `last_run_id != last_reviewed_run_id` 且 `review_round < N`。
+
+### 5.4 第一层扫描范围（K4：只扫 3 态）
+
+只扫 `todo / in_progress / in_review`：
+
+- `done` 不重开、`blocked` 不抢跑、`backlog`（待规划）是人工规划区，三态都不扫。
+- 手动卡片（无执行 Agent）即使处于这 3 态也不被任何 Agent 入队。
+
+### 5.5 写锁与 ping-pong 持锁区间（K3）
+
+- executor 写文件需 WorkspaceWriteLease（同 `resolved_workdir` 同时只允许一个 active lease，沿用 04-studio §4.5）；reviewer 只读审查，**不另抢锁**，在任务已持有的锁内跑。
+- **整个 executor↔reviewer ping-pong（从首次执行到落「审核中」）= 一个持锁区间**：锁在首个 executor Run 启动时获取，期间 executor Run 与 reviewer Run 交替都在这把**已持有的锁**内跑，直到落「审核中」才释放。
+  - 理由：若 ping-pong 中途释放锁，两轮 executor 之间同 Workspace 别的任务插进来改文件，reviewer 审的就不是同一份产出，一致性崩。
+- **落「审核中」释放锁**（与 C2 饿死修复一致）：等人期间不写文件，释放锁让同 Workspace 排队任务继续；人回复 → 重新获取锁（被占则排队，§5.6）。
+
+调度流程：
 
 ```
-扫到 todo 任务（有执行 Agent）
-  └─ 标记「🕐 正在排队中」
-  └─ 申请 WorkspaceWriteLease（同 workdir 同时只允许一个 active lease）
-       ├─ 拿到 → 状态挪到 in_progress，标记「⚡ 正在工作」，启动执行 Agent
-       └─ 没拿到（写锁被占）→ 留在 todo 队列，保持「🕐 正在排队中」
+第一层扫到候选（todo/in_progress/in_review，有执行 Agent）
+  executor 判据命中 → 入 executor 逻辑队列 → 标「🕐 正在排队中」
+    └─ 申请/复用 ping-pong 写锁
+         ├─ 拿到 → in_progress，标「⚡ 正在工作」，executor Run 执行
+         └─ 没拿到（写锁被占）→ 留 todo 队列，保持「🕐 正在排队中」
+  executor Run 完成 → 写 last_run_id
+  reviewer 判据命中（last_run_id≠last_reviewed_run_id 且 review_round<N）
+    → reviewer Run（同一锁内）审查 → 写 last_reviewed_run_id、review_round++
+         ├─ 有意见 → executor 接力再执行（同锁）→ …
+         └─ 通过 / review_round==N → 释放锁 → 落 in_review（审核中）
 ```
 
-### 5.3 与既有 Workspace 写锁的衔接
+### 5.6 需求合并与回复遇锁（K6）
 
-沿用 04-studio.md §4.5 WorkspaceWriteLease：同一 `resolved_workdir` 同时只允许一个 active lease。调度器据此实现排队——同一 Workspace 的多个 `todo` 任务会串行执行，排队中的显示「🕐 正在排队中」。
+- 用户一次/连续回复多条 → 合并为**一个新需求批次、一次执行**（同 Workspace 写锁串行，不真并行）。"并发扫描合并多需求"指的是合并成批，不是多线程并行跑同一任务。
+- 审核中回复 → executor 申请锁：拿到进「进行中」（⚡）；被占则回 `todo` 入队、「🕐 正在排队中」，拿到锁后再进「进行中」。
 
-### 5.4 审核中的 lease 释放与对话跨 Run 连续性（核心）
+### 5.7 对话跨 Run 连续性
 
-乒乓模型下「审核中」可能长期等人。若此时仍持有 lease，同 Workspace 的其他 `todo` 任务会被一个等人的任务**饿死**。解法是复用 04-studio 既有的 Run/Lease 生命周期，**不引入新机制**：
-
-**每个「进行中」执行段 = 一个独立 ExecutionRun。**
-
-```
-人回复/调度拉起 ──▶ 启动新 ExecutionRun ──▶ 申请 lease（被占则排队）
-                                              │
-                                          in_progress（⚡工作，含评估子循环）
-                                              │
-                                  评估通过 / 跑满 N 轮
-                                              ▼
-                         当前 Run completed ──▶ release lease
-                                              ──▶ current_run_id = null
-                                              ──▶ append run_history_ids
-                                              ──▶ 任务落 in_review（审核中）
-```
-
-- **进入「审核中」即释放 lease**：与 §4.5「纯对话/只读：不占用写锁」一致——等人期间不写文件，天然该放锁。同 Workspace 排队任务随即可拿锁继续，**解除饿死**。
-- **人回复 = 启动一个新 Run**：重新申请 lease（无竞争则瞬时拿到、体验无感；有竞争则排队，属正确公平调度）。
-- **对话连续性靠 Task 级 transcript / Session 维持，不靠单个 Run**：详情页的多轮堆叠跨多个 ExecutionRun，`run_history_ids` 记录每一轮；`current_run_id` 仅在「进行中」非空。
-- 这同时回答了"一场任务是一个长 Run 还是每轮一个 Run"：**每个执行段一个 Run**，审核中是 Run 之间的空档。
+- 详情页的多轮堆叠跨多个 ExecutionRun（executor Run 与 reviewer Run），对话连续性靠 **Task 级 transcript / Session** 维持，不靠单个 Run。
+- `run_history_ids` 记录每一个 Run；`current_run_id` 仅在 ping-pong 进行中非空，落「审核中」置 null。
 
 ---
 
-## 6. 评估循环
+## 6. 评估接力（reviewer 自治 Run）
 
-### 6.1 循环逻辑
+评估不再是 executor Run 内部的子步骤，而是**独立评估 Agent 的独立 Run**，与 executor Run 在同一持锁 ping-pong 区间（§5.5）内交替（K5）。
+
+### 6.1 ping-pong 逻辑
 
 ```
-执行 → 评估(第1轮) → 有意见 → 执行Agent自动修 → 评估(第2轮) → …
-                                                        │
-                            评估通过  或  跑满 N 轮
-                                                        ▼
-                                              任务落「审核中」
+executor Run 执行 → 写 last_run_id
+   → reviewer Run 审查 → 写 last_reviewed_run_id、review_round++
+        ├─ 有未解决意见 且 review_round < N → executor Run 接力修复 → …
+        └─ 评估通过  或  review_round == N
+                          ▼
+              释放 ping-pong 锁 → 落「审核中」
 ```
 
 ### 6.2 终止与交接（关键）
 
-- **评估轮数 N 是"自动修复"的上限，不是任务终点**。
-- **评估通过**（评估 Agent 无意见）→ 立即落「审核中」等人最终确认。
-- **跑满 N 轮仍有意见**（例：3 轮后第 4 轮评估仍有意见）→ 执行 Agent **停止自动运行**，任务带着"未解决意见"落「审核中」，由人介入二选一：
+- **`evaluation_max_rounds`（N，≥1）是自动修复的上限，不是任务终点**。
+- **评估通过**（reviewer 判无未解决意见）→ 立即落「审核中」等人最终确认。
+- **跑满 N 轮仍有意见** → executor **停止自动接力**，任务带着"未解决意见"落「审核中」，由人介入二选一：
   1. **回复 / 打回「进行中」** 让 Agent 继续修；
   2. **直接拖到「已完成」** 收工。
 - **永不丢弃、永不无限烧**：轮数上限是硬刹车。
@@ -235,8 +265,9 @@
 | 维度 | 原设计（04-studio §8） | 本设计 |
 |------|----------------------|--------|
 | 评估开关 | 独立布尔「启用评估」 | 隐式：是否配置评估 Agent |
-| 评估产出 | 只产意见，不判 pass/fail | 评估 Agent 需能判"是否还有意见"以驱动循环终止 |
-| 修复触发 | 每轮修复由人显式触发 | N 轮内自动修复；耗尽后才交人 |
+| 执行形态 | executor 内部子步骤 | **独立 reviewer Agent 的独立 Run**，与 executor Run 交替 |
+| 评估产出 | 只产意见，不判 pass/fail | reviewer 需能判"是否还有未解决意见"以驱动 ping-pong 终止 |
+| 修复触发 | 每轮修复由人显式触发 | N 轮内 executor 自动接力修复；耗尽后才交人 |
 | 终点 | 人三选一 | 一律落「审核中」人工确认 |
 
 ---
@@ -256,18 +287,24 @@ WorkItem:
   agents:
     executor: "agent_coder"        # 执行 Agent，可空（空 = 手动卡片）
     evaluator: "agent_evaluator"   # 评估 Agent，可空（空 = 无评估）
-  evaluation_max_rounds: 3         # 评估轮数上限（≥1），仅 evaluator 非空时有效
+  evaluation_max_rounds: 3         # 评估轮数上限 N（≥1），仅 evaluator 非空时有效
+
+  # 多 Agent 接力协调标记（K2，§5.3）
+  has_pending_input: false         # 用户回复时置 true，executor 取走后清零
+  last_run_id: "run_07"            # executor 最近完成的 Run；reviewer 判"有新结果"
+  last_reviewed_run_id: "run_05"   # reviewer 已审过的 Run；≠last_run_id 则需 review
+  review_round: 2                  # 已 review 轮次，对比 N 判是否继续 ping-pong
 
   run_substate: queued | working | null   # 运行子状态，驱动卡片角标，详见 §7.4
 ```
 
-### 7.3 ExecutionRun 调整（每执行段一个 Run，见 §5.4）
+### 7.3 ExecutionRun 调整（executor / reviewer 两类 Run，见 §5.5/§6）
 
-- `mode` 字段（`manual|semi_auto|auto`）删除。
-- **每个「进行中」执行段 = 一个独立 ExecutionRun**；进入「审核中」时该 Run completed、释放 lease；人回复启动新 Run。一场任务跨多个 Run，`run_history_ids` 串起全部轮次。
+- `mode` 字段（`manual|semi_auto|auto`）删除；新增 `run_kind: executor | reviewer` 区分两类自治 Run。
+- **一个持锁 ping-pong 区间内含多个 Run**：executor Run 与 reviewer Run 交替，**共享同一把 WorkspaceWriteLease**（K3，§5.5）；锁在首个 executor Run 启动时获取，落「审核中」才释放。
+- 进入「审核中」时 `current_run_id = null`、释放 lease；人回复开启新一轮 ping-pong（新 executor Run）。一场任务跨多个 Run，`run_history_ids` 串起全部 executor/reviewer Run。
 - `in_evaluation` 重命名为 `in_review`（见 §4.1）；涉及该枚举的字段（如 `blocked_from_status` 取值）同步。
-- 步骤链由"固定 4 链"改为 **Run 内对话轮次流**：单个 Run 内是"执行 + 评估子循环"，详情页跨 Run 按时间堆叠。
-- `evaluation_round` 记录 Run 内评估子轮，供详情页渲染。
+- 详情页跨 Run 按时间堆叠（executor 结果块 + reviewer 评估块交替）。`review_round` 记录 ping-pong 评估轮次，供详情页与终止判定共用。
 
 ### 7.4 字段命名说明
 
@@ -301,13 +338,13 @@ WorkItem:
 落地时需同步：
 
 - [ ] `docs/fp-ui/04-studio.md`：
-  - 重写 §3（执行模式 → 执行模型）
+  - 重写 §3（执行模式 → 执行模型）：无模式 + **两层循环 + 多 Agent 自治队列（黑板接力，K1=B 逻辑多队列/物理单循环）**
   - §2.4 状态机：`in_evaluation` → `in_review`、补乒乓流转与卡片角标、保留 `cancelled`
-  - §7.4 详情页改为对话轮次流
-  - §2.1/2.5 数据模型删 `execution_mode`、新增 `evaluation_max_rounds` / `run_substate`、ExecutionRun 改每执行段一个 Run
-  - **§8 评估系统改写**：原文「Evaluation Agent 只产出意见、不判 pass/fail、每轮修复人工触发、不变」与本设计冲突 → 改为"评估 Agent 输出结构化 pass/fail（是否仍有未解决意见）+ N 轮内自动修复触发 + 耗尽落审核中交人"
-  - §4.5 写锁：补「进入审核中释放 lease」（§5.4）
-  - §3 重写中明确：手动卡片（无执行 Agent）不进调度、不触发强制审核中、状态全人工拖动（§4.3）
+  - §7.4 详情页改为 executor/reviewer 接力的对话流
+  - §2.1/2.5 数据模型：删 `execution_mode`；新增 `evaluation_max_rounds` / `run_substate` / **K2 协调字段（`has_pending_input` / `last_run_id` / `last_reviewed_run_id` / `review_round`）**；ExecutionRun 新增 `run_kind: executor|reviewer`，一个 ping-pong 区间多 Run 共享一把锁
+  - **§8 评估系统改写**：原文「Evaluation Agent 只产出意见、不判 pass/fail、每轮修复人工触发、不变」与本设计冲突 → 改为"**独立 reviewer Agent 的独立 Run**，输出结构化 pass/fail（是否仍有未解决意见）+ N 轮内 executor 自动接力修复 + 耗尽落审核中交人"
+  - §4.5 写锁：补「ping-pong 全程持一把锁、落审核中释放」（§5.5）
+  - §3 重写中明确：手动卡片（无执行 Agent）不进调度、不触发强制审核中、状态全人工拖动（§4.3）；第一层只扫 `todo/in_progress/in_review` 三态（§5.4）
 - [ ] `docs/PRD.md`：
   - §3.1 删除/替换 `auto_execute` 字段（被"拖入待办即调度"取代），状态名对齐说明
   - 注：PRD §3.1（`planning/ready/executing`）与 04-studio §2.4（`backlog/todo/in_progress`）为**既存的两套状态词汇不一致**，非本设计引入；本期只对齐 `auto_execute` 字段，**完全统一两套词汇另起一个独立任务处理**
