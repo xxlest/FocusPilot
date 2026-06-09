@@ -2611,17 +2611,17 @@
           <div class="side-scroll studio-side-content" id="studioSideKanban" style="display:block">
             <!-- ── 全局视图 ── -->
             <div style="padding:4px 8px 2px;font-size:10px;font-weight:600;color:var(--dim);text-transform:uppercase;letter-spacing:.04em">范围筛选</div>
-            <div class="side-item active" data-focus-filter="all" onclick="applyFocusFilter(this);switchToGlobalWorkspace()">
-              <span>📋 全局规划</span><span class="count">11</span>
-            </div>
-            <div class="side-item" data-focus-filter="month" onclick="applyFocusFilter(this);switchToGlobalWorkspace()">
-              <span>📆 本月计划</span><span class="count">6</span>
+            <div class="side-item" data-focus-filter="today" onclick="applyFocusFilter(this);switchToGlobalWorkspace()">
+              <span>🔥 今日聚焦</span><span class="count">2</span>
             </div>
             <div class="side-item" data-focus-filter="week" onclick="applyFocusFilter(this);switchToGlobalWorkspace()">
               <span>📅 本周计划</span><span class="count">8</span>
             </div>
-            <div class="side-item" data-focus-filter="today" onclick="applyFocusFilter(this);switchToGlobalWorkspace()">
-              <span>🔥 今日聚焦</span><span class="count">2</span>
+            <div class="side-item" data-focus-filter="month" onclick="applyFocusFilter(this);switchToGlobalWorkspace()">
+              <span>📆 本月计划</span><span class="count">6</span>
+            </div>
+            <div class="side-item active" data-focus-filter="all" onclick="applyFocusFilter(this);switchToGlobalWorkspace()">
+              <span>📋 全局规划</span><span class="count">11</span>
             </div>
             <div class="side-item" data-focus-filter="agent" onclick="applyFocusFilter(this);switchToGlobalWorkspace()">
               <span>🤖 Agent 执行中</span><span class="count" style="background:var(--accent-bg);color:var(--accent)">2</span>
