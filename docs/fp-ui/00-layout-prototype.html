@@ -2611,7 +2611,7 @@
           <div class="side-scroll studio-side-content" id="studioSideKanban" style="display:block">
             <!-- ── 全局视图 ── -->
             <div style="padding:4px 8px 2px;font-size:10px;font-weight:600;color:var(--dim);text-transform:uppercase;letter-spacing:.04em">范围筛选</div>
-            <div class="side-item" data-focus-filter="today" onclick="applyFocusFilter(this);switchToGlobalWorkspace()">
+            <div class="side-item active" data-focus-filter="today" onclick="applyFocusFilter(this);switchToGlobalWorkspace()">
               <span>🔥 今日聚焦</span><span class="count">2</span>
             </div>
             <div class="side-item" data-focus-filter="week" onclick="applyFocusFilter(this);switchToGlobalWorkspace()">
@@ -2620,7 +2620,7 @@
             <div class="side-item" data-focus-filter="month" onclick="applyFocusFilter(this);switchToGlobalWorkspace()">
               <span>📆 本月计划</span><span class="count">6</span>
             </div>
-            <div class="side-item active" data-focus-filter="all" onclick="applyFocusFilter(this);switchToGlobalWorkspace()">
+            <div class="side-item" data-focus-filter="all" onclick="applyFocusFilter(this);switchToGlobalWorkspace()">
               <span>📋 全局规划</span><span class="count">11</span>
             </div>
             <div class="side-item" data-focus-filter="agent" onclick="applyFocusFilter(this);switchToGlobalWorkspace()">
@@ -6935,7 +6935,7 @@ FocusPilot/
         'git-focuspilot-ai': { id: 'git-focuspilot-ai', name: 'Git · FocusPilot AI', type: 'git_project', icon: '🔗', path: '~/FocusPilotWorkspaces/git-focuspilot-ai', branch: 'feature/planning-engine', remote: 'github.com/xxlest/FocusPilot.git' }
       };
       var studioWorkspaceFilter = 'all';
-      var currentFocusFilter = 'all';
+      var currentFocusFilter = 'today';
       var studioToolbarFilters = { time: 'all', goal: 'all' };
       var studioTaskFilterActiveCategory = 'project';
       var studioTaskFilterSelections = { project: [], agent: [], priority: [], tag: [], owner: [], creator: [] };
@@ -10683,6 +10683,10 @@ FocusPilot/
             el.addEventListener('click', function() { drillDown(scope); });
           }
         });
+
+        // 任务视图默认聚焦「今日聚焦」：执行优先，打开 Studio 即落在当日范围
+        var defaultFocusScope = document.querySelector('#studioSideKanban [data-focus-filter="today"]');
+        if (defaultFocusScope) applyFocusFilter(defaultFocusScope);
       });
 
       /* ═══ Projects 交互（内部变量沿用 areas- 前缀，用户侧统一显示 Projects）═══ */
