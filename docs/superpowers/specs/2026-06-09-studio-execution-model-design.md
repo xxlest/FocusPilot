@@ -83,7 +83,7 @@
 │ 📄 任务描述（= 这场对话的开场）                        │
 │    实现看板 6 态拖拽 + 状态持久化…                     │
 │ ──────────────────────────────────────────────────── │
-│ 🤖 代码工程师 · 自动执行              00:03:42  ⚡     │  ← 创建/入队后
+│ 🤖 代码工程师 · 自动执行              00:03:42  ⚡     │  ← 入队/被拉起后
 │    修改 Models.swift…  [Diff] [Transcript]            │     第一个自动启动
 │ 🔍 质量审查员 · 评估                                   │  ← 配了评估 Agent
 │    ⚠ 2 条意见：状态枚举缺 blocked 回退…              │     自动跟评估
@@ -101,12 +101,12 @@
 
 **规则**：
 
-1. **创建后第一个动作是 Agent 自动执行**（不等人），开场白就是任务描述本身。
+1. **任务进入「待办」（或被拖入「进行中」）、被扫描器首次拉起后**，第一个动作是 Agent 自动执行（不等人），开场白就是任务描述本身。（走「创建」落「待规划」的任务不调度，见 §2.1）
 2. **每一轮 🤖 executor 执行后 🔍 reviewer 独立接力评估**：配了评估 Agent 时，executor Run 与 reviewer Run 交替（执行→评估→有意见再执行→再评估），在 N 轮内全自动来回，同一执行环境内（worktree / 路径锁，见 §5.5、§6）。
 3. **人回复 = 触发下一轮自动执行**：人在对话里回一句话，就是"继续"的扳机，Agent 据此再自动跑一轮。"打回继续修"和"人工回复"是同一个动作。
 4. **整页从上往下无限堆叠**：执行结果、评估结果、人工回复按时间顺序追加，像聊天记录。
 5. **回复时序随状态分流**：
-   - 任务在「审核中」（Agent 已停、等人）时回复 → 启动新一轮 ping-pong：抢 Agent 并发槽（local_directory 还需路径锁）；拿到则进「进行中」（⚡）；槽满 / 路径锁被占则显示「🕐 正在排队中」，下次扫描重捞（与 §5.4/§5.5 一致）。
+   - 任务在「审核中」（Agent 已停、等人）时回复 → 启动新一轮 ping-pong：抢 Agent 并发槽（local_directory 的路径锁在审核中一直由本任务持有、无需重抢，§5.5）；拿到槽则进「进行中」（⚡）；槽满则显示「🕐 正在排队中」，下次扫描重捞（与 §5.4/§5.5 一致）。
    - 任务在「进行中」（Agent 仍在跑）时回复 → 置 `has_pending_input`，**本轮 ping-pong 结束、落「审核中」后**再作为下一轮的输入处理（与聊天体验一致）。
 
 ---
@@ -138,8 +138,8 @@
 |------|--------|---------|------|
 | `backlog` | 待规划 | **不扫描** | 规划区。任务有名称 + 描述，人（或多人对话）在描述里把目标需求规划丰富好，再拖到「待办」 |
 | `todo` | 待办 | **拖入即扫描** | 调度器扫到 → 抢到并发槽（local_directory 还需路径锁）就进「进行中」；没抢到（槽满 / 路径锁被占）停这里，显示「🕐 正在排队中」 |
-| `in_progress` | 进行中 | 执行中 | executor↔reviewer ping-pong 在跑（同一 worktree / 路径锁内），显示「⚡ 正在工作」；落「审核中」时释放槽/路径锁（见 §5.5） |
-| `in_review` | 审核中 | 等人回复 | 自动执行一轮跑完一律落这里。人**回复**→ 弹回「进行中」再跑；人**满意**→ 拖到「已完成」 |
+| `in_progress` | 进行中 | 执行中 | executor↔reviewer ping-pong 在跑（同一 worktree / 路径锁内），显示「⚡ 正在工作」；落「审核中」时释放槽，**local_directory 路径锁保持到任务落定**（见 §5.5） |
+| `in_review` | 审核中 | 等人回复 | 自动执行一轮跑完一律落这里。人**回复**→ 抢到并发槽则弹回「进行中」再跑、槽满则先排队（🕐，见 §3 规则 5）；人**满意**→ 拖到「已完成」 |
 | `done` | 已完成 | — | 人工拖入确认。AI 产出必须经人审查再交付（删除原"验收开关"） |
 | `blocked` | 已阻塞 | — | 外部依赖阻塞，解除后回 `blocked_from_status`（见 §4.4） |
 | `cancelled` | 已取消 | — | 终止状态，进归档/历史，不在主甬道常驻展示 |
@@ -147,10 +147,10 @@
 ### 4.3 关键规则
 
 - **「待规划」承担规划职能**：原"规划模式"砍掉，规划改为在「待规划」列由人/对话完成（丰富任务描述），无独立执行模式。
-- **「待办」拖入即自动执行**：这是自动调度的唯一触发口。
+- **「待办」拖入即自动执行**：这是触发口**之一**；扫描器还会拉起被直接拖入「进行中」但未启动的任务、以及「审核中」收到新回复的任务（§5.1/§5.2）。
 - **「审核中」是强制的人工确认关卡（必经站，非终点）**：**仅对配置了执行 Agent 的自动任务**——每轮自动执行跑完都落「审核中」等人；它会与「进行中」来回，真正的终点是「已完成」。删除原"是否需要验收"开关。
 - **手动卡片（无执行 Agent）不进自动调度，也不触发强制审核中**：状态完全由人自由拖动（待规划 → 待办 → 进行中 → 已完成），无 Agent 执行、无「审核中」强制关卡、无运行子状态角标。
-- **「进行中」⇄「审核中」可来回**：人在审核中回复即重新触发执行，回到进行中；满意则拖到已完成。
+- **「进行中」⇄「审核中」可来回**：人在审核中回复即重新触发执行（抢到并发槽回到进行中，槽满则先排队，§3 规则 5）；满意则拖到已完成。
 - **运行子状态做成卡片角标**（`正在排队中` / `正在工作`），不新增看板列，保持 6 列主甬道干净。
 
 ### 4.4 已阻塞（blocked）的触发与恢复
@@ -195,7 +195,8 @@
 | **local_directory** | **不建 worktree，原地执行** + 路径级互斥锁（等待态 `waiting_local_directory`） | 同目录**串行** | 改动在用户工作副本 | 否（原地） |
 | **temporary** | 本就独立目录 | 并行 | 手动取用 | 否 |
 
-- **WorkspaceWriteLease 不完全退役，而是"瘦身"为 local_directory 的路径锁**——只在本地目录场景存在；git / temp 无 app 级锁。
+- **local_directory 路径锁 = 任务级持有**（从首次执行到任务离开执行流，审核中也不释放，§5.5）；git / 非 git 本地目录统一此规则，**不做分支快照**。
+- **WorkspaceWriteLease 不完全退役，而是"瘦身"为 local_directory 的路径锁**——只在本地目录场景存在；git worktree / temporary 无 app 级锁。
 - **Handoff（worktree 变更合并回主工作区）仍留 V2**（04-studio §15）：git 项目靠 PR 交付、local_directory 原地改，V1 都不需要合并回工作副本。
 
 ### 5.4 三层并发闸 + 排序
@@ -212,8 +213,11 @@
 ### 5.5 派发与 ping-pong 接力
 
 - **派发动作**：建/复用 worktree（git）或取路径锁（local_directory）→ 在该任务 session 内 resume 上下文（类 `claude -p --resume`，上下文存于 worktree/session，与 Run 边界无关）→ 发给 Agent 执行。
-- **每轮（executor 轮 / reviewer 轮）= 一个 ExecutionRun**；**槽按轮取还**：轮开始取槽、轮结束释放。
-- **审核中（等人）：不占槽、不占路径锁——什么都不占**。因无 app 级共享锁，"持锁空等槽"的旧风险消失，无需跨 ping-pong 长持槽或锁。
+- **槽与锁的释放粒度不对称**：
+  - **并发槽（Daemon / Agent）：按轮取还**——轮开始取槽、轮结束释放；审核中（等人）不占槽。
+  - **local_directory 路径锁：任务级持有**——从首次执行一直持到**任务离开执行流**（落 `done` / `cancelled` / 被拖出审核中），**审核中也不释放**。否则同目录另一任务进来改文件 → 你回复续跑时工作副本已被污染（git/非 git 本地目录同此风险，故统一持锁到落定，不做分支快照）。escape hatch：把任务拖出审核中，路径锁即释放。
+  - **worktree（git 项目）：无 app 级锁**，天然无此问题。
+- **不会饿死其他 Workspace**：路径锁只约束同一本地目录（本就只能串行），不影响别的 Workspace；worktree 场景更无锁。
 
 调度流程：
 
@@ -226,7 +230,8 @@
   reviewer 判据命中（last_run_id≠last_reviewed_run_id 且 review_round<N）
     → 抢 reviewer 槽 → reviewer Run 审查 → 写 last_reviewed_run_id、review_round++
          ├─ 有意见 → executor 再跑
-         └─ 通过 / review_round==N → 落 in_review（审核中），释放全部槽/路径锁
+         └─ 通过 / review_round==N → 落 in_review（审核中）：释放槽；
+            local_directory 路径锁继续持有，git worktree 无锁
 ```
 
 ### 5.6 需求合并与新需求优先级（K6 + H2）
@@ -260,7 +265,7 @@ executor Run 执行 → 写 last_run_id
         ├─ 有未解决意见 且 review_round < N → executor Run 接力修复 → …
         └─ 评估通过  或  review_round == N
                           ▼
-              落「审核中」，释放全部槽 / 路径锁
+       落「审核中」：释放槽；local_directory 路径锁持到任务落定
 ```
 
 ### 6.2 终止与交接（关键）
@@ -321,7 +326,7 @@ AICrew Agent 定义新增 **`max_concurrent_tasks`（默认 1）**（P3，放 AI
 
 - `mode` 字段（`manual|semi_auto|auto`）删除；新增 `agent_role: executor | reviewer` 区分两类自治 Run。
 - **一个 ping-pong 区间内含多个 Run**：executor Run 与 reviewer Run 在**同一执行环境**（git worktree / local_directory 路径锁，§5.3）内交替；**槽按轮取还**（§5.5），不再共享 app 级写锁。
-- 进入「审核中」时 `current_run_id = null`、释放全部槽/路径锁；人回复开启新一轮 ping-pong（新 executor Run）。一场任务跨多个 Run，`run_history_ids` 串起全部 executor/reviewer Run。
+- 进入「审核中」时 `current_run_id = null`、释放槽（local_directory 路径锁保持到任务落定，§5.5）；人回复开启新一轮 ping-pong（新 executor Run）。一场任务跨多个 Run，`run_history_ids` 串起全部 executor/reviewer Run。
 - `in_evaluation` 重命名为 `in_review`（见 §4.1）；涉及该枚举的字段（如 `blocked_from_status` 取值）同步。
 - 详情页跨 Run 按时间堆叠（executor 结果块 + reviewer 评估块交替）。`review_round` 记录 ping-pong 评估轮次，供详情页与终止判定共用。
 
@@ -343,7 +348,7 @@ AICrew Agent 定义新增 **`max_concurrent_tasks`（默认 1）**（P3，放 AI
 **worktree 化连带废弃 / 调整（相对本 spec 前几轮）**：
 
 - ⚠️ **WorkspaceWriteLease 不再是 app 级共享写锁**：瘦身为 local_directory 的路径锁（§5.3）；git / temporary 改 worktree 物理隔离，无锁。
-- ❌ **"ping-pong 全程持一把锁、落审核中释放 lease 防饿死"**（前几轮 C2/K3）→ 无共享锁，饿死不存在；改 worktree 隔离 + 槽按轮取还。
+- ❌ **"ping-pong 全程持一把锁、落审核中释放 lease 防饿死"**（前几轮 C2/K3）→ worktree（git 项目）无锁、不存在饿死；local_directory 路径锁仅约束同目录（本就只能串行、审核中持锁是正确行为，非饿死），改 worktree 隔离 + 槽按轮取还。
 - ❌ **"回复遇写锁竞争排队"**（前几轮 RC-4）→ 改为"抢并发槽（local_directory 还需路径锁）"。
 - ⚠️ 04-studio §4.6 脏检测：worktree 下不在用户工作副本干活，语义调整（仅 local_directory 仍涉及）。
 
