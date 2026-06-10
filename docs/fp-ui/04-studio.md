@@ -83,18 +83,29 @@ WorkItem:
   project_id: "proj_focuspilot"        # 资产归属（可选）
   goal_id: "FP-001-release"           # 规划归属（可选）
 
-  # ── 执行配置 ──
-  execution_mode: semi_auto     # none|manual|semi_auto|auto
-  evaluation_enabled: true      # 评估开关
+  # ── 执行配置（无模式：行为由 Agent 配置隐式推导，见 §3.1）──
   agents:
-    planner: "agent_architect"
-    executor: "agent_coder"
-    dialog: "agent_coder"
-    evaluator: "agent_evaluator"
+    executor: "agent_coder"       # 执行 Agent，可空（空=手动卡片，不自动调度）
+    evaluator: "agent_evaluator"  # 评估 Agent，可空（空=无评估）
+    # planner / dialog 字段废弃（无模式后不再使用）；解码向后兼容忽略
+  evaluation_max_rounds: 3        # 评估轮数上限 N（≥1），仅 evaluator 非空时有效
+
+  # ── 多 Agent 接力协调标记（K2，见 §3.3）──
+  has_pending_input: false             # 用户回复时置 true，executor 取走后清零
+  last_run_id: null                    # executor 最近完成的 Run；reviewer 判"有新结果"
+  last_reviewed_run_id: null           # reviewer 已审过的 Run；≠last_run_id 则需 review
+  review_round: 0                      # 已 review 轮次，对比 N 判是否继续 ping-pong
+
+  # ── 调度子状态（卡片角标，见 §2.4）──
+  run_substate: queued | working | waiting_local_directory | null
+
+  # ── 执行环境（worktree 混合制，见 §3.3/§4；local_directory/temporary 不填）──
+  worktree_path: "~/.focuspilot/wt/FP-002"
+  worktree_branch: "task/FP-002"
 
   # ── 执行状态 ──
-  current_run_id: "run_abc123"         # 当前活跃 ExecutionRun（至多一个，完成后置 null）
-  run_history_ids: ["run_prev01"]      # 历史 ExecutionRun 列表
+  current_run_id: null                 # 非空=正在跑（防重复派发，Issue×Agent 闸）；落审核中置 null
+  run_history_ids: ["run_prev01"]      # 历史 ExecutionRun 列表（executor/reviewer 各 Run）
 
   # ── Session 关联 ──
   primary_session_id: "session_abc"    # 当前 Run 的主对话（可为 null）
@@ -149,44 +160,35 @@ Free:   Group → ... → Task (→ Sub-task)
 
 ### 2.5 ExecutionRun
 
+> 一个 ping-pong 区间含多个 Run：executor Run 与 reviewer Run 交替，在**同一执行环境**（git worktree / local_directory 路径锁）内跑；**槽按轮取还**；进入「审核中」时 `current_run_id=null`、释放槽，local_directory 路径锁保持到任务落定（§3.3）。
+
 ```yaml
 ExecutionRun:
   id: "run_abc123"
   work_item_id: "FP-002"
-  mode: semi_auto               # manual|semi_auto|auto
-  evaluation_enabled: true
+  agent_role: executor          # executor | reviewer（区分两类自治 Run）
   status: running               # pending|running|paused|completed|aborted
 
   # Agent
-  primary_agent_id: "agent_coder"
-  primary_session_id: "session_abc"
-  sub_agent_runs: []            # V1 字段保留、默认空；V2 开始写入多 Agent 记录
-
-  # 步骤
-  current_step_index: 3
-  active_evaluation_cycle: 1
-  steps:
-    - { step_run_id: "step_plan", type: plan, status: completed }
-    - { step_run_id: "step_approval", type: approval, status: completed }
-    - { step_run_id: "step_exec", type: execute, status: running }
-    # ... evaluation, acceptance
+  agent_id: "agent_coder"
+  session_id: "session_abc"     # 该 Run 所在任务 session（上下文连续性载体）
 
   # Workspace 快照（启动时冻结）
   workspace_snapshot:
-    resolved_workdir: "/Users/bruce/Workspace/FocusPilot"
-    source_type: local_project
+    resolved_workdir: "~/.focuspilot/wt/FP-002"   # git 项目=worktree 路径；local_directory=用户目录
+    source_type: git_project    # git_project | local_directory | temporary
+    isolation: worktree         # worktree | local_dir_path_lock | temp_dir
     base_commit: "3764760"
-    branch: "task/FP-002"
+    branch: "task/FP-002"       # git 项目的任务分支
     created_at: "2026-06-05T10:00:00"
 
-  # Lease
-  workspace_write_lease:
-    lease_id: "lease_001"
-    status: active              # active|released|orphaned
-    acquired_at: "2026-06-05T10:00:00"
-    heartbeat_at: "2026-06-05T10:05:00"
-    expires_at: "2026-06-05T10:10:00"
+  # 并发占用（槽按轮取还；local_directory 路径锁任务级持有，见 §4.5）
+  daemon_slot: held             # held | released
+  agent_slot: held              # held | released
+  local_dir_lock: null          # 仅 local_directory：held（任务级）| null
 ```
+
+> **Run 完成迁移**：Run completed/aborted → append `run_history_ids` → 释放槽；若是 ping-pong 的收尾（落审核中）则 `current_run_id=null`（local_directory 路径锁保持到任务落定）。`mode` / `evaluation_enabled` / `steps`（plan/approval 四链）字段删除——无模式后由协调标记驱动接力。
 
 **Run 完成后状态迁移**：Run completed/aborted → append `run_history_ids` → `current_run_id = null` → release WorkspaceWriteLease。如需展示最近一次 Run，通过 `run_history_ids[-1]` 反查。
 
@@ -503,7 +505,7 @@ WorkItem (Task)
 | 本周计划 | schedule=today\|week |
 | 本月计划 | goal.month=当月 + 未关联目标中 schedule∈{today,week,month} |
 | 全局规划 | 无筛选 |
-| 执行中 | status=in_progress & execution_mode≠none |
+| 执行中 | status=in_progress & 有执行 Agent（非手动卡片） |
 | 等我决策 | status=in_review |
 | Triage | 自动化结果待处理 |
 
