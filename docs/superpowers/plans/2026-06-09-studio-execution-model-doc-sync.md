@@ -14,7 +14,7 @@
 - 每次更新 `docs/fp-ui/` 后必须输出 UI 设计进度表（见 Task 11）。
 - 页面真实完成度以 `00-layout-prototype.html` 母版同步为准；仅改规格文档不得标 5/5。
 - 原型变更联动规则：改原型必须检查 PRD 对应章节同步。
-- 每完成一个功能/大修改自动用 `/commit` 提交并推送。
+- 每完成一个功能/大修改自动用 `/commit` 提交。**本计划全程只本地 commit、不 push**，待全部 11 任务完成 + 用户整体验收后再统一推送（避免半成品同步进远程）。
 
 ---
 
@@ -28,7 +28,11 @@
 | `docs/fp-ui/08-settings.md` | Settings 页面规格 | §3.8 Studio 删旧三模式、§3.5 Daemon 加扫描间隔+全局并发 |
 | `docs/fp-ui/00-layout-prototype.html` | 原型母版 | 详情页对话流 + 看板卡片角标（🕐/⚡/🔒） |
 
-**任务依赖顺序**：Task 1–6（04-studio）→ Task 7（PRD）→ Task 8（AICrew）→ Task 9（Settings）→ Task 10（HTML 母版）→ Task 11（一致性收尾 + 进度表）。文档任务相互独立，可并行；HTML 母版（Task 10）依赖前序规格定稿。
+**任务依赖顺序**：
+- **Task 1–6 必须串行**——它们都改 `04-studio.md` 同一文件，并行会写冲突。
+- **Task 7 / Task 8 / Task 9 可并行**——分别改 PRD / ai-crew / settings 三个不同文件。
+- **Task 10（HTML 母版）依赖前序规格定稿**（同步 Studio + ai-crew + settings 控件，见 PR-2 修订）。
+- **Task 11 最后收尾**（跨文档一致性 + UI 进度表）。
 
 ---
 
@@ -51,9 +55,12 @@
 
 新增子节「### 3.1 创建任务的执行配置」，内容对齐 SPEC §2.1 表单 + §2.2 双 Agent + 配置约束（执行 Agent 留空=手动卡片；评估 Agent 空=无评估；executor 空+evaluator 非空非法）+ §2.3 执行范围（只执行当前节点、不递归，hybrid 不连带跑子节点，container 不展示，递归=V2）。把 SPEC §2.1 的新建任务弹窗 ASCII 原样搬入。
 
-- [ ] **Step 4: 写入 §3.2 看板状态机（来源 SPEC §4）**
+- [ ] **Step 4: 写入 §3.2 看板状态机执行视角（单一 owner，不搬全文）**
 
-新增子节「### 3.2 看板状态机（乒乓模型）」，搬入 SPEC §4.1 状态流转图、§4.2 各状态语义表（含 `in_review` 改名、`cancelled`、角标列）、§4.3 关键规则（含手动卡片不进调度）、§4.4 blocked 触发与恢复。**注意**：此处与 §2.4 状态机（Task 2）会有重叠，§3.2 聚焦"执行视角"，§2.4 聚焦"数据/状态枚举"，互相 `见 §X` 交叉引用，不重复全文。
+**状态机全文归 §2.4 持有**（数据视角：枚举 + 流转图，由 Task 2 维护）。本 Step 新增子节「### 3.2 看板状态机（执行视角）」**只写执行视角差异点**，不复制 §2.4 全文：
+- 一句话指向：「状态枚举与流转图见 §2.4」。
+- 补执行视角三点：① 乒乓（进行中 ⇄ 审核中，人回复触发再执行）；② 卡片角标 `run_substate`（🕐 queued / ⚡ working / 🔒 waiting_local_directory）；③ 各状态的调度行为（来源 SPEC §4.2 调度行为列 + §4.3 关键规则，含手动卡片不进调度）。
+- blocked 触发与恢复（SPEC §4.4）放 §3.2（执行相关），§2.4 仅 `见 §3.2`。
 
 - [ ] **Step 5: 写入 §3.3 执行引擎（来源 SPEC §5）**
 
@@ -224,6 +231,7 @@ git commit -m "docs(studio): §4 Workspace 加 worktree 混合制 + lease 瘦身
 - 删除「Evaluation Agent 只产出评估意见，不产出 pass/fail」「每轮修复由用户显式触发」。
 - 改为：reviewer 是**独立评估 Agent 的独立 Run**，输出结构化 pass/fail（是否仍有未解决意见）；N 轮内 executor 自动接力修复；跑满 N 轮仍有意见 → 停、带未解决意见落审核中交人（采纳/打回继续/直接完成）。
 - severity 排序、EvaluationCycle 可循环等可保留并对齐 `review_round`。
+- **删除 §8 末尾 line 609「详细规格见 03-focus.md 历史参考 §4」**——该旧评估规格（只产意见、人触发）已被本设计取代，留着会让读者顺链读到矛盾的旧描述。（line 500 的 03-focus §6-§7 引用是**看板视角**、未变，**不动**。）
 
 - [ ] **Step 3: 校验**
 
@@ -295,33 +303,42 @@ git commit -m "docs(prd): §3.1 删 auto_execute，补状态词汇对齐注"
 
 ---
 
-## Task 8: 07-ai-crew.md 加 Agent 并发配置
+## Task 8: 07-ai-crew.md 对齐 Agent 并发配置（非新增）
+
+> **PR-1 修订**：07-ai-crew **§3.1.3 line 201 已存在**「并发上限 | select | 1/2/3」控件。本任务是**对齐既有控件**（重命名为 `max_concurrent_tasks`、扩范围、点明它属三层并发的 **Agent 层**），**不是新增**，避免重复。
 
 **Files:**
-- Modify: `docs/fp-ui/07-ai-crew.md`（§5.6 Agent 配置规则、§6 数据对象、§3.1 智能体成员工作区表单）
+- Modify: `docs/fp-ui/07-ai-crew.md`（§3.1.3 配置 Tab line 201 既有控件、§5.6 Agent 配置规则、§6 数据对象）
 
-- [ ] **Step 1: §5.6 加并发规则**
+- [ ] **Step 1: 先 grep 确认现状**
 
-在 §5.6 Agent 配置规则补一条：「**并发上限（`max_concurrent_tasks`，默认 1）**：单个 Agent 同时能跑多少个任务（不同任务/Workspace 间并行）；与 Daemon 全局上限、Issue×Agent=1 共同构成三层并发控制（详见 04-studio §3.3）。」
+Run: `grep -nE "并发上限|max_concurrent" docs/fp-ui/07-ai-crew.md`
+Expected: line 201 有「并发上限 | select | 1/2/3」；确认 §6 数据对象是否已有对应字段（决定 Step 3 是补还是改）。
 
-- [ ] **Step 2: §6 数据对象加字段**
+- [ ] **Step 2: §3.1.3 既有控件对齐**
 
-在 §6 数据对象的 Agent/CrewMember 模型补 `max_concurrent_tasks: 1` 字段及注释。
+把 line 201 的「并发上限 | select | 1/2/3」改为「**Agent 并发上限**（`max_concurrent_tasks`）| select：1 / 2 / 4 / 8（默认 1）| 该 Agent 同时能跑多少个任务（不同任务/Workspace 间并行）」。**显式标注它是三层并发中的「Agent 层」**，区别于 Settings 的「Daemon 全局层」（Task 9）。
 
-- [ ] **Step 3: §3.1 成员工作区表单加控件**
+- [ ] **Step 3: §5.6 加并发规则**
 
-在 §3.1 智能体成员工作区的配置表单（Instructions/Skills/Env/Args/MCP 同级）补一项「并发上限 | stepper/select：1–8 | 默认 1」。
+在 §5.6 Agent 配置规则补一条：「**Agent 并发上限（`max_concurrent_tasks`，默认 1）**：单个 Agent 同时能跑多少个任务；与 **Daemon 全局上限**（Settings，`daemon_max_concurrent_tasks`）、**Issue×Agent=1**（同 Agent 同任务最多 1，不暴露 UI）共同构成三层并发控制（详见 04-studio §3.3）。」
 
-- [ ] **Step 4: 校验**
+- [ ] **Step 4: §6 数据对象对齐字段**
+
+在 §6 数据对象的 Agent/CrewMember 模型确保有 `max_concurrent_tasks: 1` 字段（无则补、有则核对命名）。
+
+- [ ] **Step 5: 校验**
 
 Run: `grep -c "max_concurrent_tasks" docs/fp-ui/07-ai-crew.md`
-Expected: ≥2（规则 + 数据对象）。
+Expected: ≥2（§3.1.3 控件 + §5.6 规则；§6 视现状）。
+Run: `grep -nE "并发上限 \| select \| 1 / 2 / 3" docs/fp-ui/07-ai-crew.md`
+Expected: 无输出（旧 1/2/3 控件已对齐）。
 
-- [ ] **Step 5: Commit**
+- [ ] **Step 6: Commit**
 
 ```bash
 git add docs/fp-ui/07-ai-crew.md
-git commit -m "docs(ai-crew): Agent 新增 max_concurrent_tasks 并发配置"
+git commit -m "docs(ai-crew): 既有并发上限对齐为 Agent 层 max_concurrent_tasks（三层之一）"
 ```
 
 ---
@@ -331,16 +348,17 @@ git commit -m "docs(ai-crew): Agent 新增 max_concurrent_tasks 并发配置"
 **Files:**
 - Modify: `docs/fp-ui/08-settings.md`（§3.8 Studio、§3.5 Daemon、§6 数据对象）
 
-- [ ] **Step 1: §3.8 Studio 删旧三模式**
+- [ ] **Step 1: §3.8 Studio 删旧三模式 + 核对「对话」分组（PR-7）**
 
 把 §3.8 Studio 表中「默认执行方式 | radio：普通 / 对话 / 自动」**整行删除**（无模式后不存在执行方式选择）。「默认 Agent」保留（= 默认 executor）。「默认启用评估」改为「默认评估 Agent | select（引用 AICrew 成员，可空=不评估）」+「默认评估轮数 | select：1/2/3」。「并发上限」行迁移到 §3.5 Daemon（见 Step 2）。
+**核对「对话」分组（line 258）**：无模式后"对话模式"已不存在，但 Session 自由对话仍在；该分组的「默认 Agent / 代码字体大小」语义仍成立，**但分组标签「对话」易与已删的"对话模式"混淆 → 改名为「Session 对话」**（明确指自由对话 Session，非执行模式）。
 
-- [ ] **Step 2: §3.5 Daemon 加扫描间隔 + 全局并发**
+- [ ] **Step 2: §3.5 Daemon 加扫描间隔 + Daemon 全局并发（区分于 Agent 层）**
 
 在 §3.5 Daemon 配置块补两项：
-- 「扫描间隔 | select：3s / 5s / 10s（默认 5s） | 中央扫描器轮询任务的周期」。
-- 「全局并发上限（`max_concurrent_tasks`）| select：2 / 4 / 6 / 8（默认按个人 Mac 取小，建议 4） | 整机同时运行的最大 Task 数（Daemon 级信号量）」。
-（这条整合自原 §3.8 的「并发上限 1/2/3」，数值范围上调到 2–8 并迁此处。）
+- 「扫描间隔（`scan_interval_seconds`）| select：3s / 5s / 10s（默认 5s） | 中央扫描器轮询任务的周期」。
+- 「**Daemon 全局并发上限**（`daemon_max_concurrent_tasks`）| select：2 / 4 / 6 / 8（默认按个人 Mac 取小，建议 4） | 整机同时运行的最大 Task 数（Daemon 级信号量）」。
+**显式标注**：这是三层并发的「Daemon 层」，**区别于 AICrew 的「Agent 层」`max_concurrent_tasks`（Task 8）**——两者不同层、命名不同，避免用户混淆。本条整合自原 §3.8 的「并发上限 1/2/3」（数值上调到 2–8 并迁此处）。
 
 - [ ] **Step 3: §6 数据对象补字段**
 
@@ -370,10 +388,12 @@ git commit -m "docs(settings): §3.8 删旧三模式、§3.5 加扫描间隔+全
 
 ---
 
-## Task 10: 00-layout-prototype.html 母版同步
+## Task 10: 00-layout-prototype.html 母版同步（Studio + ai-crew + settings）
+
+> **PR-2 修订**：CLAUDE.md「页面完成度以母版同步为准」。Task 8/9 给 ai-crew/settings 加/改了控件，母版必须一并同步，否则这两页不能算同步完成。本任务覆盖三页母版改动。
 
 **Files:**
-- Modify: `docs/fp-ui/00-layout-prototype.html`（Studio 详情页视图 + 看板卡片）
+- Modify: `docs/fp-ui/00-layout-prototype.html`（Studio 详情页 + 看板卡片；ai-crew 成员配置表单；settings Daemon/Studio 表单）
 
 - [ ] **Step 1: 定位 Studio 相关 DOM**
 
@@ -392,22 +412,36 @@ Run: `grep -nE "studio|kanban|看板|详情|in_review|审核中" docs/fp-ui/00-l
 
 把 Task 详情的「执行步骤进度条」替换为对话流（SPEC §3 ASCII 的 HTML 实现）：任务描述块 → 🤖 executor 自动执行块（含 Diff/Transcript 链接）→ 🔍 reviewer 评估块 → 👤 人工回复块（堆叠）→ 底部追加指令输入框。
 
-- [ ] **Step 4: 状态机改名**
+- [ ] **Step 4: Studio 状态机改名**
 
-母版里看板列/状态相关文案 `in_evaluation` → `in_review`（中文「审核中」不变）。
+母版里看板列/状态相关文案 `in_evaluation` → `in_review`（中文「审核中」不变）；删除母版 Studio 任务创建处的旧「普通/对话/自动」模式控件（若有）。
 
-- [ ] **Step 5: 视觉验收（替代自动化测试）**
+- [ ] **Step 5: ai-crew 母版同步 Agent 并发控件（PR-2）**
 
-用浏览器打开 `docs/fp-ui/00-layout-prototype.html`，停在 Studio 页面，人工核对：① 卡片三态角标渲染正确；② Task 详情为对话流而非进度条；③ 无旧「普通/对话/自动」模式控件残留。**不用截图替代用户验收**（CLAUDE.md），停留等用户查看。
+在母版 AICrew 页的成员配置表单（对应 07-ai-crew §3.1.3）把既有「并发上限 1/2/3」对齐为「Agent 并发上限（`max_concurrent_tasks`）select：1/2/4/8」。配色/控件样式遵循 DesignGuide.md（**改前必读**）。
+
+- [ ] **Step 6: settings 母版同步 Daemon/Studio 控件（PR-2）**
+
+在母版 Settings 页：
+- §3.5 Daemon 块加「扫描间隔 select 3s/5s/10s」+「Daemon 全局并发上限 select 2/4/6/8」。
+- §3.8 Studio 块删「默认执行方式 普通/对话/自动」行；「默认启用评估 toggle」→「默认评估 Agent select + 默认评估轮数 select」；「对话」分组标签→「Session 对话」。
+
+- [ ] **Step 7: 视觉验收（替代自动化测试，覆盖三页）**
+
+用浏览器打开 `docs/fp-ui/00-layout-prototype.html`，逐页人工核对：
+- **Studio**：① 卡片三态角标（🕐/⚡/🔒）渲染正确；② Task 详情为对话流而非进度条；③ 无旧「普通/对话/自动」控件。
+- **AICrew**：成员配置有「Agent 并发上限」控件。
+- **Settings**：Daemon 有扫描间隔 + 全局并发；Studio 无旧三模式、评估改为 Agent+轮数、分组为「Session 对话」。
+**不用截图替代用户验收**（CLAUDE.md），停留等用户查看。
 
 Run: `open docs/fp-ui/00-layout-prototype.html`
-Expected: 浏览器打开母版，Studio 视图呈现对话流详情 + 卡片角标。
+Expected: 浏览器打开母版，三页改动均呈现。
 
-- [ ] **Step 6: Commit**
+- [ ] **Step 8: Commit**
 
 ```bash
 git add docs/fp-ui/00-layout-prototype.html
-git commit -m "docs(proto): 母版同步 Studio 对话流详情 + 卡片三态角标"
+git commit -m "docs(proto): 母版同步 Studio 对话流/角标 + ai-crew/settings 并发控件"
 ```
 
 ---
@@ -446,5 +480,7 @@ git commit -m "docs: Studio 执行模型文档同步一致性收尾"
 
 - **Spec 覆盖**：SPEC §2→Task1/3、§3→Task1/5/10、§4→Task1/2/10、§5→Task1/4、§6→Task1/5、§7→Task3、§8 删除项→Task1/9、§9 待定→Task4/9、§10 联动清单 5 文件全部有对应任务（04-studio→T1-6、PRD→T7、AICrew→T8、Settings→T9、母版→T10）。✅ 无遗漏。
 - **占位符**：无 TBD/TODO；内容源统一指向已提交 SPEC 的具体章节（稳定、版本锁定），非计划内跨任务"similar to"。
-- **类型一致**：字段名 `executor`/`evaluator`/`evaluation_max_rounds`/`current_run_id`/`has_pending_input`/`last_run_id`/`last_reviewed_run_id`/`review_round`/`run_substate`/`worktree_path`/`worktree_branch`/`agent_role`/`max_concurrent_tasks`/`scan_interval_seconds` 在 Task 3/8/9 间一致，与 SPEC §7 对齐。
-- **存量冲突**：已显式处理 08-settings §3.8 旧三模式（Task9-S1）、原 `agents.planner/dialog` 废弃（Task3-S2b）、spec §10 文件名笔误（Task9-S5）。
+- **类型一致**：字段名 `executor`/`evaluator`/`evaluation_max_rounds`/`current_run_id`/`has_pending_input`/`last_run_id`/`last_reviewed_run_id`/`review_round`/`run_substate`/`worktree_path`/`worktree_branch`/`agent_role`/`scan_interval_seconds` 在 Task 3/8/9 间一致，与 SPEC §7 对齐。**三层并发命名严格区分**：Agent 层 `max_concurrent_tasks`（Task 8，ai-crew）vs Daemon 层 `daemon_max_concurrent_tasks`（Task 9，settings）vs Issue×Agent=1（不暴露 UI）。
+- **存量冲突（R7 review 后补全）**：已显式处理 08-settings §3.8 旧三模式（Task9-S1）、原 `agents.planner/dialog` 废弃（Task3-S2b）、spec §10 文件名笔误（Task9-S5）、**07-ai-crew §3.1.3 既有「并发上限 1/2/3」改对齐非新增（Task8，PR-1）**、**「对话」分组标签改名（Task9-S1，PR-7）**、**04-studio §8 的 03-focus §4 陈旧评估引用删除（Task5-S2，PR-5）**。
+- **母版同步覆盖（PR-2）**：Task 10 覆盖 Studio + ai-crew + settings 三页母版，满足 CLAUDE.md「以母版同步为准」，三页可在 Task 11 进度表正常标记。
+- **并行安全（PR-4）**：Task 1–6 串行（同改 04-studio）；T7/T8/T9 可并行（不同文件）。
