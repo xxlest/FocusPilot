@@ -217,46 +217,107 @@ StudioSession:
 
 ---
 
-## 3. 执行模式
+## 3. 执行模型（无模式化 + 单扫描器 + worktree 混合制）
 
-### 3.1 三种模式 + 两个开关
+> **设计来源**：[执行模型 spec](../superpowers/specs/2026-06-09-studio-execution-model-design.md)（已定稿）。本节取代原「三种模式 + 两个开关」「步骤流」「手动接管」。
 
-| 用户面向模式 | 底层 execution_mode | 定位 | 执行模型 |
-|------------|-------------------|------|---------|
-| **普通任务** | `none` | 手动管理 | 不启动 Agent Runtime，不创建 ExecutionRun，但仍有 Workspace |
-| **对话** | `manual` | 和 Agent 交互式协作 | 启动 dialog ExecutionRun，创建/绑定 primary Session |
-| **自动** | `semi_auto`（审批开）/ `auto`（审批关） | Agent 自主规划执行 | 启动 auto ExecutionRun，可绑定 primary Session 展示日志和交互 |
+每个任务都是"Agent 自动干活 + 人随时插话校准"的一场多轮对话。**不再有执行模式与开关**：配了执行 Agent 就自动调度，配了评估 Agent 就带评估接力。一个中央扫描器（每 3~5s）读任务协调标记判"该谁干" → 抢对应 Agent 并发槽 → 在该任务执行环境（git 项目用独立 worktree / 本地目录用路径锁原地执行）里跑。任务隔离靠 worktree（物理）或本地目录路径锁，不靠 app 级共享写锁。
 
-自动模式的两个开关：
+### 3.1 创建任务的执行配置
 
-| 开关 | 默认 | 开启 | 关闭 |
-|------|------|------|------|
-| 审批计划 | ✅ 开 | plan → 等用户批准 → execute（底层 semi_auto） | plan → 直接执行（底层 auto） |
-| 启用评估 | ❌ 关 | execute → Evaluation Agent 审查 | execute → 直接验收 |
-
-### 3.2 步骤流
+创建任务不再选「执行模式」，只配置：
 
 ```
-普通任务:     (无步骤) → 手动打勾 → done
-
-对话:         dialog → (evaluation) → 验收
-
-自动:
-  审批开+评估关:  plan → 批准 → execute → 验收
-  审批开+评估开:  plan → 批准 → execute → evaluation → 验收
-  审批关+评估关:  plan → execute → 验收
-  审批关+评估开:  plan → execute → evaluation → 验收
+┌──── 新建任务 ──────────────────────────────┐
+│  标题 / 描述 / Workspace                     │
+│  执行 Agent:  [代码工程师 ▾]   ← 可留空      │
+│  ☑ 开启自动评估                              │
+│     评估 Agent: [质量审查员 ▾]              │
+│     评估轮数:   [3 轮 ▾]   （最低 1 轮）     │
+│  安排 / 优先级 / 归属目标（可选）            │
+│           [创建]  [创建并放入待办]            │
+└──────────────────────────────────────────────┘
 ```
 
-### 3.3 手动接管
+执行行为由两项配置**隐式推导**（不再有 `execution_mode` 枚举）：
 
-任何模式执行中，用户都可点击"手动接管"：
+| 配置 | 取值 | 行为 |
+|------|------|------|
+| 执行 Agent | 已选 | 拖到「待办」即被自动调度执行 |
+| 执行 Agent | 留空 | 纯手动卡片，不自动执行、靠人拖状态（吸收原「普通任务」，覆盖非 AI 事务） |
+| 自动评估 | 关（无评估 Agent） | 执行后无评估关卡 |
+| 自动评估 | 开（评估 Agent + 轮数 N） | 每轮执行后评估 Agent 自动审查、执行 Agent 据意见自动修复，至多 N 轮 |
 
-- 当前 Run 暂停
-- 打开对话视图
-- 注入当前全部上下文（plan.md、execution_log、evaluation_report、changed_files）
-- 用户和 Agent 对话微调
-- 完成后提交验收或标记 done
+**配置约束**：执行 Agent 留空 + 评估 Agent 非空 = 非法（UI 禁止）。
+**创建按钮落点**：「创建」→「待规划」（不调度）；「创建并放入待办」→「待办」（进自动调度）。
+**执行范围（V1）**：只执行被拖入「待办」的**当前节点自身**，**不递归**——含子节点的任务（`hybrid`）只跑自身、不连带跑子节点；纯容器（`container`）不展示、不入调度；递归执行为 V2（见 §15）。
+
+### 3.2 看板状态机（执行视角）
+
+> 状态枚举与流转图见 **§2.4**（数据视角，权威）。本节只写执行视角差异点。
+
+- **乒乓**：`进行中 ⇄ 审核中`——自动执行（含评估接力）跑完一律落「审核中」等人；人**回复**即重新触发执行、回到「进行中」（抢到并发槽则进，槽满/路径锁被占则先排队）；人**满意**则拖到「已完成」。「审核中」是强制的人工确认关卡（必经站，非终点）。
+- **卡片角标**（运行子状态 `run_substate`，不新增看板列）：🕐 `queued` 等并发槽 / ⚡ `working` 执行中 / 🔒 `waiting_local_directory` 本地目录被同目录另一任务占用。
+- **调度行为**：仅扫 `todo / in_progress / in_review` 三态；`backlog`（规划区）/`done`/`blocked`/`cancelled` 不扫。手动卡片（无执行 Agent）任何状态都不进调度、不触发强制审核中、状态全人工拖动。
+- **blocked 触发与恢复**：V1 仅人工标 blocked；标时写 `blocked_from_status`，进行中被标则当前 Run aborted、释放槽/路径锁；解除回到来源状态，回 `todo` 则重新入调度、不自动续跑旧 Run。
+
+### 3.3 执行引擎
+
+**单中央扫描器**：一个调度循环（间隔可配，Settings，默认 3~5s），扫到任务靠协调标记判"该谁干"（过滤谓词，非多层循环）；槽满则跳过、下次扫描重捞（隐式排队）。
+
+**协调标记（多 Agent 接力命门）**：
+
+| 字段 | 写者 | 用途 |
+|------|------|------|
+| `current_run_id` | 调度器 | 非空 = 正在跑 → 跳过（防重复派发，= Issue×Agent 闸） |
+| `has_pending_input` | 用户回复时置 | 驱动"新需求再执行"；executor 取走后清零 |
+| `last_run_id` / `last_reviewed_run_id` | executor / reviewer | 二者不等 = 有未 review 新结果 → reviewer 该上 |
+| `review_round` vs `evaluation_max_rounds` | reviewer | 判 ping-pong 是否继续 |
+
+**隔离：worktree 混合制**：
+
+| Workspace 类型 | 隔离 | 并发 | 交付 |
+|---|---|---|---|
+| git 项目 | 独立 worktree（共享 bare repo 缓存建，分支 `task/{task_id}`） | 真并行 | push 分支 / PR |
+| local_directory | 不建 worktree、原地执行 + 路径级互斥锁（等待态 `waiting_local_directory`） | 同目录串行 | 改动在用户工作副本 |
+| temporary | 独立目录 | 并行 | 手动取用 |
+
+- **local_directory 路径锁 = 任务级持有**：从首次执行持到任务离开执行流（落 `done`/`cancelled`/被拖出审核中），**审核中也不释放**（防同目录并发污染）；git/非 git 统一此规则、不做分支快照。escape hatch：拖出审核中即释放。
+- WorkspaceWriteLease 不全退役，瘦身为 local_directory 路径锁；git worktree / temporary 无 app 级锁。
+
+**三层并发闸 + 排序**：
+
+| 层 | 字段（位置） | 作用 |
+|---|---|---|
+| Daemon 全局 | `daemon_max_concurrent_tasks`（Settings，默认 4） | 整机总并发（信号量） |
+| Agent 级 | `max_concurrent_tasks`（AICrew，每 Agent，默认 1） | 单 Agent 并发 |
+| Issue×Agent | 固定 1 | 同 Agent 同任务最多 1（= `current_run_id` 非空跳过） |
+
+候选按 `priority DESC, created_at ASC` 取；槽满跳过、下轮重捞。
+
+**派发与 ping-pong**：建/复用 worktree（git）或取路径锁（local_directory，若未持有）→ 在任务 session 内 resume 上下文（类 `claude -p --resume`）→ executor Run 执行 → 写 `last_run_id` → reviewer Run 接力评估 → 有意见 executor 再跑、通过/满 N 轮则落「审核中」。**槽按轮取还**（轮开始取、轮结束释放）；**审核中释放槽、local_directory 路径锁保持**。
+
+**需求合并与新需求优先级**：多回复合并为一批一次执行（不真并行）；executor 跑到一半用户回复且配了评估 → 先走完当前 ping-pong 评估循环、落审核中，再由 `has_pending_input` 触发下一个全新 ping-pong（不插队进正在进行的评估轮）。
+
+**重启对账**：CoderSession 不持久化（重启清空内存池）。启动时扫 `current_run_id != null` 的任务 → 进程已不在 → 清 `current_run_id`、标 Run aborted → 下轮重新派发；`git worktree prune` 清孤儿 worktree。
+
+**对话跨 Run 连续性**：详情页多轮堆叠跨多个 Run（executor/reviewer），连续性靠 session / worktree 上下文，不靠 Run 边界；`run_history_ids` 记录每 Run，`current_run_id` 仅 ping-pong 进行中非空。
+
+### 3.4 评估接力（reviewer 自治 Run）
+
+评估不是 executor Run 内部子步骤，而是**独立评估 Agent 的独立 Run**，与 executor Run 在同一执行环境内交替：
+
+```
+executor Run 执行 → 写 last_run_id
+   → reviewer Run 审查 → 写 last_reviewed_run_id、review_round++
+        ├─ 有未解决意见 且 review_round < N → executor 接力修复 → …
+        └─ 评估通过 或 review_round == N → 落「审核中」
+```
+
+- **`evaluation_max_rounds`（N，≥1）是自动修复上限，不是终点**。
+- 评估通过（reviewer 判无未解决意见）→ 落「审核中」等人。
+- 跑满 N 轮仍有意见 → executor 停止自动接力，带"未解决意见"落「审核中」，人二选一：回复/打回继续 或 直接拖「已完成」。永不丢弃、永不无限烧。
+- 原「手动接管」降级为详情页**人工回复**通用能力（§7.4）：任何时候人回复一句即注入上下文、触发下一轮。
 
 ---
 
