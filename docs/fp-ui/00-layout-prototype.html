@@ -4334,50 +4334,20 @@
             </div>
             <div style="display:flex;flex:1;overflow:hidden">
               <div style="flex:1;display:flex;flex-direction:column;overflow:hidden">
-                <div style="display:flex;gap:0;padding:0 18px;border-bottom:1px solid var(--line-soft)">
-                  <div class="fp-dtab active" data-t="fp-t-plan" style="padding:10px 14px;font-size:12px;font-weight:500;color:var(--accent);cursor:pointer;border-bottom:2px solid var(--accent)">规划 ✓</div>
-                  <div class="fp-dtab" data-t="fp-t-approval" style="padding:10px 14px;font-size:12px;font-weight:500;color:var(--dim);cursor:pointer;border-bottom:2px solid transparent">确认 ✓</div>
-                  <div class="fp-dtab" data-t="fp-t-exec" style="padding:10px 14px;font-size:12px;font-weight:500;color:var(--dim);cursor:pointer;border-bottom:2px solid transparent">执行 ●</div>
-                  <div class="fp-dtab" data-t="fp-t-eval" style="padding:10px 14px;font-size:12px;font-weight:500;color:var(--dim);cursor:pointer;border-bottom:2px solid transparent">评估</div>
-                  <div class="fp-dtab" data-t="fp-t-accept" style="padding:10px 14px;font-size:12px;font-weight:500;color:var(--dim);cursor:pointer;border-bottom:2px solid transparent">验收</div>
-                </div>
                 <div id="fp-t-plan" style="flex:1;overflow-y:auto;padding:14px 18px">
-                  <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);margin-bottom:6px">📝 任务描述</div>
-                  <div style="background:var(--bg);border:1px solid var(--line-soft);border-radius:var(--radius);padding:10px;font-size:12px;line-height:1.6;color:var(--muted);margin-bottom:16px">实现 Workspace 看板视图的状态模型，采用 Multica 7 态流转：backlog → todo → in_progress ⇄ in_review → done，旁路状态 blocked / cancelled。需要实现拖拽跨列变更状态，状态变更持久化，以及与规划视图的数据同步。</div>
-                  <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);margin-bottom:6px">📋 规划文档 <span style="color:var(--green);margin-left:4px">● READY</span></div>
-                  <div style="background:var(--bg);border:1px solid var(--line-soft);border-radius:var(--radius);overflow:hidden">
-                    <div style="display:flex;justify-content:space-between;padding:6px 10px;background:var(--elevated);border-bottom:1px solid var(--line-soft);font-size:10px;color:var(--dim)"><span style="color:var(--green)">✓ plan.md</span><span><button class="btn" style="font-size:9px;min-height:20px;padding:0 6px">重新规划</button></span></div>
-                    <div style="padding:12px;font-size:12px;line-height:1.7;color:var(--muted)"><strong style="color:var(--text)">实现步骤</strong><ol style="padding-left:18px;margin:6px 0"><li>定义 TaskStatus 枚举（7 态 + 转换矩阵）</li><li>创建 KanbanDataSource（分组、排序）</li><li>实现 NSTableView drag & drop</li><li>持久化到 ConfigStore</li><li>添加拖拽动画 0.25s ease-out</li><li>同步规划视图状态标记</li></ol><strong style="color:var(--text)">验收标准</strong><div style="margin:6px 0;font-size:11px">☐ 拖拽后 status 正确更新且持久化<br>☐ 动画流畅，响应 &lt; 100ms<br>☐ 重启后状态不丢失<br>☐ blocked/cancelled 独立折叠区</div></div>
-                  </div>
+                  <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);margin-bottom:6px">📄 任务描述</div>
+                  <div style="background:var(--bg);border:1px solid var(--line-soft);border-radius:var(--radius);padding:10px;font-size:12px;line-height:1.6;color:var(--muted);margin-bottom:14px">实现 Workspace 看板视图的状态模型，采用 Multica 7 态流转：backlog → todo → in_progress ⇄ in_review → done，旁路状态 blocked / cancelled。</div>
+                  <div style="border-top:1px dashed var(--line-soft);margin:0 0 14px"></div>
+                  <div style="display:flex;gap:8px;margin-bottom:14px"><span style="flex-shrink:0">🤖</span><div style="flex:1;min-width:0"><div style="font-size:11px;margin-bottom:4px"><strong>代码工程师</strong> <span style="color:var(--dim)">· 自动执行 · 00:03:42</span></div><div style="font-family:var(--mono);font-size:10px;line-height:1.7;color:var(--muted);background:var(--bg);border:1px solid var(--line-soft);border-radius:6px;padding:8px">修改 Models.swift (+42)、新建 KanbanDataSource.swift (+186)<br><span style="color:var(--green)">✓ Build succeeded</span></div><div style="display:flex;gap:6px;margin-top:6px"><button class="btn" style="font-size:9px;min-height:22px;padding:0 8px">查看 Diff</button><button class="btn" style="font-size:9px;min-height:22px;padding:0 8px">日志</button></div></div></div>
+                  <div style="display:flex;gap:8px;margin-bottom:14px"><span style="flex-shrink:0">🔍</span><div style="flex:1;min-width:0"><div style="font-size:11px;margin-bottom:4px"><strong>质量审查员</strong> <span style="color:var(--dim)">· 评估 · 第 1 轮 / 共 3 轮</span> <span class="pill amber" style="font-size:9px;padding:1px 5px">2 条意见</span></div><div style="padding:6px 9px;background:rgba(248,113,113,.08);border-left:3px solid var(--red);border-radius:0 4px 4px 0;margin-bottom:4px;font-size:11px"><strong style="color:var(--red)">Critical</strong> 状态转换缺少 blocked→todo 路径</div><div style="padding:6px 9px;background:rgba(242,196,15,.08);border-left:3px solid var(--amber);border-radius:0 4px 4px 0;font-size:11px"><strong style="color:var(--amber)">Important</strong> 拖拽动画帧率偏低</div></div></div>
+                  <div style="display:flex;gap:8px;margin-bottom:14px"><span style="flex-shrink:0">🤖</span><div style="flex:1;min-width:0"><div style="font-size:11px;margin-bottom:4px"><strong>代码工程师</strong> <span style="color:var(--dim)">· 自动修复（第 2 轮）</span></div><div style="font-family:var(--mono);font-size:10px;line-height:1.7;color:var(--muted);background:var(--bg);border:1px solid var(--line-soft);border-radius:6px;padding:8px">补充 blocked→todo 转换 + 提升动画帧率</div></div></div>
+                  <div style="display:flex;gap:8px;margin-bottom:14px"><span style="flex-shrink:0">🔍</span><div style="flex:1;min-width:0"><div style="font-size:11px"><strong>质量审查员</strong> <span style="color:var(--dim)">· 评估 · 第 2 轮</span> <span class="pill green" style="font-size:9px;padding:1px 5px">✓ 通过</span> <span style="color:var(--dim)">→ 落「审核中」</span></div></div></div>
+                  <div style="border-top:1px dashed var(--line-soft);margin:0 0 14px"></div>
+                  <div style="display:flex;gap:8px;margin-bottom:14px"><span style="flex-shrink:0">👤</span><div style="flex:1;min-width:0"><div style="font-size:11px;margin-bottom:4px"><strong>你</strong> <span style="color:var(--dim)">· 回复 = 触发下一轮</span></div><div style="font-size:12px;color:var(--text);background:var(--elevated);border-radius:6px;padding:7px 9px">blocked 的回退逻辑再补一下边界情况</div></div></div>
                 </div>
-                <div id="fp-t-approval" style="display:none;flex:1;overflow-y:auto;padding:14px 18px">
-                  <div style="font-size:12px;font-weight:600;margin-bottom:10px">规划产物审批</div>
-                  <div style="background:var(--bg);border:1px solid var(--line-soft);border-radius:var(--radius);padding:12px;margin-bottom:14px;font-size:12px;line-height:1.8;color:var(--muted)">
-                    <div style="font-weight:500;color:var(--text);margin-bottom:6px">plan.md — 看板状态模型实现方案</div>
-                    <div>1. 定义 TaskStatus 枚举（7 态）</div>
-                    <div>2. 实现拖拽跨列变更 + validTransitions 校验</div>
-                    <div>3. NSTableView 替代方案（性能）</div>
-                    <div>4. 持久化到 ConfigStore</div>
-                  </div>
-                  <div style="display:flex;gap:8px"><button class="btn primary" style="font-size:11px;min-height:28px">批准并执行</button><button class="btn" style="font-size:11px;min-height:28px">退回修改</button></div>
-                </div>
-                <div id="fp-t-exec" style="display:none;flex:1;overflow-y:auto;padding:14px 18px">
-                  <div style="background:var(--bg);border:1px solid var(--line-soft);border-radius:var(--radius);overflow:hidden"><div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--elevated);border-bottom:1px solid var(--line-soft);font-size:11px"><strong>代码工程师</strong><span style="color:var(--accent)">· 执行中</span><span style="margin-left:auto;font-family:var(--mono);font-size:10px;color:var(--dim)">00:03:42</span></div><div style="padding:10px 12px;font-family:var(--mono);font-size:10px;line-height:1.8;color:var(--muted);max-height:240px;overflow-y:auto">▸ 加载 plan.md ...<br>▸ 创建 TaskStatus 枚举 — 7 态<br>▸ 写入 Models.swift (+42行)<br>▸ 创建 KanbanDataSource.swift<br>▸ 实现 drag & drop 协议<br>▸ <span style="color:var(--green)">✓ Build succeeded</span><br>▸ 同步规划视图状态...<br>▸ <span style="color:var(--accent)">生成报告...</span></div></div>
-                  <div style="margin-top:12px;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);margin-bottom:6px">📦 产出物</div>
-                  <div style="font-family:var(--mono);font-size:11px;line-height:1.8;color:var(--muted)"><span style="color:var(--green)">NEW</span> KanbanDataSource.swift +186<br><span style="color:var(--amber)">MOD</span> Models.swift +42<br><span style="color:var(--amber)">MOD</span> QuickPanelView.swift +67 -12<br><span style="color:var(--amber)">MOD</span> ConfigStore.swift +15</div>
-                </div>
-                <div id="fp-t-eval" style="display:none;flex:1;overflow-y:auto;padding:14px 18px">
-                  <div style="font-size:12px;font-weight:600;margin-bottom:10px">评估意见（reviewer · 质量审查员 · 第 1 轮 / 共 3 轮）</div>
-                  <div style="padding:7px 10px;background:rgba(248,113,113,.08);border-left:3px solid var(--red);border-radius:0 4px 4px 0;margin-bottom:5px;font-size:11px"><strong style="color:var(--red)">Critical</strong> 状态转换缺少 blocked→todo 路径</div>
-                  <div style="padding:7px 10px;background:rgba(242,196,15,.08);border-left:3px solid var(--amber);border-radius:0 4px 4px 0;margin-bottom:5px;font-size:11px"><strong style="color:var(--amber)">Important</strong> 拖拽动画帧率偏低</div>
-                  <div style="padding:7px 10px;background:var(--elevated);border-left:3px solid var(--dim);border-radius:0 4px 4px 0;font-size:11px"><strong>Nit</strong> 变量命名风格不一致</div>
-                  <div style="font-size:10px;color:var(--dim);margin-top:10px;margin-bottom:6px">N 轮内 executor 自动接力修复；跑满 3 轮仍有意见时停下交你定夺：</div>
-                  <div style="display:flex;gap:8px"><button class="btn primary" style="font-size:11px;min-height:28px" onclick="handleEvalAction('apply')">采纳并继续</button><button class="btn" style="font-size:11px;min-height:28px" onclick="handleEvalAction('manual')">回复打回</button><button class="btn" style="font-size:11px;min-height:28px" onclick="handleEvalAction('ignore')">直接完成</button></div>
-                </div>
-                <div id="fp-t-accept" style="display:none;flex:1;overflow-y:auto;padding:14px 18px">
-                  <div style="font-size:12px;font-weight:600;margin-bottom:10px">最终验收</div>
-                  <div style="background:var(--bg);border-radius:var(--radius);padding:12px;font-family:var(--mono);font-size:11px;line-height:1.8;color:var(--muted);margin-bottom:14px">Models.swift — TaskStatus 枚举<br>KanbanDataSource.swift — 拖拽跨列<br>plan.md — 实现方案<br>execution.log — 执行日志</div>
-                  <div style="display:flex;gap:8px"><button class="btn" style="font-size:11px;min-height:28px;background:rgba(46,204,113,.15);color:var(--green);border-color:rgba(46,204,113,.3)" onclick="handleAcceptAction('pass')">验收通过 → Done</button><button class="btn" style="font-size:11px;min-height:28px" onclick="handleAcceptAction('reject')">退回修改</button></div>
+                <div style="border-top:1px solid var(--line-soft);padding:10px 18px;display:flex;gap:8px;align-items:center">
+                  <input type="text" placeholder="让 Agent 继续调整…（回复即触发下一轮执行）" style="flex:1;background:var(--bg);border:1px solid var(--line-soft);border-radius:var(--radius);padding:7px 10px;color:var(--text);font-size:12px;font-family:var(--sans);outline:none">
+                  <button class="btn primary" style="font-size:11px;min-height:30px">↑ 发送</button>
                 </div>
               </div>
               <div id="fpDetailAttrs" style="width:200px;border-left:1px solid var(--line-soft);padding:14px;overflow-y:auto;font-size:11px">
@@ -8473,18 +8443,18 @@ FocusPilot/
         // plan tab: description + plan
         var planTab = document.getElementById('fp-t-plan');
         if (planTab) {
-          var descHtml = '<div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);margin-bottom:6px">📝 任务描述</div>' +
-            '<div style="background:var(--bg);border:1px solid var(--line-soft);border-radius:var(--radius);padding:10px;font-size:12px;line-height:1.6;color:var(--muted);margin-bottom:16px">' + task.desc + '</div>';
-          if (task.plan) {
-            descHtml += '<div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);margin-bottom:6px">📋 规划文档 <span style="color:var(--green);margin-left:4px">● READY</span></div>' +
-              '<div style="background:var(--bg);border:1px solid var(--line-soft);border-radius:var(--radius);overflow:hidden">' +
-              '<div style="display:flex;justify-content:space-between;padding:6px 10px;background:var(--elevated);border-bottom:1px solid var(--line-soft);font-size:10px;color:var(--dim)"><span style="color:var(--green)">✓ plan.md</span><span><button class="btn" style="font-size:9px;min-height:20px;padding:0 6px">重新规划</button></span></div>' +
-              '<div style="padding:12px;font-size:12px;line-height:1.7;color:var(--muted)">' + task.plan + '</div></div>';
+          var convHtml = '<div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);margin-bottom:6px">📄 任务描述</div>' +
+            '<div style="background:var(--bg);border:1px solid var(--line-soft);border-radius:var(--radius);padding:10px;font-size:12px;line-height:1.6;color:var(--muted);margin-bottom:14px">' + task.desc + '</div>';
+          if (task.exec) {
+            convHtml += '<div style="border-top:1px dashed var(--line-soft);margin:0 0 14px"></div>' +
+              '<div style="display:flex;gap:8px;margin-bottom:14px"><span style="flex-shrink:0">🤖</span><div style="flex:1;min-width:0">' +
+              '<div style="font-size:11px;margin-bottom:4px"><strong>' + task.exec.agent + '</strong> <span style="color:var(--dim)">· 自动执行 · ' + task.exec.time + '</span></div>' +
+              '<div style="font-family:var(--mono);font-size:10px;line-height:1.7;color:var(--muted);background:var(--bg);border:1px solid var(--line-soft);border-radius:6px;padding:8px">' + task.exec.logs + '</div>' +
+              '<div style="display:flex;gap:6px;margin-top:6px"><button class="btn" style="font-size:9px;min-height:22px;padding:0 8px">查看 Diff</button><button class="btn" style="font-size:9px;min-height:22px;padding:0 8px">日志</button></div></div></div>';
           } else {
-            descHtml += '<div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);margin-bottom:6px">📋 规划文档 <span style="color:var(--dim);margin-left:4px">○ 未规划</span></div>' +
-              '<div style="background:var(--bg);border:1px solid var(--line-soft);border-radius:var(--radius);padding:24px;text-align:center;font-size:12px;color:var(--dim)">尚无规划文档<br><button class="btn" style="font-size:10px;min-height:24px;margin-top:8px">开始规划</button></div>';
+            convHtml += '<div style="background:var(--bg);border:1px solid var(--line-soft);border-radius:var(--radius);padding:20px;text-align:center;font-size:12px;color:var(--dim)">尚未开始执行 — 拖到「待办」即由 Agent 自动执行</div>';
           }
-          planTab.innerHTML = descHtml;
+          planTab.innerHTML = convHtml;
         }
         // sidebar metadata
         var sidebar = panel.querySelector('div[style*="width:200px"]');
@@ -8522,18 +8492,18 @@ FocusPilot/
         // plan tab: description + plan (same as renderFocusTaskDetail)
         var planTab = document.getElementById('fp-t-plan');
         if (planTab) {
-          var descHtml = '<div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);margin-bottom:6px">📝 任务描述</div>' +
-            '<div style="background:var(--bg);border:1px solid var(--line-soft);border-radius:var(--radius);padding:10px;font-size:12px;line-height:1.6;color:var(--muted);margin-bottom:16px">' + task.desc + '</div>';
-          if (task.plan) {
-            descHtml += '<div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);margin-bottom:6px">📋 规划文档 <span style="color:var(--green);margin-left:4px">● READY</span></div>' +
-              '<div style="background:var(--bg);border:1px solid var(--line-soft);border-radius:var(--radius);overflow:hidden">' +
-              '<div style="display:flex;justify-content:space-between;padding:6px 10px;background:var(--elevated);border-bottom:1px solid var(--line-soft);font-size:10px;color:var(--dim)"><span style="color:var(--green)">✓ plan.md</span><span><button class="btn" style="font-size:9px;min-height:20px;padding:0 6px">重新规划</button></span></div>' +
-              '<div style="padding:12px;font-size:12px;line-height:1.7;color:var(--muted)">' + task.plan + '</div></div>';
+          var convHtml = '<div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);margin-bottom:6px">📄 任务描述</div>' +
+            '<div style="background:var(--bg);border:1px solid var(--line-soft);border-radius:var(--radius);padding:10px;font-size:12px;line-height:1.6;color:var(--muted);margin-bottom:14px">' + task.desc + '</div>';
+          if (task.exec) {
+            convHtml += '<div style="border-top:1px dashed var(--line-soft);margin:0 0 14px"></div>' +
+              '<div style="display:flex;gap:8px;margin-bottom:14px"><span style="flex-shrink:0">🤖</span><div style="flex:1;min-width:0">' +
+              '<div style="font-size:11px;margin-bottom:4px"><strong>' + task.exec.agent + '</strong> <span style="color:var(--dim)">· 自动执行 · ' + task.exec.time + '</span></div>' +
+              '<div style="font-family:var(--mono);font-size:10px;line-height:1.7;color:var(--muted);background:var(--bg);border:1px solid var(--line-soft);border-radius:6px;padding:8px">' + task.exec.logs + '</div>' +
+              '<div style="display:flex;gap:6px;margin-top:6px"><button class="btn" style="font-size:9px;min-height:22px;padding:0 8px">查看 Diff</button><button class="btn" style="font-size:9px;min-height:22px;padding:0 8px">日志</button></div></div></div>';
           } else {
-            descHtml += '<div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);margin-bottom:6px">📋 规划文档 <span style="color:var(--dim);margin-left:4px">○ 未规划</span></div>' +
-              '<div style="background:var(--bg);border:1px solid var(--line-soft);border-radius:var(--radius);padding:24px;text-align:center;font-size:12px;color:var(--dim)">尚无规划文档<br><button class="btn" style="font-size:10px;min-height:24px;margin-top:8px">开始规划</button></div>';
+            convHtml += '<div style="background:var(--bg);border:1px solid var(--line-soft);border-radius:var(--radius);padding:20px;text-align:center;font-size:12px;color:var(--dim)">尚未开始执行 — 拖到「待办」即由 Agent 自动执行</div>';
           }
-          planTab.innerHTML = descHtml;
+          planTab.innerHTML = convHtml;
         }
         // NOTE: sidebar metadata is intentionally NOT rendered here — workItems is the source of truth
       }
@@ -9063,14 +9033,7 @@ FocusPilot/
         document.getElementById('fpDetailOverlay').style.pointerEvents = 'none';
         document.getElementById('fpDetailPanel').style.transform = 'translateX(100%)';
       }
-      document.querySelectorAll('.fp-dtab').forEach(tab => {
-        tab.addEventListener('click', () => {
-          document.querySelectorAll('.fp-dtab').forEach(t => { t.style.color = 'var(--dim)'; t.style.borderBottomColor = 'transparent'; });
-          tab.style.color = 'var(--accent)'; tab.style.borderBottomColor = 'var(--accent)';
-          ['fp-t-plan','fp-t-approval','fp-t-exec','fp-t-eval','fp-t-accept'].forEach(id => { document.getElementById(id).style.display = 'none'; });
-          document.getElementById(tab.dataset.t).style.display = '';
-        });
-      });
+      // 详情页已改为对话流（单容器 #fp-t-plan），原 5-tab 切换逻辑移除
 
       /* ── Focus: New Task Modal ── */
       var _newTaskContext = null;
