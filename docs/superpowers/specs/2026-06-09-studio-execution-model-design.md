@@ -34,7 +34,7 @@
 │  执行 Agent:  [代码工程师 ▾]   ← 可留空      │
 │  ☑ 开启自动评估                              │
 │     评估 Agent: [质量审查员 ▾]              │
-│     评估轮数:   [3 轮 ▾]   （最低 1 轮）     │
+│     评估轮数:   [3 ▾]  预设 1/2/3 + 自定义（≥1）     │
 │  安排: [本周 ▾]   优先级: [P1 ▾]            │
 │  归属目标: [4月/FP 0.0.1 ▾]  （可选）        │
 │           [创建]  [创建并放入待办]            │
@@ -305,7 +305,7 @@ WorkItem:
   agents:
     executor: "agent_coder"        # 执行 Agent，可空（空 = 手动卡片）
     evaluator: "agent_evaluator"   # 评估 Agent，可空（空 = 无评估）
-  evaluation_max_rounds: 3         # 评估轮数上限 N（≥1），仅 evaluator 非空时有效
+  evaluation_max_rounds: 3         # 评估轮数上限 N（≥1 任意整数；UI 预设 1/2/3 + 自定义），仅 evaluator 非空时有效
 
   # 多 Agent 接力协调标记（K2，§5.2）
   current_run_id: null             # 非空=正在跑→跳过（防重复派发，Issue×Agent 闸）

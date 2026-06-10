@@ -88,7 +88,7 @@ WorkItem:
     executor: "agent_coder"       # 执行 Agent，可空（空=手动卡片，不自动调度）
     evaluator: "agent_evaluator"  # 评估 Agent，可空（空=无评估）
     # planner / dialog 字段废弃（无模式后不再使用）；解码向后兼容忽略
-  evaluation_max_rounds: 3        # 评估轮数上限 N（≥1），仅 evaluator 非空时有效
+  evaluation_max_rounds: 3        # 评估轮数上限 N（≥1 任意整数；UI 提供预设 1/2/3 + 自定义），仅 evaluator 非空时有效
 
   # ── 多 Agent 接力协调标记（K2，见 §3.3）──
   has_pending_input: false             # 用户回复时置 true，executor 取走后清零
@@ -239,7 +239,7 @@ StudioSession:
 │  执行 Agent:  [代码工程师 ▾]   ← 可留空      │
 │  ☑ 开启自动评估                              │
 │     评估 Agent: [质量审查员 ▾]              │
-│     评估轮数:   [3 轮 ▾]   （最低 1 轮）     │
+│     评估轮数:   [3 ▾]  预设 1/2/3 或自定义   │
 │  安排 / 优先级 / 归属目标（可选）            │
 │           [创建]  [创建并放入待办]            │
 └──────────────────────────────────────────────┘

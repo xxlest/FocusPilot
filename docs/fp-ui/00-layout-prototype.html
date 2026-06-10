@@ -4411,7 +4411,7 @@
                   <label style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text);cursor:pointer;margin-bottom:6px"><input type="checkbox" id="fp-eval-toggle" style="accent-color:var(--accent)" onclick="document.getElementById('fp-eval-row').style.display=this.checked?'flex':'none'"> 开启自动评估</label>
                   <div id="fp-eval-row" style="display:none;gap:10px">
                     <div style="flex:1"><label style="display:block;font-size:10px;color:var(--dim);margin-bottom:3px">评估 Agent</label><select id="fp-eval-agent" style="width:100%;background:var(--surface);border:1px solid var(--line-soft);border-radius:var(--radius);padding:5px 6px;color:var(--text);font-size:10px;font-family:var(--sans)"><option selected>质量审查员</option><option>架构师</option></select></div>
-                    <div style="width:96px"><label style="display:block;font-size:10px;color:var(--dim);margin-bottom:3px">评估轮数</label><select id="fp-eval-rounds" style="width:100%;background:var(--surface);border:1px solid var(--line-soft);border-radius:var(--radius);padding:5px 6px;color:var(--text);font-size:10px;font-family:var(--sans)"><option>1</option><option>2</option><option selected>3</option></select></div>
+                    <div style="width:150px"><label style="display:block;font-size:10px;color:var(--dim);margin-bottom:3px">评估轮数</label><div style="display:flex;gap:4px"><select id="fp-eval-rounds" onchange="document.getElementById('fp-eval-rounds-custom').style.display=this.value==='custom'?'block':'none'" style="flex:1;background:var(--surface);border:1px solid var(--line-soft);border-radius:var(--radius);padding:5px 6px;color:var(--text);font-size:10px;font-family:var(--sans)"><option>1</option><option>2</option><option selected>3</option><option value="custom">自定义…</option></select><input id="fp-eval-rounds-custom" type="number" min="1" value="5" title="自定义轮数（≥1）" style="display:none;width:52px;background:var(--surface);border:1px solid var(--line-soft);border-radius:var(--radius);padding:5px 6px;color:var(--text);font-size:10px;font-family:var(--sans)"></div></div>
                   </div>
                 </div>
               </div>
@@ -6612,11 +6612,15 @@ FocusPilot/
                       <div class="row-label">默认评估轮数</div>
                       <div class="row-desc">默认 evaluation_max_rounds（并发上限已迁至 Daemon 设置）</div>
                     </div>
-                    <select style="height:32px;width:80px;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface-2);padding:0 10px;appearance:none;cursor:pointer;font-size:12px">
-                      <option>1</option>
-                      <option>2</option>
-                      <option selected>3</option>
-                    </select>
+                    <div style="display:flex;gap:6px;align-items:center">
+                      <select onchange="this.parentElement.querySelector('input').style.display=this.value==='custom'?'block':'none'" style="height:32px;width:96px;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface-2);padding:0 10px;appearance:none;cursor:pointer;font-size:12px">
+                        <option>1</option>
+                        <option>2</option>
+                        <option selected>3</option>
+                        <option value="custom">自定义…</option>
+                      </select>
+                      <input type="number" min="1" value="5" title="自定义轮数（≥1）" style="display:none;height:32px;width:64px;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface-2);padding:0 10px;font-size:12px">
+                    </div>
                   </div>
                 </div>
                 <h4>Session 对话</h4>
