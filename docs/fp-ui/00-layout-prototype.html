@@ -4330,7 +4330,7 @@
             <div style="background:var(--elevated);border:1px solid var(--line);border-radius:var(--radius);padding:10px 14px;margin:12px 18px 0;font-size:11px">
               <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><span style="width:7px;height:7px;border-radius:50%;background:var(--green);animation:pulse 2s infinite"></span><strong>代码工程师</strong><span style="color:var(--dim)">· Running · 00:03:42 · 步骤 3/5</span></div>
               <div style="font-family:var(--mono);font-size:10px;line-height:1.7;color:var(--muted);background:var(--bg);padding:6px 8px;border-radius:4px;max-height:60px;overflow-y:auto">> 正在修改 Models.swift...<br>> 添加 blocked→todo 状态转换<br>> 运行测试套件...</div>
-              <div style="display:flex;gap:6px;margin-top:8px"><button class="btn" style="font-size:10px;min-height:24px;padding:0 8px;color:var(--red)">停止</button><button class="btn" style="font-size:10px;min-height:24px;padding:0 8px">手动接管</button><button class="btn" style="font-size:10px;min-height:24px;padding:0 8px">Transcript</button><button class="btn" style="font-size:10px;min-height:24px;padding:0 8px">产物</button></div>
+              <div style="display:flex;gap:6px;margin-top:8px"><button class="btn" style="font-size:10px;min-height:24px;padding:0 8px;color:var(--red)">停止</button><button class="btn" style="font-size:10px;min-height:24px;padding:0 8px">💬 插话</button><button class="btn" style="font-size:10px;min-height:24px;padding:0 8px">Transcript</button><button class="btn" style="font-size:10px;min-height:24px;padding:0 8px">产物</button></div>
             </div>
             <div style="display:flex;flex:1;overflow:hidden">
               <div style="flex:1;display:flex;flex-direction:column;overflow:hidden">
@@ -4343,7 +4343,7 @@
                 </div>
                 <div id="fp-t-plan" style="flex:1;overflow-y:auto;padding:14px 18px">
                   <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);margin-bottom:6px">📝 任务描述</div>
-                  <div style="background:var(--bg);border:1px solid var(--line-soft);border-radius:var(--radius);padding:10px;font-size:12px;line-height:1.6;color:var(--muted);margin-bottom:16px">实现 Workspace 看板视图的状态模型，采用 Multica 7 态流转：backlog → todo → in_progress → in_evaluation → done，旁路状态 blocked / cancelled。需要实现拖拽跨列变更状态，状态变更持久化，以及与规划视图的数据同步。</div>
+                  <div style="background:var(--bg);border:1px solid var(--line-soft);border-radius:var(--radius);padding:10px;font-size:12px;line-height:1.6;color:var(--muted);margin-bottom:16px">实现 Workspace 看板视图的状态模型，采用 Multica 7 态流转：backlog → todo → in_progress ⇄ in_review → done，旁路状态 blocked / cancelled。需要实现拖拽跨列变更状态，状态变更持久化，以及与规划视图的数据同步。</div>
                   <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);margin-bottom:6px">📋 规划文档 <span style="color:var(--green);margin-left:4px">● READY</span></div>
                   <div style="background:var(--bg);border:1px solid var(--line-soft);border-radius:var(--radius);overflow:hidden">
                     <div style="display:flex;justify-content:space-between;padding:6px 10px;background:var(--elevated);border-bottom:1px solid var(--line-soft);font-size:10px;color:var(--dim)"><span style="color:var(--green)">✓ plan.md</span><span><button class="btn" style="font-size:9px;min-height:20px;padding:0 6px">重新规划</button></span></div>
@@ -4367,11 +4367,12 @@
                   <div style="font-family:var(--mono);font-size:11px;line-height:1.8;color:var(--muted)"><span style="color:var(--green)">NEW</span> KanbanDataSource.swift +186<br><span style="color:var(--amber)">MOD</span> Models.swift +42<br><span style="color:var(--amber)">MOD</span> QuickPanelView.swift +67 -12<br><span style="color:var(--amber)">MOD</span> ConfigStore.swift +15</div>
                 </div>
                 <div id="fp-t-eval" style="display:none;flex:1;overflow-y:auto;padding:14px 18px">
-                  <div style="font-size:12px;font-weight:600;margin-bottom:10px">评估意见（Evaluation Agent · 第 1 轮）</div>
+                  <div style="font-size:12px;font-weight:600;margin-bottom:10px">评估意见（reviewer · 质量审查员 · 第 1 轮 / 共 3 轮）</div>
                   <div style="padding:7px 10px;background:rgba(248,113,113,.08);border-left:3px solid var(--red);border-radius:0 4px 4px 0;margin-bottom:5px;font-size:11px"><strong style="color:var(--red)">Critical</strong> 状态转换缺少 blocked→todo 路径</div>
                   <div style="padding:7px 10px;background:rgba(242,196,15,.08);border-left:3px solid var(--amber);border-radius:0 4px 4px 0;margin-bottom:5px;font-size:11px"><strong style="color:var(--amber)">Important</strong> 拖拽动画帧率偏低</div>
                   <div style="padding:7px 10px;background:var(--elevated);border-left:3px solid var(--dim);border-radius:0 4px 4px 0;font-size:11px"><strong>Nit</strong> 变量命名风格不一致</div>
-                  <div style="display:flex;gap:8px;margin-top:14px"><button class="btn primary" style="font-size:11px;min-height:28px" onclick="handleEvalAction('apply')">按建议处理</button><button class="btn" style="font-size:11px;min-height:28px" onclick="handleEvalAction('ignore')">忽略并完成</button><button class="btn" style="font-size:11px;min-height:28px" onclick="handleEvalAction('manual')">手动接管</button></div>
+                  <div style="font-size:10px;color:var(--dim);margin-top:10px;margin-bottom:6px">N 轮内 executor 自动接力修复；跑满 3 轮仍有意见时停下交你定夺：</div>
+                  <div style="display:flex;gap:8px"><button class="btn primary" style="font-size:11px;min-height:28px" onclick="handleEvalAction('apply')">采纳并继续</button><button class="btn" style="font-size:11px;min-height:28px" onclick="handleEvalAction('manual')">回复打回</button><button class="btn" style="font-size:11px;min-height:28px" onclick="handleEvalAction('ignore')">直接完成</button></div>
                 </div>
                 <div id="fp-t-accept" style="display:none;flex:1;overflow-y:auto;padding:14px 18px">
                   <div style="font-size:12px;font-weight:600;margin-bottom:10px">最终验收</div>
@@ -4388,7 +4389,8 @@
                 <div style="margin-bottom:12px"><div style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);margin-bottom:3px">项目</div><span class="fp-detail-project" style="color:var(--dim)">FocusPilot</span></div>
                 <div style="margin-bottom:12px"><div style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);margin-bottom:3px">归属目标</div><span class="fp-detail-goal" style="color:var(--dim)">5月</span><br>FocusPilot 0.0.1</div>
                 <div style="height:1px;background:var(--line-soft);margin:10px 0"></div>
-                <div style="margin-bottom:12px"><div style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);margin-bottom:3px">执行模式</div><span class="fp-detail-execmode">全自动</span></div>
+                <div style="margin-bottom:12px"><div style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);margin-bottom:3px">调度</div><span class="fp-detail-execmode">自动调度</span></div>
+                <div style="margin-bottom:12px"><div style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);margin-bottom:3px">评估 Agent</div><span>质量审查员 · 3 轮</span></div>
                 <div style="margin-bottom:12px"><div style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);margin-bottom:3px">Agent</div><span class="fp-detail-agent">代码工程师</span></div>
                 <div style="margin-bottom:12px"><div style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);margin-bottom:3px">截止</div><span class="fp-detail-date" style="font-family:var(--mono)">2026-04-20</span></div>
               </div>
@@ -6008,7 +6010,7 @@ FocusPilot/
                     <div class="crew-field"><label>Runtime 绑定</label><select><option selected>Claude · MacBook-Pro-10.local</option><option>Codex · MacBook-Pro-10.local</option><option>Cursor · MacBook-Pro-10.local</option></select></div>
                     <div class="crew-field"><label>模型</label><select><option selected>跟随 Runtime</option><option>claude-sonnet-4.5</option><option>claude-opus-4.6</option></select></div>
                     <div class="crew-field"><label>推理强度</label><select><option selected>跟随 Runtime</option><option>low</option><option>medium</option><option>high</option></select></div>
-                    <div class="crew-field"><label>并发上限</label><select><option>1</option><option selected>2</option><option>3</option></select></div>
+                    <div class="crew-field"><label>Agent 并发上限</label><select><option selected>1</option><option>2</option><option>4</option><option>8</option></select></div>
                     <div class="crew-field"><label>默认 Skill</label><select><option selected>dev-story</option><option>quick-dev</option><option>code-review</option></select></div>
                   </div>
                 </div>
@@ -6524,6 +6526,20 @@ FocusPilot/
                     </div>
                     <div class="toggle" onclick="this.classList.toggle('on')"></div>
                   </div>
+                  <div class="settings-row">
+                    <div class="row-left">
+                      <div class="row-label">扫描间隔</div>
+                      <div class="row-desc">中央扫描器轮询「待办/进行中/审核中」任务的周期</div>
+                    </div>
+                    <select style="background:var(--surface);border:1px solid var(--line-soft);border-radius:var(--radius);padding:5px 8px;color:var(--text);font-size:12px;font-family:var(--sans)"><option>3s</option><option selected>5s</option><option>10s</option></select>
+                  </div>
+                  <div class="settings-row">
+                    <div class="row-left">
+                      <div class="row-label">Daemon 全局并发上限</div>
+                      <div class="row-desc">整机同时运行的最大 Task 数（信号量）。三层并发的「Daemon 层」，区别于 AICrew 的「Agent 层」</div>
+                    </div>
+                    <select style="background:var(--surface);border:1px solid var(--line-soft);border-radius:var(--radius);padding:5px 8px;color:var(--text);font-size:12px;font-family:var(--sans)"><option>2</option><option selected>4</option><option>6</option><option>8</option></select>
+                  </div>
                 </div>
                 <h4>CLI 状态</h4>
                 <p style="font-size:12px;color:var(--muted);margin:0 0 16px">coder-bridge CLI 已安装，路径 <code style="font-family:var(--mono);color:var(--text);background:var(--surface-3);padding:2px 6px;border-radius:4px">~/.coder-bridge</code></p>
@@ -6603,17 +6619,8 @@ FocusPilot/
                 <div class="settings-group" style="max-width:520px">
                   <div class="settings-row">
                     <div class="row-left">
-                      <div class="row-label">默认模式</div>
-                      <div class="row-desc">Task 默认执行方式</div>
-                    </div>
-                    <div class="seg" style="font-size:11px">
-                      <button class="active">auto</button><button>manual</button>
-                    </div>
-                  </div>
-                  <div class="settings-row">
-                    <div class="row-left">
-                      <div class="row-label">默认 Agent</div>
-                      <div class="row-desc">未指定时派给谁</div>
+                      <div class="row-label">默认执行 Agent</div>
+                      <div class="row-desc">新建 Task 未指定时派给谁（留空=手动卡片）</div>
                     </div>
                     <select style="height:32px;width:150px;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface-2);padding:0 10px;appearance:none;cursor:pointer;font-size:12px">
                       <option selected>代码工程师</option>
@@ -6622,17 +6629,27 @@ FocusPilot/
                   </div>
                   <div class="settings-row">
                     <div class="row-left">
-                      <div class="row-label">并发上限</div>
-                      <div class="row-desc">全局最大并行 Task 数</div>
+                      <div class="row-label">默认评估 Agent</div>
+                      <div class="row-desc">新建 Task 默认评估者（可空=不评估）</div>
+                    </div>
+                    <select style="height:32px;width:150px;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface-2);padding:0 10px;appearance:none;cursor:pointer;font-size:12px">
+                      <option>（不评估）</option>
+                      <option selected>质量审查员</option>
+                    </select>
+                  </div>
+                  <div class="settings-row">
+                    <div class="row-left">
+                      <div class="row-label">默认评估轮数</div>
+                      <div class="row-desc">默认 evaluation_max_rounds（并发上限已迁至 Daemon 设置）</div>
                     </div>
                     <select style="height:32px;width:80px;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface-2);padding:0 10px;appearance:none;cursor:pointer;font-size:12px">
                       <option>1</option>
-                      <option selected>2</option>
-                      <option>3</option>
+                      <option>2</option>
+                      <option selected>3</option>
                     </select>
                   </div>
                 </div>
-                <h4>对话</h4>
+                <h4>Session 对话</h4>
                 <div class="settings-group" style="max-width:520px">
                   <div class="settings-row">
                     <div class="row-left">
@@ -6903,7 +6920,7 @@ FocusPilot/
       var workItems = [
         { id: 'FP-001', title: '数据模型设计', status: 'done', priority: 'p0', projectId: 'FocusPilot', workspaceType: 'local_project', executionMode: 'auto', schedule: '', month: '', goal: '4月/FP 0.0.1', agent: '代码工程师', date: '04-15' },
         { id: 'FP-002', title: '看板状态模型实现', status: 'in_progress', priority: 'p0', projectId: 'FocusPilot', workspaceType: 'local_project', executionMode: 'auto', schedule: 'week', month: '5', goal: '5月/FP 0.0.1', agent: '代码工程师', agentStatus: 'Agent 执行中', date: '05-25' },
-        { id: 'FP-003', title: 'Agent Pull 执行管道', status: 'todo', priority: 'p1', projectId: 'FocusPilot', workspaceType: 'local_project', executionMode: 'auto', schedule: 'week', month: '5', goal: '5月/AI', agent: '代码工程师', date: '05-28' },
+        { id: 'FP-003', title: 'Agent Pull 执行管道', status: 'todo', priority: 'p1', projectId: 'FocusPilot', workspaceType: 'local_project', executionMode: 'auto', run_substate: 'waiting_local_directory', schedule: 'week', month: '5', goal: '5月/AI', agent: '代码工程师', date: '05-28' },
         { id: 'FP-004', title: 'Terminal 手动执行模式', status: 'todo', priority: 'p1', projectId: 'FocusPilot', workspaceType: 'local_project', executionMode: 'manual', schedule: 'week', month: '5', goal: '5月/AI', agent: '', date: '05-29' },
         { id: 'FP-005', title: '规划引擎接口设计', status: 'in_evaluation', priority: 'p0', projectId: 'git-focuspilot-ai', workspaceType: 'git_project', executionMode: 'auto', schedule: 'week', month: '5', goal: '5月/AI', agent: '代码工程师', decision: true, date: '05-26' },
         { id: 'FP-006', title: '主题系统适配', status: 'backlog', priority: 'p2', projectId: 'FocusPilot', workspaceType: 'local_project', executionMode: 'auto', schedule: 'month', month: '6', goal: '6月/FP 0.0.1', agent: '代码工程师' },
@@ -7311,10 +7328,12 @@ FocusPilot/
         html += '<div class="task-title"' + (item.status === 'done' ? ' style="text-decoration:line-through"' : '') + '>' + item.title + '</div>';
         html += '<div class="task-meta" style="flex-wrap:wrap;gap:4px">';
         html += '<span class="pill" style="font-size:9px;padding:1px 5px;border-color:' + priorityBorder + ';color:' + priorityColor + '">' + item.priority.toUpperCase() + '</span>';
-        if (modeLabel) html += '<span class="pill" style="font-size:9px;padding:1px 5px;border-color:' + modeBorder + ';color:' + modeColor + '">' + modeLabel + '</span>';
         if (!compact) html += '<span class="pill" title="' + meta.name + '" style="font-size:9px;padding:1px 5px;border-color:var(--line-soft);color:var(--dim)">' + wsInfo.icon + ' ' + wsInfo.label + '</span>';
         if (item.goal && !compact) html += '<span style="font-size:10px;color:var(--dim)">&rarr; ' + item.goal + '</span>';
-        if (item.agentStatus) html += '<span class="pill blue" style="font-size:9px;padding:1px 5px;font-weight:600">' + item.agentStatus + '</span>';
+        // 运行子状态角标（run_substate）：🕐 排队 / ⚡ 工作 / 🔒 等待本地目录
+        var ssKey = item.run_substate || (item.agentStatus ? (item.agentStatus.indexOf('排队') >= 0 ? 'queued' : 'working') : '');
+        var subBadge = { queued: ['🕐 正在排队中', 'rgba(112,120,135,.14)', 'var(--dim)'], working: ['⚡ 正在工作', 'rgba(46,204,113,.15)', 'var(--green)'], waiting_local_directory: ['🔒 等待本地目录', 'rgba(242,196,15,.15)', 'var(--amber)'] };
+        if (ssKey && subBadge[ssKey]) { var sb = subBadge[ssKey]; html += '<span class="pill" style="font-size:9px;padding:1px 5px;font-weight:600;border:none;background:' + sb[1] + ';color:' + sb[2] + '">' + sb[0] + '</span>'; }
         if (item.decision) html += '<span class="pill amber" style="font-size:9px;padding:1px 5px;font-weight:600">等你决策</span>';
         html += '</div>';
         if (!compact) {
@@ -8357,7 +8376,7 @@ FocusPilot/
         'FP-002': {
           id: 'FP-002', title: '看板状态模型实现', status: 'in_progress', statusLabel: '● In Progress', statusClass: 'blue',
           priority: 'P0', mode: 'auto', agent: '代码工程师', schedule: '本周', goal: 'FocusPilot 0.0.1',
-          desc: '实现 Workspace 看板视图的状态模型，采用 Multica 7 态流转：backlog → todo → in_progress → in_evaluation → done，旁路状态 blocked / cancelled。需要实现拖拽跨列变更状态，状态变更持久化，以及与规划视图的数据同步。',
+          desc: '实现 Workspace 看板视图的状态模型，采用 Multica 7 态流转：backlog → todo → in_progress ⇄ in_review → done，旁路状态 blocked / cancelled。需要实现拖拽跨列变更状态，状态变更持久化，以及与规划视图的数据同步。',
           plan: '<strong>实现步骤</strong><ol style="padding-left:18px;margin:6px 0"><li>定义 TaskStatus 枚举（7 态 + 转换矩阵）</li><li>创建 KanbanDataSource（分组、排序）</li><li>实现 NSTableView drag & drop</li><li>持久化到 ConfigStore</li><li>添加拖拽动画 0.25s ease-out</li><li>同步规划视图状态标记</li></ol>',
           exec: { agent: '代码工程师', status: '执行中', time: '00:03:42', step: '步骤 3/5', logs: '> 正在修改 Models.swift...<br>> 添加 blocked→todo 状态转换<br>> 运行测试套件...' }
         },
@@ -8446,7 +8465,7 @@ FocusPilot/
             liveCard.style.display = '';
             liveCard.innerHTML = '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><span style="width:7px;height:7px;border-radius:50%;background:var(--green);animation:pulse 2s infinite"></span><strong>' + task.exec.agent + '</strong><span style="color:var(--dim)">· ' + task.exec.status + ' · ' + task.exec.time + ' · ' + task.exec.step + '</span></div>' +
               '<div style="font-family:var(--mono);font-size:10px;line-height:1.7;color:var(--muted);background:var(--bg);padding:6px 8px;border-radius:4px;max-height:60px;overflow-y:auto">' + task.exec.logs + '</div>' +
-              '<div style="display:flex;gap:6px;margin-top:8px"><button class="btn" style="font-size:10px;min-height:24px;padding:0 8px;color:var(--red)">停止</button><button class="btn" style="font-size:10px;min-height:24px;padding:0 8px">手动接管</button><button class="btn" style="font-size:10px;min-height:24px;padding:0 8px">Transcript</button><button class="btn" style="font-size:10px;min-height:24px;padding:0 8px">产物</button></div>';
+              '<div style="display:flex;gap:6px;margin-top:8px"><button class="btn" style="font-size:10px;min-height:24px;padding:0 8px;color:var(--red)">停止</button><button class="btn" style="font-size:10px;min-height:24px;padding:0 8px">💬 插话</button><button class="btn" style="font-size:10px;min-height:24px;padding:0 8px">Transcript</button><button class="btn" style="font-size:10px;min-height:24px;padding:0 8px">产物</button></div>';
           } else {
             liveCard.style.display = 'none';
           }
@@ -8477,7 +8496,7 @@ FocusPilot/
             '<div style="height:1px;background:var(--line-soft);margin:10px 0"></div>' +
             '<div style="margin-bottom:12px"><div style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);margin-bottom:3px">归属目标</div>' + task.goal + '</div>' +
             '<div style="height:1px;background:var(--line-soft);margin:10px 0"></div>' +
-            '<div style="margin-bottom:12px"><div style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);margin-bottom:3px">执行模式</div>' + (task.mode === 'auto' ? '全自动' : '手动') + '</div>' +
+            '<div style="margin-bottom:12px"><div style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);margin-bottom:3px">调度</div>' + (task.mode === 'auto' ? '自动调度' : '手动卡片') + '</div>' +
             '<div style="margin-bottom:12px"><div style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);margin-bottom:3px">Agent</div>' + task.agent + '</div>';
         }
       }
@@ -8495,7 +8514,7 @@ FocusPilot/
             liveCard.style.display = '';
             liveCard.innerHTML = '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><span style="width:7px;height:7px;border-radius:50%;background:var(--green);animation:pulse 2s infinite"></span><strong>' + task.exec.agent + '</strong><span style="color:var(--dim)">· ' + task.exec.status + ' · ' + task.exec.time + ' · ' + task.exec.step + '</span></div>' +
               '<div style="font-family:var(--mono);font-size:10px;line-height:1.7;color:var(--muted);background:var(--bg);padding:6px 8px;border-radius:4px;max-height:60px;overflow-y:auto">' + task.exec.logs + '</div>' +
-              '<div style="display:flex;gap:6px;margin-top:8px"><button class="btn" style="font-size:10px;min-height:24px;padding:0 8px;color:var(--red)">停止</button><button class="btn" style="font-size:10px;min-height:24px;padding:0 8px">手动接管</button><button class="btn" style="font-size:10px;min-height:24px;padding:0 8px">Transcript</button><button class="btn" style="font-size:10px;min-height:24px;padding:0 8px">产物</button></div>';
+              '<div style="display:flex;gap:6px;margin-top:8px"><button class="btn" style="font-size:10px;min-height:24px;padding:0 8px;color:var(--red)">停止</button><button class="btn" style="font-size:10px;min-height:24px;padding:0 8px">💬 插话</button><button class="btn" style="font-size:10px;min-height:24px;padding:0 8px">Transcript</button><button class="btn" style="font-size:10px;min-height:24px;padding:0 8px">产物</button></div>';
           } else {
             liveCard.style.display = 'none';
           }
