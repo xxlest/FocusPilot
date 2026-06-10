@@ -137,7 +137,7 @@
 | 状态 | 中文名 | 调度行为 | 说明 |
 |------|--------|---------|------|
 | `backlog` | 待规划 | **不扫描** | 规划区。任务有名称 + 描述，人（或多人对话）在描述里把目标需求规划丰富好，再拖到「待办」 |
-| `todo` | 待办 | **拖入即扫描** | 调度器扫到 → 抢到并发槽（local_directory 还需路径锁）就进「进行中」；没抢到（槽满 / 路径锁被占）停这里，显示「🕐 正在排队中」 |
+| `todo` | 待办 | **拖入即扫描** | 调度器扫到 → 抢到并发槽（local_directory 还需路径锁）就进「进行中」；**槽满** → 停这里显示「🕐 正在排队中」（`queued`）；**local_directory 路径锁被同目录另一任务占用** → 显示「🔒 等待本地目录」（`waiting_local_directory`） |
 | `in_progress` | 进行中 | 执行中 | executor↔reviewer ping-pong 在跑（同一 worktree / 路径锁内），显示「⚡ 正在工作」；落「审核中」时释放槽，**local_directory 路径锁保持到任务落定**（见 §5.5） |
 | `in_review` | 审核中 | 等人回复 | 自动执行一轮跑完一律落这里。人**回复**→ 抢到并发槽则弹回「进行中」再跑、槽满则先排队（🕐，见 §3 规则 5）；人**满意**→ 拖到「已完成」 |
 | `done` | 已完成 | — | 人工拖入确认。AI 产出必须经人审查再交付（删除原"验收开关"） |
@@ -212,7 +212,7 @@
 
 ### 5.5 派发与 ping-pong 接力
 
-- **派发动作**：建/复用 worktree（git）或取路径锁（local_directory）→ 在该任务 session 内 resume 上下文（类 `claude -p --resume`，上下文存于 worktree/session，与 Run 边界无关）→ 发给 Agent 执行。
+- **派发动作**：建/复用 worktree（git）或取路径锁（local_directory，若未持有）→ 在该任务 session 内 resume 上下文（类 `claude -p --resume`，上下文存于 worktree/session，与 Run 边界无关）→ 发给 Agent 执行。
 - **槽与锁的释放粒度不对称**：
   - **并发槽（Daemon / Agent）：按轮取还**——轮开始取槽、轮结束释放；审核中（等人）不占槽。
   - **local_directory 路径锁：任务级持有**——从首次执行一直持到**任务离开执行流**（落 `done` / `cancelled` / 被拖出审核中），**审核中也不释放**。否则同目录另一任务进来改文件 → 你回复续跑时工作副本已被污染（git/非 git 本地目录同此风险，故统一持锁到落定，不做分支快照）。escape hatch：把任务拖出审核中，路径锁即释放。
@@ -224,8 +224,9 @@
 ```
 中央扫描（todo/in_progress/in_review，有 executor）
   按 (priority DESC, created_at ASC) 取候选；current_run_id 非空 → 跳过
-  抢 Daemon 槽 + Agent 槽 → 满则跳过、下轮重捞（🕐 正在排队中）
-  建/复用 worktree（git）或取路径锁（local_directory）
+  抢 Daemon 槽 + Agent 槽 → 满则跳过、下轮重捞（🕐 正在排队中 / queued）
+  建/复用 worktree（git）或取路径锁（local_directory，若未持有）
+     └─ 路径锁被同目录另一任务占用 → 🔒 等待本地目录（waiting_local_directory）
   executor Run 执行（⚡ 正在工作）→ 写 last_run_id → 释放 executor 槽
   reviewer 判据命中（last_run_id≠last_reviewed_run_id 且 review_round<N）
     → 抢 reviewer 槽 → reviewer Run 审查 → 写 last_reviewed_run_id、review_round++
@@ -317,7 +318,7 @@ WorkItem:
   worktree_path: "~/.focuspilot/wt/FP-002"
   worktree_branch: "task/FP-002"
 
-  run_substate: queued | working | null   # 运行子状态，驱动卡片角标，详见 §7.4
+  run_substate: queued | working | waiting_local_directory | null   # 调度子状态，驱动卡片角标，详见 §7.4
 ```
 
 AICrew Agent 定义新增 **`max_concurrent_tasks`（默认 1）**（P3，放 AICrew，**不放** Settings）；Daemon 全局 `max_concurrent_tasks` 放 Settings（§5.4）。
@@ -332,7 +333,16 @@ AICrew Agent 定义新增 **`max_concurrent_tasks`（默认 1）**（P3，放 AI
 
 ### 7.4 字段命名说明
 
-`run_substate`（`queued | working | null`）驱动卡片角标，独立于看板 `status`：`queued` ↔ 「🕐 正在排队中」（status=todo 且已扫描、在等并发槽 / 路径锁），`working` ↔ 「⚡ 正在工作」（status=in_progress）。
+`run_substate` 驱动卡片角标，独立于看板 `status`：
+
+| 值 | 角标 | 含义 | 用户动作 |
+|----|------|------|---------|
+| `queued` | 🕐 正在排队中 | 已扫描、在等并发槽（所有类型） | 被动等，槽腾出自动跑 |
+| `working` | ⚡ 正在工作 | status=in_progress，Agent 在跑 | — |
+| `waiting_local_directory` | 🔒 等待本地目录（某任务占用中） | **仅 local_directory 任务**：本地目录被同目录另一任务持锁占用 | 可去把占用任务拖出审核中（escape hatch）放行 |
+| `null` | 无 | 非调度态 | — |
+
+> `waiting_local_directory` 只对 local_directory 任务出现；git worktree / temporary 无路径锁，永不进此态。它与 `queued` 的关键区别：🕐 是被动等槽、🔒 可能要主动干预（否则会被挂在审核中的任务无限期挡住）。
 
 ---
 
