@@ -62,7 +62,7 @@ WorkItem:
   children_ids: []
 
   # ── 看板维度 ──
-  status: in_progress           # backlog|todo|in_progress|in_evaluation|done|blocked|cancelled
+  status: in_progress           # backlog|todo|in_progress|in_review|done|blocked|cancelled
   blocked_from_status: null     # blocked 解除后回到的来源状态
   priority: p0                  # p0|p1|p2
   source: area_project          # inbox|area_project|adhoc
@@ -129,19 +129,23 @@ Free:   Group → ... → Task (→ Sub-task)
 ### 2.4 Task 状态机
 
 ```
-创建 ──▶ backlog ──▶ todo ──▶ in_progress ──▶ in_evaluation ──▶ done
-              │         │         │               │
-              │         │         │               ├─ 采纳评估意见 ──▶ in_progress（修复）
-              │         │         │               ├─ 忽略并完成 ──▶ done
-              │         │         │               └─ 手动接管 ──▶ in_progress（dialog）
-              │         │         │
-              │         │         └──▶ blocked（外部依赖阻塞）
-              │         │                 └─ 解除 ──▶ blocked_from_status
-              └─────────┴──── cancelled
+创建 ──▶ backlog ──▶ todo ──▶ in_progress ⇄⇄⇄ in_review ──▶ done
+        (待规划)    (🕐排队)   (⚡执行)        (等人回复)    (人拖入)
+                                  ▲              │
+                                  └── 人一回复 ──┘（回复=打回继续，自动再跑）
+
+  任意状态 ──▶ blocked（外部依赖阻塞，解除回 blocked_from_status；触发细则见 §3.2）
+  任意状态 ──▶ cancelled（终止，归档不在主甬道常驻）
 ```
 
-**7 种状态**（Multica 标准 7 态）：backlog / todo / in_progress / in_evaluation / done / blocked / cancelled。
+**7 种状态**（Multica 标准 7 态）：backlog / todo / in_progress / **in_review** / done / blocked / cancelled。
 看板主甬道展示其中 6 个操作状态，中文名称固定为：待规划 / 待办 / 进行中 / 审核中 / 已完成 / 已阻塞；`cancelled` 作为终止状态进入归档/历史，不在主看板常驻展示。
+
+> **命名变更**：原 `in_evaluation` 重命名为 `in_review`——AI 评估接力在「进行中」内部进行（§3.4），该态真实语义是"人工审核/等回复"。中文名「审核中」不变。
+
+**运行子状态 `run_substate`**（卡片角标，独立于 `status`，不新增看板列）：🕐 `queued`（等并发槽）/ ⚡ `working`（执行中）/ 🔒 `waiting_local_directory`（本地目录被同目录另一任务占用，仅 local_directory 任务）。
+
+乒乓流转、自动调度触发、手动卡片、blocked 触发细则等**执行视角**见 §3.2/§3.3。
 
 ### 2.5 ExecutionRun
 
@@ -500,7 +504,7 @@ WorkItem (Task)
 | 本月计划 | goal.month=当月 + 未关联目标中 schedule∈{today,week,month} |
 | 全局规划 | 无筛选 |
 | 执行中 | status=in_progress & execution_mode≠none |
-| 等我决策 | status=in_evaluation \| (approval pending) |
+| 等我决策 | status=in_review |
 | Triage | 自动化结果待处理 |
 
 ### 6.2 Workspace 项目列表
