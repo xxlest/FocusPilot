@@ -844,14 +844,16 @@ Inspector 通过项目顶栏的 `◨ Inspector` 按钮可显隐。
 ## 15. V2 预留
 
 不在 V1 展示：
-- Git worktree 并行隔离执行
+- **Handoff（Worktree 变更迁移到主工作区）**——V1 不需要：git 项目靠 PR 交付、local_directory 原地改，都无需把 worktree 分支合并回用户工作副本
+- **容器节点递归自动执行**（PRD §3.1 拖父节点递归依次执行子任务）——V1 只执行当前节点自身（§3.1）
 - Cloud 执行模式（远程容器）
-- Handoff（Worktree 变更迁移到主工作区）
 - Computer Use / Appshot
 - 内置浏览器
 - Resume / Fork Session
 - Pop-out Window
 - 右面板文件编辑能力
+
+> **已上移 V1**：Git worktree 并行隔离执行（git 项目，见 §3.3/§4）——原列为 V2，本期作为执行引擎基座纳入 V1。
 
 ---
 
