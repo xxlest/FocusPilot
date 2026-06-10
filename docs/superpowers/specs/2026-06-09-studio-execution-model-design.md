@@ -366,7 +366,7 @@ AICrew Agent 定义新增 **`max_concurrent_tasks`（默认 1）**（P3，放 AI
 
 ## 9. 待定 / 后续
 
-- **扫描间隔默认值**：Settings 暴露，量级为秒（3~5s 量级），具体默认值落地时定（同步检查 07-settings.md）。
+- **扫描间隔默认值**：Settings 暴露，量级为秒（3~5s 量级），具体默认值落地时定（同步检查 08-settings.md）。
 - **Daemon 全局并发上限默认值**：V1 已纳入三层并发的 Daemon 层（§5.4），默认值（量级 4~8）落地时定，放 Settings。
 - **规划模式**：本期不做显式规划模式；后续若需要，在「待规划」状态内增强（如调用规划 Agent 协助丰富描述）。
 - **多人审核**：「审核中」当前为单人验收；多人协作审核为企业版/后续能力。
@@ -392,5 +392,5 @@ AICrew Agent 定义新增 **`max_concurrent_tasks`（默认 1）**（P3，放 AI
   - §3.1 删除/替换 `auto_execute` 字段（被"拖入待办即调度"取代），状态名对齐说明
   - 注：PRD §3.1（`planning/ready/executing`）与 04-studio §2.4（`backlog/todo/in_progress`）为**既存的两套状态词汇不一致**，非本设计引入；本期只对齐 `auto_execute` 字段，**完全统一两套词汇另起一个独立任务处理**
 - [ ] `docs/fp-ui/07-ai-crew.md`：Agent 定义新增 `max_concurrent_tasks`（默认 1，P3）
-- [ ] `docs/fp-ui/07-settings.md`：新增「自动调度扫描间隔」+「Daemon 全局并发上限 `max_concurrent_tasks`」配置项
+- [ ] `docs/fp-ui/08-settings.md`：新增「自动调度扫描间隔」+「Daemon 全局并发上限 `daemon_max_concurrent_tasks`」配置项
 - [ ] `docs/fp-ui/00-layout-prototype.html`：母版同步（详情页对话流 + 卡片角标）后才可标 5/5
