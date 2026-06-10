@@ -190,7 +190,7 @@ ExecutionRun:
 
 > **Run 完成迁移**：Run completed/aborted → append `run_history_ids` → 释放槽；若是 ping-pong 的收尾（落审核中）则 `current_run_id=null`（local_directory 路径锁保持到任务落定）。`mode` / `evaluation_enabled` / `steps`（plan/approval 四链）字段删除——无模式后由协调标记驱动接力。
 
-**Run 完成后状态迁移**：Run completed/aborted → append `run_history_ids` → `current_run_id = null` → release WorkspaceWriteLease。如需展示最近一次 Run，通过 `run_history_ids[-1]` 反查。
+如需展示最近一次 Run，通过 `run_history_ids[-1]` 反查（一场任务跨多个 executor/reviewer Run）。
 
 ### 2.6 StudioSession
 
@@ -426,10 +426,10 @@ WorkItem (Task)
 ```
 
 **硬规则**：
-- 一个 Task 同时只有一个活跃 ExecutionRun
-- 一个 ExecutionRun 由一个 primary Agent 推进；Sub Agents 共享同一个 WorkspaceWriteLease
-- Session 本身不占锁，只有 Agent Runtime 写入时通过 ExecutionRun 占锁
-- Run 完成/停止后：append `run_history_ids` → `current_run_id = null` → release lease
+- 一个 Task 同一时刻只有一个活跃 ExecutionRun（`current_run_id`）；一个 ping-pong 内 executor Run 与 reviewer Run **交替**（每轮一个 Run）
+- 隔离靠 worktree（git 项目，物理）或 local_directory 路径锁（任务级持有，§4.5），不靠 app 级共享写锁
+- Session 不占锁；对话上下文连续性靠 session / worktree，不靠 Run 边界
+- Run 完成/停止后：append `run_history_ids` → 释放槽；落「审核中」时 `current_run_id = null`（local_directory 路径锁保持到任务落定）
 
 ### 5.2 primary_session 转换规则
 
@@ -636,46 +636,46 @@ WorkItem (Task)
 
 从任何视图点击 Task 打开详情面板：
 
+**详情页 = 自动执行驱动的多轮对话**（取代原"执行步骤进度条"）。Agent 一方自动跑、人随时插话；执行结果与评估结果按轮次从上往下堆叠，像聊天记录：
+
 ```
-┌─ Task 详情 ──────────────────────────────────────────────────┐
-│  ← 返回    FP-002 看板状态模型实现           ● in_progress   │
-│                                                               │
-│  ┌─ 执行步骤进度条 ────────────────────────────────────────┐ │
-│  │  ✅ ──── ✅ ──── ● ──── ○ ──── ○                       │ │
-│  │  规划    确认    执行    评估    验收                     │ │
-│  └─────────────────────────────────────────────────────────┘ │
-│                                                               │
-│  ┌─ Agent Live Card（运行中时显示）────────────────────────┐ │
-│  │  🤖 代码工程师 · Running · 00:03:42                     │ │
-│  │  > 正在修改 Models.swift...                             │ │
-│  │  [停止]  [手动接管]  [查看 Transcript]                   │ │
-│  └─────────────────────────────────────────────────────────┘ │
-│                                                               │
-│  [📄 规划 ✓] [⚡ 执行 ●] [📝 评估] [✅ 验收]                │
-│  （Tab 内容区）                                               │
-│                                                               │
-│  ── 关联对话 ──────────────────────────────────              │
-│  💬 重构 auth · ✳ Claude Code · 30min  [主对话]              │
-│  💬 Bug fix #12 · ⚡ Codex · 15min     [参考]                │
-│  [+ 新建关联对话]                                             │
-│                                                               │
-│  ── 属性 ───────────────────────────────────────             │
-│  状态 / 优先级 / Workspace / 归属项目 / 目标 / 执行方式       │
-└───────────────────────────────────────────────────────────────┘
+┌─ FP-002 看板状态模型实现                  ● in_review  ⚡ ┐
+│  📄 任务描述（= 这场对话的开场）                            │
+│     实现看板 6 态拖拽 + 状态持久化…                         │
+│  ──────────────────────────────────────────────────────── │
+│  🤖 代码工程师 · 自动执行            00:03:42  [Diff][日志] │  ← 入队/被拉起后第一个自动启动
+│     修改 Models.swift…                                      │
+│  🔍 质量审查员 · 评估   ⚠ 2 条意见…                        │  ← reviewer 独立接力
+│  🤖 代码工程师 · 自动修复（第 2 轮）                        │
+│  🔍 质量审查员 · 评估   ✓ 通过 → 落「审核中」              │
+│  ──────────────────────────────────────────────────────── │
+│  👤 你：blocked 回退逻辑再补边界                            │  ← 人工回复=触发下一轮
+│  🤖 代码工程师 · 自动执行 …                                 │
+│  ┌─ 追加指令（人工介入）────────────┐                      │
+│  │ 输入…让 Agent 继续调整    [↑ 发送] │                      │
+│  └───────────────────────────────────┘                     │
+│  ── 关联对话 ── / ── 属性（状态/优先级/Workspace/目标）──   │
+└────────────────────────────────────────────────────────────┘
 ```
+
+**5 条规则**（详见 [执行模型 spec §3](../superpowers/specs/2026-06-09-studio-execution-model-design.md)）：
+1. **任务进入「待办」（或被拖入「进行中」）、被扫描器首次拉起后**，第一个动作是 Agent 自动执行（走「创建」落「待规划」的任务不调度）。
+2. 每轮 🤖 executor 执行后 🔍 reviewer 独立接力评估（配了评估 Agent 时），N 轮内自动来回。
+3. **人回复 = 触发下一轮自动执行**（"打回继续修"和"人工回复"是同一个动作；原"手动接管"降级为此通用能力）。
+4. 整页从上往下无限堆叠。
+5. 回复时序分流：审核中回复 → 抢槽进「进行中」（槽满则排队）；进行中回复 → 置 `has_pending_input`，本轮 ping-pong 结束落审核中后再处理。
 
 ---
 
-## 8. 评估系统
+## 8. 评估系统（reviewer 自治 Run）
 
-沿用原 Focus 评估系统设计，不变。核心要点：
+评估由**独立评估 Agent 的独立 Run**承担，与 executor Run 在同一执行环境内交替（§3.4），核心要点：
 
-- Evaluation Agent 只产出评估意见，不产出 pass/fail
-- 用户三选一：按建议处理 / 忽略并完成 / 手动接管
-- EvaluationCycle 可循环，每轮修复由用户显式触发
-- severity（critical/important/nit）帮助用户排序，不自动阻断
-
-详细规格见 [03-focus.md](03-focus.md) 历史参考 §4。
+- **reviewer 输出结构化 pass/fail**（是否仍有未解决意见），驱动 ping-pong 是否继续——这区别于旧设计"只产意见、不判 pass/fail"。
+- **N 轮内 executor 自动接力修复**：reviewer 有意见且 `review_round < N` → executor 自动再跑；不再"每轮修复由用户显式触发"。
+- **跑满 N 轮仍有意见** → executor 停止自动接力，带未解决意见落「审核中」交人：采纳/打回继续（回复即触发）/ 直接拖「已完成」。
+- severity（critical/important/nit）帮助用户排序，不自动阻断。
+- `review_round` 记录已评估轮次，对比 `evaluation_max_rounds`（N）。
 
 ---
 
@@ -865,9 +865,11 @@ Inspector 通过项目顶栏的 `◨ Inspector` 按钮可显隐。
 | **Project** | 资产归属实体（Projects 页面管理） |
 | **Goal** | 规划归属实体（目标树节点） |
 | **WorkItem / 工作项** | 统一工作项模型 |
-| **Session / 对话** | 交互容器（对话 UI），本身不占 Workspace 写锁 |
-| **ExecutionRun** | 一次完整执行实例，持有 WorkspaceWriteLease |
-| **WorkspaceWriteLease** | Workspace 写入租约；V1 同一 workdir 只允许一个 active lease |
+| **Session / 对话** | 交互容器（对话 UI），承载任务对话上下文连续性，本身不占锁 |
+| **ExecutionRun** | 一次执行实例（executor 或 reviewer，`agent_role` 区分）；一场任务跨多个 Run |
+| **执行环境隔离** | git 项目用独立 **worktree**（分支 `task/{id}`）；local_directory 用**路径级互斥锁**（任务级持有）；temporary 用独立目录 |
+| **local_directory 路径锁** | 原 WorkspaceWriteLease 瘦身：仅 local_directory 场景，同目录串行，任务级持有到落定（§4.5） |
+| **三层并发** | Daemon 全局 `daemon_max_concurrent_tasks` + Agent 级 `max_concurrent_tasks` + Issue×Agent=1（§3.3） |
 | **primary Session / 主对话** | 关联 ExecutionRun 的 Session，每个 Task 至多一个 |
 | **related Sessions / 参考对话** | 仅作为上下文参考，不推进状态 |
-| **Git 项目 Workspace** | clone 远程 Git 仓库到临时目录执行，产出以 Commit/Push/PR 交付 |
+| **Git 项目 Workspace** | git 项目用独立 worktree 执行，产出以 Commit/Push/PR 交付 |
