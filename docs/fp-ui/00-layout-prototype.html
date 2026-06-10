@@ -3145,7 +3145,6 @@
                 <button class="studio-filter-select" id="studioTaskFilterButton" title="任务过滤条件" onclick="toggleStudioTaskFilterMenu(event)">筛选</button>
                 <div class="studio-filter-menu" id="studioTaskFilterMenu"></div>
               </div>
-              <button class="btn primary" onclick="openNewTaskModal()">新建 Task</button>
             </div>
           </header>
           <div class="work panel" id="focus-plan">
@@ -4399,7 +4398,7 @@
                   </label>
                 </div>
 
-                <div style="display:flex;gap:10px;margin-bottom:12px"><div style="flex:1"><label style="display:block;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--dim);margin-bottom:4px">安排</label><select id="fp-task-schedule" style="width:100%;background:var(--bg);border:1px solid var(--line-soft);border-radius:var(--radius);padding:6px 8px;color:var(--text);font-size:11px;font-family:var(--sans)"><option>今天</option><option selected>本周</option><option>本月</option><option>Backlog</option></select></div><div style="flex:1"><label style="display:block;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--dim);margin-bottom:4px">优先级</label><select id="fp-task-priority" style="width:100%;background:var(--bg);border:1px solid var(--line-soft);border-radius:var(--radius);padding:6px 8px;color:var(--text);font-size:11px;font-family:var(--sans)"><option>P0 — 紧急</option><option selected>P1 — 重要</option><option>P2 — 普通</option></select></div></div>
+                <div style="display:flex;gap:10px;margin-bottom:12px"><div style="flex:1"><label style="display:block;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--dim);margin-bottom:4px">初始状态</label><select id="fp-task-status" style="width:100%;background:var(--bg);border:1px solid var(--line-soft);border-radius:var(--radius);padding:6px 8px;color:var(--text);font-size:11px;font-family:var(--sans)"><option value="backlog" selected>待规划</option><option value="todo">待办</option><option value="in_progress">进行中</option><option value="in_evaluation">审核中</option><option value="done">已完成</option><option value="blocked">已阻塞</option></select></div><div style="flex:1"><label style="display:block;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--dim);margin-bottom:4px">优先级</label><select id="fp-task-priority" style="width:100%;background:var(--bg);border:1px solid var(--line-soft);border-radius:var(--radius);padding:6px 8px;color:var(--text);font-size:11px;font-family:var(--sans)"><option>P0 — 紧急</option><option selected>P1 — 重要</option><option>P2 — 普通</option></select></div></div>
 
                 <!-- 执行配置（无模式：执行 Agent + 评估 Agent + 轮数） -->
                 <div style="background:var(--bg);border:1px solid var(--line-soft);border-radius:var(--radius);padding:10px">
@@ -7571,14 +7570,7 @@ FocusPilot/
             if (status === 'blocked') card.style.display = 'none';
             lane.appendChild(card);
           });
-          // Add "新建任务" button (except for blocked/done)
-          if (status !== 'blocked' && status !== 'done' && status !== 'in_evaluation') {
-            var addBtn = document.createElement('div');
-            addBtn.style.cssText = 'display:flex;align-items:center;justify-content:center;gap:4px;padding:8px;border-radius:var(--radius);border:1px dashed var(--line);color:var(--dim);font-size:12px;cursor:pointer;margin-top:4px';
-            addBtn.textContent = '＋ 新建任务';
-            addBtn.onclick = function() { openNewTaskModal({ source: 'kanban-lane', status: status }); };
-            lane.appendChild(addBtn);
-          }
+          // 列底部不再放「＋ 新建任务」，统一用列标题栏的 + 创建（避免功能重复）
           kanban.appendChild(lane);
         });
       }
@@ -9071,11 +9063,12 @@ FocusPilot/
           }
         } else {
           setWorkspaceReadonly('');
-          if (context && context.source === 'kanban-lane') {
-            var scheduleEl = document.getElementById('fp-task-schedule');
-            if (scheduleEl) scheduleEl.value = context.status === 'backlog' ? 'Backlog' : scheduleEl.value;
-          }
           selectWorkspace('temp', true);
+        }
+        // 初始状态随入口决定：从看板某列的 + 创建时预选该列状态，否则默认「待规划」
+        var statusEl = document.getElementById('fp-task-status');
+        if (statusEl) {
+          statusEl.value = (context && context.source === 'kanban-lane' && context.status) ? context.status : 'backlog';
         }
       }
       function closeNewTaskModal() {
@@ -11660,11 +11653,11 @@ FocusPilot/
           }
         }
         if (projectId) registerWorkspace(projectId, workspaceType);
-        // Read schedule (by ID)
-        var scheduleMap = {'今天':'today','本周':'week','本月':'month','Backlog':'backlog'};
-        var scheduleEl = document.getElementById('fp-task-schedule');
-        var schedule = scheduleEl ? (scheduleMap[scheduleEl.options[scheduleEl.selectedIndex].text] || 'backlog') : 'backlog';
-        var explicitStatus = _newTaskContext && _newTaskContext.source === 'kanban-lane' && _newTaskContext.status ? _newTaskContext.status : '';
+        // Read 初始状态（模态框选择；看板某列的 + 创建时已预选该列状态）
+        var statusEl = document.getElementById('fp-task-status');
+        var explicitStatus = statusEl ? (statusEl.value || 'backlog') : 'backlog';
+        // schedule 由状态派生：待规划落 backlog，其余默认本周，保证新卡片仍出现在 Scope 范围内
+        var schedule = explicitStatus === 'backlog' ? 'backlog' : 'week';
         // Read priority (by ID)
         var priorityMap = {'P0 — 紧急':'p0','P1 — 重要':'p1','P2 — 普通':'p2'};
         var priorityEl = document.getElementById('fp-task-priority');

@@ -240,7 +240,7 @@ Task 的 frontmatter 通过 `status` + `scheduled_date` / `due_date` 形成**双
 
 | 入口 | 交互 | 归属项目 |
 |------|------|---------|
-| Dashboard / Studio 看板「+ 新建任务」 | 输入内容 → 选择 Workspace（临时 / 本地项目 / Git 远程）→ 选择时间维度 | Workspace 必选，Project 可选 |
+| Dashboard / Studio 看板状态列标题栏 `+` | 输入内容 → 选择 Workspace（临时 / 本地项目 / Git 远程）→ 确认初始状态（从某列 `+` 创建时自动预选该列状态，否则默认待规划） | Workspace 必选，Project 可选 |
 | Studio 项目视图 / Session 右面板创建 | 当前 Workspace 已确定，创建弹窗灰色只读展示当前 Workspace | 自动继承当前 Workspace |
 | 项目树内右键创建 | 在某个项目/Epic/Phase 下创建 | 自动继承本地 Project Workspace |
 
