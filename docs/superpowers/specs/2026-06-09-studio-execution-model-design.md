@@ -1,6 +1,6 @@
 # Studio 执行模型重构设计
 
-> **主题**：Studio 看板任务的执行模型（无模式化 + 两层循环/多 Agent 自治接力 + 对话式详情页）
+> **主题**：Studio 看板任务的执行模型（无模式化 + 单扫描器/worktree 混合制/三层并发 + 多 Agent 自治接力 + 对话式详情页）
 > **状态**：设计定稿，待落地
 > **日期**：2026-06-09
 > **关联**：[04-studio.md §3 执行模式](../../fp-ui/04-studio.md)、[PRD §3.1 两阶段模型](../../PRD.md)
@@ -102,11 +102,11 @@
 **规则**：
 
 1. **创建后第一个动作是 Agent 自动执行**（不等人），开场白就是任务描述本身。
-2. **每一轮 🤖 executor 执行后 🔍 reviewer 独立接力评估**：配了评估 Agent 时，executor Run 与 reviewer Run 交替（执行→评估→有意见再执行→再评估），在 N 轮内全自动来回，同一持锁 ping-pong 区间（见 §5.5、§6）。
+2. **每一轮 🤖 executor 执行后 🔍 reviewer 独立接力评估**：配了评估 Agent 时，executor Run 与 reviewer Run 交替（执行→评估→有意见再执行→再评估），在 N 轮内全自动来回，同一执行环境内（worktree / 路径锁，见 §5.5、§6）。
 3. **人回复 = 触发下一轮自动执行**：人在对话里回一句话，就是"继续"的扳机，Agent 据此再自动跑一轮。"打回继续修"和"人工回复"是同一个动作。
 4. **整页从上往下无限堆叠**：执行结果、评估结果、人工回复按时间顺序追加，像聊天记录。
 5. **回复时序随状态分流**：
-   - 任务在「审核中」（Agent 已停、等人）时回复 → 启动新一轮 ping-pong 并申请写锁：拿到锁则进「进行中」（⚡）；锁被同 Workspace 别的任务占用则回 `todo` 入队、显示「🕐 正在排队中」，拿到锁后再进「进行中」（与 §5.5/§5.6 一致）。
+   - 任务在「审核中」（Agent 已停、等人）时回复 → 启动新一轮 ping-pong：抢 Agent 并发槽（local_directory 还需路径锁）；拿到则进「进行中」（⚡）；槽满 / 路径锁被占则显示「🕐 正在排队中」，下次扫描重捞（与 §5.4/§5.5 一致）。
    - 任务在「进行中」（Agent 仍在跑）时回复 → 置 `has_pending_input`，**本轮 ping-pong 结束、落「审核中」后**再作为下一轮的输入处理（与聊天体验一致）。
 
 ---
@@ -137,8 +137,8 @@
 | 状态 | 中文名 | 调度行为 | 说明 |
 |------|--------|---------|------|
 | `backlog` | 待规划 | **不扫描** | 规划区。任务有名称 + 描述，人（或多人对话）在描述里把目标需求规划丰富好，再拖到「待办」 |
-| `todo` | 待办 | **拖入即扫描** | 调度器扫到 → 拿到写锁就进「进行中」；没拿到（同 Workspace 写锁被占）停这里，显示「🕐 正在排队中」 |
-| `in_progress` | 进行中 | 执行中 | executor↔reviewer ping-pong 在跑（同一持锁区间），显示「⚡ 正在工作」；落「审核中」时释放 lease（见 §5.5） |
+| `todo` | 待办 | **拖入即扫描** | 调度器扫到 → 抢到并发槽（local_directory 还需路径锁）就进「进行中」；没抢到（槽满 / 路径锁被占）停这里，显示「🕐 正在排队中」 |
+| `in_progress` | 进行中 | 执行中 | executor↔reviewer ping-pong 在跑（同一 worktree / 路径锁内），显示「⚡ 正在工作」；落「审核中」时释放槽/路径锁（见 §5.5） |
 | `in_review` | 审核中 | 等人回复 | 自动执行一轮跑完一律落这里。人**回复**→ 弹回「进行中」再跑；人**满意**→ 拖到「已完成」 |
 | `done` | 已完成 | — | 人工拖入确认。AI 产出必须经人审查再交付（删除原"验收开关"） |
 | `blocked` | 已阻塞 | — | 外部依赖阻塞，解除后回 `blocked_from_status`（见 §4.4） |
@@ -156,89 +156,101 @@
 ### 4.4 已阻塞（blocked）的触发与恢复
 
 - **进入**：仅**人工**标记 blocked（V1 不做 Agent 自检自动阻塞）。执行 Agent 卡住时表现为评估循环耗尽 → 落「审核中」交人，由人判断是否标 blocked。
-- **记录来源**：标 blocked 时写 `blocked_from_status`（通常是 `todo` 或 `in_review`）。若任务正在「进行中」被标 blocked，当前 ping-pong 的 Run 按 aborted 处理、释放 lease（见 §5.5）。
+- **记录来源**：标 blocked 时写 `blocked_from_status`（通常是 `todo` 或 `in_review`）。若任务正在「进行中」被标 blocked，当前 ping-pong 的 Run 按 aborted 处理、释放槽/路径锁（见 §5.5）。
 - **恢复**：解除阻塞 → 回到 `blocked_from_status`；若回到 `todo` 则重新进入自动调度队列，不自动续跑上一个 Run。
 
 ---
 
-## 5. 执行引擎：两层循环 + 多 Agent 自治队列
+## 5. 执行引擎：单中央扫描器 + worktree 混合制 + 三层并发
 
-执行引擎建模为**多个自治 worker（执行 Agent / 评估 Agent 各算一个）通过任务状态标记互相接力**的黑板（blackboard）/生产者-消费者架构。executor 与 reviewer 是对称的自治 worker：各自扫描"哪些任务归我、该不该入我的队"，靠任务上的协调标记字段（§5.3）接力，互不直接调用。
+**一句话总架构**：一个中央扫描器（每 3~5s）→ 读任务协调标记判"该谁干" → 抢对应 Agent 的并发槽 → 在该任务的执行环境（git 项目用独立 worktree / 本地目录用路径锁原地执行）里跑。**任务隔离靠 worktree（物理）或本地目录路径锁，不靠 app 级共享写锁**；这把前几轮"锁怎么持有/何时释放/会不会饿死"的纠结一次性消解。
 
-### 5.1 两层循环
+### 5.1 单中央扫描器（K1）
 
-- **第一层（状态层扫描）**：周期性遍历看板，只扫 `todo / in_progress / in_review` 三态（§5.4），捞出候选任务。
-- **第二层（任务层判定）**：对每个候选任务，各 Agent 按自己的判据决定是否入队：
-  - **(a) 新任务**：从未执行过（无 `last_run_id`）→ executor 入队 → 执行完落「审核中」。
-  - **(b) 新回复 = 新需求**：审核中/队列里发现 `has_pending_input` → executor 入队再执行。
-  - **(c) 执行中补需求**：正跑时用户又回复 → 本轮 ping-pong 跑完后检查 `has_pending_input`，有则再执行；多条回复合并为一个需求批次（§5.6）。
+- 一个调度循环，间隔可配（Settings，默认 3~5s）。
+- **扫描范围（K4）：仅 `todo / in_progress / in_review` 三态**；`backlog / done / blocked / cancelled` 不扫。
+- 无 executor 的手动卡片任何状态都跳过。
+- **不维护显式队列**：扫到任务靠协调标记（§5.2）判"该谁干"——这是单循环里的**过滤谓词**，不是第二层循环。槽满则跳过、下次扫描重捞（隐式排队）。
 
-### 5.2 多 Agent 队列的落地方式（K1：逻辑多队列 / 物理单循环）
+### 5.2 协调标记（K2，单扫描器命门）
 
-语义上"每个 Agent 跑自己的扫描 + 自己的队列"；**实现上 V1 采用单个调度循环承载所有 Agent 的逻辑队列**，每个 Agent 一条逻辑队列：
+扫到任务后靠这些标记判"派给谁、还要不要继续"（落库见 §7.2）：
 
-- 语义与"每 Agent 一个独立线程"完全等价，但**避免多线程并发读写同一份任务状态的竞态**（executor 写结果 / reviewer 读，reviewer 写意见 / executor 读）。
-- 物理去中心化（每 Agent 独立线程/进程）留待 V2，届时需对任务状态加锁/事务。
-- 扫描间隔可在 Settings 配置（默认值待定，量级为秒）。
+| 字段 | 写者 | 用途 |
+|------|------|------|
+| `current_run_id` | 调度器 | 非空 = 正在跑 → 跳过（防重复派发，= Issue×Agent 闸） |
+| `has_pending_input` | 用户回复时置 | 驱动"新需求再执行"；executor 取走后清零 |
+| `last_run_id` / `last_reviewed_run_id` | executor / reviewer | 二者不等 = 有未 review 的新结果 → reviewer 该上 |
+| `review_round` vs `evaluation_max_rounds` | reviewer | 判 ping-pong 是否继续 |
 
-### 5.3 协调标记字段（K2，模型命门）
+判据：
+- **executor 入队**：`has_pending_input == true`，或（新任务且无 `last_run_id`），或（reviewer 留下未解决意见且 `review_round < N`）。
+- **reviewer 入队**：配了评估 Agent 且 `last_run_id != last_reviewed_run_id` 且 `review_round < N`。
 
-两个 Agent 靠任务状态接力，定义以下字段（落库见 §7.2）：
+### 5.3 隔离：worktree 混合制
 
-| 字段 | 写者 | 读者 | 作用 |
-|------|------|------|------|
-| `has_pending_input` | 用户回复时置 true | executor | 驱动 (b)(c) 再执行；executor 取走后清零 |
-| `last_run_id` | executor 完成时写 | reviewer | reviewer 判"有新结果" |
-| `last_reviewed_run_id` | reviewer 完成时写 | reviewer | `last_run_id != last_reviewed_run_id` → 需 review |
-| `review_round` | reviewer 自增 | executor & reviewer | 对比 N，判是否继续 ping-pong |
+| Workspace 类型 | 隔离方式 | 并发 | 交付 | Handoff |
+|---|---|---|---|:---:|
+| **git 项目** | 独立 worktree（共享 bare repo 缓存建，分支 `task/{task_id}`） | 真并行 | push 分支 / PR | 否（PR 即交付） |
+| **local_directory** | **不建 worktree，原地执行** + 路径级互斥锁（等待态 `waiting_local_directory`） | 同目录**串行** | 改动在用户工作副本 | 否（原地） |
+| **temporary** | 本就独立目录 | 并行 | 手动取用 | 否 |
 
-- **executor 入队判据**：`has_pending_input == true`，或（新任务且无 `last_run_id`），或（reviewer 留下未解决意见且 `review_round < N`）。
-- **reviewer 入队判据**：配了评估 Agent 且 `last_run_id != last_reviewed_run_id` 且 `review_round < N`。
+- **WorkspaceWriteLease 不完全退役，而是"瘦身"为 local_directory 的路径锁**——只在本地目录场景存在；git / temp 无 app 级锁。
+- **Handoff（worktree 变更合并回主工作区）仍留 V2**（04-studio §15）：git 项目靠 PR 交付、local_directory 原地改，V1 都不需要合并回工作副本。
 
-### 5.4 第一层扫描范围（K4：只扫 3 态）
+### 5.4 三层并发闸 + 排序
 
-只扫 `todo / in_progress / in_review`：
+| 层 | 字段（配置位置） | 作用 |
+|---|---|---|
+| **Daemon 全局** | `max_concurrent_tasks`（Settings，默认待定，量级 4~8） | 整机总并发（信号量） |
+| **Agent 级** | `max_concurrent_tasks`（每 Agent，AICrew 定义） | 单 Agent 并发上限 |
+| **Issue×Agent** | 固定 1 | 同 Agent 在同任务最多 1 个（= `current_run_id` 非空跳过） |
 
-- `done` 不重开、`blocked` 不抢跑、`backlog`（待规划）是人工规划区，三态都不扫。
-- 手动卡片（无执行 Agent）即使处于这 3 态也不被任何 Agent 入队。
+- **排序（P4）**：候选按 `priority DESC, created_at ASC` 确定性取，防高优先级被反复插队饿死。
+- **槽满 → 跳过**，下次扫描重捞（隐式排队，无显式队列结构）。
 
-### 5.5 写锁与 ping-pong 持锁区间（K3）
+### 5.5 派发与 ping-pong 接力
 
-- executor 写文件需 WorkspaceWriteLease（同 `resolved_workdir` 同时只允许一个 active lease，沿用 04-studio §4.5）；reviewer 只读审查，**不另抢锁**，在任务已持有的锁内跑。
-- **整个 executor↔reviewer ping-pong（从首次执行到落「审核中」）= 一个持锁区间**：锁在首个 executor Run 启动时获取，期间 executor Run 与 reviewer Run 交替都在这把**已持有的锁**内跑，直到落「审核中」才释放。
-  - 理由：若 ping-pong 中途释放锁，两轮 executor 之间同 Workspace 别的任务插进来改文件，reviewer 审的就不是同一份产出，一致性崩。
-- **落「审核中」释放锁**（与 C2 饿死修复一致）：等人期间不写文件，释放锁让同 Workspace 排队任务继续；人回复 → 重新获取锁（被占则排队，§5.6）。
+- **派发动作**：建/复用 worktree（git）或取路径锁（local_directory）→ 在该任务 session 内 resume 上下文（类 `claude -p --resume`，上下文存于 worktree/session，与 Run 边界无关）→ 发给 Agent 执行。
+- **每轮（executor 轮 / reviewer 轮）= 一个 ExecutionRun**；**槽按轮取还**：轮开始取槽、轮结束释放。
+- **审核中（等人）：不占槽、不占路径锁——什么都不占**。因无 app 级共享锁，"持锁空等槽"的旧风险消失，无需跨 ping-pong 长持槽或锁。
 
 调度流程：
 
 ```
-第一层扫到候选（todo/in_progress/in_review，有执行 Agent）
-  executor 判据命中 → 入 executor 逻辑队列 → 标「🕐 正在排队中」
-    └─ 申请/复用 ping-pong 写锁
-         ├─ 拿到 → in_progress，标「⚡ 正在工作」，executor Run 执行
-         └─ 没拿到（写锁被占）→ 留 todo 队列，保持「🕐 正在排队中」
-  executor Run 完成 → 写 last_run_id
+中央扫描（todo/in_progress/in_review，有 executor）
+  按 (priority DESC, created_at ASC) 取候选；current_run_id 非空 → 跳过
+  抢 Daemon 槽 + Agent 槽 → 满则跳过、下轮重捞（🕐 正在排队中）
+  建/复用 worktree（git）或取路径锁（local_directory）
+  executor Run 执行（⚡ 正在工作）→ 写 last_run_id → 释放 executor 槽
   reviewer 判据命中（last_run_id≠last_reviewed_run_id 且 review_round<N）
-    → reviewer Run（同一锁内）审查 → 写 last_reviewed_run_id、review_round++
-         ├─ 有意见 → executor 接力再执行（同锁）→ …
-         └─ 通过 / review_round==N → 释放锁 → 落 in_review（审核中）
+    → 抢 reviewer 槽 → reviewer Run 审查 → 写 last_reviewed_run_id、review_round++
+         ├─ 有意见 → executor 再跑
+         └─ 通过 / review_round==N → 落 in_review（审核中），释放全部槽/路径锁
 ```
 
-### 5.6 需求合并与回复遇锁（K6）
+### 5.6 需求合并与新需求优先级（K6 + H2）
 
-- 用户一次/连续回复多条 → 合并为**一个新需求批次、一次执行**（同 Workspace 写锁串行，不真并行）。"并发扫描合并多需求"指的是合并成批，不是多线程并行跑同一任务。
-- 审核中回复 → executor 申请锁：拿到进「进行中」（⚡）；被占则回 `todo` 入队、「🕐 正在排队中」，拿到锁后再进「进行中」。
+- **合并（K6）**：用户一次/连续回复多条 → 合并为**一个需求批次、一次执行**，不是多线程并行跑同一任务。
+- **新需求 vs 评估优先级（H2）**：executor 跑到一半用户回复（`has_pending_input=true`）且同时配了评估 → **先把当前 ping-pong 的评估循环走完、落「审核中」，再由 `has_pending_input` 触发下一个全新 ping-pong**。新需求不插队进正在进行的评估轮（否则 `review_round` 计数与 transcript 顺序错乱）。
 
-### 5.7 对话跨 Run 连续性
+### 5.7 重启对账（H1，单扫描器运维命门）
 
-- 详情页的多轮堆叠跨多个 ExecutionRun（executor Run 与 reviewer Run），对话连续性靠 **Task 级 transcript / Session** 维持，不靠单个 Run。
+CoderSession 不持久化（项目约定，见 CLAUDE.md），App 重启后内存池清空。启动时必须对账：
+
+- 扫所有 `current_run_id != null` 的任务 → 进程已不在 → 清 `current_run_id`、标 Run aborted → 让扫描器下轮重新派发。
+- **prune 孤儿 worktree**（无对应活跃任务的 `wt/*`），复用 git 原生 `git worktree prune`。
+
+### 5.8 对话跨 Run 连续性
+
+- 详情页的多轮堆叠跨多个 ExecutionRun（executor Run 与 reviewer Run），连续性靠 **session / worktree 上下文**（类 `claude -p --resume`）维持，**不靠 Run 边界**。
 - `run_history_ids` 记录每一个 Run；`current_run_id` 仅在 ping-pong 进行中非空，落「审核中」置 null。
 
 ---
 
 ## 6. 评估接力（reviewer 自治 Run）
 
-评估不再是 executor Run 内部的子步骤，而是**独立评估 Agent 的独立 Run**，与 executor Run 在同一持锁 ping-pong 区间（§5.5）内交替（K5）。
+评估不再是 executor Run 内部的子步骤，而是**独立评估 Agent 的独立 Run**，与 executor Run 在同一执行环境（git worktree / local_directory 路径锁，§5.3）内交替（K5）。
 
 ### 6.1 ping-pong 逻辑
 
@@ -248,7 +260,7 @@ executor Run 执行 → 写 last_run_id
         ├─ 有未解决意见 且 review_round < N → executor Run 接力修复 → …
         └─ 评估通过  或  review_round == N
                           ▼
-              释放 ping-pong 锁 → 落「审核中」
+              落「审核中」，释放全部槽 / 路径锁
 ```
 
 ### 6.2 终止与交接（关键）
@@ -289,26 +301,33 @@ WorkItem:
     evaluator: "agent_evaluator"   # 评估 Agent，可空（空 = 无评估）
   evaluation_max_rounds: 3         # 评估轮数上限 N（≥1），仅 evaluator 非空时有效
 
-  # 多 Agent 接力协调标记（K2，§5.3）
+  # 多 Agent 接力协调标记（K2，§5.2）
+  current_run_id: null             # 非空=正在跑→跳过（防重复派发，Issue×Agent 闸）
   has_pending_input: false         # 用户回复时置 true，executor 取走后清零
   last_run_id: "run_07"            # executor 最近完成的 Run；reviewer 判"有新结果"
   last_reviewed_run_id: "run_05"   # reviewer 已审过的 Run；≠last_run_id 则需 review
   review_round: 2                  # 已 review 轮次，对比 N 判是否继续 ping-pong
 
+  # 执行环境（worktree 混合制，§5.3）—— git 项目用，local_directory/temporary 不填
+  worktree_path: "~/.focuspilot/wt/FP-002"
+  worktree_branch: "task/FP-002"
+
   run_substate: queued | working | null   # 运行子状态，驱动卡片角标，详见 §7.4
 ```
 
+AICrew Agent 定义新增 **`max_concurrent_tasks`（默认 1）**（P3，放 AICrew，**不放** Settings）；Daemon 全局 `max_concurrent_tasks` 放 Settings（§5.4）。
+
 ### 7.3 ExecutionRun 调整（executor / reviewer 两类 Run，见 §5.5/§6）
 
-- `mode` 字段（`manual|semi_auto|auto`）删除；新增 `run_kind: executor | reviewer` 区分两类自治 Run。
-- **一个持锁 ping-pong 区间内含多个 Run**：executor Run 与 reviewer Run 交替，**共享同一把 WorkspaceWriteLease**（K3，§5.5）；锁在首个 executor Run 启动时获取，落「审核中」才释放。
-- 进入「审核中」时 `current_run_id = null`、释放 lease；人回复开启新一轮 ping-pong（新 executor Run）。一场任务跨多个 Run，`run_history_ids` 串起全部 executor/reviewer Run。
+- `mode` 字段（`manual|semi_auto|auto`）删除；新增 `agent_role: executor | reviewer` 区分两类自治 Run。
+- **一个 ping-pong 区间内含多个 Run**：executor Run 与 reviewer Run 在**同一执行环境**（git worktree / local_directory 路径锁，§5.3）内交替；**槽按轮取还**（§5.5），不再共享 app 级写锁。
+- 进入「审核中」时 `current_run_id = null`、释放全部槽/路径锁；人回复开启新一轮 ping-pong（新 executor Run）。一场任务跨多个 Run，`run_history_ids` 串起全部 executor/reviewer Run。
 - `in_evaluation` 重命名为 `in_review`（见 §4.1）；涉及该枚举的字段（如 `blocked_from_status` 取值）同步。
 - 详情页跨 Run 按时间堆叠（executor 结果块 + reviewer 评估块交替）。`review_round` 记录 ping-pong 评估轮次，供详情页与终止判定共用。
 
 ### 7.4 字段命名说明
 
-`run_substate`（`queued | working | null`）驱动卡片角标，独立于看板 `status`：`queued` ↔ 「🕐 正在排队中」（status=todo 且已入队等锁），`working` ↔ 「⚡ 正在工作」（status=in_progress）。
+`run_substate`（`queued | working | null`）驱动卡片角标，独立于看板 `status`：`queued` ↔ 「🕐 正在排队中」（status=todo 且已扫描、在等并发槽 / 路径锁），`working` ↔ 「⚡ 正在工作」（status=in_progress）。
 
 ---
 
@@ -321,15 +340,23 @@ WorkItem:
 - ❌ 自动模式 4 条步骤链 → 单一对话轮次流
 - ❌ 独立「手动接管」按钮 → 降级为详情页"人工回复"通用能力
 
+**worktree 化连带废弃 / 调整（相对本 spec 前几轮）**：
+
+- ⚠️ **WorkspaceWriteLease 不再是 app 级共享写锁**：瘦身为 local_directory 的路径锁（§5.3）；git / temporary 改 worktree 物理隔离，无锁。
+- ❌ **"ping-pong 全程持一把锁、落审核中释放 lease 防饿死"**（前几轮 C2/K3）→ 无共享锁，饿死不存在；改 worktree 隔离 + 槽按轮取还。
+- ❌ **"回复遇写锁竞争排队"**（前几轮 RC-4）→ 改为"抢并发槽（local_directory 还需路径锁）"。
+- ⚠️ 04-studio §4.6 脏检测：worktree 下不在用户工作副本干活，语义调整（仅 local_directory 仍涉及）。
+
 ---
 
 ## 9. 待定 / 后续
 
-- **扫描间隔默认值**：Settings 暴露，量级为秒，具体默认值落地时定（建议同步检查 07-settings.md）。
+- **扫描间隔默认值**：Settings 暴露，量级为秒（3~5s 量级），具体默认值落地时定（同步检查 07-settings.md）。
+- **Daemon 全局并发上限默认值**：V1 已纳入三层并发的 Daemon 层（§5.4），默认值（量级 4~8）落地时定，放 Settings。
 - **规划模式**：本期不做显式规划模式；后续若需要，在「待规划」状态内增强（如调用规划 Agent 协助丰富描述）。
 - **多人审核**：「审核中」当前为单人验收；多人协作审核为企业版/后续能力。
 - **评估 Agent 的 pass/fail 判定标准**：评估 Agent prompt 需能稳定输出"是否仍有未解决意见"，实现时定义结构化输出契约。
-- **全局并发上限**：V1 排队的唯一原因是 WorkspaceWriteLease 锁竞争（同 Workspace 串行），不设跨 Workspace 全局并发上限。若后续本机资源/API 速率出现瓶颈，再考虑在 Settings 增"全局最多 N 个 Run 并行"配置（V2）。
+- **worktree 磁盘 GC 策略**：复用 04-studio §4.7 临时 workspace 的 GC（done/cancelled 超期清理 + 有未 push commit 保护），孤儿 worktree 用 `git worktree prune`（§5.7）。
 
 ---
 
@@ -338,15 +365,17 @@ WorkItem:
 落地时需同步：
 
 - [ ] `docs/fp-ui/04-studio.md`：
-  - 重写 §3（执行模式 → 执行模型）：无模式 + **两层循环 + 多 Agent 自治队列（黑板接力，K1=B 逻辑多队列/物理单循环）**
+  - 重写 §3（执行模式 → 执行模型）：无模式 + **单中央扫描器 + worktree 混合制 + 三层并发**
   - §2.4 状态机：`in_evaluation` → `in_review`、补乒乓流转与卡片角标、保留 `cancelled`
   - §7.4 详情页改为 executor/reviewer 接力的对话流
-  - §2.1/2.5 数据模型：删 `execution_mode`；新增 `evaluation_max_rounds` / `run_substate` / **K2 协调字段（`has_pending_input` / `last_run_id` / `last_reviewed_run_id` / `review_round`）**；ExecutionRun 新增 `run_kind: executor|reviewer`，一个 ping-pong 区间多 Run 共享一把锁
+  - **§4 Workspace 模型**：加 worktree 混合制（git→worktree 分支 `task/{id}`；local_directory→原地+路径锁 `waiting_local_directory`；temporary→独立目录）；**§4.5 WorkspaceWriteLease 瘦身为 local_directory 路径锁（不再 app 级共享）**；§4.6 脏检测语义调整（仅 local_directory 涉及）；§4.7 worktree GC 复用
+  - §2.1/2.5 数据模型：删 `execution_mode`；新增 `evaluation_max_rounds` / `run_substate` / **K2 协调字段（`current_run_id` / `has_pending_input` / `last_run_id` / `last_reviewed_run_id` / `review_round`）** / worktree 字段（`worktree_path` / `worktree_branch`）；ExecutionRun 新增 `agent_role: executor|reviewer`，删 `mode`
   - **§8 评估系统改写**：原文「Evaluation Agent 只产出意见、不判 pass/fail、每轮修复人工触发、不变」与本设计冲突 → 改为"**独立 reviewer Agent 的独立 Run**，输出结构化 pass/fail（是否仍有未解决意见）+ N 轮内 executor 自动接力修复 + 耗尽落审核中交人"
-  - §4.5 写锁：补「ping-pong 全程持一把锁、落审核中释放」（§5.5）
-  - §3 重写中明确：手动卡片（无执行 Agent）不进调度、不触发强制审核中、状态全人工拖动（§4.3）；第一层只扫 `todo/in_progress/in_review` 三态（§5.4）
+  - §3 重写中明确：手动卡片（无执行 Agent）不进调度、不触发强制审核中、状态全人工拖动（§4.3）；第一层只扫 `todo/in_progress/in_review` 三态（§5.4）；重启对账 + 孤儿 worktree prune（§5.7）
+  - §15 V2 预留：worktree 上移到 V1，**Handoff 仍留 V2**（git 靠 PR、local_directory 原地，V1 不需合并回工作副本）
 - [ ] `docs/PRD.md`：
   - §3.1 删除/替换 `auto_execute` 字段（被"拖入待办即调度"取代），状态名对齐说明
   - 注：PRD §3.1（`planning/ready/executing`）与 04-studio §2.4（`backlog/todo/in_progress`）为**既存的两套状态词汇不一致**，非本设计引入；本期只对齐 `auto_execute` 字段，**完全统一两套词汇另起一个独立任务处理**
-- [ ] `docs/fp-ui/07-settings.md`：新增"自动调度扫描间隔"配置项
+- [ ] `docs/fp-ui/07-ai-crew.md`：Agent 定义新增 `max_concurrent_tasks`（默认 1，P3）
+- [ ] `docs/fp-ui/07-settings.md`：新增「自动调度扫描间隔」+「Daemon 全局并发上限 `max_concurrent_tasks`」配置项
 - [ ] `docs/fp-ui/00-layout-prototype.html`：母版同步（详情页对话流 + 卡片角标）后才可标 5/5
