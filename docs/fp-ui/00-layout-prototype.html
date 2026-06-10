@@ -4411,7 +4411,7 @@
                   <label style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text);cursor:pointer;margin-bottom:6px"><input type="checkbox" id="fp-eval-toggle" style="accent-color:var(--accent)" onclick="document.getElementById('fp-eval-row').style.display=this.checked?'flex':'none'"> 开启自动评估</label>
                   <div id="fp-eval-row" style="display:none;gap:10px">
                     <div style="flex:1"><label style="display:block;font-size:10px;color:var(--dim);margin-bottom:3px">评估 Agent</label><select id="fp-eval-agent" style="width:100%;background:var(--surface);border:1px solid var(--line-soft);border-radius:var(--radius);padding:5px 6px;color:var(--text);font-size:10px;font-family:var(--sans)"><option selected>质量审查员</option><option>架构师</option></select></div>
-                    <div style="width:150px"><label style="display:block;font-size:10px;color:var(--dim);margin-bottom:3px">评估轮数</label><div style="display:flex;gap:4px"><select id="fp-eval-rounds" onchange="document.getElementById('fp-eval-rounds-custom').style.display=this.value==='custom'?'block':'none'" style="flex:1;background:var(--surface);border:1px solid var(--line-soft);border-radius:var(--radius);padding:5px 6px;color:var(--text);font-size:10px;font-family:var(--sans)"><option>1</option><option>2</option><option selected>3</option><option value="custom">自定义…</option></select><input id="fp-eval-rounds-custom" type="number" min="1" value="5" title="自定义轮数（≥1）" style="display:none;width:52px;background:var(--surface);border:1px solid var(--line-soft);border-radius:var(--radius);padding:5px 6px;color:var(--text);font-size:10px;font-family:var(--sans)"></div></div>
+                    <div style="width:96px"><label style="display:block;font-size:10px;color:var(--dim);margin-bottom:3px">评估轮数</label><input id="fp-eval-rounds" type="number" min="1" value="3" title="评估轮数（≥1，逐次增减）" style="width:100%;background:var(--surface);border:1px solid var(--line-soft);border-radius:var(--radius);padding:5px 6px;color:var(--text);font-size:10px;font-family:var(--sans)"></div>
                   </div>
                 </div>
               </div>
@@ -6612,15 +6612,7 @@ FocusPilot/
                       <div class="row-label">默认评估轮数</div>
                       <div class="row-desc">默认 evaluation_max_rounds（并发上限已迁至 Daemon 设置）</div>
                     </div>
-                    <div style="display:flex;gap:6px;align-items:center">
-                      <select onchange="this.parentElement.querySelector('input').style.display=this.value==='custom'?'block':'none'" style="height:32px;width:96px;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface-2);padding:0 10px;appearance:none;cursor:pointer;font-size:12px">
-                        <option>1</option>
-                        <option>2</option>
-                        <option selected>3</option>
-                        <option value="custom">自定义…</option>
-                      </select>
-                      <input type="number" min="1" value="5" title="自定义轮数（≥1）" style="display:none;height:32px;width:64px;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface-2);padding:0 10px;font-size:12px">
-                    </div>
+                    <input type="number" min="1" value="3" title="评估轮数（≥1，逐次增减）" style="height:32px;width:80px;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface-2);padding:0 10px;font-size:12px">
                   </div>
                 </div>
                 <h4>Session 对话</h4>
@@ -8343,9 +8335,21 @@ FocusPilot/
         'FP-001': {
           id: 'FP-001', title: '数据模型设计', status: 'done', statusLabel: '● Done', statusClass: 'green',
           priority: 'P0', mode: 'auto', agent: '代码工程师', schedule: '—', goal: 'FocusPilot 0.0.1',
-          desc: '设计 FocusPilot 核心数据模型，包括 Workspace、Task、CrewMember、CrewRuntime 等实体的字段定义、关系映射和持久化方案。',
+          desc: '设计 FocusPilot 核心数据模型，包括 Workspace、Task、CrewMember、CrewRuntime 等实体的字段定义、关系映射和持久化方案。要求：Codable 可序列化、支持单字段增量保存、覆盖单元测试。',
           plan: '<strong>实现步骤</strong><ol style="padding-left:18px;margin:6px 0"><li>梳理实体关系图（ER Diagram）</li><li>定义 Swift Codable 结构体</li><li>实现 UserDefaults 序列化</li><li>编写单元测试</li></ol>',
-          exec: null
+          exec: null,
+          // 已完成任务的完整对话流：执行 Agent ⇄ 评估 Agent 多轮接力 + 人工回复触发下一轮 + 验收落「已完成」
+          conv:
+            '<div style="display:flex;gap:8px;margin-bottom:14px"><span style="flex-shrink:0">🤖</span><div style="flex:1;min-width:0"><div style="font-size:11px;margin-bottom:4px"><strong>代码工程师</strong> <span style="color:var(--dim)">· 自动执行（第 1 轮）· 00:08:12</span></div><div style="font-family:var(--mono);font-size:10px;line-height:1.7;color:var(--muted);background:var(--bg);border:1px solid var(--line-soft);border-radius:6px;padding:8px">新建 Models.swift (+318)：定义 Workspace / Task / CrewMember / CrewRuntime 四个 Codable 结构体<br>新建 ConfigStore+Codable.swift (+96)：UserDefaults 序列化 + 单字段保存<br>新建 ModelsTests.swift (+142)：12 个单测<br><span style="color:var(--green)">✓ Build succeeded · 12 tests passed</span></div><div style="display:flex;gap:6px;margin-top:6px"><button class="btn" style="font-size:9px;min-height:22px;padding:0 8px">查看 Diff</button><button class="btn" style="font-size:9px;min-height:22px;padding:0 8px">日志</button></div></div></div>' +
+            '<div style="display:flex;gap:8px;margin-bottom:14px"><span style="flex-shrink:0">🔍</span><div style="flex:1;min-width:0"><div style="font-size:11px;margin-bottom:4px"><strong>质量审查员</strong> <span style="color:var(--dim)">· 评估 · 第 1 轮 / 共 3 轮</span> <span class="pill amber" style="font-size:9px;padding:1px 5px">2 条意见</span></div><div style="padding:6px 9px;background:rgba(248,113,113,.08);border-left:3px solid var(--red);border-radius:0 4px 4px 0;margin-bottom:4px;font-size:11px"><strong style="color:var(--red)">Critical</strong> CrewRuntime 缺少 daemon 心跳时间戳字段，无法做超时回收</div><div style="padding:6px 9px;background:rgba(242,196,15,.08);border-left:3px solid var(--amber);border-radius:0 4px 4px 0;font-size:11px"><strong style="color:var(--amber)">Important</strong> Task 全量写入 UserDefaults，大对象建议按 id 分片存储</div></div></div>' +
+            '<div style="display:flex;gap:8px;margin-bottom:14px"><span style="flex-shrink:0">🤖</span><div style="flex:1;min-width:0"><div style="font-size:11px;margin-bottom:4px"><strong>代码工程师</strong> <span style="color:var(--dim)">· 自动修复（第 2 轮）· 00:04:18</span></div><div style="font-family:var(--mono);font-size:10px;line-height:1.7;color:var(--muted);background:var(--bg);border:1px solid var(--line-soft);border-radius:6px;padding:8px">CrewRuntime 增加 lastHeartbeatAt: Date 字段 + 编解码<br>Task 持久化改为按 id 分片键存储<br><span style="color:var(--green)">✓ Build succeeded · 14 tests passed</span></div></div></div>' +
+            '<div style="display:flex;gap:8px;margin-bottom:14px"><span style="flex-shrink:0">🔍</span><div style="flex:1;min-width:0"><div style="font-size:11px"><strong>质量审查员</strong> <span style="color:var(--dim)">· 评估 · 第 2 轮</span> <span class="pill green" style="font-size:9px;padding:1px 5px">✓ 通过</span> <span style="color:var(--dim)">→ 落「审核中」</span></div></div></div>' +
+            '<div style="border-top:1px dashed var(--line-soft);margin:0 0 14px"></div>' +
+            '<div style="display:flex;gap:8px;margin-bottom:14px"><span style="flex-shrink:0">👤</span><div style="flex:1;min-width:0"><div style="font-size:11px;margin-bottom:4px"><strong>你</strong> <span style="color:var(--dim)">· 回复 = 触发下一轮 · 04-15 16:20</span></div><div style="font-size:12px;color:var(--text);background:var(--elevated);border-radius:6px;padding:7px 9px">CrewMember 的能力标签（capabilities）也加一个索引，后面按能力筛选 Agent 要用</div></div></div>' +
+            '<div style="display:flex;gap:8px;margin-bottom:14px"><span style="flex-shrink:0">🤖</span><div style="flex:1;min-width:0"><div style="font-size:11px;margin-bottom:4px"><strong>代码工程师</strong> <span style="color:var(--dim)">· 自动执行（第 3 轮）· 00:02:36</span></div><div style="font-family:var(--mono);font-size:10px;line-height:1.7;color:var(--muted);background:var(--bg);border:1px solid var(--line-soft);border-radius:6px;padding:8px">CrewMember 增加 capabilityIndex: [String: [UUID]] 反向索引 + 增量维护<br><span style="color:var(--green)">✓ Build succeeded · 16 tests passed</span></div></div></div>' +
+            '<div style="display:flex;gap:8px;margin-bottom:14px"><span style="flex-shrink:0">🔍</span><div style="flex:1;min-width:0"><div style="font-size:11px"><strong>质量审查员</strong> <span style="color:var(--dim)">· 评估 · 第 3 轮</span> <span class="pill green" style="font-size:9px;padding:1px 5px">✓ 通过</span></div></div></div>' +
+            '<div style="border-top:1px dashed var(--line-soft);margin:0 0 14px"></div>' +
+            '<div style="display:flex;gap:8px;align-items:center;background:rgba(74,222,128,.08);border:1px solid rgba(74,222,128,.25);border-radius:var(--radius);padding:9px 12px"><span style="flex-shrink:0">✅</span><div style="flex:1;min-width:0;font-size:11px"><strong style="color:var(--green)">你已验收通过</strong> <span style="color:var(--dim)">· 拖入「已完成」· 04-16 09:30 · 共 3 轮 · 累计耗时 15m06s</span></div></div>'
         },
         'FP-002': {
           id: 'FP-002', title: '看板状态模型实现', status: 'in_progress', statusLabel: '● In Progress', statusClass: 'blue',
@@ -8387,7 +8391,10 @@ FocusPilot/
           priority: 'P1', mode: 'manual', agent: '手动完成', schedule: '—', goal: 'FocusPilot 0.0.1',
           desc: '将分散的产品需求文档整合为统一的 PRD.md，建立文档体系和版本规划。',
           plan: '<strong>实现步骤</strong><ol style="padding-left:18px;margin:6px 0"><li>收集各文档</li><li>统一格式</li><li>建立索引</li></ol>',
-          exec: null
+          exec: null,
+          conv:
+            '<div style="display:flex;gap:8px;margin-bottom:14px"><span style="flex-shrink:0">👤</span><div style="flex:1;min-width:0"><div style="font-size:11px;margin-bottom:4px"><strong>你</strong> <span style="color:var(--dim)">· 手动执行 · 04-16</span></div><div style="font-size:12px;color:var(--text);background:var(--elevated);border-radius:6px;padding:7px 9px">整合 PRD-v4-legacy / 产品理念 / V1-MVP 三份文档，统一为 PRD.md，并建立文档索引。</div></div></div>' +
+            '<div style="display:flex;gap:8px;align-items:center;background:rgba(74,222,128,.08);border:1px solid rgba(74,222,128,.25);border-radius:var(--radius);padding:9px 12px"><span style="flex-shrink:0">✅</span><div style="flex:1;min-width:0;font-size:11px"><strong style="color:var(--green)">手动完成并归档</strong> <span style="color:var(--dim)">· 拖入「已完成」· 04-16 · 未配置评估 Agent</span></div></div>'
         },
         'FP-008': {
           id: 'FP-008', title: '配置迁移脚本', status: 'blocked', statusLabel: '● Blocked', statusClass: 'orange',
@@ -8449,7 +8456,9 @@ FocusPilot/
         if (planTab) {
           var convHtml = '<div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);margin-bottom:6px">📄 任务描述</div>' +
             '<div style="background:var(--bg);border:1px solid var(--line-soft);border-radius:var(--radius);padding:10px;font-size:12px;line-height:1.6;color:var(--muted);margin-bottom:14px">' + task.desc + '</div>';
-          if (task.exec) {
+          if (task.conv) {
+            convHtml += '<div style="border-top:1px dashed var(--line-soft);margin:0 0 14px"></div>' + task.conv;
+          } else if (task.exec) {
             convHtml += '<div style="border-top:1px dashed var(--line-soft);margin:0 0 14px"></div>' +
               '<div style="display:flex;gap:8px;margin-bottom:14px"><span style="flex-shrink:0">🤖</span><div style="flex:1;min-width:0">' +
               '<div style="font-size:11px;margin-bottom:4px"><strong>' + task.exec.agent + '</strong> <span style="color:var(--dim)">· 自动执行 · ' + task.exec.time + '</span></div>' +
@@ -8498,7 +8507,9 @@ FocusPilot/
         if (planTab) {
           var convHtml = '<div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);margin-bottom:6px">📄 任务描述</div>' +
             '<div style="background:var(--bg);border:1px solid var(--line-soft);border-radius:var(--radius);padding:10px;font-size:12px;line-height:1.6;color:var(--muted);margin-bottom:14px">' + task.desc + '</div>';
-          if (task.exec) {
+          if (task.conv) {
+            convHtml += '<div style="border-top:1px dashed var(--line-soft);margin:0 0 14px"></div>' + task.conv;
+          } else if (task.exec) {
             convHtml += '<div style="border-top:1px dashed var(--line-soft);margin:0 0 14px"></div>' +
               '<div style="display:flex;gap:8px;margin-bottom:14px"><span style="flex-shrink:0">🤖</span><div style="flex:1;min-width:0">' +
               '<div style="font-size:11px;margin-bottom:4px"><strong>' + task.exec.agent + '</strong> <span style="color:var(--dim)">· 自动执行 · ' + task.exec.time + '</span></div>' +
