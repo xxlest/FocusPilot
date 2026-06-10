@@ -4429,27 +4429,17 @@
 
                 <div style="display:flex;gap:10px;margin-bottom:12px"><div style="flex:1"><label style="display:block;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--dim);margin-bottom:4px">安排</label><select id="fp-task-schedule" style="width:100%;background:var(--bg);border:1px solid var(--line-soft);border-radius:var(--radius);padding:6px 8px;color:var(--text);font-size:11px;font-family:var(--sans)"><option>今天</option><option selected>本周</option><option>本月</option><option>Backlog</option></select></div><div style="flex:1"><label style="display:block;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--dim);margin-bottom:4px">优先级</label><select id="fp-task-priority" style="width:100%;background:var(--bg);border:1px solid var(--line-soft);border-radius:var(--radius);padding:6px 8px;color:var(--text);font-size:11px;font-family:var(--sans)"><option>P0 — 紧急</option><option selected>P1 — 重要</option><option>P2 — 普通</option></select></div></div>
 
-                <!-- 执行方式（3模式 + 2开关） -->
+                <!-- 执行配置（无模式：执行 Agent + 评估 Agent + 轮数） -->
                 <div style="background:var(--bg);border:1px solid var(--line-soft);border-radius:var(--radius);padding:10px">
-                  <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--dim);margin-bottom:8px">执行方式</div>
-                  <div style="display:flex;gap:0;border:1px solid var(--line);border-radius:var(--radius);overflow:hidden" id="fp-exec-modes">
-                    <label style="flex:1;text-align:center;padding:5px 0;cursor:pointer;font-size:11px;background:var(--elevated);color:var(--text);border-right:1px solid var(--line)" data-exec="none" onclick="selectExecMode('none')"><input type="radio" name="fp-exec" checked style="display:none"> 普通任务</label>
-                    <label style="flex:1;text-align:center;padding:5px 0;cursor:pointer;font-size:11px;color:var(--muted);border-right:1px solid var(--line)" data-exec="dialog" onclick="selectExecMode('dialog')"><input type="radio" name="fp-exec" style="display:none"> 💬 对话</label>
-                    <label style="flex:1;text-align:center;padding:5px 0;cursor:pointer;font-size:11px;color:var(--muted)" data-exec="auto" onclick="selectExecMode('auto')"><input type="radio" name="fp-exec" style="display:none"> 🤖 自动</label>
+                  <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--dim);margin-bottom:8px">执行配置</div>
+                  <div style="display:flex;gap:10px;margin-bottom:8px">
+                    <div style="flex:1"><label style="display:block;font-size:10px;color:var(--dim);margin-bottom:3px">执行 Agent <span style="color:var(--dim)">（留空=手动卡片）</span></label><select id="fp-task-agent" style="width:100%;background:var(--surface);border:1px solid var(--line-soft);border-radius:var(--radius);padding:5px 6px;color:var(--text);font-size:10px;font-family:var(--sans)"><option>（不指定 · 手动卡片）</option><option selected>代码工程师</option><option>数据分析师</option><option>架构师</option></select></div>
+                    <div style="flex:1"><label style="display:block;font-size:10px;color:var(--dim);margin-bottom:3px">归属目标</label><select id="fp-task-goal" style="width:100%;background:var(--surface);border:1px solid var(--line-soft);border-radius:var(--radius);padding:5px 6px;color:var(--text);font-size:10px;font-family:var(--sans)"><option>无</option><option selected>4月/FP 0.0.1</option><option>5月/FP 0.0.1</option></select></div>
                   </div>
-
-                  <!-- Agent（对话/自动时显示） -->
-                  <div id="fp-exec-agent" style="display:none;margin-top:8px">
-                    <div style="display:flex;gap:10px">
-                      <div style="flex:1"><label style="display:block;font-size:10px;color:var(--dim);margin-bottom:3px">Agent</label><select id="fp-task-agent" style="width:100%;background:var(--surface);border:1px solid var(--line-soft);border-radius:var(--radius);padding:5px 6px;color:var(--text);font-size:10px;font-family:var(--sans)"><option selected>代码工程师</option><option>数据分析师</option><option>架构师</option></select></div>
-                      <div style="flex:1"><label style="display:block;font-size:10px;color:var(--dim);margin-bottom:3px">归属目标</label><select id="fp-task-goal" style="width:100%;background:var(--surface);border:1px solid var(--line-soft);border-radius:var(--radius);padding:5px 6px;color:var(--text);font-size:10px;font-family:var(--sans)"><option>无</option><option selected>4月/FP 0.0.1</option><option>5月/FP 0.0.1</option></select></div>
-                    </div>
-                  </div>
-
-                  <!-- 自动模式开关（仅自动时显示） -->
-                  <div id="fp-exec-auto-options" style="display:none;margin-top:8px;padding-top:8px;border-top:1px solid var(--line-soft)">
-                    <label style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text);cursor:pointer;margin-bottom:4px"><input type="checkbox" checked style="accent-color:var(--accent)"> 执行前需要我批准计划</label>
-                    <label style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted);cursor:pointer"><input type="checkbox" style="accent-color:var(--accent)"> 完成后启用 AI 评估</label>
+                  <label style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text);cursor:pointer;margin-bottom:6px"><input type="checkbox" id="fp-eval-toggle" style="accent-color:var(--accent)" onclick="document.getElementById('fp-eval-row').style.display=this.checked?'flex':'none'"> 开启自动评估</label>
+                  <div id="fp-eval-row" style="display:none;gap:10px">
+                    <div style="flex:1"><label style="display:block;font-size:10px;color:var(--dim);margin-bottom:3px">评估 Agent</label><select id="fp-eval-agent" style="width:100%;background:var(--surface);border:1px solid var(--line-soft);border-radius:var(--radius);padding:5px 6px;color:var(--text);font-size:10px;font-family:var(--sans)"><option selected>质量审查员</option><option>架构师</option></select></div>
+                    <div style="width:96px"><label style="display:block;font-size:10px;color:var(--dim);margin-bottom:3px">评估轮数</label><select id="fp-eval-rounds" style="width:100%;background:var(--surface);border:1px solid var(--line-soft);border-radius:var(--radius);padding:5px 6px;color:var(--text);font-size:10px;font-family:var(--sans)"><option>1</option><option>2</option><option selected>3</option></select></div>
                   </div>
                 </div>
               </div>
@@ -9069,7 +9059,7 @@ FocusPilot/
       function openNewTaskModal(context) {
         _newTaskContext = context || null;
         document.getElementById('fpNewTaskModal').style.display = 'flex';
-        selectExecMode('none');
+        initTaskExecConfig();
         var workspaceSection = document.getElementById('fp-new-task-workspace-section');
         var isProjectScoped = context && (context.source === 'project' || context.source === 'session') && context.projectId;
         if (isProjectScoped) {
@@ -9132,26 +9122,14 @@ FocusPilot/
         }
       }
 
-      // 执行方式切换（3模式 + 2开关）
-      function selectExecMode(mode) {
-        document.querySelectorAll('#fp-exec-modes label').forEach(function(l) {
-          var isActive = l.dataset.exec === mode;
-          l.style.background = isActive ? 'var(--elevated)' : 'transparent';
-          l.style.color = isActive ? 'var(--text)' : 'var(--muted)';
-          l.querySelector('input').checked = isActive;
-        });
-        var agentSection = document.getElementById('fp-exec-agent');
-        var autoSection = document.getElementById('fp-exec-auto-options');
-        if (mode === 'none') {
-          agentSection.style.display = 'none';
-          autoSection.style.display = 'none';
-        } else if (mode === 'dialog') {
-          agentSection.style.display = 'block';
-          autoSection.style.display = 'none';
-        } else {
-          agentSection.style.display = 'block';
-          autoSection.style.display = 'block';
-        }
+      // 执行配置初始化（无模式：执行 Agent + 评估 Agent + 轮数）
+      function initTaskExecConfig() {
+        var agentSel = document.getElementById('fp-task-agent');
+        if (agentSel) agentSel.selectedIndex = 1; // 默认 代码工程师
+        var evalToggle = document.getElementById('fp-eval-toggle');
+        if (evalToggle) evalToggle.checked = false;
+        var evalRow = document.getElementById('fp-eval-row');
+        if (evalRow) evalRow.style.display = 'none';
       }
 
       /* ── Studio: Sidebar Tab Switch (任务视图 / 项目视图) ── */
@@ -11694,18 +11672,14 @@ FocusPilot/
         var priorityMap = {'P0 — 紧急':'p0','P1 — 重要':'p1','P2 — 普通':'p2'};
         var priorityEl = document.getElementById('fp-task-priority');
         var priority = priorityEl ? (priorityMap[priorityEl.options[priorityEl.selectedIndex].text] || 'p1') : 'p1';
-        // Read execution mode
-        var execRadio = modal.querySelector('input[name="fp-exec"]:checked');
-        var executionMode = execRadio ? execRadio.parentElement.dataset.exec : 'none';
-        // Read agent (by ID)
-        var agent = '';
-        if (executionMode === 'dialog' || executionMode === 'auto') {
-          var agentSel = document.getElementById('fp-task-agent');
-          if (agentSel) agent = agentSel.value;
-        }
-        // Read approval/evaluation checkboxes
-        var approvalCheck = modal.querySelector('#fp-exec-auto-options input[type="checkbox"]:first-child');
-        var evalCheck = modal.querySelector('#fp-exec-auto-options input[type="checkbox"]:last-child');
+        // 无模式：执行行为由执行 Agent 是否配置隐式推导
+        var agentSel = document.getElementById('fp-task-agent');
+        var agentVal = agentSel ? agentSel.value : '';
+        var isManual = !agentVal || agentVal.indexOf('不指定') >= 0;   // 留空=手动卡片
+        var executionMode = isManual ? 'none' : 'auto';               // 内部兼容字段：有执行 Agent 即自动调度
+        var agent = isManual ? '' : agentVal;
+        // 自动评估：配了评估 Agent（开关勾选）即带评估接力
+        var evalCheck = document.getElementById('fp-eval-toggle');
         // Generate ID
         var newId = 'FP-' + String(workItems.length + 1).padStart(3, '0');
         // Build item
