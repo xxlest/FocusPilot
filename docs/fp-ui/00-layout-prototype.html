@@ -1235,21 +1235,26 @@
       }
       .swimlane-grid {
         display: grid;
-        grid-template-columns: 180px repeat(6, minmax(150px, 1fr));
+        grid-template-columns: repeat(6, minmax(160px, 1fr));
         border: 1px solid var(--line-soft);
         border-radius: var(--radius);
         overflow: hidden;
         background: var(--surface);
       }
       .swimlane-head,
-      .swimlane-workspace,
       .swimlane-cell {
         border-right: 1px solid var(--line-soft);
         border-bottom: 1px solid var(--line-soft);
       }
       .swimlane-head {
+        position: sticky;
+        top: 0;
+        z-index: 3;
         min-height: 34px;
         padding: 9px 10px;
+        display: flex;
+        align-items: center;
+        gap: 5px;
         background: var(--elevated);
         color: var(--dim);
         font-size: 10px;
@@ -1257,52 +1262,89 @@
         text-transform: uppercase;
         letter-spacing: .04em;
       }
-      .swimlane-workspace {
-        min-height: 96px;
-        padding: 10px;
+      /* 分组整行横幅（跨全部状态列） */
+      .swimlane-band {
+        grid-column: 1 / -1;
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        min-height: 38px;
+        padding: 8px 12px;
         background: var(--surface-2);
+        border-bottom: 1px solid var(--line-soft);
         color: var(--text);
         font-size: 12px;
         font-weight: 600;
-      }
-      .swimlane-workspace.folded,
-      .swimlane-cell.folded {
-        min-height: 44px;
-      }
-      .swimlane-group-toggle {
-        width: 20px;
-        height: 20px;
-        border: 1px solid var(--line-soft);
-        border-radius: 50%;
-        background: var(--surface);
-        color: var(--dim);
         cursor: pointer;
-        font-size: 10px;
+        user-select: none;
+      }
+      .swimlane-band:hover { background: var(--elevated); }
+      .swimlane-band .swimlane-band-handle {
+        flex-shrink: 0;
+        cursor: grab;
+        color: var(--dim);
+        font-size: 12px;
+        line-height: 1;
+        opacity: .45;
+      }
+      .swimlane-band:hover .swimlane-band-handle { opacity: 1; }
+      .swimlane-band .swimlane-band-handle:active { cursor: grabbing; }
+      .swimlane-band.band-dragging { opacity: .45; }
+      .swimlane-band.band-drop-before { box-shadow: inset 0 2px 0 0 var(--accent); }
+      .swimlane-band.band-drop-after { box-shadow: inset 0 -2px 0 0 var(--accent); }
+      .swimlane-band .swimlane-band-toggle {
+        width: 16px;
+        color: var(--dim);
+        font-size: 14px;
         line-height: 1;
         flex-shrink: 0;
+        text-align: center;
       }
-      .swimlane-workspace .sub {
-        display: block;
-        margin-top: 4px;
-        color: var(--dim);
-        font-size: 10px;
+      .swimlane-band .swimlane-band-id {
         font-family: var(--mono);
+        font-size: 10px;
         font-weight: 400;
+        color: var(--dim);
+        background: var(--surface);
+        border: 1px solid var(--line-soft);
+        border-radius: 4px;
+        padding: 1px 5px;
+      }
+      .swimlane-band .swimlane-band-count {
+        font-family: var(--mono);
+        font-size: 11px;
+        font-weight: 400;
+        color: var(--dim);
       }
       .swimlane-cell {
-        min-height: 96px;
+        display: flex;
+        flex-direction: column;
+        min-height: 90px;
         padding: 8px;
         background: var(--bg);
-      }
-      .swimlane-cell.folded {
-        color: var(--dim);
-        font-size: 10px;
       }
       .swimlane-cell.drag-over {
         outline: 1px solid var(--accent);
         outline-offset: -2px;
         background: var(--accent-bg);
       }
+      /* 状态列底部「+」新建按钮 */
+      .swimlane-add {
+        margin-top: auto;
+        width: 100%;
+        min-height: 26px;
+        border: 1px dashed var(--line-soft);
+        border-radius: var(--radius);
+        background: transparent;
+        color: var(--dim);
+        cursor: pointer;
+        font-size: 13px;
+        line-height: 1;
+        opacity: 0;
+        transition: opacity .15s;
+      }
+      .swimlane-cell:hover .swimlane-add { opacity: 1; }
+      .swimlane-add:hover { background: var(--surface); color: var(--text); border-color: var(--line); }
       .swimlane-card {
         margin-bottom: 6px;
         cursor: grab;
@@ -3151,8 +3193,8 @@
             <div class="view-local-bar">
               <span class="vlb-label">分组方式</span>
               <select class="studio-display-dropdown active" id="fp-timeline-group-select" title="时间轴分组" onchange="setTimelineGroupMode(this.value)">
+                <option value="project" selected>▤ 按项目</option>
                 <option value="goal">▱ 按目标</option>
-                <option value="project">▤ 按项目</option>
               </select>
             </div>
             <!-- 规划子模式由侧边栏 Scope 自动驱动，无手动子 Tab -->
@@ -4121,200 +4163,17 @@
             </div>
           </div>
           <div class="work panel" id="focus-list" style="overflow:auto;padding:0 18px 18px">
-            <!-- Group 1 -->
-            <div style="display:flex;align-items:center;gap:8px;padding:12px 0 6px;font-size:12px;font-weight:700;color:var(--muted);border-bottom:1px solid var(--line-soft);position:sticky;top:0;background:var(--bg);z-index:2">
-              📌 4月 · FocusPilot 0.0.1 发布
-              <span style="font-weight:400;color:var(--dim);font-family:var(--mono);font-size:11px" class="fp-list-group-count">2 项</span>
+            <div class="view-local-bar">
+              <span class="vlb-label">分组方式</span>
+              <select class="studio-display-dropdown active" id="fp-list-group-select" title="列表分组" onchange="setListGroupMode(this.value)">
+                <option value="status">◉ 按状态</option>
+                <option value="goal">▱ 按目标</option>
+                <option value="project">▤ 按项目</option>
+                <option value="agent">◈ 执行 Agent</option>
+                <option value="owner">◎ 负责人</option>
+              </select>
             </div>
-            <table style="width:100%;border-collapse:collapse" class="fp-list-table" data-fp-month-group="4">
-              <thead>
-                <tr>
-                  <th style="width:40px;text-align:left;padding:8px 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);border-bottom:1px solid var(--line-soft)">状态</th>
-                  <th style="text-align:left;padding:8px 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);border-bottom:1px solid var(--line-soft)">标题</th>
-                  <th style="width:70px;text-align:left;padding:8px 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);border-bottom:1px solid var(--line-soft)">安排</th>
-                  <th style="width:50px;text-align:left;padding:8px 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);border-bottom:1px solid var(--line-soft)">优先级</th>
-                  <th style="width:50px;text-align:left;padding:8px 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);border-bottom:1px solid var(--line-soft)">模式</th>
-                  <th style="width:90px;text-align:left;padding:8px 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);border-bottom:1px solid var(--line-soft)">Agent</th>
-                  <th style="width:60px;text-align:left;padding:8px 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);border-bottom:1px solid var(--line-soft)">来源</th>
-                  <th style="width:60px;text-align:left;padding:8px 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);border-bottom:1px solid var(--line-soft)">截止</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr class="fp-list-row" style="cursor:pointer" data-fp-schedule="" data-fp-mode="auto">
-                  <td style="padding:8px 10px"><span class="pill green" style="font-size:10px;padding:1px 6px">✓ 完成</span></td>
-                  <td style="padding:8px 10px;text-decoration:line-through;color:var(--dim)"><strong style="color:var(--dim)">数据模型设计</strong></td>
-                  <td style="padding:8px 10px;font-size:12px;color:var(--dim)">—</td>
-                  <td style="padding:8px 10px"><span class="pill" style="font-size:9px;padding:1px 5px;border-color:rgba(248,113,113,.3);color:var(--red)">P0</span></td>
-                  <td style="padding:8px 10px;font-size:12px">🤖</td>
-                  <td style="padding:8px 10px;font-size:11px;color:var(--muted)">代码工程师</td>
-                  <td style="padding:8px 10px;font-size:11px;color:var(--dim)">area</td>
-                  <td style="padding:8px 10px;font-size:11px;font-family:var(--mono);color:var(--green)">✓ 04-15</td>
-                </tr>
-                <tr class="fp-list-row" style="cursor:pointer" data-fp-schedule="" data-fp-mode="manual">
-                  <td style="padding:8px 10px"><span class="pill green" style="font-size:10px;padding:1px 6px">✓ 完成</span></td>
-                  <td style="padding:8px 10px;text-decoration:line-through;color:var(--dim)"><strong style="color:var(--dim)">PRD 文档整合</strong></td>
-                  <td style="padding:8px 10px;font-size:12px;color:var(--dim)">—</td>
-                  <td style="padding:8px 10px"><span class="pill" style="font-size:9px;padding:1px 5px;border-color:rgba(242,196,15,.3);color:var(--amber)">P1</span></td>
-                  <td style="padding:8px 10px;font-size:12px">🖐</td>
-                  <td style="padding:8px 10px;font-size:11px;color:var(--muted)">手动完成</td>
-                  <td style="padding:8px 10px;font-size:11px;color:var(--dim)">area</td>
-                  <td style="padding:8px 10px;font-size:11px;font-family:var(--mono);color:var(--green)">✓ 04-16</td>
-                </tr>
-              </tbody>
-            </table>
-            <!-- Group 2: 5月 -->
-            <div style="display:flex;align-items:center;gap:8px;padding:12px 0 6px;font-size:12px;font-weight:700;color:var(--muted);border-bottom:1px solid var(--line-soft);margin-top:8px">
-              📆 5月 · FocusPilot 0.0.1 发布
-              <span style="font-weight:400;color:var(--dim);font-family:var(--mono);font-size:11px" class="fp-list-group-count">4 项</span>
-            </div>
-            <table style="width:100%;border-collapse:collapse" class="fp-list-table" data-fp-month-group="5">
-              <thead>
-                <tr>
-                  <th style="width:40px;text-align:left;padding:8px 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);border-bottom:1px solid var(--line-soft)">状态</th>
-                  <th style="text-align:left;padding:8px 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);border-bottom:1px solid var(--line-soft)">标题</th>
-                  <th style="width:70px;text-align:left;padding:8px 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);border-bottom:1px solid var(--line-soft)">安排</th>
-                  <th style="width:50px;text-align:left;padding:8px 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);border-bottom:1px solid var(--line-soft)">优先级</th>
-                  <th style="width:50px;text-align:left;padding:8px 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);border-bottom:1px solid var(--line-soft)">模式</th>
-                  <th style="width:90px;text-align:left;padding:8px 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);border-bottom:1px solid var(--line-soft)">Agent</th>
-                  <th style="width:60px;text-align:left;padding:8px 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);border-bottom:1px solid var(--line-soft)">来源</th>
-                  <th style="width:60px;text-align:left;padding:8px 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);border-bottom:1px solid var(--line-soft)">截止</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr class="fp-list-row" onclick="openTaskDetail('FP-002')" style="cursor:pointer" data-fp-schedule="week" data-fp-mode="auto" data-fp-agent="yes">
-                  <td style="padding:8px 10px"><span class="pill blue" style="font-size:10px;padding:1px 6px">● 进行</span></td>
-                  <td style="padding:8px 10px"><strong>看板状态模型实现</strong></td>
-                  <td style="padding:8px 10px;font-size:12px;color:var(--muted)">本周</td>
-                  <td style="padding:8px 10px"><span class="pill" style="font-size:9px;padding:1px 5px;border-color:rgba(248,113,113,.3);color:var(--red)">P0</span></td>
-                  <td style="padding:8px 10px;font-size:12px">🤖</td>
-                  <td style="padding:8px 10px;font-size:11px;color:var(--muted)">代码工程师</td>
-                  <td style="padding:8px 10px;font-size:11px;color:var(--dim)">area</td>
-                  <td style="padding:8px 10px;font-size:11px;font-family:var(--mono);color:var(--muted)">05-25</td>
-                </tr>
-                <tr class="fp-list-row" onclick="openTaskDetail('FP-003')" style="cursor:pointer" data-fp-schedule="week" data-fp-mode="auto">
-                  <td style="padding:8px 10px"><span class="pill" style="font-size:10px;padding:1px 6px;border-color:rgba(163,169,181,.3);color:var(--muted)">○ 待做</span></td>
-                  <td style="padding:8px 10px"><strong>Agent Pull 执行管道</strong></td>
-                  <td style="padding:8px 10px;font-size:12px;color:var(--muted)">本周</td>
-                  <td style="padding:8px 10px"><span class="pill" style="font-size:9px;padding:1px 5px;border-color:rgba(242,196,15,.3);color:var(--amber)">P1</span></td>
-                  <td style="padding:8px 10px;font-size:12px">🤖</td>
-                  <td style="padding:8px 10px;font-size:11px;color:var(--muted)">代码工程师</td>
-                  <td style="padding:8px 10px;font-size:11px;color:var(--dim)">area</td>
-                  <td style="padding:8px 10px;font-size:11px;font-family:var(--mono);color:var(--muted)">05-28</td>
-                </tr>
-                <tr class="fp-list-row" onclick="openTaskDetail('FP-004')" style="cursor:pointer" data-fp-schedule="week" data-fp-mode="manual">
-                  <td style="padding:8px 10px"><span class="pill" style="font-size:10px;padding:1px 6px;border-color:rgba(163,169,181,.3);color:var(--muted)">○ 待做</span></td>
-                  <td style="padding:8px 10px"><strong>Terminal 手动执行模式</strong></td>
-                  <td style="padding:8px 10px;font-size:12px;color:var(--muted)">本周</td>
-                  <td style="padding:8px 10px"><span class="pill" style="font-size:9px;padding:1px 5px;border-color:rgba(242,196,15,.3);color:var(--amber)">P1</span></td>
-                  <td style="padding:8px 10px;font-size:12px">🖐</td>
-                  <td style="padding:8px 10px;font-size:11px;color:var(--muted)">手动执行</td>
-                  <td style="padding:8px 10px;font-size:11px;color:var(--dim)">area</td>
-                  <td style="padding:8px 10px;font-size:11px;font-family:var(--mono);color:var(--muted)">05-29</td>
-                </tr>
-                <tr class="fp-list-row" onclick="openTaskDetailTab('fp-t-eval','FP-005')" style="cursor:pointer" data-fp-schedule="week" data-fp-mode="auto" data-fp-decision="yes">
-                  <td style="padding:8px 10px"><span class="pill" style="font-size:10px;padding:1px 6px;border-color:rgba(167,139,250,.3);color:var(--purple)">◈ 评估</span></td>
-                  <td style="padding:8px 10px"><strong>规划引擎接口设计</strong></td>
-                  <td style="padding:8px 10px;font-size:12px;color:var(--muted)">本周</td>
-                  <td style="padding:8px 10px"><span class="pill" style="font-size:9px;padding:1px 5px;border-color:rgba(248,113,113,.3);color:var(--red)">P0</span></td>
-                  <td style="padding:8px 10px;font-size:12px">🤖</td>
-                  <td style="padding:8px 10px;font-size:11px;color:var(--amber)">代码工程师→等你处理评估</td>
-                  <td style="padding:8px 10px;font-size:11px;color:var(--dim)">area</td>
-                  <td style="padding:8px 10px;font-size:11px;font-family:var(--mono);color:var(--muted)">05-26</td>
-                </tr>
-              </tbody>
-            </table>
-            <!-- Group 2b: 6月 -->
-            <div style="display:flex;align-items:center;gap:8px;padding:12px 0 6px;font-size:12px;font-weight:700;color:var(--muted);border-bottom:1px solid var(--line-soft);margin-top:8px">
-              📆 6月 · FocusPilot 0.0.1 发布
-              <span style="font-weight:400;color:var(--dim);font-family:var(--mono);font-size:11px" class="fp-list-group-count">2 项</span>
-            </div>
-            <table style="width:100%;border-collapse:collapse" class="fp-list-table" data-fp-month-group="6">
-              <thead>
-                <tr>
-                  <th style="width:40px;text-align:left;padding:8px 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);border-bottom:1px solid var(--line-soft)">状态</th>
-                  <th style="text-align:left;padding:8px 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);border-bottom:1px solid var(--line-soft)">标题</th>
-                  <th style="width:70px;text-align:left;padding:8px 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);border-bottom:1px solid var(--line-soft)">安排</th>
-                  <th style="width:50px;text-align:left;padding:8px 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);border-bottom:1px solid var(--line-soft)">优先级</th>
-                  <th style="width:50px;text-align:left;padding:8px 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);border-bottom:1px solid var(--line-soft)">模式</th>
-                  <th style="width:90px;text-align:left;padding:8px 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);border-bottom:1px solid var(--line-soft)">Agent</th>
-                  <th style="width:60px;text-align:left;padding:8px 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);border-bottom:1px solid var(--line-soft)">来源</th>
-                  <th style="width:60px;text-align:left;padding:8px 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);border-bottom:1px solid var(--line-soft)">截止</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr class="fp-list-row" style="cursor:pointer" data-fp-schedule="month" data-fp-mode="auto">
-                  <td style="padding:8px 10px"><span class="pill" style="font-size:10px;padding:1px 6px;border-color:rgba(112,120,135,.3);color:var(--dim)">◦ 待排</span></td>
-                  <td style="padding:8px 10px"><strong>主题系统适配</strong></td>
-                  <td style="padding:8px 10px;font-size:12px;color:var(--dim)">本月</td>
-                  <td style="padding:8px 10px"><span class="pill" style="font-size:9px;padding:1px 5px;border-color:rgba(112,120,135,.3);color:var(--dim)">P2</span></td>
-                  <td style="padding:8px 10px;font-size:12px">🤖</td>
-                  <td style="padding:8px 10px;font-size:11px;color:var(--muted)">代码工程师</td>
-                  <td style="padding:8px 10px;font-size:11px;color:var(--dim)">area</td>
-                  <td style="padding:8px 10px;font-size:11px;font-family:var(--mono);color:var(--muted)">—</td>
-                </tr>
-                <tr class="fp-list-row" style="cursor:pointer" data-fp-schedule="month" data-fp-mode="auto">
-                  <td style="padding:8px 10px"><span class="pill" style="font-size:10px;padding:1px 6px;border-color:rgba(112,120,135,.3);color:var(--dim)">◦ 待排</span></td>
-                  <td style="padding:8px 10px"><strong>Anki 同步接口设计</strong></td>
-                  <td style="padding:8px 10px;font-size:12px;color:var(--dim)">本月</td>
-                  <td style="padding:8px 10px"><span class="pill" style="font-size:9px;padding:1px 5px;border-color:rgba(112,120,135,.3);color:var(--dim)">P2</span></td>
-                  <td style="padding:8px 10px;font-size:12px">🤖</td>
-                  <td style="padding:8px 10px;font-size:11px;color:var(--muted)">代码工程师</td>
-                  <td style="padding:8px 10px;font-size:11px;color:var(--dim)">area</td>
-                  <td style="padding:8px 10px;font-size:11px;font-family:var(--mono);color:var(--muted)">—</td>
-                </tr>
-              </tbody>
-            </table>
-            <!-- Group 3: 未关联目标 -->
-            <div style="display:flex;align-items:center;gap:8px;padding:12px 0 6px;font-size:12px;font-weight:700;color:var(--muted);border-bottom:1px solid var(--line-soft);margin-top:8px">
-              ✏️ 未关联目标
-              <span style="font-weight:400;color:var(--dim);font-family:var(--mono);font-size:11px" class="fp-list-group-count">3 项</span>
-            </div>
-            <table style="width:100%;border-collapse:collapse" class="fp-list-table">
-              <thead>
-                <tr>
-                  <th style="width:40px;text-align:left;padding:8px 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);border-bottom:1px solid var(--line-soft)">状态</th>
-                  <th style="text-align:left;padding:8px 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);border-bottom:1px solid var(--line-soft)">标题</th>
-                  <th style="width:70px;text-align:left;padding:8px 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);border-bottom:1px solid var(--line-soft)">安排</th>
-                  <th style="width:50px;text-align:left;padding:8px 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);border-bottom:1px solid var(--line-soft)">优先级</th>
-                  <th style="width:50px;text-align:left;padding:8px 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);border-bottom:1px solid var(--line-soft)">模式</th>
-                  <th style="width:90px;text-align:left;padding:8px 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);border-bottom:1px solid var(--line-soft)">Agent</th>
-                  <th style="width:60px;text-align:left;padding:8px 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);border-bottom:1px solid var(--line-soft)">来源</th>
-                  <th style="width:60px;text-align:left;padding:8px 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);border-bottom:1px solid var(--line-soft)">截止</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr class="fp-list-row" style="cursor:pointer;opacity:.5" data-fp-schedule="" data-fp-mode="auto">
-                  <td style="padding:8px 10px"><span class="pill" style="font-size:10px;padding:1px 6px;border-color:rgba(249,115,22,.3);color:rgba(249,115,22,1)">⊘ 阻塞</span></td>
-                  <td style="padding:8px 10px"><strong>配置迁移脚本</strong></td>
-                  <td style="padding:8px 10px;font-size:12px;color:var(--dim)">—</td>
-                  <td style="padding:8px 10px"><span class="pill" style="font-size:9px;padding:1px 5px;border-color:rgba(112,120,135,.3);color:var(--dim)">P2</span></td>
-                  <td style="padding:8px 10px;font-size:12px">🤖</td>
-                  <td style="padding:8px 10px;font-size:11px;color:var(--muted)">代码工程师</td>
-                  <td style="padding:8px 10px;font-size:11px;color:var(--dim)">area</td>
-                  <td style="padding:8px 10px;font-size:11px;font-family:var(--mono);color:var(--muted)">—</td>
-                </tr>
-                <tr class="fp-list-row" onclick="openTaskDetail('FP-011')" style="cursor:pointer" data-fp-schedule="today" data-fp-mode="manual">
-                  <td style="padding:8px 10px"><span class="pill blue" style="font-size:10px;padding:1px 6px">● 进行</span></td>
-                  <td style="padding:8px 10px"><strong>研究 Multica 执行模型</strong></td>
-                  <td style="padding:8px 10px;font-size:12px;color:var(--muted)">今天</td>
-                  <td style="padding:8px 10px"><span class="pill" style="font-size:9px;padding:1px 5px;border-color:rgba(242,196,15,.3);color:var(--amber)">P1</span></td>
-                  <td style="padding:8px 10px;font-size:12px">🖐</td>
-                  <td style="padding:8px 10px;font-size:11px;color:var(--muted)">手动执行</td>
-                  <td style="padding:8px 10px;font-size:11px;color:var(--dim)">adhoc</td>
-                  <td style="padding:8px 10px;font-size:11px;font-family:var(--mono);color:var(--muted)">05-27</td>
-                </tr>
-                <tr class="fp-list-row" style="cursor:pointer" data-fp-schedule="today" data-fp-mode="manual">
-                  <td style="padding:8px 10px"><span class="pill" style="font-size:10px;padding:1px 6px;border-color:rgba(163,169,181,.3);color:var(--muted)">○ 待做</span></td>
-                  <td style="padding:8px 10px"><strong>整理本周会议记录</strong></td>
-                  <td style="padding:8px 10px;font-size:12px;color:var(--muted)">今天</td>
-                  <td style="padding:8px 10px"><span class="pill" style="font-size:9px;padding:1px 5px;border-color:rgba(112,120,135,.3);color:var(--dim)">P2</span></td>
-                  <td style="padding:8px 10px;font-size:12px">🖐</td>
-                  <td style="padding:8px 10px;font-size:11px;color:var(--muted)">手动执行</td>
-                  <td style="padding:8px 10px;font-size:11px;color:var(--dim)">adhoc</td>
-                  <td style="padding:8px 10px;font-size:11px;font-family:var(--mono);color:var(--muted)">05-27</td>
-                </tr>
-              </tbody>
-            </table>
+            <div id="fp-list-body"></div>
           </div>
         </div>
           </div>
@@ -6911,11 +6770,16 @@ FocusPilot/
       var studioToolbarFilters = { time: 'all', goal: 'all' };
       var studioTaskFilterActiveCategory = 'project';
       var studioTaskFilterSelections = { project: [], agent: [], priority: [], tag: [], owner: [], creator: [] };
-      var timelineGroupMode = 'goal';
+      var timelineGroupMode = 'project';
+      var timelineCollapsedGroups = {};   // 时间轴按项目分组的折叠状态
       var swimlaneGroupMode = 'workspace';
       var swimlaneCollapsedGroups = {};
+      var swimlaneGroupOrder = {};        // 按 mode 保存用户拖拽的分组自定义顺序
+      var swimlaneBandDraggedKey = '';    // 当前正在拖动排序的分组横幅 key
       var swimlaneDraggedTaskId = '';
       var kanbanDraggedTaskId = '';
+      var listGroupMode = 'status';
+      var listCollapsedGroups = {};
       var selectedListTaskIds = [];
       var tempWorkspaceCounter = 3;
 
@@ -7381,18 +7245,34 @@ FocusPilot/
         };
       }
 
+      // 时间轴子视图可见性单一入口：始终只显示一个 .fp-sub
+      // gantt + 按项目 → fp-project-timeline；否则按当前 Scope 映射到 年/月/周/日
+      function syncTimelineSubVisibility() {
+        var subIds = ['fp-year', 'fp-month', 'fp-week', 'fp-day', 'fp-project-timeline'];
+        var activeId;
+        if (studioGlobalDisplayMode === 'gantt' && timelineGroupMode === 'project') {
+          activeId = 'fp-project-timeline';
+        } else {
+          var modeMap = { today: 'fp-day', week: 'fp-week', month: 'fp-month' };
+          activeId = modeMap[currentFocusFilter] || 'fp-year';
+        }
+        subIds.forEach(function(id) {
+          var el = document.getElementById(id);
+          if (!el) return;
+          var on = id === activeId;
+          el.style.display = on ? 'grid' : 'none';
+          el.classList.toggle('active', on);
+        });
+      }
+
       function renderTimelineProjectGrouping() {
         ensureWorkspaceRegistryFromItems();
         var container = document.getElementById('fp-project-timeline');
-        var yearPanel = document.getElementById('fp-year');
         if (!container) return;
+        syncTimelineSubVisibility();
         if (timelineGroupMode !== 'project' || studioGlobalDisplayMode !== 'gantt') {
-          container.style.display = 'none';
-          if (yearPanel) yearPanel.style.display = '';
           return;
         }
-        if (yearPanel) yearPanel.style.display = 'none';
-        container.style.display = 'grid';
         var visibleItems = workItems.filter(itemMatchesStudioTaskFilters);
         var groupKeys = [];
         visibleItems.forEach(function(item) {
@@ -7420,27 +7300,41 @@ FocusPilot/
           var items = visibleItems.filter(function(item) {
             return (item.projectId || deriveWorkspaceIdForItem(item)) === groupKey;
           });
-          var rowHeight = Math.max(72, 34 + items.length * 28);
-          leftHtml += '<div style="min-height:' + rowHeight + 'px;padding:12px 14px;border-bottom:1px solid var(--line-soft);display:flex;flex-direction:column;gap:5px">';
-          leftHtml += '<div style="display:flex;align-items:center;gap:7px;font-size:13px;font-weight:650;color:var(--text);min-width:0"><span style="font-size:12px;color:var(--dim)">' + info.icon + '</span><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + escapeTimelineHtml(meta.name) + '</span></div>';
-          leftHtml += '<div style="font-size:10px;color:var(--dim);font-family:var(--mono)">' + escapeTimelineHtml(info.label) + ' · ' + items.length + ' 项</div>';
-          leftHtml += '<div style="font-size:10px;color:var(--dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + escapeTimelineHtml(meta.path || meta.remote || '') + '</div>';
+          var collapsed = !!timelineCollapsedGroups[groupKey];
+          var safeKey = String(groupKey).replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+          var rowHeight = collapsed ? 40 : Math.max(72, 34 + items.length * 28);
+          leftHtml += '<div style="min-height:' + rowHeight + 'px;padding:' + (collapsed ? '9px 14px' : '12px 14px') + ';border-bottom:1px solid var(--line-soft);display:flex;flex-direction:column;gap:5px">';
+          leftHtml += '<div onclick="toggleTimelineGroupCollapsed(\'' + safeKey + '\')" title="折叠/展开分组" style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:650;color:var(--text);min-width:0;cursor:pointer;user-select:none">';
+          leftHtml += '<span style="width:14px;color:var(--dim);font-size:14px;line-height:1;text-align:center;flex-shrink:0">' + (collapsed ? '▸' : '▾') + '</span>';
+          leftHtml += '<span style="font-size:12px;color:var(--dim);flex-shrink:0">' + info.icon + '</span><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + escapeTimelineHtml(meta.name) + '</span>';
+          leftHtml += '<span style="font-size:10px;font-weight:400;color:var(--dim);font-family:var(--mono);flex-shrink:0">' + items.length + '</span></div>';
+          if (!collapsed) {
+            leftHtml += '<div style="font-size:10px;color:var(--dim);font-family:var(--mono);padding-left:20px">' + escapeTimelineHtml(info.label) + ' · ' + items.length + ' 项</div>';
+            leftHtml += '<div style="font-size:10px;color:var(--dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding-left:20px">' + escapeTimelineHtml(meta.path || meta.remote || '') + '</div>';
+          }
           leftHtml += '</div>';
           rightHtml += '<div style="min-height:' + rowHeight + 'px;position:relative;border-bottom:1px solid var(--line-soft);background:linear-gradient(90deg, transparent calc(8.333% - 1px), var(--line-soft) calc(8.333% - 1px), var(--line-soft) 8.333%, transparent 8.333%);background-size:8.333% 100%">';
-          items.forEach(function(item, index) {
-            var pos = timelineMonthPosition(item);
-            var statusDef = taskStatusDefs.find(function(def) { return def.status === item.status; }) || taskStatusDefs[0];
-            var top = 14 + index * 28;
-            var opacity = item.status === 'done' ? '.58' : '1';
-            rightHtml += '<button class="fp-timeline-project-card" onclick="openTaskDetail(\'' + item.id + '\')" title="' + escapeTimelineHtml(item.id + ' · ' + item.title + ' · ' + pos.label) + '" style="position:absolute;top:' + top + 'px;left:' + pos.left + '%;width:max(78px,' + pos.width + '%);max-width:180px;height:22px;border:1px solid var(--line-soft);border-left:3px solid ' + statusDef.color + ';border-radius:4px;background:var(--surface);color:var(--text);padding:0 8px;text-align:left;font-size:10px;display:flex;align-items:center;gap:5px;cursor:pointer;opacity:' + opacity + ';box-shadow:0 1px 2px rgba(0,0,0,.12)">';
-            rightHtml += '<span style="font-family:var(--mono);color:var(--dim);flex-shrink:0">' + escapeTimelineHtml(item.id) + '</span><span style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + escapeTimelineHtml(item.title) + '</span>';
-            rightHtml += '</button>';
-          });
+          if (!collapsed) {
+            items.forEach(function(item, index) {
+              var pos = timelineMonthPosition(item);
+              var statusDef = taskStatusDefs.find(function(def) { return def.status === item.status; }) || taskStatusDefs[0];
+              var top = 14 + index * 28;
+              var opacity = item.status === 'done' ? '.58' : '1';
+              rightHtml += '<button class="fp-timeline-project-card" onclick="openTaskDetail(\'' + item.id + '\')" title="' + escapeTimelineHtml(item.id + ' · ' + item.title + ' · ' + pos.label) + '" style="position:absolute;top:' + top + 'px;left:' + pos.left + '%;width:max(78px,' + pos.width + '%);max-width:180px;height:22px;border:1px solid var(--line-soft);border-left:3px solid ' + statusDef.color + ';border-radius:4px;background:var(--surface);color:var(--text);padding:0 8px;text-align:left;font-size:10px;display:flex;align-items:center;gap:5px;cursor:pointer;opacity:' + opacity + ';box-shadow:0 1px 2px rgba(0,0,0,.12)">';
+              rightHtml += '<span style="font-family:var(--mono);color:var(--dim);flex-shrink:0">' + escapeTimelineHtml(item.id) + '</span><span style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + escapeTimelineHtml(item.title) + '</span>';
+              rightHtml += '</button>';
+            });
+          }
           rightHtml += '</div>';
         });
         leftHtml += '</div>';
         rightHtml += '</div></div>';
         container.innerHTML = leftHtml + rightHtml;
+      }
+
+      function toggleTimelineGroupCollapsed(groupKey) {
+        timelineCollapsedGroups[groupKey] = !timelineCollapsedGroups[groupKey];
+        renderTimelineProjectGrouping();
       }
 
       function syncViewLocalGroupSelect(selectId, mode) {
@@ -7467,6 +7361,30 @@ FocusPilot/
         swimlaneGroupMode = allowed.indexOf(mode) !== -1 ? mode : 'workspace';
         syncSwimlaneGroupControlVisibility();
         renderSwimlaneFromItems();
+      }
+
+      function setListGroupMode(mode) {
+        var allowed = ['status', 'goal', 'project', 'agent', 'owner'];
+        listGroupMode = allowed.indexOf(mode) !== -1 ? mode : 'status';
+        syncViewLocalGroupSelect('fp-list-group-select', listGroupMode);
+        renderFocusListFromItems();
+      }
+
+      function toggleListGroupCollapsed(groupKey) {
+        var stateKey = listGroupMode + '::' + groupKey;
+        listCollapsedGroups[stateKey] = !listCollapsedGroups[stateKey];
+        renderFocusListFromItems();
+      }
+
+      function openListGroupTask(event, groupKey) {
+        if (event) event.stopPropagation();
+        var ctx = { source: 'list-group' };
+        if (listGroupMode === 'status') ctx.status = groupKey;
+        else if (listGroupMode === 'project') { ctx.source = 'project'; ctx.projectId = groupKey; }
+        else if (listGroupMode === 'agent') ctx.agent = groupKey === '__manual__' ? '' : groupKey;
+        else if (listGroupMode === 'owner') ctx.owner = groupKey === '__unassigned__' ? '' : groupKey;
+        else if (listGroupMode === 'goal') ctx.goal = groupKey;
+        openNewTaskModal(ctx);
       }
 
       function refreshTaskProjectionsForMove(previousWorkspace, targetWorkspace) {
@@ -7631,14 +7549,52 @@ FocusPilot/
         return !!swimlaneCollapsedGroups[getSwimlaneGroupStateKey(groupKey)];
       }
 
-      function toggleSwimlaneGroupCollapsedFromButton(event) {
-        if (event) event.stopPropagation();
-        var button = event && event.currentTarget;
-        if (!button) return;
-        var groupKey = button.dataset.swimlaneToggleKey || '';
+      function toggleSwimlaneGroupCollapsedFromBand(event) {
+        var band = event && event.currentTarget;
+        if (!band) return;
+        var groupKey = band.dataset.swimlaneToggleKey || '';
         var stateKey = getSwimlaneGroupStateKey(groupKey);
         swimlaneCollapsedGroups[stateKey] = !swimlaneCollapsedGroups[stateKey];
         renderSwimlaneFromItems();
+      }
+
+      // 拖动分组横幅排序：把 draggedKey 移动到 targetKey 之前/之后
+      function reorderSwimlaneGroup(draggedKey, targetKey, after) {
+        if (!draggedKey || draggedKey === targetKey) return;
+        // 以当前渲染顺序为基准构建完整顺序数组
+        var visibleItems = workItems.filter(itemMatchesStudioTaskFilters);
+        var groupKeys = [];
+        visibleItems.forEach(function(item) {
+          var k = getSwimlaneGroupKey(item);
+          if (groupKeys.indexOf(k) === -1) groupKeys.push(k);
+        });
+        groupKeys.sort(function(a, b) {
+          return getSwimlaneGroupMeta(a, visibleItems).label.localeCompare(getSwimlaneGroupMeta(b, visibleItems).label);
+        });
+        var saved = swimlaneGroupOrder[swimlaneGroupMode] || [];
+        if (saved.length) {
+          var inSaved = saved.filter(function(k) { return groupKeys.indexOf(k) !== -1; });
+          var rest = groupKeys.filter(function(k) { return inSaved.indexOf(k) === -1; });
+          groupKeys = inSaved.concat(rest);
+        }
+        var from = groupKeys.indexOf(draggedKey);
+        if (from === -1) return;
+        groupKeys.splice(from, 1);
+        var to = groupKeys.indexOf(targetKey);
+        if (to === -1) return;
+        groupKeys.splice(after ? to + 1 : to, 0, draggedKey);
+        swimlaneGroupOrder[swimlaneGroupMode] = groupKeys;
+        renderSwimlaneFromItems();
+      }
+
+      function openSwimlaneCellTask(event, status, groupKey) {
+        if (event) event.stopPropagation();
+        var ctx = { source: 'swimlane-cell', status: status };
+        if (swimlaneGroupMode === 'workspace') { ctx.source = 'project'; ctx.projectId = groupKey; }
+        else if (swimlaneGroupMode === 'agent') ctx.agent = groupKey === '__manual__' ? '' : groupKey;
+        else if (swimlaneGroupMode === 'parent') ctx.parent = groupKey;
+        else if (swimlaneGroupMode === 'owner') ctx.owner = groupKey;
+        openNewTaskModal(ctx);
       }
 
       function renderSwimlaneFromItems() {
@@ -7654,14 +7610,20 @@ FocusPilot/
         groupKeys.sort(function(a, b) {
           return getSwimlaneGroupMeta(a, visibleItems).label.localeCompare(getSwimlaneGroupMeta(b, visibleItems).label);
         });
-        var leadLabelMap = { workspace: 'Workspace', agent: '执行 Agent', parent: '父级任务', owner: '负责人' };
-        var leadLabel = leadLabelMap[swimlaneGroupMode] || 'Workspace';
-        var html = '<div class="swimlane-head">' + leadLabel + '</div>';
+        // 应用用户拖拽自定义顺序：已保存顺序在前，未排序的新分组按字母补在后
+        var savedOrder = swimlaneGroupOrder[swimlaneGroupMode] || [];
+        if (savedOrder.length) {
+          var inSaved = savedOrder.filter(function(k) { return groupKeys.indexOf(k) !== -1; });
+          var rest = groupKeys.filter(function(k) { return inSaved.indexOf(k) === -1; });
+          groupKeys = inSaved.concat(rest);
+        }
+        // 顶部状态表头行（整行横幅布局：分组改为整行，状态作为列）
+        var html = '';
         taskStatusDefs.forEach(function(def) {
-          html += '<div class="swimlane-head"><span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:' + def.color + ';margin-right:5px"></span>' + def.label + '</div>';
+          html += '<div class="swimlane-head"><span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:' + def.color + '"></span>' + def.label + '</div>';
         });
         if (groupKeys.length === 0) {
-          html += '<div class="swimlane-workspace"><span class="sub">无匹配任务</span></div>';
+          html += '<div class="swimlane-band" style="cursor:default"><span class="swimlane-band-toggle"></span><span>无匹配任务</span></div>';
           taskStatusDefs.forEach(function(def) {
             html += '<div class="swimlane-cell" data-swimlane-group="" data-swimlane-workspace="" data-swimlane-agent="" data-swimlane-status="' + def.status + '"></div>';
           });
@@ -7673,32 +7635,34 @@ FocusPilot/
           var groupMeta = getSwimlaneGroupMeta(groupKey, visibleItems);
           var collapsed = isSwimlaneGroupCollapsed(groupKey);
           var groupItems = visibleItems.filter(function(item) { return getSwimlaneGroupKey(item) === groupKey; });
-          html += '<div class="swimlane-workspace' + (collapsed ? ' folded' : '') + '">';
-          html += '<div style="display:flex;align-items:center;gap:7px;min-width:0"><button class="swimlane-group-toggle" data-swimlane-toggle-key="' + escapeTimelineHtml(groupKey) + '" onclick="toggleSwimlaneGroupCollapsedFromButton(event)" title="' + (collapsed ? '展开分组' : '折叠分组') + '">' + (collapsed ? '▸' : '▾') + '</button><span style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + escapeTimelineHtml(groupMeta.label) + '</span></div>';
-          html += '<span class="sub">' + escapeTimelineHtml(groupMeta.sub) + '</span></div>';
+          // 分组整行横幅（拖拽柄排序 + 点击整行折叠/展开）
+          html += '<div class="swimlane-band" data-swimlane-band-key="' + escapeTimelineHtml(groupKey) + '" data-swimlane-toggle-key="' + escapeTimelineHtml(groupKey) + '" onclick="toggleSwimlaneGroupCollapsedFromBand(event)" title="' + (collapsed ? '展开分组' : '折叠分组') + '">' +
+            '<span class="swimlane-band-handle" draggable="true" title="拖动调整分组顺序" onclick="event.stopPropagation()">⠿</span>' +
+            '<span class="swimlane-band-toggle">' + (collapsed ? '▸' : '▾') + '</span>' +
+            '<span style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + escapeTimelineHtml(groupMeta.label) + '</span>' +
+            '<span class="swimlane-band-count">' + groupItems.length + '</span></div>';
+          if (collapsed) return;
           taskStatusDefs.forEach(function(def) {
             var workspaceAttr = swimlaneGroupMode === 'workspace' ? groupKey : '';
             var agentAttr = swimlaneGroupMode === 'agent' ? groupKey : '';
             var parentAttr = swimlaneGroupMode === 'parent' ? groupKey : '';
             var ownerAttr = swimlaneGroupMode === 'owner' ? groupKey : '';
-            html += '<div class="swimlane-cell' + (collapsed ? ' folded' : '') + '" data-swimlane-group="' + escapeTimelineHtml(groupKey) + '" data-swimlane-workspace="' + escapeTimelineHtml(workspaceAttr) + '" data-swimlane-agent="' + escapeTimelineHtml(agentAttr) + '" data-swimlane-parent="' + escapeTimelineHtml(parentAttr) + '" data-swimlane-owner="' + escapeTimelineHtml(ownerAttr) + '" data-swimlane-status="' + def.status + '">';
-            if (collapsed) {
-              if (def.status === taskStatusDefs[0].status) html += '已折叠 ' + groupItems.length + ' 项';
-            } else {
-              groupItems.filter(function(item) {
-                return item.status === def.status;
-              }).forEach(function(item) {
-                var meta = getWorkspaceMeta(item.projectId || deriveWorkspaceIdForItem(item));
-                html += '<div class="task fp-card swimlane-card" draggable="true" data-task-id="' + item.id + '" data-fp-schedule="' + (item.schedule || '') + '" data-fp-workspace="' + escapeTimelineHtml(meta.name) + '"' +
-                  (item.month ? ' data-fp-month="' + item.month + '"' : '') +
-                  (item.executionMode ? ' data-fp-mode="' + item.executionMode + '"' : '') +
-                  (item.agentStatus ? ' data-fp-agent="yes"' : '') +
-                  (item.decision ? ' data-fp-decision="yes"' : '') +
-                  '>' +
-                  buildTaskCardHtml(item, true) +
-                  '</div>';
-              });
-            }
+            html += '<div class="swimlane-cell" data-swimlane-group="' + escapeTimelineHtml(groupKey) + '" data-swimlane-workspace="' + escapeTimelineHtml(workspaceAttr) + '" data-swimlane-agent="' + escapeTimelineHtml(agentAttr) + '" data-swimlane-parent="' + escapeTimelineHtml(parentAttr) + '" data-swimlane-owner="' + escapeTimelineHtml(ownerAttr) + '" data-swimlane-status="' + def.status + '">';
+            groupItems.filter(function(item) {
+              return item.status === def.status;
+            }).forEach(function(item) {
+              var meta = getWorkspaceMeta(item.projectId || deriveWorkspaceIdForItem(item));
+              html += '<div class="task fp-card swimlane-card" draggable="true" data-task-id="' + item.id + '" data-fp-schedule="' + (item.schedule || '') + '" data-fp-workspace="' + escapeTimelineHtml(meta.name) + '"' +
+                (item.month ? ' data-fp-month="' + item.month + '"' : '') +
+                (item.executionMode ? ' data-fp-mode="' + item.executionMode + '"' : '') +
+                (item.agentStatus ? ' data-fp-agent="yes"' : '') +
+                (item.decision ? ' data-fp-decision="yes"' : '') +
+                '>' +
+                buildTaskCardHtml(item, true) +
+                '</div>';
+            });
+            // 列底「+」：在该分组 + 该状态下新建任务
+            html += '<button class="swimlane-add" title="在此新建任务" onclick="openSwimlaneCellTask(event, \'' + def.status + '\', \'' + escapeTimelineHtml(groupKey).replace(/'/g, "\\'") + '\')">+</button>';
             html += '</div>';
           });
         });
@@ -7723,6 +7687,7 @@ FocusPilot/
       }
 
       function handleSwimlaneDragOver(event) {
+        if (swimlaneBandDraggedKey) return; // 拖动的是分组横幅排序，不进入卡片单元格逻辑
         event.preventDefault();
         if (event.dataTransfer) event.dataTransfer.dropEffect = 'move';
         var cell = event.currentTarget || (event.target && event.target.closest('.swimlane-cell'));
@@ -7735,6 +7700,7 @@ FocusPilot/
       }
 
       function handleSwimlaneDrop(event) {
+        if (swimlaneBandDraggedKey) return; // 分组横幅排序拖拽，忽略卡片落点
         event.preventDefault();
         var cell = event.currentTarget || (event.target && event.target.closest('.swimlane-cell'));
         if (!cell) return;
@@ -7792,6 +7758,48 @@ FocusPilot/
           cell.addEventListener('dragover', handleSwimlaneDragOver);
           cell.addEventListener('dragleave', handleSwimlaneDragLeave);
           cell.addEventListener('drop', handleSwimlaneDrop);
+        });
+        // 分组横幅拖拽排序：拖拽柄发起，横幅作为落点
+        container.querySelectorAll('.swimlane-band-handle').forEach(function(handle) {
+          handle.addEventListener('dragstart', function(event) {
+            var band = handle.closest('.swimlane-band');
+            if (!band) return;
+            swimlaneBandDraggedKey = band.dataset.swimlaneBandKey || '';
+            band.classList.add('band-dragging');
+            if (event.dataTransfer) {
+              event.dataTransfer.effectAllowed = 'move';
+              event.dataTransfer.setData('application/x-fp-band', swimlaneBandDraggedKey);
+            }
+          });
+          handle.addEventListener('dragend', function() {
+            swimlaneBandDraggedKey = '';
+            container.querySelectorAll('.swimlane-band').forEach(function(b) {
+              b.classList.remove('band-dragging', 'band-drop-before', 'band-drop-after');
+            });
+          });
+        });
+        container.querySelectorAll('.swimlane-band').forEach(function(band) {
+          band.addEventListener('dragover', function(event) {
+            if (!swimlaneBandDraggedKey) return;
+            event.preventDefault();
+            if (event.dataTransfer) event.dataTransfer.dropEffect = 'move';
+            var rect = band.getBoundingClientRect();
+            var after = (event.clientY - rect.top) > rect.height / 2;
+            band.classList.toggle('band-drop-after', after);
+            band.classList.toggle('band-drop-before', !after);
+          });
+          band.addEventListener('dragleave', function() {
+            band.classList.remove('band-drop-before', 'band-drop-after');
+          });
+          band.addEventListener('drop', function(event) {
+            if (!swimlaneBandDraggedKey) return;
+            event.preventDefault();
+            var rect = band.getBoundingClientRect();
+            var after = (event.clientY - rect.top) > rect.height / 2;
+            var targetKey = band.dataset.swimlaneBandKey || '';
+            band.classList.remove('band-drop-before', 'band-drop-after');
+            reorderSwimlaneGroup(swimlaneBandDraggedKey, targetKey, after);
+          });
         });
       }
 
@@ -8799,11 +8807,7 @@ FocusPilot/
         el.classList.add('active');
         const filter = el.dataset.focusFilter;
         currentFocusFilter = filter || 'all';
-        const modeMap = { today: 'fp-day', week: 'fp-week', month: 'fp-month' };
-        const targetId = modeMap[filter] || 'fp-year';
-        document.querySelectorAll('.fp-sub').forEach(p => { p.style.display = 'none'; p.classList.remove('active'); });
-        const target = document.getElementById(targetId);
-        if (target) { target.style.display = 'grid'; target.classList.add('active'); }
+        syncTimelineSubVisibility();
         updateStudioToolbarFilterState();
         const monthSet = ['month', 'week', 'today'];
         const weekSet = ['week', 'today'];
@@ -9065,10 +9069,10 @@ FocusPilot/
           setWorkspaceReadonly('');
           selectWorkspace('temp', true);
         }
-        // 初始状态随入口决定：从看板某列的 + 创建时预选该列状态，否则默认「待规划」
+        // 初始状态随入口决定：从看板列 / 泳道单元格 / 列表分组的 + 创建时预选对应状态，否则默认「待规划」
         var statusEl = document.getElementById('fp-task-status');
         if (statusEl) {
-          statusEl.value = (context && context.source === 'kanban-lane' && context.status) ? context.status : 'backlog';
+          statusEl.value = (context && context.status) ? context.status : 'backlog';
         }
       }
       function closeNewTaskModal() {
@@ -11770,6 +11774,28 @@ FocusPilot/
         renderFocusListFromItems();
       }
 
+      // 列表分组 key（与 renderFocusListFromItems 内分组逻辑一致，供分组级全选复用）
+      function getListGroupKey(item) {
+        if (listGroupMode === 'goal') return item.goal || (item.month ? item.month + '月' : '__nogoal__');
+        if (listGroupMode === 'project') return item.projectId || deriveWorkspaceIdForItem(item);
+        if (listGroupMode === 'agent') return item.agent || '__manual__';
+        if (listGroupMode === 'owner') return item.owner || '__unassigned__';
+        return item.status || 'backlog';
+      }
+
+      // 分组标题勾选框：勾选=该组全选，取消=该组全不选
+      function toggleListGroupSelection(event, groupKey) {
+        if (event) event.stopPropagation();
+        var checked = event && event.currentTarget ? event.currentTarget.checked : false;
+        var groupIds = getVisibleListItems().filter(function(item) { return getListGroupKey(item) === groupKey; }).map(function(item) { return item.id; });
+        if (checked) {
+          groupIds.forEach(function(id) { if (selectedListTaskIds.indexOf(id) === -1) selectedListTaskIds.push(id); });
+        } else {
+          selectedListTaskIds = selectedListTaskIds.filter(function(id) { return groupIds.indexOf(id) === -1; });
+        }
+        renderFocusListFromItems();
+      }
+
       function getListBulkOwnerOptions() {
         var values = getStudioTaskFilterOptions('owner').map(function(option) { return option.value; });
         ['Bruce', '代码工程师', '产品经理', '设计师'].forEach(function(owner) {
@@ -11854,30 +11880,49 @@ FocusPilot/
 
       /* ═══ renderFocusListFromItems: Render focus-list panel from workItems ═══ */
       function renderFocusListFromItems() {
-        var container = document.getElementById('focus-list');
+        var container = document.getElementById('fp-list-body');
         if (!container) return;
+        syncViewLocalGroupSelect('fp-list-group-select', listGroupMode);
         selectedListTaskIds = selectedListTaskIds.filter(function(id) {
           return workItems.some(function(item) { return item.id === id; });
         });
         var visibleItems = getVisibleListItems();
-        // Group items by goal/month for display
-        var groups = {};
-        var ungrouped = [];
-        visibleItems.forEach(function(item) {
-          var gKey = item.goal || (item.month ? item.month + '月' : '');
-          if (gKey) {
-            if (!groups[gKey]) groups[gKey] = [];
-            groups[gKey].push(item);
-          } else {
-            ungrouped.push(item);
+        // 按所选分组方式分组（默认按状态），生成有序分组列表（key 计算复用全局 getListGroupKey）
+        function listGroupLabelOf(key) {
+          if (listGroupMode === 'status') {
+            var def = taskStatusDefs.find(function(d) { return d.status === key; });
+            var color = def ? def.color : 'var(--dim)';
+            return '<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:' + color + '"></span> ' + (def ? def.label : key);
           }
+          if (listGroupMode === 'project') {
+            var meta = getWorkspaceMeta(key);
+            return workspaceTypeInfo(meta.type).icon + ' ' + escapeTimelineHtml(meta.name);
+          }
+          if (listGroupMode === 'agent') return key === '__manual__' ? '👤 手动执行' : '🧑‍💻 ' + escapeTimelineHtml(key);
+          if (listGroupMode === 'owner') return key === '__unassigned__' ? '◎ 未分配' : '◎ ' + escapeTimelineHtml(key);
+          if (listGroupMode === 'goal') return key === '__nogoal__' ? '✏️ 未关联目标' : '📌 ' + escapeTimelineHtml(key);
+          return escapeTimelineHtml(key);
+        }
+        var groupMap = {};
+        var groupOrder = [];
+        if (listGroupMode === 'status') {
+          taskStatusDefs.forEach(function(def) { groupMap[def.status] = []; groupOrder.push(def.status); });
+        }
+        visibleItems.forEach(function(item) {
+          var gKey = getListGroupKey(item);
+          if (!groupMap[gKey]) { groupMap[gKey] = []; groupOrder.push(gKey); }
+          groupMap[gKey].push(item);
         });
+        if (listGroupMode !== 'status') {
+          groupOrder.sort(function(a, b) { return listGroupLabelOf(a).localeCompare(listGroupLabelOf(b)); });
+        }
         var selectedVisibleIds = getSelectedVisibleListTaskIds(visibleItems);
         var allVisibleSelected = visibleItems.length > 0 && selectedVisibleIds.length === visibleItems.length;
+        var someVisibleSelected = selectedVisibleIds.length > 0 && !allVisibleSelected;
         var html = renderListBulkToolbar(visibleItems);
-        var thStyle = 'text-align:left;padding:8px 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);border-bottom:1px solid var(--line-soft)';
+        var thStyle = 'text-align:left;padding:8px 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);background:var(--bg);border-bottom:1px solid var(--line-soft)';
         var thRow = '<tr>';
-        thRow += '<th style="width:30px;' + thStyle + '"><input type="checkbox" id="fp-list-select-all" onclick="event.stopPropagation()" onchange="toggleAllVisibleListTasks(event)"' + (allVisibleSelected ? ' checked' : '') + '></th>';
+        thRow += '<th style="width:30px;' + thStyle + '"><input type="checkbox" id="fp-list-select-all" data-some="' + (someVisibleSelected ? '1' : '') + '" title="全选/取消全部" onclick="event.stopPropagation()" onchange="toggleAllVisibleListTasks(event)"' + (allVisibleSelected ? ' checked' : '') + '></th>';
         thRow += '<th style="width:40px;' + thStyle + '">状态</th>';
         thRow += '<th style="' + thStyle + '">标题</th>';
         thRow += '<th style="width:70px;' + thStyle + '">安排</th>';
@@ -11889,13 +11934,20 @@ FocusPilot/
         thRow += '<th style="width:60px;' + thStyle + '">截止</th>';
         thRow += '</tr>';
 
-        function renderGroup(label, items) {
-          var r = '<div style="display:flex;align-items:center;gap:8px;padding:12px 0 6px;font-size:12px;font-weight:700;color:var(--muted);border-bottom:1px solid var(--line-soft);margin-top:8px">';
-          r += label + ' <span style="font-weight:400;color:var(--dim);font-family:var(--mono);font-size:11px">' + items.length + ' 项</span></div>';
-          r += '<table style="width:100%;border-collapse:collapse" class="fp-list-table"><thead>' + thRow + '</thead><tbody>';
-          items.forEach(function(item) { r += renderListRow(item); });
-          r += '</tbody></table>';
-          return r;
+        // 分组以整行标题分隔（列头只在表格最顶显示一次，不在每组重复）
+        function renderGroupHeaderRow(groupKey, label, items) {
+          var collapsed = !!listCollapsedGroups[listGroupMode + '::' + groupKey];
+          var safeKey = String(groupKey).replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+          var selCount = items.filter(function(it) { return isListTaskSelected(it.id); }).length;
+          var groupState = (items.length > 0 && selCount === items.length) ? 'all' : (selCount > 0 ? 'some' : 'none');
+          var cell = '<div style="display:flex;align-items:center;gap:8px;padding:9px 10px;font-size:12px;font-weight:700;color:var(--muted)">';
+          cell += '<input type="checkbox" class="fp-list-group-check" data-group-state="' + groupState + '" title="全选/取消该组" onclick="event.stopPropagation()" onchange="toggleListGroupSelection(event,\'' + safeKey + '\')"' + (groupState === 'all' ? ' checked' : '') + ' style="flex-shrink:0;margin:0">';
+          cell += '<span onclick="toggleListGroupCollapsed(\'' + safeKey + '\')" style="display:flex;align-items:center;gap:6px;cursor:pointer;user-select:none;flex:1;min-width:0">';
+          cell += '<span style="width:16px;color:var(--dim);font-size:15px;line-height:1;text-align:center">' + (collapsed ? '▸' : '▾') + '</span>';
+          cell += label + ' <span style="font-weight:400;color:var(--dim);font-family:var(--mono);font-size:11px">' + items.length + ' 项</span></span>';
+          cell += '<button title="在此新建任务" onclick="openListGroupTask(event,\'' + safeKey + '\')" style="width:22px;height:22px;border:1px solid var(--line-soft);border-radius:50%;background:var(--surface);color:var(--dim);cursor:pointer;font-size:13px;line-height:1;flex-shrink:0">+</button>';
+          cell += '</div>';
+          return '<tr class="fp-list-group-row"><td colspan="10" style="padding:0;border-bottom:1px solid var(--line-soft);background:var(--surface-2)">' + cell + '</td></tr>';
         }
 
         function renderListRow(item) {
@@ -11931,17 +11983,26 @@ FocusPilot/
           return r;
         }
 
-        // Render each group
-        Object.keys(groups).forEach(function(gKey) {
-          html += renderGroup('📌 ' + gKey, groups[gKey]);
+        // 单表格：列头一次，分组以整行标题分隔（状态分组保留空分组，便于在该状态下直接新建）
+        var bodyHtml = '';
+        groupOrder.forEach(function(gKey) {
+          var items = groupMap[gKey] || [];
+          if (listGroupMode !== 'status' && items.length === 0) return;
+          var collapsed = !!listCollapsedGroups[listGroupMode + '::' + gKey];
+          bodyHtml += renderGroupHeaderRow(gKey, listGroupLabelOf(gKey), items);
+          if (!collapsed) items.forEach(function(item) { bodyHtml += renderListRow(item); });
         });
-        if (ungrouped.length > 0) {
-          html += renderGroup('📋 其他', ungrouped);
-        }
         if (visibleItems.length === 0) {
-          html += '<div style="padding:28px 12px;text-align:center;color:var(--dim);font-size:12px">暂无匹配任务</div>';
+          bodyHtml = '<tr><td colspan="10" style="padding:28px 12px;text-align:center;color:var(--dim);font-size:12px">暂无匹配任务</td></tr>';
         }
+        html += '<table style="width:100%;border-collapse:collapse" class="fp-list-table"><thead>' + thRow + '</thead><tbody>' + bodyHtml + '</tbody></table>';
         container.innerHTML = html;
+        // 勾选框部分选中显示 indeterminate（HTML 属性无法表达，渲染后设置）
+        container.querySelectorAll('.fp-list-group-check').forEach(function(cb) {
+          if (cb.dataset.groupState === 'some') cb.indeterminate = true;
+        });
+        var selAllEl = container.querySelector('#fp-list-select-all');
+        if (selAllEl && selAllEl.dataset.some) selAllEl.indeterminate = true;
       }
 
       /* ═══ Initialize: Render kanban from workItems data ═══ */
