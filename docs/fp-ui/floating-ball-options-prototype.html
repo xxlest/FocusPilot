@@ -284,13 +284,15 @@
       .focus-bar {
         position: absolute;
         left: 88px;
-        right: 28px;
+        right: auto;
+        max-width: calc(100% - 116px);
+        width: max-content;
         top: 14px;
         min-height: 34px;
         display: none;
         align-items: center;
-        gap: 8px;
-        padding: 6px 10px;
+        gap: 6px;
+        padding: 5px 9px;
         border: 1px solid rgba(255, 255, 255, 0.14);
         border-radius: 12px;
         background: rgba(246, 245, 241, 0.94);
@@ -315,23 +317,114 @@
       }
 
       .bar-btn {
-        height: 26px;
+        height: 28px;
         border: 0;
         border-radius: 7px;
         background: transparent;
         color: var(--ink);
-        padding: 0 8px;
+        padding: 0 9px;
         white-space: nowrap;
-        font-size: 12px;
+        font-size: 12.5px;
+        font-weight: 600;
       }
 
       .bar-btn:hover {
         background: rgba(0, 0, 0, 0.06);
       }
 
+      .bar-num {
+        font-size: 15px;
+        font-weight: 800;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .bar-btn[data-tone="plan"]    .bar-num { color: #6b7280; }
+      .bar-btn[data-tone="running"] .bar-num { color: var(--red); }
+      .bar-btn[data-tone="review"]  .bar-num { color: #b4690e; }
+      .bar-btn[data-tone="done"]    .bar-num { color: #1f8f43; }
+      .bar-btn[data-tone="focus"]   .bar-num { color: var(--blue); }
+
+      .bar-btn[data-tone="plan"]:hover    { background: rgba(107, 114, 128, 0.12); }
+      .bar-btn[data-tone="running"]:hover { background: rgba(239, 80, 71, 0.12); }
+      .bar-btn[data-tone="review"]:hover  { background: rgba(245, 158, 11, 0.16); }
+      .bar-btn[data-tone="done"]:hover    { background: rgba(49, 199, 90, 0.14); }
+      .bar-btn[data-tone="focus"]:hover   { background: rgba(20, 122, 243, 0.12); }
+
+      .bar-sep {
+        width: 1px;
+        height: 18px;
+        background: rgba(0, 0, 0, 0.16);
+        flex: 0 0 auto;
+      }
+
+      .bar-close {
+        margin-left: 6px;
+        width: 24px;
+        height: 24px;
+        flex: 0 0 auto;
+        border: 0;
+        border-radius: 7px;
+        background: transparent;
+        color: var(--muted);
+        font-size: 18px;
+        line-height: 1;
+        cursor: pointer;
+      }
+
+      .bar-close:hover {
+        background: rgba(0, 0, 0, 0.08);
+        color: var(--ink);
+      }
+
+      .bar-timer {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+
+      .bar-timer-idle {
+        display: flex;
+        gap: 6px;
+      }
+
+      .timer-pill {
+        height: 28px;
+        border: 0;
+        border-radius: 8px;
+        padding: 0 12px;
+        font-size: 12.5px;
+        font-weight: 700;
+        cursor: pointer;
+      }
+
+      .timer-start { background: rgba(20, 122, 243, 0.12); color: var(--blue); }
+      .timer-start:hover { background: rgba(20, 122, 243, 0.2); }
+      .timer-rest { background: rgba(49, 199, 90, 0.14); color: #1f8f43; }
+      .timer-rest:hover { background: rgba(49, 199, 90, 0.24); }
+
+      .bar-timer-active {
+        display: none;
+        align-items: center;
+        gap: 8px;
+        height: 28px;
+        border: 0;
+        border-radius: 8px;
+        padding: 0 10px;
+        background: rgba(0, 0, 0, 0.05);
+        color: var(--ink);
+        font-size: 12.5px;
+        font-weight: 700;
+        cursor: pointer;
+      }
+
+      .bar-timer-active:hover { background: rgba(0, 0, 0, 0.09); }
+
+      /* 运行/专注/休息态：隐藏 idle 双按钮，显示可点击状态块 */
+      body.bar-pinned.timer-running .bar-timer-idle { display: none; }
+      body.bar-pinned.timer-running .bar-timer-active { display: flex; }
+
       .bar-time {
-        margin-left: auto;
-        font-size: 22px;
+        font-size: 16px;
         font-weight: 800;
         font-variant-numeric: tabular-nums;
       }
@@ -362,7 +455,7 @@
       .bar-menu {
         position: absolute;
         left: 0;
-        top: 31px;
+        top: 30px;
         width: 280px;
         display: none;
         padding: 8px;
@@ -374,7 +467,18 @@
         z-index: 30;
       }
 
-      .bar-group:hover .bar-menu {
+      /* 透明桥接：覆盖按钮与菜单之间的间隙，鼠标下移时不会触发 hover 中断 */
+      .bar-menu::before {
+        content: "";
+        position: absolute;
+        left: 0;
+        right: 0;
+        top: -10px;
+        height: 10px;
+      }
+
+      .bar-group:hover .bar-menu,
+      .bar-menu:hover {
         display: block;
       }
 
@@ -514,7 +618,7 @@
         background: var(--surface);
         color: var(--ink);
         box-shadow: 0 26px 80px rgba(0, 0, 0, 0.34);
-        overflow: hidden;
+        overflow: visible;
       }
 
       .float-overview {
@@ -592,6 +696,7 @@
         background: var(--surface);
         box-shadow: 0 20px 64px rgba(0, 0, 0, 0.3);
         pointer-events: auto;
+        z-index: 20;
       }
 
       .action-row:hover .sub-menu,
@@ -615,6 +720,8 @@
         padding: 8px 10px 10px 16px;
         border-top: 1px solid var(--line);
         background: rgba(255, 255, 255, 0.68);
+        border-bottom-left-radius: 26px;
+        border-bottom-right-radius: 26px;
       }
 
       .chat-strip button {
@@ -662,6 +769,284 @@
         color: var(--ink);
         box-shadow: 0 30px 90px rgba(0, 0, 0, 0.38);
         padding: 26px;
+      }
+
+      /* ── 任务执行详情：右侧滑出面板（与主看板详情一致）── */
+      /* 透明点击捕获层：不接管整屏（不变暗），仅用于点外部关闭 */
+      .rd-overlay {
+        position: fixed;
+        inset: 0;
+        background: transparent;
+        z-index: 60;
+        pointer-events: none;
+      }
+
+      .rd-overlay.open { pointer-events: auto; }
+
+      /* 锚定浮球的悬浮卡片：浮在右下一角，不占满屏 */
+      .rd-card {
+        position: fixed;
+        right: 24px;
+        bottom: 96px;
+        width: 560px;
+        max-width: calc(100vw - 48px);
+        max-height: 72vh;
+        background: var(--surface);
+        backdrop-filter: blur(30px);
+        border: 1px solid var(--line);
+        border-radius: 18px;
+        z-index: 61;
+        opacity: 0;
+        transform: translateY(12px) scale(0.98);
+        transform-origin: bottom right;
+        pointer-events: none;
+        transition: opacity 0.18s ease, transform 0.2s ease;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        box-shadow: 0 28px 90px rgba(0, 0, 0, 0.38);
+      }
+
+      .rd-card.open {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+        pointer-events: auto;
+      }
+
+      .rd-top {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 14px 18px;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .rd-x {
+        border: 0;
+        background: transparent;
+        color: var(--dim);
+        font-size: 16px;
+        cursor: pointer;
+        line-height: 1;
+      }
+
+      .rd-top-main { flex: 1; min-width: 0; }
+      .rd-id { font-size: 10px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; color: var(--dim); }
+      .rd-title { font-size: 15px; font-weight: 700; color: var(--ink); }
+
+      .rd-statuspill {
+        padding: 3px 10px;
+        border-radius: 999px;
+        font-size: 11px;
+        font-weight: 700;
+        white-space: nowrap;
+        background: rgba(20, 122, 243, 0.14);
+        color: var(--blue);
+      }
+      .rd-statuspill[data-tone="running"] { background: rgba(239, 80, 71, 0.14); color: var(--red); }
+      .rd-statuspill[data-tone="review"]  { background: rgba(217, 154, 39, 0.18); color: #a9740f; }
+      .rd-statuspill[data-tone="done"]    { background: rgba(49, 199, 90, 0.16); color: #1f8f43; }
+      .rd-statuspill[data-tone="plan"]    { background: rgba(0, 0, 0, 0.07); color: var(--muted); }
+
+      /* 可编辑字段下拉（共享一个弹层，定位到被点的 chip 下方）*/
+      .rd-metawrap { position: relative; }
+
+      .rd-chip.editable { cursor: pointer; }
+      .rd-chip.editable:hover { background: rgba(0, 0, 0, 0.1); }
+      .rd-chip.editable.blue:hover  { background: rgba(20, 122, 243, 0.2); }
+      .rd-chip.editable.red:hover   { background: rgba(239, 80, 71, 0.22); }
+      .rd-chip.editable.green:hover { background: rgba(49, 199, 90, 0.26); }
+      .rd-chip .caret { color: var(--dim); font-size: 9px; margin-left: 1px; }
+
+      .rd-field-menu {
+        position: absolute;
+        min-width: 150px;
+        display: none;
+        padding: 5px;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        background: #fff;
+        box-shadow: 0 16px 44px rgba(0, 0, 0, 0.22);
+        z-index: 6;
+      }
+      .rd-field-menu.open { display: block; }
+      .rd-field-item {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        width: 100%;
+        padding: 6px 8px;
+        border: 0;
+        border-radius: 7px;
+        background: transparent;
+        color: var(--ink);
+        font-size: 12px;
+        text-align: left;
+        white-space: nowrap;
+        cursor: pointer;
+      }
+      .rd-field-item:hover { background: rgba(0, 0, 0, 0.05); }
+      .rd-field-item .tick { width: 12px; color: var(--blue); flex: 0 0 auto; }
+      .rd-field-item .sdot { width: 7px; height: 7px; border-radius: 50%; flex: 0 0 auto; }
+
+      .rd-live {
+        margin: 12px 18px 0;
+        padding: 10px 14px;
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        background: #ebeae6;
+        font-size: 11px;
+      }
+      .rd-live.hidden { display: none; }
+      .rd-live-head { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+      .rd-live-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); }
+      .rd-live-log {
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 10px;
+        line-height: 1.7;
+        color: var(--muted);
+        background: #fff;
+        border: 1px solid var(--line);
+        border-radius: 4px;
+        padding: 6px 8px;
+        max-height: 64px;
+        overflow-y: auto;
+      }
+
+      /* 顶部属性 chip 信息条（替代右侧 200px 栏）*/
+      .rd-metastrip {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        padding: 10px 18px 0;
+      }
+      .rd-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 3px 9px;
+        border-radius: 999px;
+        background: rgba(0, 0, 0, 0.05);
+        font-size: 11px;
+        color: var(--ink);
+        white-space: nowrap;
+      }
+      .rd-chip b { font-weight: 700; }
+      .rd-chip .k { color: var(--dim); }
+      .rd-chip.blue  { background: rgba(20, 122, 243, 0.12); color: var(--blue); }
+      .rd-chip.red   { background: rgba(239, 80, 71, 0.13); color: var(--red); }
+      .rd-chip.green { background: rgba(49, 199, 90, 0.15); color: #1f8f43; }
+
+      .rd-scroll { flex: 1; overflow-y: auto; padding: 14px 18px; }
+
+      .rd-sec-label {
+        font-size: 10px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: var(--dim);
+        margin-bottom: 6px;
+      }
+
+      .rd-desc {
+        background: #fff;
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        padding: 10px;
+        font-size: 12px;
+        line-height: 1.6;
+        color: var(--muted);
+        margin-bottom: 14px;
+      }
+
+      .rd-divider { border-top: 1px dashed var(--line); margin: 0 0 14px; }
+
+      .rd-round { display: flex; gap: 8px; margin-bottom: 14px; }
+      .rd-round > .ic { flex-shrink: 0; }
+      .rd-round-body { flex: 1; min-width: 0; }
+      .rd-round-meta { font-size: 11px; margin-bottom: 4px; }
+      .rd-round-meta .dim { color: var(--dim); }
+      .rd-round-meta strong { color: var(--ink); }
+
+      .rd-code {
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 10px;
+        line-height: 1.7;
+        color: var(--muted);
+        background: #fff;
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        padding: 8px;
+      }
+
+      .rd-round-actions { display: flex; gap: 6px; margin-top: 6px; }
+      .rd-mini-btn {
+        font-size: 9px;
+        min-height: 22px;
+        padding: 0 8px;
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        background: #fff;
+        color: var(--ink);
+        cursor: pointer;
+      }
+      .rd-mini-btn:hover { background: #f0efeb; }
+
+      .rd-opinion {
+        padding: 6px 9px;
+        border-radius: 0 4px 4px 0;
+        margin-bottom: 4px;
+        font-size: 11px;
+      }
+      .rd-opinion.crit { background: rgba(239, 80, 71, 0.08); border-left: 3px solid var(--red); }
+      .rd-opinion.imp  { background: rgba(217, 154, 39, 0.1); border-left: 3px solid var(--amber); }
+      .rd-opinion.crit strong { color: var(--red); }
+      .rd-opinion.imp strong { color: var(--amber); }
+
+      .rd-pill {
+        display: inline-block;
+        padding: 1px 5px;
+        border-radius: 999px;
+        font-size: 9px;
+        font-weight: 700;
+      }
+      .rd-pill.amber { background: rgba(217, 154, 39, 0.18); color: #a9740f; }
+      .rd-pill.green { background: rgba(49, 199, 90, 0.18); color: #1f8f43; }
+
+      .rd-user {
+        font-size: 12px;
+        color: var(--ink);
+        background: #ebeae6;
+        border-radius: 6px;
+        padding: 7px 9px;
+      }
+
+      .rd-reply {
+        border-top: 1px solid var(--line);
+        padding: 10px 18px;
+        display: flex;
+        gap: 8px;
+        align-items: center;
+      }
+      .rd-reply input {
+        flex: 1;
+        background: #fff;
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        padding: 7px 10px;
+        color: var(--ink);
+        font-size: 12px;
+        outline: none;
+      }
+      .rd-send {
+        border: 0;
+        border-radius: var(--radius);
+        background: var(--blue);
+        color: #fff;
+        font-size: 11px;
+        padding: 0 12px;
+        min-height: 30px;
+        cursor: pointer;
       }
 
       .modal-logo {
@@ -1084,7 +1469,7 @@
           <button class="active" type="button" data-demo-mode="normal">常规</button>
           <button type="button" data-demo-mode="focus">专注中</button>
           <button type="button" data-demo-mode="rest">休息中</button>
-          <button type="button" data-demo-mode="bar">状态条置顶</button>
+          <button type="button" data-demo-mode="bar">打开状态条</button>
         </div>
       </header>
 
@@ -1092,7 +1477,7 @@
         <div class="prototype-head">
           <div class="prototype-title">
             <b>Doubao 式 hover 浮层 + FocusPilot 全局执行中枢</b>
-            <span>移到右侧小浮球上自动展开；底部问答框打开全局聊天助手；运行状态条可置顶。</span>
+            <span>移到右侧小浮球上自动展开；底部问答框打开全局聊天助手；「实时状态」一键打开 Focus Bar，条内可关闭。</span>
           </div>
           <div class="summary">
             <span class="chip">运行中 2</span>
@@ -1105,34 +1490,60 @@
         <div class="stage" id="stage">
           <div class="focus-bar" id="focusBar">
             <div class="bar-group">
-              <button class="bar-btn" type="button">运行中 2</button>
+              <button class="bar-btn" data-tone="plan" type="button">待规划 <b class="bar-num">3</b></button>
+              <div class="bar-menu">
+                <div class="sub-title">待规划 / 待办</div>
+                <button class="mini-task" type="button" data-run-detail="FP-112"><span>FP-112 PRD 同步检查<small>FocusPilot · 待办</small></span><small>详情</small></button>
+                <button class="mini-task" type="button" data-run-detail="FP-130"><span>FP-130 状态条实现计划<small>FocusPilot · 待规划</small></span><small>详情</small></button>
+              </div>
+            </div>
+            <div class="bar-group">
+              <button class="bar-btn" data-tone="running" type="button">运行中 <b class="bar-num">2</b></button>
               <div class="bar-menu">
                 <div class="sub-title">正在运行的任务</div>
-                <button class="mini-task" type="button" data-task-jump="FP-104"><span>FP-104 浮球 hover 面板实现<small>Codex · FocusPilot · 62%</small></span><small>打开</small></button>
-                <button class="mini-task" type="button" data-task-jump="FP-088"><span>FP-088 Studio 状态投影<small>Claude Code · PilotOne · 31%</small></span><small>打开</small></button>
+                <button class="mini-task" type="button" data-run-detail="FP-104"><span>FP-104 浮球 hover 面板实现<small>Codex · FocusPilot · 62%</small></span><small>详情</small></button>
+                <button class="mini-task" type="button" data-run-detail="FP-088"><span>FP-088 Studio 状态投影<small>Claude Code · PilotOne · 31%</small></span><small>详情</small></button>
               </div>
             </div>
             <div class="bar-group">
-              <button class="bar-btn" type="button">待验收 3</button>
+              <button class="bar-btn" data-tone="review" type="button">待验收 <b class="bar-num">3</b></button>
               <div class="bar-menu">
                 <div class="sub-title">等待验收</div>
-                <button class="mini-task" type="button" data-task-jump="FP-097"><span>FP-097 看板 Workspace 行<small>FocusPilot · 审核中</small></span><small>验收</small></button>
-                <button class="mini-task" type="button" data-task-jump="KB-031"><span>KB-031 资料卡片归档<small>VaultOne · 审核中</small></span><small>验收</small></button>
+                <button class="mini-task" type="button" data-run-detail="FP-097"><span>FP-097 看板 Workspace 行<small>FocusPilot · 审核中</small></span><small>详情</small></button>
+                <button class="mini-task" type="button" data-run-detail="KB-031"><span>KB-031 资料卡片归档<small>VaultOne · 审核中</small></span><small>详情</small></button>
               </div>
             </div>
             <div class="bar-group">
-              <button class="bar-btn" type="button">今日聚焦 5</button>
+              <button class="bar-btn" data-tone="done" type="button">已完成 <b class="bar-num">4</b></button>
               <div class="bar-menu">
-                <div class="sub-title">今日聚焦实时状态</div>
-                <button class="mini-task" type="button" data-task-jump="FP-104"><span>浮球原型定稿<small>进行中 · FocusPilot</small></span><small>62%</small></button>
-                <button class="mini-task" type="button" data-task-jump="FP-112"><span>PRD 同步检查<small>待办 · FocusPilot</small></span><small>待办</small></button>
-                <button class="mini-task" type="button" data-task-jump="FP-097"><span>看板 Workspace 行验收<small>等待验收</small></span><small>验收</small></button>
+                <div class="sub-title">今日已完成</div>
+                <button class="mini-task" type="button" data-run-detail="FP-090"><span>FP-090 主题色槽统一<small>FocusPilot · 已完成</small></span><small>详情</small></button>
+                <button class="mini-task" type="button" data-run-detail="FP-085"><span>FP-085 快捷面板差分刷新<small>FocusPilot · 已完成</small></span><small>详情</small></button>
               </div>
             </div>
-            <button class="bar-btn" type="button">已完成 4</button>
-            <button class="bar-btn" id="barTimerAction" type="button">番茄钟</button>
-            <strong class="bar-time" id="barTime">35:00</strong>
+            <span class="bar-sep" aria-hidden="true"></span>
+            <div class="bar-group">
+              <button class="bar-btn" data-tone="focus" type="button">今日聚焦 <b class="bar-num">5</b></button>
+              <div class="bar-menu">
+                <div class="sub-title">今日聚焦实时状态</div>
+                <button class="mini-task" type="button" data-run-detail="FP-104"><span>浮球原型定稿<small>进行中 · FocusPilot</small></span><small>详情</small></button>
+                <button class="mini-task" type="button" data-run-detail="FP-112"><span>PRD 同步检查<small>待办 · FocusPilot</small></span><small>详情</small></button>
+                <button class="mini-task" type="button" data-run-detail="FP-097"><span>看板 Workspace 行验收<small>等待验收</small></span><small>详情</small></button>
+              </div>
+            </div>
+            <span class="bar-sep" aria-hidden="true"></span>
+            <div class="bar-timer" id="barTimer">
+              <div class="bar-timer-idle" id="barTimerIdle">
+                <button class="timer-pill timer-start" id="barStartFocus" type="button">▶ 开始专注</button>
+                <button class="timer-pill timer-rest" id="barStartRest" type="button">☕ 休息</button>
+              </div>
+              <button class="bar-timer-active" id="barTimerActive" type="button">
+                <span id="barTimerAction">工作中</span>
+                <strong class="bar-time" id="barTime">35:00</strong>
+              </button>
+            </div>
             <div class="bar-progress"><i></i></div>
+            <button class="bar-close" id="barClose" type="button" aria-label="关闭 Focus Bar">×</button>
           </div>
 
           <div class="mock-window">
@@ -1171,23 +1582,9 @@
                 </div>
                 <div class="float-actions">
                   <div class="action-row">
-                    <button class="float-action" type="button" data-open-modal="focus">
-                      <span class="action-icon">▶</span>
-                      <span>开始专注<small>深度专注 / 常规节奏 / 轻度脑力 / 自定义</small></span>
-                      <span>›</span>
-                    </button>
-                  </div>
-                  <div class="action-row">
-                    <button class="float-action" type="button" data-open-modal="rest">
-                      <span class="action-icon">休</span>
-                      <span>休息<small>轻度恢复 / 标准恢复 / 深度恢复 / 自由休息</small></span>
-                      <span>›</span>
-                    </button>
-                  </div>
-                  <div class="action-row">
                     <button class="float-action" type="button" id="pinBarBtn">
                       <span class="action-icon">顶</span>
-                      <span>运行状态<small id="pinBarText">置顶 Focus Bar，显示所有项目实时状态</small></span>
+                      <span>实时状态<small id="pinBarText">打开 Focus Bar，显示所有项目实时状态</small></span>
                       <span>⌃</span>
                     </button>
                   </div>
@@ -1199,24 +1596,24 @@
                     </button>
                     <div class="sub-menu">
                       <div class="sub-title">今日聚焦 · 按状态分组</div>
-                      <button class="mini-task" type="button" data-task-jump="FP-104"><span>进行中 · 浮球原型定稿<small>FocusPilot · Codex · 62%</small></span><small>打开</small></button>
-                      <button class="mini-task" type="button" data-task-jump="FP-112"><span>待办 · PRD 同步检查<small>FocusPilot · 今天</small></span><small>打开</small></button>
-                      <button class="mini-task" type="button" data-task-jump="FP-097"><span>等待验收 · 看板 Workspace 行<small>FocusPilot · 审核中</small></span><small>验收</small></button>
-                      <button class="mini-task" type="button" data-task-jump="OPS-018"><span>已阻塞 · API 授权回调<small>PilotOne · blocked</small></span><small>打开</small></button>
+                      <button class="mini-task" type="button" data-run-detail="FP-104"><span>进行中 · 浮球原型定稿<small>FocusPilot · Codex · 62%</small></span><small>打开</small></button>
+                      <button class="mini-task" type="button" data-run-detail="FP-112"><span>待办 · PRD 同步检查<small>FocusPilot · 今天</small></span><small>打开</small></button>
+                      <button class="mini-task" type="button" data-run-detail="FP-097"><span>等待验收 · 看板 Workspace 行<small>FocusPilot · 审核中</small></span><small>验收</small></button>
+                      <button class="mini-task" type="button" data-run-detail="OPS-018"><span>已阻塞 · API 授权回调<small>PilotOne · blocked</small></span><small>打开</small></button>
                     </div>
                   </div>
                   <div class="action-row">
                     <button class="float-action" type="button">
                       <span class="action-icon">周</span>
-                      <span>本周聚焦<small>今天 / 明天 / 本周稍后 / 已逾期</small></span>
+                      <span>本周计划<small>今天 / 明天 / 本周稍后 / 已逾期</small></span>
                       <span>›</span>
                     </button>
                     <div class="sub-menu">
-                      <div class="sub-title">本周聚焦 · 按时间分组</div>
-                      <button class="mini-task" type="button" data-task-jump="FP-104"><span>今天 · 浮球原型定稿<small>进行中</small></span><small>打开</small></button>
-                      <button class="mini-task" type="button" data-task-jump="FP-130"><span>明天 · 状态条实现计划<small>待办</small></span><small>打开</small></button>
-                      <button class="mini-task" type="button" data-task-jump="KB-041"><span>本周稍后 · Review 卡片批处理<small>VaultOne</small></span><small>打开</small></button>
-                      <button class="mini-task" type="button" data-task-jump="OPS-018"><span>已逾期 · API 授权回调<small>blocked</small></span><small>打开</small></button>
+                      <div class="sub-title">本周计划 · 按时间分组</div>
+                      <button class="mini-task" type="button" data-run-detail="FP-104"><span>今天 · 浮球原型定稿<small>进行中</small></span><small>打开</small></button>
+                      <button class="mini-task" type="button" data-run-detail="FP-130"><span>明天 · 状态条实现计划<small>待办</small></span><small>打开</small></button>
+                      <button class="mini-task" type="button" data-run-detail="KB-041"><span>本周稍后 · Review 卡片批处理<small>VaultOne</small></span><small>打开</small></button>
+                      <button class="mini-task" type="button" data-run-detail="OPS-018"><span>已逾期 · API 授权回调<small>blocked</small></span><small>打开</small></button>
                     </div>
                   </div>
                 </div>
@@ -1244,7 +1641,7 @@
             <div class="scope-strip">
               <button class="active" type="button" data-chat-scope="全部项目">全部项目</button>
               <button type="button" data-chat-scope="今日聚焦">今日聚焦</button>
-              <button type="button" data-chat-scope="本周聚焦">本周聚焦</button>
+              <button type="button" data-chat-scope="本周计划">本周计划</button>
               <button type="button" data-chat-scope="运行中">运行中</button>
               <button type="button" data-chat-scope="等待验收">等待验收</button>
             </div>
@@ -1255,7 +1652,7 @@
               <div class="msg agent">今日聚焦剩 5 项。建议先处理 FP-104 浮球原型定稿，因为它正在运行且会影响后续 PRD 同步。</div>
             </div>
             <div class="chat-compose">
-              <textarea id="chatInput" placeholder="问所有项目、运行记录、今日/本周聚焦..."></textarea>
+              <textarea id="chatInput" placeholder="问所有项目、运行记录、今日聚焦 / 本周计划..."></textarea>
               <button class="send-btn" id="sendChatBtn" type="button">↑</button>
             </div>
           </section>
@@ -1317,8 +1714,47 @@
                 <div class="step"><i></i><span>补水远眺 · 1m10s</span></div>
               </div>
               <div class="modal-actions">
-                <button class="cancel" type="button" data-close-modal>停止</button>
-                <button class="primary blue" type="button" data-close-modal>暂停</button>
+                <button class="cancel" type="button" id="restGuideStop">停止</button>
+                <button class="primary blue" type="button" id="restGuidePause">暂停</button>
+              </div>
+            </section>
+          </div>
+
+          <div class="rd-overlay" id="runDetailOverlay"></div>
+          <div class="rd-card" id="runDetailPanel" role="dialog" aria-label="任务执行详情">
+            <div class="rd-top">
+              <button class="rd-x" id="rdClose" type="button" aria-label="关闭">✕</button>
+              <div class="rd-top-main">
+                <div class="rd-id" id="rdId">FP-104</div>
+                <div class="rd-title" id="rdTitle">浮球 hover 面板实现</div>
+              </div>
+              <span class="rd-statuspill" id="rdStatusPill">● In Progress</span>
+            </div>
+            <div class="rd-metawrap">
+              <div class="rd-metastrip" id="rdMeta"></div>
+              <div class="rd-field-menu" id="rdFieldMenu"></div>
+            </div>
+            <div class="rd-live" id="rdLive"></div>
+            <div class="rd-scroll">
+              <div class="rd-sec-label">📄 任务描述</div>
+              <div class="rd-desc" id="rdDesc"></div>
+              <div class="rd-divider"></div>
+              <div id="rdRounds"></div>
+            </div>
+            <div class="rd-reply">
+              <input type="text" placeholder="让 Agent 继续调整…（回复即触发下一轮执行）" />
+              <button class="rd-send" type="button">↑ 发送</button>
+            </div>
+          </div>
+
+          <div class="modal-backdrop" id="timerOpsModal">
+            <section class="modal" role="dialog" aria-label="专注操作">
+              <div class="modal-logo"></div>
+              <h2 id="timerOpsTitle">工作中 · 32:38 / 35:00</h2>
+              <p class="lead">保持专注，你做得很好</p>
+              <div class="modal-actions">
+                <button class="cancel" type="button" id="timerOpsStop">停止</button>
+                <button class="primary blue" type="button" id="timerOpsPause">暂停</button>
               </div>
             </section>
           </div>
@@ -1328,9 +1764,8 @@
 
         <div class="notes">
           <div class="note"><b>全局聊天</b>快捷助手面向全部项目与全部 Workspace，默认不绑定当前任务，只提供范围筛选。</div>
-          <div class="note"><b>专注/休息</b>开始专注和休息都是一级快捷指令，复用现有 FocusByTime 的预设、自由休息和引导恢复逻辑。</div>
-          <div class="note"><b>Focus Bar</b>运行中、已完成、待验收、今日聚焦和番茄钟都在顶部状态条轻量处理，可置顶或取消置顶。</div>
-          <div class="note"><b>跳转规则</b>今日/本周任务菜单点击后进入 Studio，看板视图自动定位对应任务详情。</div>
+          <div class="note"><b>实时状态</b>菜单「实时状态」打开 Focus Bar；番茄钟（开始专注 / 休息）已收进状态条，菜单不再重复。状态条按「待规划·运行中·待验收·已完成 ┃ 今日聚焦」分组，右端可点 × 关闭。</div>
+          <div class="note"><b>任务详情</b>状态条分组、菜单「今日聚焦 / 本周计划」二级列表，点任意任务都右侧滑出与主看板一致的执行详情（描述 + 执行轮次时间线 + 属性栏），不再二次跳转 Studio。</div>
         </div>
       </section>
     </main>
@@ -1386,20 +1821,21 @@
       function setMode(mode) {
         body.dataset.mode = mode === "bar" ? "normal" : mode;
         body.classList.toggle("bar-pinned", mode === "bar" || mode === "focus" || mode === "rest");
+        body.classList.toggle("timer-running", mode === "focus" || mode === "rest");
         focusBar.classList.toggle("resting", mode === "rest");
         if (mode === "focus") {
-          barTime.textContent = "35:00";
-          barTimerAction.textContent = "常规节奏";
+          barTime.textContent = "32:38 / 35:00";
+          barTimerAction.textContent = "工作中";
         } else if (mode === "rest") {
-          barTime.textContent = "01:11";
+          barTime.textContent = "01:11 / 07:00";
           barTimerAction.textContent = "闭眼远眺 · 1/5";
         } else if (mode === "normal") {
           barTime.textContent = "35:00";
-          barTimerAction.textContent = "番茄钟";
+          barTimerAction.textContent = "工作中";
         }
         pinBarText.textContent = body.classList.contains("bar-pinned")
-          ? "取消置顶 Focus Bar"
-          : "置顶 Focus Bar，显示所有项目实时状态";
+          ? "关闭 Focus Bar，回到常规视图"
+          : "打开 Focus Bar，显示所有项目实时状态";
         document.querySelectorAll("[data-demo-mode]").forEach((btn) => btn.classList.toggle("active", btn.dataset.demoMode === mode));
       }
 
@@ -1410,8 +1846,58 @@
       document.getElementById("pinBarBtn").addEventListener("click", () => {
         body.classList.toggle("bar-pinned");
         pinBarText.textContent = body.classList.contains("bar-pinned")
-          ? "取消置顶 Focus Bar"
-          : "置顶 Focus Bar，显示所有项目实时状态";
+          ? "关闭 Focus Bar，回到常规视图"
+          : "打开 Focus Bar，显示所有项目实时状态";
+      });
+
+      // Focus Bar 内的关闭按钮 → 收起状态条，回到常规视图
+      document.getElementById("barClose").addEventListener("click", () => {
+        body.classList.remove("bar-pinned", "timer-running");
+        body.dataset.mode = "normal";
+        focusBar.classList.remove("resting");
+        barTimerAction.textContent = "工作中";
+        barTime.textContent = "35:00";
+        pinBarText.textContent = "打开 Focus Bar，显示所有项目实时状态";
+        document.querySelectorAll("[data-demo-mode]").forEach((b) => b.classList.remove("active"));
+      });
+
+      // 番茄钟 idle 双按钮：开始专注 / 休息
+      document.getElementById("barStartFocus").addEventListener("click", () => openModal("focusModal"));
+      document.getElementById("barStartRest").addEventListener("click", () => openModal("restModal"));
+      // 点击状态块：专注中 → 停止/暂停/继续；休息中 → 当前休息动作 + 暂停/停止
+      document.getElementById("barTimerActive").addEventListener("click", () => {
+        if (focusBar.classList.contains("resting")) {
+          openModal("restGuideModal");
+        } else {
+          document.getElementById("timerOpsTitle").textContent = "工作中 · " + barTime.textContent;
+          openModal("timerOpsModal");
+        }
+      });
+
+      // 停止专注/休息 → 回到 idle（状态条保留，番茄钟区恢复双按钮）
+      function stopTimer() {
+        closeModals();
+        body.classList.remove("timer-running");
+        focusBar.classList.remove("resting");
+        body.dataset.mode = "normal";
+        barTimerAction.textContent = "工作中";
+        barTime.textContent = "35:00";
+        document.querySelectorAll("[data-demo-mode]").forEach((b) => b.classList.toggle("active", b.dataset.demoMode === "bar"));
+        showToast("已停止，回到待命状态");
+      }
+      document.getElementById("timerOpsStop").addEventListener("click", stopTimer);
+
+      // 暂停 → 保持运行态，仅提示
+      document.getElementById("timerOpsPause").addEventListener("click", () => {
+        closeModals();
+        showToast("已暂停，再次点击状态块可继续");
+      });
+
+      // 休息动作弹窗的 停止 / 暂停
+      document.getElementById("restGuideStop").addEventListener("click", stopTimer);
+      document.getElementById("restGuidePause").addEventListener("click", () => {
+        closeModals();
+        showToast("休息已暂停，再次点击状态块可继续");
       });
 
       function openModal(id) {
@@ -1428,6 +1914,13 @@
 
       document.querySelectorAll("[data-close-modal]").forEach((btn) => {
         btn.addEventListener("click", closeModals);
+      });
+
+      // 点击弹窗外的空白遮罩 → 自动关闭（对话框继续保持当前计时状态）
+      document.querySelectorAll(".modal-backdrop").forEach((backdrop) => {
+        backdrop.addEventListener("click", (e) => {
+          if (e.target === backdrop) closeModals();
+        });
       });
 
       document.querySelectorAll(".choice-list .choice").forEach((choice) => {
@@ -1465,7 +1958,7 @@
       document.getElementById("startRestBtn").addEventListener("click", () => {
         closeModals();
         setMode("rest");
-        openModal("restGuideModal");
+        showToast("已开始休息，点状态块可查看休息动作");
       });
 
       document.getElementById("openChatFromStrip").addEventListener("click", () => {
@@ -1508,10 +2001,287 @@
         chatThread.scrollTop = chatThread.scrollHeight;
       });
 
-      document.querySelectorAll("[data-task-jump]").forEach((btn) => {
-        btn.addEventListener("click", () => {
-          showToast("已打开 Studio · 看板，并定位 " + btn.dataset.taskJump);
-        });
+
+      // ── 任务执行详情（与看板点击任务弹出的详情保持一致）──
+      const RUN_DETAILS = {
+        "FP-104": {
+          id: "FP-104", title: "浮球 hover 面板实现", status: { text: "In Progress", tone: "running" },
+          desc: "实现浮球 hover 时弹出的快捷面板：移入自动展开、移走延迟收起，支持运行状态、专注与跳转能力。",
+          live: { agent: "代码工程师", state: "Running · 00:03:42 · 步骤 3/5", log: ["正在实现 hover 面板布局…", "接入移走延迟收起逻辑", "运行预览校验…"] },
+          rounds: [
+            { ic: "🤖", who: "代码工程师", meta: "自动执行 · 00:08:12", code: "新建 QuickPanelView.swift (+120)、修改 FloatingBallView.swift (+24)<br><span style=\"color:var(--green)\">✓ Build succeeded · 12 tests passed</span>", actions: true },
+            { ic: "🔍", who: "质量审查员", meta: "评估 · 第 1 轮 / 共 3 轮", pill: { text: "2 条意见", cls: "amber" }, opinions: [
+              { level: "Critical", cls: "crit", text: "移走收起缺少延迟，鼠标经过即关闭" },
+              { level: "Important", cls: "imp", text: "hover 展开动画帧率偏低" } ] },
+            { ic: "🤖", who: "代码工程师", meta: "自动修复（第 2 轮）", code: "补充 240ms 延迟收起 + 提升动画帧率" },
+            { ic: "🔍", who: "质量审查员", meta: "评估 · 第 2 轮", pill: { text: "✓ 通过", cls: "green" }, suffix: "→ 落「审核中」" },
+            { ic: "👤", who: "你", meta: "回复 = 触发下一轮", user: "点击浮球切换展开也加上，方便原型验收" },
+          ],
+          attrs: { status: { text: "in_progress", cls: "blue" }, priority: { text: "P0", cls: "red" }, schedule: "本周", workspace: "📁 本地项目", project: "FocusPilot", goal: ["4月/FP 0.0.1", "FocusPilot 0.0.1"], execmode: "🤖 全自动", evalAgent: "质量审查员 · 3 轮", agent: "代码工程师", date: "04-20" },
+        },
+        "FP-088": {
+          id: "FP-088", title: "Studio 状态投影", status: { text: "In Progress", tone: "running" },
+          desc: "将各 Workspace 的运行状态实时投影到 Studio 全局视图，统一状态口径。",
+          live: { agent: "代码工程师", state: "Running · 00:02:05 · 步骤 2/4", log: ["梳理状态来源…", "设计状态投影数据结构…"] },
+          rounds: [
+            { ic: "🤖", who: "代码工程师", meta: "自动执行 · 00:05:30", code: "新建 StatusProjection.swift (+96)<br><span style=\"color:var(--green)\">✓ Build succeeded · 8 tests passed</span>", actions: true },
+            { ic: "🔍", who: "质量审查员", meta: "评估 · 第 1 轮 / 共 3 轮", pill: { text: "1 条意见", cls: "amber" }, opinions: [
+              { level: "Important", cls: "imp", text: "多 Workspace 并发更新需加节流" } ] },
+          ],
+          attrs: { status: { text: "in_progress", cls: "blue" }, priority: { text: "P1", cls: "red" }, schedule: "本周", workspace: "📁 本地项目", project: "PilotOne", goal: ["4月/FP 0.0.1", "PilotOne 0.0.1"], execmode: "🤖 全自动", evalAgent: "质量审查员 · 3 轮", agent: "代码工程师", date: "04-22" },
+        },
+        "FP-097": {
+          id: "FP-097", title: "看板 Workspace 行", status: { text: "In Review", tone: "review" },
+          desc: "看板每个泳道支持以 Workspace 为单位的实体行展示，含类型与路径。",
+          rounds: [
+            { ic: "🤖", who: "代码工程师", meta: "自动执行 · 00:06:48", code: "新建 BoardLaneView.swift (+86)、接入类型筛选<br><span style=\"color:var(--green)\">✓ Build succeeded · 10 tests passed</span>", actions: true },
+            { ic: "🔍", who: "质量审查员", meta: "评估 · 第 1 轮", pill: { text: "✓ 通过", cls: "green" }, suffix: "→ 落「审核中」" },
+            { ic: "👤", who: "你", meta: "等待人工验收", user: "等我看一下 Workspace 行的折叠交互" },
+          ],
+          attrs: { status: { text: "in_review", cls: "blue" }, priority: { text: "P1", cls: "red" }, schedule: "今天", workspace: "📁 本地项目", project: "FocusPilot", goal: ["4月/FP 0.0.1", "FocusPilot 0.0.1"], execmode: "🤖 全自动", evalAgent: "质量审查员 · 3 轮", agent: "代码工程师", date: "04-15" },
+        },
+        "KB-031": {
+          id: "KB-031", title: "资料卡片归档", status: { text: "In Review", tone: "review" },
+          desc: "VaultOne 资料卡片支持批量归档与状态流转。",
+          rounds: [
+            { ic: "🤖", who: "代码工程师", meta: "自动执行 · 00:04:10", code: "新建 CardArchive.ts (+54)<br><span style=\"color:var(--green)\">✓ Build succeeded · 6 tests passed</span>", actions: true },
+            { ic: "🔍", who: "质量审查员", meta: "评估 · 第 1 轮", pill: { text: "✓ 通过", cls: "green" }, suffix: "→ 落「审核中」" },
+          ],
+          attrs: { status: { text: "in_review", cls: "blue" }, priority: { text: "P2", cls: "red" }, schedule: "今天", workspace: "📁 本地项目", project: "VaultOne", goal: ["4月/VaultOne", "VaultOne 0.1"], execmode: "🤖 全自动", evalAgent: "质量审查员 · 1 轮", agent: "代码工程师", date: "04-16" },
+        },
+        "FP-090": {
+          id: "FP-090", title: "主题色槽统一", status: { text: "Done", tone: "done" },
+          desc: "将全 UI 主题色统一到 9 色槽体系，移除散落的硬编码色值。",
+          rounds: [
+            { ic: "🤖", who: "代码工程师", meta: "自动执行 · 00:09:22", code: "迁移到 ThemeColors.swift (+210 −156)<br><span style=\"color:var(--green)\">✓ Build succeeded · 18 tests passed</span>", actions: true },
+            { ic: "🔍", who: "质量审查员", meta: "评估 · 第 1 轮", pill: { text: "✓ 通过", cls: "green" }, suffix: "→ 合并到主干" },
+          ],
+          attrs: { status: { text: "done", cls: "green" }, priority: { text: "P1", cls: "red" }, schedule: "—", workspace: "📁 本地项目", project: "FocusPilot", goal: ["4月/FP 0.0.1", "FocusPilot 0.0.1"], execmode: "🤖 全自动", evalAgent: "质量审查员 · 1 轮", agent: "代码工程师", date: "04-12" },
+        },
+        "FP-085": {
+          id: "FP-085", title: "快捷面板差分刷新", status: { text: "Done", tone: "done" },
+          desc: "QuickPanel 通过结构 key 比对实现差分刷新，标题变化走轻量路径。",
+          rounds: [
+            { ic: "🤖", who: "代码工程师", meta: "自动执行 · 00:07:05", code: "实现 buildStructuralKey + 差分更新路径 (+98 −40)<br><span style=\"color:var(--green)\">✓ Build succeeded · 16 tests passed</span>", actions: true },
+            { ic: "🔍", who: "质量审查员", meta: "评估 · 第 1 轮", pill: { text: "✓ 通过", cls: "green" }, suffix: "→ 合并到主干" },
+          ],
+          attrs: { status: { text: "done", cls: "green" }, priority: { text: "P1", cls: "red" }, schedule: "—", workspace: "📁 本地项目", project: "FocusPilot", goal: ["4月/FP 0.0.1", "FocusPilot 0.0.1"], execmode: "🤖 全自动", evalAgent: "质量审查员 · 1 轮", agent: "代码工程师", date: "04-08" },
+        },
+        "FP-112": {
+          id: "FP-112", title: "PRD 同步检查", status: { text: "Todo", tone: "plan" },
+          desc: "原型变更后检查 PRD 对应章节是否需要同步更新，保持原型与 PRD 一致。",
+          rounds: [
+            { ic: "📝", who: "计划", meta: "待排期", user: "需求已记录，等待启动执行，尚无运行记录" },
+          ],
+          attrs: { status: { text: "todo", cls: "blue" }, priority: { text: "P1", cls: "red" }, schedule: "—", workspace: "📁 本地项目", project: "FocusPilot", goal: ["4月/FP 0.0.1", "FocusPilot 0.0.1"], execmode: "手动卡片", evalAgent: "—", agent: "未分配", date: "—" },
+        },
+        "FP-130": {
+          id: "FP-130", title: "状态条实现计划", status: { text: "待规划", tone: "plan" },
+          desc: "把 Focus Bar 的排序、分隔符与任务详情联动落地到真实代码。",
+          rounds: [
+            { ic: "📝", who: "计划", meta: "待拆解", user: "需求已定，等待拆解为可执行任务，尚无运行记录" },
+          ],
+          attrs: { status: { text: "backlog", cls: "blue" }, priority: { text: "P2", cls: "red" }, schedule: "—", workspace: "📁 本地项目", project: "FocusPilot", goal: ["5月/FP 0.0.1", "FocusPilot 0.0.1"], execmode: "手动卡片", evalAgent: "—", agent: "未分配", date: "—" },
+        },
+        "OPS-018": {
+          id: "OPS-018", title: "API 授权回调", status: { text: "Blocked", tone: "review" },
+          desc: "PilotOne 第三方 API 授权回调链路，回调地址校验失败导致阻塞，等待外部配置。",
+          rounds: [
+            { ic: "🤖", who: "代码工程师", meta: "自动执行 · 00:03:20", code: "实现 OAuth 回调处理 (+72)<br><span style=\"color:var(--red)\">✗ 回调域名未在白名单</span>", actions: true },
+            { ic: "🔍", who: "质量审查员", meta: "评估 · 第 1 轮", pill: { text: "已阻塞", cls: "amber" }, opinions: [
+              { level: "Critical", cls: "crit", text: "回调域名需在第三方后台登记，当前无法自动完成" } ] },
+            { ic: "👤", who: "你", meta: "待处理", user: "我去第三方后台登记回调域名后再触发下一轮" },
+          ],
+          attrs: { status: { text: "blocked", cls: "red" }, priority: { text: "P0", cls: "red" }, schedule: "—", workspace: "📁 本地项目", project: "PilotOne", goal: ["4月/PilotOne", "PilotOne 0.0.1"], execmode: "🤖 全自动", evalAgent: "质量审查员 · 3 轮", agent: "代码工程师", date: "04-18" },
+        },
+        "KB-041": {
+          id: "KB-041", title: "Review 卡片批处理", status: { text: "Todo", tone: "plan" },
+          desc: "VaultOne 知识卡片支持批量进入 Review 流程，按主题分组批处理。",
+          rounds: [
+            { ic: "📝", who: "计划", meta: "本周稍后", user: "待排期，尚无运行记录" },
+          ],
+          attrs: { status: { text: "todo", cls: "blue" }, priority: { text: "P2", cls: "red" }, schedule: "本周稍后", workspace: "📁 本地项目", project: "VaultOne", goal: ["4月/VaultOne", "VaultOne 0.1"], execmode: "手动卡片", evalAgent: "—", agent: "未分配", date: "—" },
+        },
+      };
+
+      // chip：带 field 的为可编辑（点击弹下拉），否则纯展示
+      function rdChip(label, val, cls, field) {
+        if (field) {
+          return `<button class="rd-chip editable ${cls || ""}" type="button" data-field="${field}"><span class="k">${label}</span><b>${val}</b><span class="caret">▾</span></button>`;
+        }
+        return `<span class="rd-chip ${cls || ""}"><span class="k">${label}</span><b>${val}</b></span>`;
+      }
+
+      // 任务状态模型（与 Studio 7 态流转一致）
+      const STATUS_MODEL = {
+        backlog:     { label: "待规划", tone: "plan",    dot: "#999ca2", chip: "" },
+        todo:        { label: "待办",   tone: "plan",    dot: "#999ca2", chip: "" },
+        in_progress: { label: "执行中", tone: "running", dot: "#ef5047", chip: "red" },
+        in_review:   { label: "待验收", tone: "review",  dot: "#d99a27", chip: "" },
+        done:        { label: "已完成", tone: "done",    dot: "#31c75a", chip: "green" },
+        blocked:     { label: "已阻塞", tone: "review",  dot: "#d99a27", chip: "" },
+        cancelled:   { label: "已取消", tone: "plan",    dot: "#999ca2", chip: "" },
+      };
+      const STATUS_ORDER = ["backlog", "todo", "in_progress", "in_review", "done", "blocked", "cancelled"];
+      const STATUS_TEXT_TO_KEY = { "In Progress": "in_progress", "In Review": "in_review", "Done": "done", "Todo": "todo", "待规划": "backlog", "Blocked": "blocked" };
+
+      function statusKeyOf(d) {
+        return d.statusKey || STATUS_TEXT_TO_KEY[d.status.text] || "todo";
+      }
+
+      // 可编辑字段配置：选项 + 当前值读写。点 chip 即用这套弹同款下拉
+      const FIELD_DEFS = {
+        status: {
+          options: () => STATUS_ORDER.map((k) => ({ val: k, label: STATUS_MODEL[k].label, dot: STATUS_MODEL[k].dot })),
+          current: (d) => statusKeyOf(d),
+          set: (d, v) => { d.statusKey = v; },
+          toast: (v) => "状态 → " + STATUS_MODEL[v].label,
+        },
+        priority: {
+          options: () => [{ val: "P0" }, { val: "P1" }, { val: "P2" }, { val: "P3" }],
+          current: (d) => d.attrs.priority.text,
+          set: (d, v) => { d.attrs.priority.text = v; },
+          toast: (v) => "优先级 → " + v,
+        },
+        agent: {
+          options: () => [{ val: "代码工程师" }, { val: "数据分析师" }, { val: "架构师" }, { val: "未分配" }],
+          current: (d) => d.attrs.agent,
+          set: (d, v) => { d.attrs.agent = v; },
+          toast: (v) => "Agent → " + v,
+        },
+        execmode: {
+          options: () => [{ val: "手动卡片" }, { val: "半自动" }, { val: "🤖 全自动" }],
+          current: (d) => d.attrs.execmode,
+          set: (d, v) => { d.attrs.execmode = v; },
+          toast: (v) => "调度 → " + v,
+        },
+        eval: {
+          options: () => [{ val: "质量审查员 · 1 轮" }, { val: "质量审查员 · 3 轮" }, { val: "架构师" }, { val: "—" }],
+          current: (d) => d.attrs.evalAgent,
+          set: (d, v) => { d.attrs.evalAgent = v; },
+          toast: (v) => "评估 → " + v,
+        },
+      };
+
+      let currentDetailId = null;
+
+      function renderRunDetail(id) {
+        const d = RUN_DETAILS[id];
+        if (!d) return false;
+        currentDetailId = id;
+        const sk = statusKeyOf(d);
+        const sm = STATUS_MODEL[sk];
+
+        document.getElementById("rdId").textContent = d.id;
+        document.getElementById("rdTitle").textContent = d.title;
+        const sp = document.getElementById("rdStatusPill");
+        sp.textContent = "● " + sm.label;
+        sp.dataset.tone = sm.tone;
+        document.getElementById("rdDesc").textContent = d.desc;
+
+        const live = document.getElementById("rdLive");
+        if (d.live && sk === "in_progress") {
+          live.classList.remove("hidden");
+          live.innerHTML =
+            `<div class="rd-live-head"><span class="rd-live-dot"></span><strong>${d.live.agent}</strong><span style="color:var(--dim)">· ${d.live.state}</span></div>` +
+            `<div class="rd-live-log">${d.live.log.map((l) => "&gt; " + l).join("<br>")}</div>`;
+        } else {
+          live.classList.add("hidden");
+          live.innerHTML = "";
+        }
+
+        document.getElementById("rdRounds").innerHTML = d.rounds.map((r) => {
+          let inner = `<div class="rd-round-meta"><strong>${r.who}</strong> <span class="dim">· ${r.meta}</span>`;
+          if (r.pill) inner += ` <span class="rd-pill ${r.pill.cls}">${r.pill.text}</span>`;
+          if (r.suffix) inner += ` <span class="dim">${r.suffix}</span>`;
+          inner += `</div>`;
+          if (r.code) inner += `<div class="rd-code">${r.code}</div>`;
+          if (r.actions) inner += `<div class="rd-round-actions"><button class="rd-mini-btn" type="button">查看 Diff</button><button class="rd-mini-btn" type="button">日志</button></div>`;
+          if (r.opinions) inner += r.opinions.map((o) => `<div class="rd-opinion ${o.cls}"><strong>${o.level}</strong> ${o.text}</div>`).join("");
+          if (r.user) inner += `<div class="rd-user">${r.user}</div>`;
+          return `<div class="rd-round"><span class="ic">${r.ic}</span><div class="rd-round-body">${inner}</div></div>`;
+        }).join("");
+
+        // meta 信息条：第 4 个参数=字段名时该 chip 可点改
+        const a = d.attrs;
+        document.getElementById("rdMeta").innerHTML =
+          rdChip("状态", sm.label, sm.chip, "status") +
+          rdChip("优先级", a.priority.text, a.priority.cls, "priority") +
+          rdChip("Agent", a.agent, "", "agent") +
+          rdChip("项目", a.project, "") +
+          rdChip("归属", a.goal[0], "") +
+          rdChip("调度", a.execmode, "", "execmode") +
+          rdChip("评估", a.evalAgent, "", "eval") +
+          rdChip("截止", a.date, "");
+        return true;
+      }
+
+      // 打开某个字段的下拉（定位到被点 chip 下方）
+      function openFieldMenu(fieldKey, chipEl) {
+        const def = FIELD_DEFS[fieldKey];
+        if (!def) return;
+        const d = RUN_DETAILS[currentDetailId];
+        const cur = def.current(d);
+        const menu = document.getElementById("rdFieldMenu");
+        menu.dataset.field = fieldKey;
+        menu.innerHTML = def.options().map((o) =>
+          `<button class="rd-field-item" type="button" data-val="${o.val}"><span class="tick">${o.val === cur ? "✓" : ""}</span>${o.dot ? `<span class="sdot" style="background:${o.dot}"></span>` : ""}${o.label || o.val}</button>`
+        ).join("");
+        const wrap = document.querySelector(".rd-metawrap");
+        menu.style.left = Math.min(chipEl.offsetLeft, wrap.clientWidth - 160) + "px";
+        menu.style.top = (chipEl.offsetTop + chipEl.offsetHeight + 4) + "px";
+        menu.classList.add("open");
+      }
+
+      // 选定新值 → 写回内存 + 即时刷新（手动改 / 系统自动流转都走这条）
+      function setField(val) {
+        const menu = document.getElementById("rdFieldMenu");
+        const def = FIELD_DEFS[menu.dataset.field];
+        const d = RUN_DETAILS[currentDetailId];
+        def.set(d, val);
+        menu.classList.remove("open");
+        renderRunDetail(currentDetailId);
+        showToast("已修改 " + def.toast(val));
+      }
+
+      function openRunDetail(id) {
+        if (!renderRunDetail(id)) return;
+        document.getElementById("rdFieldMenu").classList.remove("open");
+        document.getElementById("runDetailOverlay").classList.add("open");
+        document.getElementById("runDetailPanel").classList.add("open");
+      }
+      function closeRunDetail() {
+        document.getElementById("rdFieldMenu").classList.remove("open");
+        document.getElementById("runDetailOverlay").classList.remove("open");
+        document.getElementById("runDetailPanel").classList.remove("open");
+      }
+
+      document.querySelectorAll("[data-run-detail]").forEach((btn) => {
+        btn.addEventListener("click", () => openRunDetail(btn.dataset.runDetail));
+      });
+      document.getElementById("rdClose").addEventListener("click", closeRunDetail);
+      document.getElementById("runDetailOverlay").addEventListener("click", closeRunDetail);
+
+      // 点可编辑 chip → 弹该字段下拉（事件委托）
+      document.getElementById("rdMeta").addEventListener("click", (e) => {
+        const chip = e.target.closest("[data-field]");
+        if (!chip) return;
+        e.stopPropagation();
+        const menu = document.getElementById("rdFieldMenu");
+        if (menu.classList.contains("open") && menu.dataset.field === chip.dataset.field) {
+          menu.classList.remove("open");
+        } else {
+          openFieldMenu(chip.dataset.field, chip);
+        }
+      });
+      // 选项点击 → 改值
+      document.getElementById("rdFieldMenu").addEventListener("click", (e) => {
+        const item = e.target.closest("[data-val]");
+        if (item) setField(item.dataset.val);
+      });
+      // 点卡片内其它空白处收起下拉
+      document.getElementById("runDetailPanel").addEventListener("click", (e) => {
+        if (!e.target.closest(".rd-metawrap")) document.getElementById("rdFieldMenu").classList.remove("open");
       });
     </script>
   </body>
