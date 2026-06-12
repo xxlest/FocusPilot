@@ -164,7 +164,7 @@ Project/Epic/US/Task 是敏捷语境产物，不适用于所有场景。FocusPil
 ```
 Project → Epic → User Story → Task
 ```
-- 完整四级，planning 阶段 AI 按敏捷方法论引导拆分
+- 完整四级，AI 按敏捷方法论引导拆分（重规划引导）
 - 适用：软件开发、复杂工程项目
 
 #### 模式二：流程模式（Flow）— 阶段制项目
@@ -180,7 +180,7 @@ Project → Phase → Task
 ```
 Project → Task
 ```
-- 两级，无 planning 阶段（可选），快速进出
+- 两级，规划引导可选，快速进出
 - 适用：写一篇文章、处理一批数据、日常运维巡检
 
 #### 模式四：自由模式（Free）— 自定义层级
@@ -211,7 +211,7 @@ Task 的 frontmatter 通过 `status` + `scheduled_date` / `due_date` 形成**双
 
 `schedule`（today / week / month / backlog）是 UI 派生字段（不持久化），由 `scheduled_date` / `due_date` 相对当前日期自动计算。过滤关系：`今日聚焦 ⊂ 本周计划 ⊂ 本月计划 ⊂ 全局规划`（侧边栏按执行优先自上而下排列：今日聚焦 → 本周计划 → 本月计划 → 全局规划）。
 
-两者独立：一个 Task 可以 `status: ready` + `scheduled_date` 落在本周（UI 派生 `schedule: week`，本周要做，已规划好，等待执行）。
+两者独立：一个 Task 可以 `status: todo` + `scheduled_date` 落在本周（UI 派生 `schedule: week`，本周要做、等待调度执行）。
 
 | schedule 值 | 含义 | Dashboard 区域 |
 |------------|------|---------------|
@@ -778,7 +778,7 @@ pipeline:
 ```yaml
 ---
 type: task
-status: ready
+status: todo
 schedule: today          # today / week / month / backlog
 priority: normal
 tags: [backend]

@@ -885,7 +885,7 @@ struct WorkItem: Identifiable, Codable {
     var title: String
     var itemType: ItemType                  // epic | story | task | subtask | group
     var itemRole: ItemRole                  // container | executable | hybrid
-    var status: WorkItemStatus              // backlog | todo | in_progress | in_evaluation | done | blocked | cancelled
+    var status: WorkItemStatus              // backlog | todo | in_progress | in_review | done | blocked | cancelled
     var priority: Priority                  // p0 | p1 | p2
     var executionMode: ExecutionMode        // none | manual | semi_auto | auto
     var evaluationEnabled: Bool
@@ -907,7 +907,7 @@ struct WorkItem: Identifiable, Codable {
 }
 
 enum WorkItemStatus: String, Codable {
-    case backlog, todo, in_progress, in_evaluation, done, blocked, cancelled
+    case backlog, todo, in_progress, in_review, done, blocked, cancelled
 }
 
 enum ExecutionMode: String, Codable {

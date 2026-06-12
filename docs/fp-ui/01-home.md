@@ -302,4 +302,4 @@ Home 页**不允许**的操作：
 | 本月目标 | `schedule = month` 的项目级目标 | Studio 全局视图，筛选本月 |
 | 全部 TODO | 所有 `status ∉ {done, cancelled}` 的 WorkItem | Studio 全局视图，列表 |
 | 活跃项目 | `lifecycle = active` 的项目 | Projects（Projects Tab） |
-| 执行中 | `status ∈ {in_progress, in_evaluation}` 的 WorkItem | Studio 全局视图，筛选执行中 |
+| 执行中 | `status ∈ {in_progress, in_review}` 的 WorkItem | Studio 全局视图，筛选执行中 |
