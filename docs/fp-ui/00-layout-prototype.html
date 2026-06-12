@@ -4273,7 +4273,7 @@
                   </div>
                 </div>
               </div>
-              <div style="display:flex;justify-content:flex-end;gap:8px;padding:12px 18px;border-top:1px solid var(--line-soft)"><button class="btn" onclick="closeNewTaskModal()">取消</button><button class="btn" onclick="createWorkItemFromModal({start:false})">创建</button><button class="btn primary" onclick="createWorkItemFromModal({start:true})">创建并启动</button></div>
+              <div style="display:flex;justify-content:flex-end;gap:8px;padding:12px 18px;border-top:1px solid var(--line-soft)"><button class="btn" onclick="closeNewTaskModal()">取消</button><button class="btn primary" onclick="createWorkItemFromModal({start:false})">创建</button></div>
             </div>
           </div>
           </div>
@@ -11681,7 +11681,7 @@ FocusPilot/
           id: newId,
           title: title,
           description: description,
-          status: opts.start ? (executionMode === 'auto' ? 'in_progress' : (explicitStatus || 'todo')) : (explicitStatus || 'todo'),
+          status: explicitStatus || 'todo',   // 落点由「初始状态」下拉决定（待规划=不调度 / 待办=进调度）
           priority: priority,
           projectId: projectId,
           workspaceType: workspaceType,
