@@ -339,13 +339,13 @@
       }
 
       .bar-btn[data-tone="plan"]    .bar-num { color: #6b7280; }
-      .bar-btn[data-tone="running"] .bar-num { color: var(--red); }
+      .bar-btn[data-tone="running"] .bar-num { color: var(--blue); }
       .bar-btn[data-tone="review"]  .bar-num { color: #b4690e; }
       .bar-btn[data-tone="done"]    .bar-num { color: #1f8f43; }
       .bar-btn[data-tone="focus"]   .bar-num { color: var(--blue); }
 
       .bar-btn[data-tone="plan"]:hover    { background: rgba(107, 114, 128, 0.12); }
-      .bar-btn[data-tone="running"]:hover { background: rgba(239, 80, 71, 0.12); }
+      .bar-btn[data-tone="running"]:hover { background: rgba(20, 122, 243, 0.12); }
       .bar-btn[data-tone="review"]:hover  { background: rgba(245, 158, 11, 0.16); }
       .bar-btn[data-tone="done"]:hover    { background: rgba(49, 199, 90, 0.14); }
       .bar-btn[data-tone="focus"]:hover   { background: rgba(20, 122, 243, 0.12); }
@@ -843,10 +843,11 @@
         background: rgba(20, 122, 243, 0.14);
         color: var(--blue);
       }
-      .rd-statuspill[data-tone="running"] { background: rgba(239, 80, 71, 0.14); color: var(--red); }
-      .rd-statuspill[data-tone="review"]  { background: rgba(217, 154, 39, 0.18); color: #a9740f; }
+      .rd-statuspill[data-tone="running"] { background: rgba(20, 122, 243, 0.14); color: var(--blue); }
+      .rd-statuspill[data-tone="review"]  { background: rgba(139, 92, 246, 0.16); color: #6d3bd4; }
       .rd-statuspill[data-tone="done"]    { background: rgba(49, 199, 90, 0.16); color: #1f8f43; }
       .rd-statuspill[data-tone="plan"]    { background: rgba(0, 0, 0, 0.07); color: var(--muted); }
+      .rd-statuspill[data-tone="blocked"] { background: rgba(249, 115, 22, 0.16); color: #c2540b; }
 
       /* 可编辑字段下拉（共享一个弹层，定位到被点的 chip 下方）*/
       .rd-metawrap { position: relative; }
@@ -2031,7 +2032,7 @@
           attrs: { priorityKey: "p1", agentKey: "code", execmodeKey: "auto", evalKey: "qa3", schedule: "本周", workspace: "📁 本地项目", project: "PilotOne", goal: ["4月/FP 0.0.1", "PilotOne 0.0.1"], date: "04-22" },
         },
         "FP-097": {
-          id: "FP-097", title: "看板 Workspace 行", statusKey: "in_evaluation",
+          id: "FP-097", title: "看板 Workspace 行", statusKey: "in_review",
           desc: "看板每个泳道支持以 Workspace 为单位的实体行展示，含类型与路径。",
           rounds: [
             { ic: "🤖", who: "代码工程师", meta: "自动执行 · 00:06:48", code: "新建 BoardLaneView.swift (+86)、接入类型筛选<br><span style=\"color:var(--green)\">✓ Build succeeded · 10 tests passed</span>", actions: true },
@@ -2041,7 +2042,7 @@
           attrs: { priorityKey: "p1", agentKey: "code", execmodeKey: "auto", evalKey: "qa3", schedule: "今天", workspace: "📁 本地项目", project: "FocusPilot", goal: ["4月/FP 0.0.1", "FocusPilot 0.0.1"], date: "04-15" },
         },
         "KB-031": {
-          id: "KB-031", title: "资料卡片归档", statusKey: "in_evaluation",
+          id: "KB-031", title: "资料卡片归档", statusKey: "in_review",
           desc: "VaultOne 资料卡片支持批量归档与状态流转。",
           rounds: [
             { ic: "🤖", who: "代码工程师", meta: "自动执行 · 00:04:10", code: "新建 CardArchive.ts (+54)<br><span style=\"color:var(--green)\">✓ Build succeeded · 6 tests passed</span>", actions: true },
@@ -2116,12 +2117,12 @@
       const STATUS_MODEL = {
         backlog:       { label: "待规划", tone: "plan",    dot: "#999ca2", chip: "" },
         todo:          { label: "待办",   tone: "plan",    dot: "#74777d", chip: "" },
-        in_progress:   { label: "进行中", tone: "running", dot: "#ef5047", chip: "red" },
-        in_evaluation: { label: "审核中", tone: "review",  dot: "#8b5cf6", chip: "" },
+        in_progress:   { label: "进行中", tone: "running", dot: "#147af3", chip: "blue" },
+        in_review: { label: "审核中", tone: "review",  dot: "#8b5cf6", chip: "" },
         done:          { label: "已完成", tone: "done",    dot: "#31c75a", chip: "green" },
-        blocked:       { label: "已阻塞", tone: "review",  dot: "#f97316", chip: "" },
+        blocked:       { label: "已阻塞", tone: "blocked", dot: "#f97316", chip: "" },
       };
-      const STATUS_ORDER = ["backlog", "todo", "in_progress", "in_evaluation", "done", "blocked"];
+      const STATUS_ORDER = ["backlog", "todo", "in_progress", "in_review", "done", "blocked"];
 
       function statusKeyOf(d) { return d.statusKey || "todo"; }
 
@@ -2136,9 +2137,10 @@
       const EVAL_ORDER = ["qa1", "qa3", "arch", "none"];
 
       // 通用字段定义：current/set 统一走 key，下拉 ✓ 用 key 全等（不再靠展示串比对）
-      function makeFieldDef(model, order, dataKey, withDot) {
+      // 非状态字段不带色点（只有 status 的下拉显示状态色点，单独定义）
+      function makeFieldDef(model, order, dataKey) {
         return {
-          options: () => order.map((k) => ({ val: k, label: model[k].label, dot: withDot ? model[k].dot : undefined })),
+          options: () => order.map((k) => ({ val: k, label: model[k].label })),
           current: (d) => d.attrs[dataKey],
           set: (d, v) => { d.attrs[dataKey] = v; },
           label: (v) => model[v].label,
