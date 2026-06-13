@@ -10,15 +10,15 @@
 
 类似 VS Code 布局，由活动栏 + 侧边栏 + 工作区组成。Studio 页面额外支持右侧栏（文件浏览）和终端面板。
 
-### 基础布局（Home / Projects / Studio / Review / AICrew / Settings）
+### 基础布局（Home / Studio / Projects / Review / AICrew / Settings）
 
 ```
 ┌─ 活动栏 ─┬─ 侧边栏 ──────┬─ 工作区 ─────────────────────────┐
 │  52px    │  260px        │                                    │
 │          │               │  顶部栏（标题 + 视图切换 + 筛选）    │
 │  🏠 Home │  随活动栏      │  ─────────────────────────────     │
-│  📂 Proj │  切换内容      │                                    │
-│  💻Studio│               │  内容区（随页面和视图变化）           │
+│  💻Studio│  切换内容      │                                    │
+│  📂 Proj │               │  内容区（随页面和视图变化）           │
 │  🧠Review│               │                                    │
 │  🤖 Crew │               │                                    │
 │  ─ ─ ─   │               │                                    │
@@ -33,8 +33,8 @@
 │  52px    │  260px        │                        │  ⌘⇧B 切换       │
 │          │               │  顶栏（项目·Runtime·   │                  │
 │  🏠 Home │  全局视图       │   🔧工具·🖥终端·◨侧栏）│  多 Tab 文件浏览  │
-│  📂 Proj │  +项目列表      │  ────────────────     │  只读预览        │
-│  💻Studio│  搜索           │                        │                  │
+│  💻Studio│  +项目列表      │  ────────────────     │  只读预览        │
+│  📂 Proj │  搜索           │                        │                  │
 │  🧠Review│  (统一侧边栏)  │  对话区（消息流）       │                  │
 │  🤖 Crew │               │                        │                  │
 │  ─ ─ ─   │               │  输入区（底部）         │                  │
@@ -51,8 +51,8 @@ Studio 独有区域：右侧栏（⌘⇧B 切换，多 Tab 文件浏览）、终
 | 图标 | 页面 | 说明 | 设计文档 |
 |------|------|------|---------|
 | 🏠 | Home | 全局概览入口：摘要数字条 + 重点列表 + 对话视图（Tab 切换） | [01-home.md](01-home.md) |
-| 📂 | Projects | 记忆与输入管理层：Inbox（收集）+ Projects（知识沉淀），侧边栏 Tab 切换 | [05-area-projects.md](05-area-projects.md) |
 | 💻 | Studio | 跨项目 AI 工作台：任务视图（默认看板 + 泳道/列表/时间轴视图，时间轴支持按目标/项目分组）+ 项目视图（工作项/对话/Diff/终端） | [04-studio.md](04-studio.md) |
+| 📂 | Projects | 记忆与输入管理层：Inbox（收集）+ Projects（知识沉淀），侧边栏 Tab 切换 | [05-area-projects.md](05-area-projects.md) |
 | 🧠 | Review | 复习与内化中心：今日复习 / 内化挑战 / 卡片库 / 统计 | [06-review.md](06-review.md) |
 | 🤖 | AICrew | Agent 团队管理 | [07-ai-crew.md](07-ai-crew.md) |
 | ⚙️ | Settings | 全局配置（底部） | [08-settings.md](08-settings.md) |
