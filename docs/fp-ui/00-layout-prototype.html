@@ -2800,6 +2800,7 @@
               <div class="hib-menu" id="hib-group-menu">
                 <div class="ml">分组方式</div>
                 <div class="mi" onclick="hibSetGroup('none',this)">✓ 无（按时间倒序）</div>
+                <div class="mi" onclick="hibSetGroup('sched',this)">按规划</div>
                 <div class="mi" onclick="hibSetGroup('project',this)">按项目</div>
               </div>
             </div>
@@ -12630,6 +12631,9 @@ FocusPilot/
         {id:'FP-016', title:'权限体系初步方案', sub:'状态设为 待办', st:'todo', proj:'FocusPilot', time:'15 天', unread:false},
         {id:'FP-015', title:'V2 路线图梳理', sub:'状态设为 待规划', st:'backlog', proj:'FocusPilot', time:'16 天', unread:false}
       ];
+      // 规划维度（schedule）：今日聚焦 ⊂ 本周计划 ⊂ 本月计划；分组时按最具体的归一桶
+      var SCHED_MAP={'FP-018':'today','FP-030':'today','FP-027':'today','FP-023':'today','FP-029':'week','FP-028':'week','FP-021':'week','FP-017':'week','FP-016':'week'};
+      hibMsgs.forEach(function(m){ m.sched=SCHED_MAP[m.id]||'month'; });
       var hibStatus='all', hibUnread=false, hibGroup='none', hibVisible=[], hibCur=null;
       function counts(){ var c={}; ORDER.forEach(function(k){c[k]={t:0,u:0};}); hibMsgs.forEach(function(m){ if(!c[m.st])return; c[m.st].t++; if(m.unread)c[m.st].u++; }); return c; }
       function unreadN(){ return hibMsgs.filter(function(m){return m.unread;}).length; }
@@ -12643,10 +12647,11 @@ FocusPilot/
         if(pinned.length){ var ph=document.createElement('div'); ph.className='hib-ghead'; ph.innerHTML='📌 置顶 <span style="font-weight:400">'+pinned.length+'</span>'; list.appendChild(ph); pinned.forEach(function(m){ list.appendChild(msgEl(m)); hibVisible.push(m.id); }); }
         if(pinned.length && rest.length){ var sep=document.createElement('div'); sep.className='hib-listsep'; list.appendChild(sep); }
         if(hibGroup==='none'){ rest.forEach(function(m){ list.appendChild(msgEl(m)); hibVisible.push(m.id); }); }
+        else if(hibGroup==='sched'){ var SCHED=[['today','🔥 今日聚焦'],['week','📅 本周计划'],['month','📆 本月计划']]; SCHED.forEach(function(sc){ var arr=rest.filter(function(m){return m.sched===sc[0];}); if(!arr.length)return; var h=document.createElement('div'); h.className='hib-ghead'; h.innerHTML=sc[1]+' <span style="font-weight:400">'+arr.length+'</span>'; list.appendChild(h); arr.forEach(function(m){ list.appendChild(msgEl(m)); hibVisible.push(m.id); }); }); }
         else { var g={}; rest.forEach(function(m){ (g[m.proj]=g[m.proj]||[]).push(m); }); Object.keys(g).forEach(function(key){ var h=document.createElement('div'); h.className='hib-ghead'; h.innerHTML='<span class="gdot"></span>'+key+' <span style="font-weight:400">'+g[key].length+'</span>'; list.appendChild(h); g[key].forEach(function(m){ list.appendChild(msgEl(m)); hibVisible.push(m.id); }); }); } }
       window.hibSetStatus=function(k){ hibStatus=k; renderTabs(); renderList(); };
       window.hibToggleUnread=function(){ hibUnread=!hibUnread; renderHead(); renderList(); };
-      window.hibSetGroup=function(g,el){ hibGroup=g; var menu=$('hib-group-menu'); menu.querySelectorAll('.mi').forEach(function(x){x.textContent=x.textContent.replace('✓ ','');}); el.textContent='✓ '+el.textContent; $('hib-group-btn').textContent='⊟ '+(g==='none'?'时间':'项目')+' ▾'; menu.classList.remove('open'); renderList(); };
+      window.hibSetGroup=function(g,el){ hibGroup=g; var menu=$('hib-group-menu'); menu.querySelectorAll('.mi').forEach(function(x){x.textContent=x.textContent.replace('✓ ','');}); el.textContent='✓ '+el.textContent; $('hib-group-btn').textContent='⊟ '+({none:'时间',sched:'规划',project:'项目'}[g]||'时间')+' ▾'; menu.classList.remove('open'); renderList(); };
       window.hibToggleMenu=function(e){ e.stopPropagation(); $('hib-group-menu').classList.toggle('open'); };
       document.addEventListener('click',function(){ var m=$('hib-group-menu'); if(m) m.classList.remove('open'); });
       window.hibMarkAllRead=function(){ hibMsgs.forEach(function(m){m.unread=false;}); renderHead(); renderTabs(); renderList(); };
