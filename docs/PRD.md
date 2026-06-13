@@ -52,14 +52,14 @@
 |------|----------|----------|-----------|--------|-------|
 | AIOS 定位 | 本地智能 OS 层 | Agent 框架 | 办公 Agent | IDE + Agent | 纯云端 Agent |
 | 项目管理 | 四模式 Markdown 引擎 | — | 文档管理 | — | Playbook |
-| 两阶段模型 | planning → executing | — | — | — | — |
+| 无模式 Agent 编排 | 配执行/评估 Agent 自动调度 + 接力 | — | — | — | — |
 | 多 AI 工具调度 | MCP 统一 | 模型 Gateway | 多模型切换 | 内置 | 内置 |
 | 知识管道 | Materials→Reports→KB→Anki | — | — | — | — |
 | 窗口管理 | 有（内置） | — | — | — | — |
 | 番茄钟 | 有（内置） | — | — | — | — |
 | Today Dashboard | 有 | — | — | — | — |
 
-**差异化定位**：FocusPilot 是本地优先的智能 AIOS，唯一同时提供"四模式项目管理 + 两阶段 Agent 编排 + 窗口管理 + 番茄钟 + Today Dashboard"的桌面平台。
+**差异化定位**：FocusPilot 是本地优先的智能 AIOS，唯一同时提供"四模式项目管理 + 无模式 Agent 编排执行 + 窗口管理 + 番茄钟 + Today Dashboard"的桌面平台。
 
 ### 1.5 产品形态
 
@@ -123,49 +123,37 @@
 
 ## 3. 功能需求
 
-### 3.1 两阶段模型：规划 → 执行
+### 3.1 任务执行：Agent 配置驱动（无模式）
 
-任意节点（Project / Epic / US / Task / 自定义层级）都有两个阶段：
+任务执行**不分阶段、无执行模式**，行为完全由创建时的 Agent 配置隐式推导（权威定义见 [04-studio §3](fp-ui/04-studio.md)）：
+
+- **配执行 Agent**：任务拖入「待办」即被中央扫描器自动调度执行；留空则为纯手动卡片，靠人拖动状态。
+- **配评估 Agent（自动评估）**：每轮执行后评估 Agent 自动审查、执行 Agent 据意见修复，在「进行中 ⇄ 审核中」间接力，至多 N 轮。
+- **递归**：容器节点执行 = 其子节点依次执行（**V2**；V1 只执行当前节点自身）。
+
+**任务状态模型**：`status` 字段统一采用看板状态模型，主甬道 6 态（与 04-studio §2.4、各原型 `taskStatusDefs` 完全一致）：
 
 ```
-任意节点
-├── 规划阶段（人 + AI 协作）
-│   "这个 Epic 应该拆成哪些 US？"
-│   → AI 辅助拆分、细化、补全
-│   → 人确认、调整、批准
-│
-└── 执行阶段（AI 自主）
-    "规划好了，去做吧"
-    → FocusPilot 调度 Agent 执行
-    → 向下递归：容器执行 = 其子节点依次执行
+待规划(backlog) → 待办(todo) → 进行中(in_progress) ⇄ 审核中(in_review) → 已完成(done)；任意态 → 已阻塞(blocked)
 ```
 
-**统一状态流转**：
-```
-inbox → planning（规划中，人+AI 协作）→ ready（规划完毕，可执行）→ executing（AI 执行中）→ done / blocked
-```
+| 状态 | key | 说明 |
+|------|-----|------|
+| 待规划 | `backlog` | 待排期，未进入执行流 |
+| 待办 | `todo` | 拖入「待办」即被中央扫描器自动调度执行（取代原 `auto_execute` 字段；详见 [Studio 执行模型](fp-ui/04-studio.md) §3） |
+| 进行中 | `in_progress` | Agent 工作中，实时反馈进度；内部含 AI 评估接力（见 04-studio §3.4） |
+| 审核中 | `in_review` | 自动执行跑完一律落此态等人工确认；人回复即重新触发、回「进行中」 |
+| 已完成 | `done` | 人工确认通过 |
+| 已阻塞 | `blocked` | 外部依赖阻塞，解除后回来源状态 |
+| 容器节点执行 | — | 递归执行其子节点中所有 Task（**V2**；V1 只执行当前节点自身，见 04-studio §3.1/§15） |
 
-| 状态 | 说明 |
-|------|------|
-| `planning` | FocusPilot 提供对话式交互，AI 帮助拆分和细化 |
-| `ready` | 用户点击「执行」或设置 `auto_execute: true` 自动触发 |
-| `executing` | Agent 工作中，实时反馈进度 |
-| 容器节点执行 | 递归执行其子节点中所有 Task |
-
-**不同层级的两阶段行为**：
-
-| 颗粒度 | 规划阶段 AI 做什么 | 执行阶段 AI 做什么 |
-|--------|-------------------|-------------------|
-| Project | 拆分为 Epic / Phase / Task | 递归执行所有子节点 |
-| Epic / Phase | 拆分为 US / Task | 递归执行所有子节点 |
-| US | 拆分为 Task | 递归执行所有子 Task |
-| Task | 细化描述、补全验收标准 | 直接调度 Agent 完成 |
+> 终止态 `cancelled` 进入归档，不在主甬道常驻。**状态机/流转图/运行子状态的权威定义见 [04-studio §2.4](fp-ui/04-studio.md)**，本文不重复维护枚举。
 
 **对话式交互**：
 
-两个阶段都通过统一的**对话面板**进行，用户不需要感知 Skill、Agent 等技术概念：
-- 规划阶段：用户输入"帮我拆分这个 Epic" → Engine 理解意图 → 自动调用合适的能力 → 返回拆分建议 → 用户确认/调整
-- 执行阶段：用户输入"把这个 Task 交给代码工程师做" → Engine 理解意图 → 调度 Crew 成员执行 → 实时反馈
+任务的细化与执行都通过统一的**对话面板**进行，用户不需要感知 Skill、Agent 等技术概念——输入自然语言（如"帮我拆分这个 Epic"、"把这个 Task 交给代码工程师做"），Engine 理解意图、调用合适的能力或调度 Crew 执行并实时反馈。
+
+全局右下角提供快捷对话助手，作为同一对话面板的轻量入口。它不新增独立历史：Home 对话、快捷助手对话和 Studio 项目视图 Session 共享 `StudioSession`；在 Studio 中优先使用当前 Workspace，在其他页面发起的临时对话归属 `tmp-quick-chat` 临时 Workspace。快捷面板标题区下拉只用于选择已有历史，历史按 Workspace 分组并显示 Workspace 项目符号；`+` 新建时进入 `新对话` 草稿态，发送首条消息后自动从内容提取标题并锁定所选 Agent。
 
 ### 3.2 四种项目模式
 
@@ -176,7 +164,7 @@ Project/Epic/US/Task 是敏捷语境产物，不适用于所有场景。FocusPil
 ```
 Project → Epic → User Story → Task
 ```
-- 完整四级，planning 阶段 AI 按敏捷方法论引导拆分
+- 完整四级，AI 按敏捷方法论引导拆分（重规划引导）
 - 适用：软件开发、复杂工程项目
 
 #### 模式二：流程模式（Flow）— 阶段制项目
@@ -192,7 +180,7 @@ Project → Phase → Task
 ```
 Project → Task
 ```
-- 两级，无 planning 阶段（可选），快速进出
+- 两级，规划引导可选，快速进出
 - 适用：写一篇文章、处理一批数据、日常运维巡检
 
 #### 模式四：自由模式（Free）— 自定义层级
@@ -218,12 +206,12 @@ Project → 自由嵌套 → Task
 
 Task 的 frontmatter 通过 `status` + `scheduled_date` / `due_date` 形成**双轴管理**：
 
-- `status` 管**执行生命周期**：inbox → planning → ready → executing → done
+- `status` 管**执行生命周期**：待规划 → 待办 → 进行中 ⇄ 审核中 → 已完成（旁路 已阻塞）
 - `scheduled_date` / `due_date` 管**时间安排**：驱动任务在时间轴上的定位
 
-`schedule`（today / week / month / backlog）是 UI 派生字段（不持久化），由 `scheduled_date` / `due_date` 相对当前日期自动计算。过滤关系：`全局规划 ⊃ 本月计划 ⊃ 本周计划 ⊃ 今日聚焦`。
+`schedule`（today / week / month / backlog）是 UI 派生字段（不持久化），由 `scheduled_date` / `due_date` 相对当前日期自动计算。过滤关系：`今日聚焦 ⊂ 本周计划 ⊂ 本月计划 ⊂ 全局规划`（侧边栏按执行优先自上而下排列：今日聚焦 → 本周计划 → 本月计划 → 全局规划）。
 
-两者独立：一个 Task 可以 `status: ready` + `scheduled_date` 落在本周（UI 派生 `schedule: week`，本周要做，已规划好，等待执行）。
+两者独立：一个 Task 可以 `status: todo` + `scheduled_date` 落在本周（UI 派生 `schedule: week`，本周要做、等待调度执行）。
 
 | schedule 值 | 含义 | Dashboard 区域 |
 |------------|------|---------------|
@@ -236,17 +224,19 @@ Task 的 frontmatter 通过 `status` + `scheduled_date` / `due_date` 形成**双
 
 | 入口 | 交互 | 归属项目 |
 |------|------|---------|
-| Dashboard / Studio 看板「+ 新建任务」 | 输入内容 → 选择 Workspace（临时 / 本地项目 / Git 远程）→ 选择时间维度 | Workspace 必选，Project 可选 |
+| Dashboard / Studio 看板状态列标题栏 `+` | 输入内容 → 选择 Workspace（临时 / 本地项目 / Git 远程）→ 确认初始状态（从某列 `+` 创建时自动预选该列状态，否则默认待规划） | Workspace 必选，Project 可选 |
 | Studio 项目视图 / Session 右面板创建 | 当前 Workspace 已确定，创建弹窗灰色只读展示当前 Workspace | 自动继承当前 Workspace |
 | 项目树内右键创建 | 在某个项目/Epic/Phase 下创建 | 自动继承本地 Project Workspace |
 
+无项目上下文的快捷对话不创建 Task，默认创建到 `tmp-quick-chat` 临时 Workspace。后续如从对话中派生任务，再按 Task 创建规则选择或继承 Workspace。
+
 #### Studio 任务视图
 
-Studio 任务视图把计划范围和展示方式拆成两条轴：侧边栏 Scope 决定 `全局规划 / 本月计划 / 本周计划 / 今日聚焦 / 执行中 / 等我决策 / 来源` 等范围；主区域默认显示 `甘特规划`，并通过 `展示方式` 下拉在 `看板 / 列表 / 泳道` 间切换。切换展示方式不改变当前 Scope。看板主甬道固定显示为：待规划 / 待办 / 进行中 / 审核中 / 已完成 / 已阻塞；Task 卡片底部最后一行显示所属 Workspace 名称，便于跨项目扫描。
+Studio 任务视图把计划范围和视图模式拆成两条轴：侧边栏 Scope 决定 `今日聚焦 / 本周计划 / 本月计划 / 全局规划 / 执行中 / 等我决策 / 来源` 等范围和时间粒度（时间范围按执行优先自上而下排列，今日聚焦置顶，默认选中今日聚焦）；主区域顶部只保留一个低调的视图下拉，默认选中 `▦ 看板`。下拉菜单用灰色分组标题隔开，上方为 `执行视图`（`▦ 看板 / 田 泳道 / ☰ 列表`），下方为 `规划视图`（`▱ 时间轴`）。顶部保留 `目标` 筛选，并把旧 `来源` 改为组合 `筛选` 入口：一级栏目为 `项目 / Agent / 优先级 / 标签 / 负责人 / 创建者`，二级选项支持多选，栏目内 OR、栏目间 AND，一级栏目显示已选数量，并同步作用于时间轴、看板、列表和泳道；时间范围不在顶部重复出现。切换视图模式不改变当前 Scope。看板主甬道固定显示为：待规划 / 待办 / 进行中 / 审核中 / 已完成 / 已阻塞；Task 卡片底部最后一行显示所属 Workspace 名称，便于跨项目扫描；卡片可拖到其他状态列，drop 后只改变任务状态。分组控件不再挂在全局工具栏，而是**内嵌于各视图自身头部**（统一形态：`分组方式` 文字标签 + 扁平下拉），因此切换视图时全局工具栏（视图下拉 / 目标 / 筛选）布局保持稳定。泳道采用参考 Multica 的**整行横幅**布局：顶部一行为状态列表头，每个分组各占一整行横幅（横跨所有状态列，含折叠箭头 + 名称 + 计数），横幅下方卡片按状态列排布，**点击整行横幅即可折叠/展开**，横幅左侧拖拽柄（⠿）**可上下拖动调整分组顺序**（参考 Multica，自定义顺序按分组维度记忆）；泳道头部提供 `▤ Workspace / ◉ 执行 Agent / ↳ 父级任务 / ◎ 负责人` 分组下拉；Workspace 分组时 drop 后同步改变任务归属与状态，Agent / 父级任务 / 负责人分组时分别同步对应字段与状态。列表模式头部同样提供分组下拉（`◉ 按状态 / ▱ 按目标 / ▤ 按项目 / ◈ 执行 Agent / ◎ 负责人`，**默认按状态**），采用单表格单列头（列标题只在最顶显示一次、不在每组重复），分组以整行标题分隔、可点击三角（已放大）折叠/展开，**分组标题前提供勾选框**实现该组全选/取消（部分选中显示 indeterminate），**顶部列头行提供总全选框**（全部可见全选）；列表还提供行首每行复选框、已选计数，并支持批量修改状态、优先级、负责人和删除。时间轴分组下拉为 `▤ 按项目 / ▱ 按目标`，**默认按项目**，按项目时每个项目行可折叠/展开。各视图均以 `+` 就地新建并带入对应上下文：看板各状态列 `+`（预选该列状态）、泳道每个「分组×状态」单元格底部 `+`（预选分组维度值 + 状态）、列表每个分组头 `+`（预选分组维度值）。看板视图无分组控件。
 
-**甘特规划：四级同构甘特**
+**时间轴：四级同构甘特**
 
-甘特规划统一采用「左侧任务列表 + 右侧甘特时间轴」布局，四种模式按时间粒度递进：
+时间轴视图统一采用「左侧任务列表 + 右侧甘特时间轴」布局，四种模式按时间粒度递进：
 
 | 侧边栏选择 | 展示模式 | 甘特列 |
 |---|---|---|
@@ -255,7 +245,11 @@ Studio 任务视图把计划范围和展示方式拆成两条轴：侧边栏 Sco
 | 本周计划 | 按天分组 + 天级甘特 | 天列(7) |
 | 今日聚焦 | 任务列表 + 小时级甘特 | 小时列(10) |
 
+时间轴默认按目标树展示；切换为 `▤ 按项目` 后以 Workspace/项目为行轴，右侧仍使用同一甘特时间轴定位任务，用于跨项目查看同一计划范围内的排期分布。
+
 **本月计划过滤规则**：按日历月过滤，显示 `goal.month = 当前月` 的任务 + 未关联目标中 `schedule ∈ {today, week, month}` 的任务。非当月目标容器及其任务整体隐藏。
+
+**任务管理能力**：任务详情面板支持字段内联编辑（状态/优先级/标签/安排/执行 Agent/归属目标，点击就地弹下拉，标签为多值可加删）与删除（二次确认）；看板/泳道/列表三视图均支持**同状态（同分组）内拖拽调整卡片顺序**（跨列拖拽仍改状态/分组）。详见 [04-studio §7.4 / §6 视图](fp-ui/04-studio.md)。
 
 ### 3.4 Crew 数字团队
 
@@ -335,7 +329,7 @@ Crew 是 FocusPilot 的核心交互概念——**用户不直接面对 Agent/MCP
 
 | 任务类型 | 来源 | 触发方式 |
 |---------|------|---------|
-| 项目 Task（一次性） | 用户在对话面板中派遣，或从 Kanban 拖拽分配 | 手动 / auto_execute |
+| 项目 Task（一次性） | 用户在对话面板中派遣，或从 Kanban 拖拽分配 | 手动 / 拖入「待办」自动调度 |
 | 常驻职责（周期性） | 用户在 Crew 成员详情页配置 | cron 定时 / 事件触发 |
 
 **AICrew 侧边栏**：
@@ -553,37 +547,37 @@ Crew 常驻职责（定时收集）           用户（每日 Review）
 
 **Agile**：
 ```
-▾ 📁 FocusPilot V1                      [planning]
-    ▾ 🎯 Epic: Engine 基础架构          [ready]
-        ▾ 💼 US: 项目引擎               [executing]
+▾ 📁 FocusPilot V1                      [backlog]
+    ▾ 🎯 Epic: Engine 基础架构          [todo]
+        ▾ 💼 US: 项目引擎               [in_progress]
             📄 Task: frontmatter 解析    [done ✓]
-            📄 Task: 目录扫描            [executing 🔄]
+            📄 Task: 目录扫描            [in_progress 🔄]
 ```
 
 **Flow**：
 ```
-▾ 📁 Q2 大客户跟踪                     [executing]
+▾ 📁 Q2 大客户跟踪                     [in_progress]
     ▸ 📊 Phase 1: 数据收集     ████████░░ 80%
     ▾ 📊 Phase 2: 分析报告     ██░░░░░░░░ 20%
         📄 拉取 CRM 数据                 [done ✓]
-        📄 生成客户画像                   [executing 🔄]
+        📄 生成客户画像                   [in_progress 🔄]
 ```
 
 **Lite**：
 ```
-▾ 📁 重构登录模块                       [executing]
+▾ 📁 重构登录模块                       [in_progress]
     📄 分析现有代码                       [done ✓]
-    📄 实现 JWT 认证                     [executing 🔄]
+    📄 实现 JWT 认证                     [in_progress 🔄]
 ```
 
 **Free**：
 ```
-▾ 📁 学术论文                           [planning]
+▾ 📁 学术论文                           [backlog]
     ▾ 📂 文献综述
         📄 搜索相关论文                   [done ✓]
     ▾ 📂 实验
         ▾ 📂 实验设计
-            📄 定义变量                   [ready]
+            📄 定义变量                   [todo]
 ```
 
 #### 3.7.2 Crew 侧边栏
@@ -720,6 +714,17 @@ agent_runs: 4
 
 **升级说明**：悬浮球 Agent 角标将从"AI 会话数"扩展为"执行中 Task 数"，不区分项目模式。
 
+### 3.11 悬浮球新形态（设计原型）
+
+新形态在 [`docs/fp-ui/floating-ball-options-prototype.html`](fp-ui/floating-ball-options-prototype.html) 中迭代，已收敛以下设计决策：
+
+- **Doubao 式 hover 浮层**：移入自动展开、移走延迟收起、点击浮球切换展开。菜单收束为三项一级入口：`实时状态`、`今日聚焦`、`本周计划`（番茄钟不再单列，已并入 Focus Bar）。
+- **全局快捷聊天助手**：面向全部项目 / Workspace / 运行状态，不默认绑定当前任务，仅提供范围筛选。
+- **Focus Bar（实时状态）**：菜单「实时状态」打开整页浮出的状态条，条内可点 × 关闭。状态项按 `待规划 · 进行中 · 审核中 · 已完成 ┃ 今日聚焦` 分组（执行流水在前、聚焦在后，中间分隔符），各状态用不同颜色标记、数字放大；每组 hover 下拉列任务。状态词汇与 §3.1.x 看板 6 态（待规划/待办/进行中/审核中/已完成/已阻塞）对齐。
+- **番茄钟入栏**：Focus Bar 右侧承载番茄钟。待命态显示「开始专注 / 休息」双按钮（分别弹方案弹窗，选完即开始，不自动弹引导步骤）；专注中点状态块弹「停止 / 暂停」，休息中点状态块弹当前休息动作 + 暂停/停止；点弹窗外空白处自动关闭。
+- **任务详情卡片**：状态条分组、菜单二级列表点任意任务，统一右下角浮出**悬浮卡片**（非全屏抽屉，不接管整屏、点外部即关），内容与主看板任务详情一致（标题+状态、运行块、任务描述、执行轮次时间线、属性 chip 条），不再二次跳转 Studio。
+- **任务字段内联编辑**：详情卡片的属性 chip 条中，`状态 / 优先级 / Agent / 调度 / 评估` 可点击就地弹下拉修改，状态遵循看板 6 态流转（待规划/待办/进行中/审核中/已完成/已阻塞，与 00-layout `taskStatusDefs` 一致）；系统自动流转（启动→进行中、完成→审核中）与手动修改走同一套机制。每个可枚举字段以 `{ key → label }` 模型驱动，存储 key 而非展示串。
+
 ---
 
 ## 4. 数据模型
@@ -759,7 +764,7 @@ agent_runs: 4
 ---
 type: project
 mode: agile              # agile / flow / lite / free
-status: planning         # inbox → planning → ready → executing → done / blocked
+status: backlog          # backlog → todo → in_progress ⇄ in_review → done / blocked
 priority: normal         # low / normal / high / urgent
 tags: [backend, auth]
 created_date: 2026-04-01
@@ -775,7 +780,7 @@ pipeline:
 ```yaml
 ---
 type: task
-status: ready
+status: todo
 schedule: today          # today / week / month / backlog
 priority: normal
 tags: [backend]
@@ -783,15 +788,14 @@ created_date: 2026-04-01
 code_path:               # 关联代码仓库路径（可选）
 parent_project:
 skill:                   # 默认根据上下文推断
-agent:                   # 默认用首选 Agent
-auto_execute: false
+agent:                   # 默认用首选 Agent（执行 Agent；留空=手动卡片）
 ---
 把登录接口从 session 改为 JWT，保持向后兼容
 ```
 
 **执行策略字段说明**：
-- `skill` / `agent` 不填时，Engine 按默认策略推断
-- `auto_execute: true` 时，状态流转到 `executing` 自动触发 Agent
+- `skill` / `agent` 不填时，Engine 按默认策略推断；`agent` 留空 = 手动卡片、不自动调度
+- **自动执行靠"拖入「待办」"触发**（取代原 `auto_execute` 字段）：配了执行 Agent 的任务拖到「待办」即被中央扫描器调度（见 04-studio §3）
 - 遵循「克制」原则：默认覆盖 90% 场景，高级用户可通过 frontmatter 精确控制
 
 **Task 不是"代码指令"，而是"意图指令"**：
@@ -861,7 +865,7 @@ POST   /api/agents/sessions/{id}/stop   # 终止会话
 3. 从 Registry 选择 MCP Server（V1 默认 claude-code）
 4. 通过 MCP 协议启动 Agent 会话
 5. 实时通过 WebSocket 推送进度事件
-6. 完成后 PATCH Task frontmatter：`status: executing → done`
+6. 完成后 PATCH Task frontmatter：`status: in_progress → in_review`（人工确认通过后 → done）
 
 **与现有 coder-bridge 的关系**：
 - V1 初期：coder-bridge 保留兼容，Engine 新增 MCP 通道
@@ -991,7 +995,7 @@ FocusPilot.app
 |------|---------|---------|
 | **Engine 基础** | FastAPI 服务 + 健康检查 + WebSocket | — |
 | **项目引擎** | Markdown CRUD + frontmatter + 目录扫描 + FSEvents + 四模式 | 全文搜索 |
-| **两阶段模型** | planning → ready → executing → done 状态流转 | 容器级递归自动执行 |
+| **无模式 Agent 编排** | 配执行/评估 Agent 隐式驱动，看板状态自动流转 | 容器级递归自动执行 |
 | **四模式** | Agile / Flow / Lite / Free 创建 + 展示 + 规划引导 | 模式切换迁移 |
 | **MCP Host** | 单 Agent 调度（claude-code） | 多 Agent 并行、自动选择 |
 | **Crew 数字团队** | 预置"代码工程师"1 个成员 + 侧边栏智能体成员/Runtime 双 Tab + 成员工作区三 Tab（概览/Tasks/配置）+ Runtime 单页监控（Header/执行器表格/Daemon 日志）+ crewState 统一状态管理 + MCP 状态 + 常驻职责配置 UI | 云端成员执行、多 Agent 自动选择、后台常驻调度 |
@@ -1130,7 +1134,7 @@ make full-install   # Swift App + Engine 一起安装
 | Pipeline | 知识管道编排链（collect→integrate→distill→sync） |
 | Dashboard | Today 驾驶舱，四维时间管理视图 |
 | Task 双轴 | status（执行生命周期）+ schedule（时间安排） |
-| 两阶段模型 | 规划（人+AI 协作）→ 执行（AI 自主） |
+| 无模式 Agent 编排 | 配执行 Agent 自动调度 + 配评估 Agent 评估接力 |
 | 四模式 | Agile / Flow / Lite / Free 项目组织模式 |
 | KB 卡片 | 知识卡片，原子化要点，可同步 Anki |
 | Actionable | 需要用户处理的状态（计入角标） |

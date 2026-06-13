@@ -407,10 +407,10 @@
             </div>
             <div class="body">
               <div class="overline">Scenario Prompt</div>
-              <div class="prompt">假设一个任务正在 `in_evaluation`，这时发现执行结果依赖的接口挂了。你会把它改成 `todo`、`blocked` 还是继续留在 `in_evaluation`？请说明理由。</div>
+              <div class="prompt">假设一个任务正在 `in_review`，这时发现执行结果依赖的接口挂了。你会把它改成 `todo`、`blocked` 还是继续留在 `in_review`？请说明理由。</div>
               <div class="desc">这类题不看你会不会背定义，而看你能不能在真实情境里选对动作，并给出判断依据。</div>
               <div class="answer-box">
-                我会改成 `blocked`，并记录 `blocked_from_status = in_evaluation`。<br><br>
+                我会改成 `blocked`，并记录 `blocked_from_status = in_review`。<br><br>
                 因为这不是回到“待做”，而是评估阶段被外部条件卡住。之后恢复时应该继续从评估阶段往下走，而不是丢失上下文。
               </div>
             </div>

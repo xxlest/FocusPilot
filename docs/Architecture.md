@@ -885,7 +885,7 @@ struct WorkItem: Identifiable, Codable {
     var title: String
     var itemType: ItemType                  // epic | story | task | subtask | group
     var itemRole: ItemRole                  // container | executable | hybrid
-    var status: WorkItemStatus              // backlog | todo | in_progress | in_evaluation | done | blocked | cancelled
+    var status: WorkItemStatus              // backlog | todo | in_progress | in_review | done | blocked | cancelled
     var priority: Priority                  // p0 | p1 | p2
     var executionMode: ExecutionMode        // none | manual | semi_auto | auto
     var evaluationEnabled: Bool
@@ -907,7 +907,7 @@ struct WorkItem: Identifiable, Codable {
 }
 
 enum WorkItemStatus: String, Codable {
-    case backlog, todo, in_progress, in_evaluation, done, blocked, cancelled
+    case backlog, todo, in_progress, in_review, done, blocked, cancelled
 }
 
 enum ExecutionMode: String, Codable {
@@ -931,7 +931,13 @@ enum WorkspaceType: String, Codable {
 ```
 
 **Workspace 项目规则**：
-- Studio 任务视图和项目视图共享同一批 WorkItem，均通过 `workspaceRef.id` 过滤和同步状态；任务视图内的看板 / 列表 / 泳道只是同一 Scope 的展示方式
+- Studio 任务视图和项目视图共享同一批 WorkItem，均通过 `workspaceRef.id` 过滤和同步状态；任务视图内的时间轴 / 看板 / 泳道 / 列表只是同一 Scope 的显示模式
+- Studio 任务视图顶部 `studioDisplayDropdown` 是唯一视图模式入口，默认 `board`；菜单按 `执行视图`（board / swimlane / list）在上、`规划视图`（gantt 时间轴）在下分组展示。左侧 Scope 负责时间范围和时间粒度；顶部保留 `目标` 筛选，并把旧 `来源` 替换为组合 `筛选` 入口，支持按项目、Agent、优先级、标签、负责人、创建者进行二级多选过滤，复用同一 predicate 刷新时间轴、看板、列表和泳道
+- 时间轴通过 `timelineGroupMode`（**默认 `project`**）切换行轴：`goal` 展示目标树甘特，`project` 按 `workspaceRef.id` / `projectId` 聚合为 Workspace/项目行，并继续复用当前 Scope、目标、组合筛选；按项目时每个项目行三角调 `toggleTimelineGroupCollapsed(groupKey)` 折叠/展开（状态存于 `timelineCollapsedGroups`，折叠时左右两栏行高压缩为单行、不渲染甘特条）
+- 时间轴子视图（年/月/周/日 `fp-year|fp-month|fp-week|fp-day` 与按项目 `fp-project-timeline`）共用 `.fp-sub` 容器，可见性由单一入口 `syncTimelineSubVisibility()` 控制：`gantt + project` → `fp-project-timeline`，否则按当前 Scope 映射到对应粒度子视图，**始终只显示一个**。`applyFocusFilter` 切 Scope 和 `renderTimelineProjectGrouping` 切分组都调用它，避免出现多个子视图叠加（`.fp-sub` 无 `display:none` 基础 CSS，禁止直接把某个子视图 `style.display` 置空，否则会回退到 `block` 造成重叠）
+- 看板视图固定为 6 个状态列，不再暴露分组按钮；卡片拖到其他状态列时只更新 `status`，再刷新看板、列表、泳道和项目任务投影
+- 泳道视图采用 Multica 整行横幅布局（`.swimlane-grid` 为 `repeat(6, 1fr)` 状态列网格，分组横幅用 `.swimlane-band { grid-column:1/-1 }` 横跨全部列，状态表头 `.swimlane-head` sticky）；通过 `swimlaneGroupMode` 切换分组维度：`workspace` 按 Workspace、`agent` 按执行 Agent、`parent` 按父级任务、`owner` 按负责人聚合；卡片跨 `.swimlane-cell` 拖拽时同步更新 `status` 与对应维度字段（workspace→`workspaceRef.id`、agent→`primaryAgentID/agent`、parent/owner→对应字段）；点击整行横幅触发 `toggleSwimlaneGroupCollapsedFromBand` 折叠/展开（状态存于 `swimlaneCollapsedGroups`，按 `mode::groupKey` 索引）；横幅左侧 `.swimlane-band-handle`（`draggable`）发起分组排序拖拽，落在其它横幅上调 `reorderSwimlaneGroup(draggedKey, targetKey, after)`，自定义顺序按 `swimlaneGroupMode` 存于 `swimlaneGroupOrder`，渲染时已保存顺序在前、新分组按字母补后（卡片单元格拖拽处理用 `swimlaneBandDraggedKey` 守卫，避免与分组排序冲突）；每个单元格底部 `.swimlane-add` 调 `openSwimlaneCellTask(status, groupKey)` 就地新建并带入上下文
+- 列表视图通过 `listGroupMode`（`status`/`goal`/`project`/`agent`/`owner`，**默认 `status`**）分组，`setListGroupMode` 切换并重渲染至内层容器 `#fp-list-body`（保留 `#focus-list` 顶部 `分组方式` 下拉不被覆盖）；状态分组沿用 `taskStatusDefs` 顺序与配色并保留空分组；渲染为**单 `<table>`**：列头 `thead`（含总全选框 `#fp-list-select-all` 调 `toggleAllVisibleListTasks`）只在最顶出现一次，分组用整行 `<tr class="fp-list-group-row"><td colspan>` 标题分隔，数据行紧随其后；分组头三角调 `toggleListGroupCollapsed` 折叠（状态存于 `listCollapsedGroups`），右侧 `+` 调 `openListGroupTask(groupKey)` 就地新建；分组标题前的 `.fp-list-group-check` 调 `toggleListGroupSelection(groupKey)` 对该组全选/取消（复用全局 `getListGroupKey` 计算分组成员，部分选中渲染后置 `indeterminate`，总全选框同理）；行首每行复选框、多选状态和批量操作入口可批量更新 `status`、`priority`、`owner` 或删除 WorkItem
 - 跨项目看板卡片底部必须展示 `workspaceRef.id` 对应的 Workspace 名称，避免只显示类型图标导致归属不清
 - 临时 Workspace：系统生成 ID，并在默认 Workspace 根目录下物化
 - 本地项目 Workspace：`workspaceRef.id` 与本地 Project/目录一致
@@ -993,6 +999,12 @@ enum LeaseStatus: String, Codable {
 ### StudioSession
 
 ```swift
+enum SessionEntrySource: String, Codable {
+    case studio
+    case home
+    case quickChat = "quick_chat"
+}
+
 struct StudioSession: Identifiable, Codable {
     let id: String
     var title: String
@@ -1000,10 +1012,27 @@ struct StudioSession: Identifiable, Codable {
     var workdir: String
     var crewMemberID: String?
     var runtime: RuntimeType                // claude_code | codex_cli | gemini_cli
+    var entrySource: SessionEntrySource     // studio | home | quick_chat
     var status: SessionStatus               // active | idle | done | ended
     var lastActivityAt: Date                // 最近对话/任务投递时间；项目视图按此倒序展示最近 5 条
 }
 ```
+
+`SessionEntrySource` 只记录创建入口，不决定历史归属。历史归属始终由 `workspaceID` 决定：Studio 当前 Workspace 发起的快捷对话写入当前 Workspace；其他页面的快捷对话写入固定临时 Workspace `tmp-quick-chat`。
+
+### QuickChatState
+
+```swift
+struct QuickChatState {
+    var isPanelOpen: Bool
+    var activeSessionID: String?
+    var draftTitle: String                  // 无 activeSessionID 时固定显示 "新对话"
+    var historySelectValue: String?         // 仅指向 StudioSession.id；空值表示未选择历史
+    var defaultWorkspaceID: String          // Studio 当前 Workspace 或 tmp-quick-chat
+}
+```
+
+快捷助手、Home 对话视图和 Studio 项目视图共享 `StudioSession` 仓库。快捷助手只保存 UI 状态；标题区历史下拉只用于选择已有 `StudioSession`，不承载新建动作；历史候选按 Workspace 分组，并显示 Workspace 项目符号。点击 `+` 进入 `新对话` 草稿，发送首条消息时才创建 Session，并用首条内容提取标题；之后 Agent 锁定并复用该 Session 的 transcript。
 
 ### Task / Session / Run 关系
 
