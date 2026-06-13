@@ -153,7 +153,7 @@
 
 任务的细化与执行都通过统一的**对话面板**进行，用户不需要感知 Skill、Agent 等技术概念——输入自然语言（如"帮我拆分这个 Epic"、"把这个 Task 交给代码工程师做"），Engine 理解意图、调用合适的能力或调度 Crew 执行并实时反馈。
 
-全局右下角提供快捷对话助手，作为同一对话面板的轻量入口。它不新增独立历史：Home 对话、快捷助手对话和 Studio 项目视图 Session 共享 `StudioSession`；在 Studio 中优先使用当前 Workspace，在其他页面发起的临时对话归属 `tmp-quick-chat` 临时 Workspace。快捷面板标题区下拉只用于选择已有历史，历史按 Workspace 分组并显示 Workspace 项目符号；`+` 新建时进入 `新对话` 草稿态，发送首条消息后自动从内容提取标题并锁定所选 Agent。
+全局右下角提供快捷对话助手，作为同一对话面板的轻量入口（Home 不再提供独立对话入口，自由对话统一由快捷助手承载）。它不新增独立历史：快捷助手对话和 Studio 项目视图 Session 共享 `StudioSession`；在 Studio 中优先使用当前 Workspace，在其他页面发起的临时对话归属 `tmp-quick-chat` 临时 Workspace。快捷面板标题区下拉只用于选择已有历史，历史按 Workspace 分组并显示 Workspace 项目符号；`+` 新建时进入 `新对话` 草稿态，发送首条消息后自动从内容提取标题并锁定所选 Agent。
 
 ### 3.2 四种项目模式
 
