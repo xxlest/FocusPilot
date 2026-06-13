@@ -789,6 +789,35 @@
         font-size: 11px;
         white-space: nowrap;
       }
+      /* 详情面板可编辑字段 + 字段下拉 + 标签 */
+      .fp-editable { cursor: pointer; position: relative; }
+      .fp-editable::after { content: " ▾"; font-size: 9px; color: var(--dim); }
+      .fp-editable:hover { filter: brightness(1.08); outline: 1px dashed var(--line); outline-offset: 1px; border-radius: 4px; }
+      .fp-field-menu {
+        position: absolute; display: none; min-width: 150px; max-height: 240px; overflow-y: auto;
+        padding: 5px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface);
+        box-shadow: 0 16px 44px rgba(0,0,0,.3); z-index: 20;
+      }
+      .fp-field-menu.open { display: block; }
+      .fp-field-item {
+        display: flex; align-items: center; gap: 7px; width: 100%; padding: 6px 8px; border: 0;
+        border-radius: 7px; background: transparent; color: var(--text); font-size: 12px; text-align: left;
+        white-space: nowrap; cursor: pointer; font-family: var(--sans);
+      }
+      .fp-field-item:hover { background: var(--elevated); }
+      .fp-field-item .tick { width: 12px; color: var(--accent); flex: 0 0 auto; }
+      .fp-tag {
+        display: inline-flex; align-items: center; gap: 3px; padding: 2px 6px; margin: 0 4px 4px 0;
+        border-radius: 5px; background: var(--elevated); font-size: 10px; color: var(--muted);
+      }
+      .fp-tag b { font-weight: 500; }
+      .fp-tag .x { cursor: pointer; color: var(--dim); font-weight: 700; }
+      .fp-tag .x:hover { color: var(--red); }
+      .fp-tag-add {
+        display: inline-flex; align-items: center; padding: 2px 7px; border-radius: 5px;
+        border: 1px dashed var(--line); background: transparent; color: var(--dim); font-size: 10px; cursor: pointer;
+      }
+      .fp-tag-add:hover { color: var(--accent); border-color: var(--accent-line); }
       .pill.blue {
         border-color: var(--accent-line);
         color: var(--accent);
@@ -4184,6 +4213,7 @@
               <div style="cursor:pointer;color:var(--dim);font-size:16px" onclick="closeTaskDetail()">✕</div>
               <div style="flex:1"><div class="fp-detail-id" style="font-size:10px;font-family:var(--mono);color:var(--dim)">FP-002</div><div class="fp-detail-title" style="font-size:15px;font-weight:600">看板状态模型实现</div></div>
               <span class="pill blue" style="font-size:11px">● In Progress</span>
+              <button class="btn" title="删除任务" onclick="deleteCurrentTask()" style="min-height:28px;padding:0 9px;color:var(--red);border-color:rgba(248,113,113,.3)">🗑 删除</button>
             </div>
             <div style="background:var(--elevated);border:1px solid var(--line);border-radius:var(--radius);padding:10px 14px;margin:12px 18px 0;font-size:11px">
               <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><span style="width:7px;height:7px;border-radius:50%;background:var(--green);animation:pulse 2s infinite"></span><strong>代码工程师</strong><span style="color:var(--dim)">· Running · 00:03:42 · 步骤 3/5</span></div>
@@ -4208,19 +4238,21 @@
                   <button class="btn primary" style="font-size:11px;min-height:30px">↑ 发送</button>
                 </div>
               </div>
-              <div id="fpDetailAttrs" style="width:200px;border-left:1px solid var(--line-soft);padding:14px;overflow-y:auto;font-size:11px">
-                <div style="margin-bottom:12px"><div style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);margin-bottom:3px">状态</div><span class="pill blue fp-detail-status">in_progress</span></div>
-                <div style="margin-bottom:12px"><div style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);margin-bottom:3px">优先级</div><span class="pill fp-detail-priority" style="background:rgba(248,113,113,.15);color:var(--red)">P0</span></div>
-                <div style="margin-bottom:12px"><div style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);margin-bottom:3px">安排</div><span class="fp-detail-schedule">本周</span></div>
+              <div id="fpDetailAttrs" style="width:200px;border-left:1px solid var(--line-soft);padding:14px;overflow-y:auto;font-size:11px;position:relative">
+                <div style="margin-bottom:12px"><div style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);margin-bottom:3px">状态</div><span class="pill blue fp-detail-status fp-editable" data-edit-field="status">in_progress</span></div>
+                <div style="margin-bottom:12px"><div style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);margin-bottom:3px">优先级</div><span class="pill fp-detail-priority fp-editable" data-edit-field="priority" style="background:rgba(248,113,113,.15);color:var(--red)">P0</span></div>
+                <div style="margin-bottom:12px"><div style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);margin-bottom:3px">安排</div><span class="fp-detail-schedule fp-editable" data-edit-field="schedule">本周</span></div>
+                <div style="margin-bottom:12px"><div style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);margin-bottom:3px">标签</div><span class="fp-detail-tags" id="fp-detail-tags"></span></div>
                 <div style="height:1px;background:var(--line-soft);margin:10px 0"></div>
                 <div style="margin-bottom:12px"><div style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);margin-bottom:3px">Workspace</div><span class="fp-detail-wstype">📁 本地项目</span></div>
                 <div style="margin-bottom:12px"><div style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);margin-bottom:3px">项目</div><span class="fp-detail-project" style="color:var(--dim)">FocusPilot</span></div>
-                <div style="margin-bottom:12px"><div style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);margin-bottom:3px">归属目标</div><span class="fp-detail-goal" style="color:var(--dim)">5月</span><br>FocusPilot 0.0.1</div>
+                <div style="margin-bottom:12px"><div style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);margin-bottom:3px">归属目标</div><span class="fp-detail-goal fp-editable" data-edit-field="goal" style="color:var(--dim)">5月/FP 0.0.1</span></div>
                 <div style="height:1px;background:var(--line-soft);margin:10px 0"></div>
                 <div style="margin-bottom:12px"><div style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);margin-bottom:3px">调度</div><span class="fp-detail-execmode">自动调度</span></div>
                 <div style="margin-bottom:12px"><div style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);margin-bottom:3px">评估 Agent</div><span>质量审查员 · 3 轮</span></div>
-                <div style="margin-bottom:12px"><div style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);margin-bottom:3px">Agent</div><span class="fp-detail-agent">代码工程师</span></div>
+                <div style="margin-bottom:12px"><div style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);margin-bottom:3px">Agent</div><span class="fp-detail-agent fp-editable" data-edit-field="agent">代码工程师</span></div>
                 <div style="margin-bottom:12px"><div style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);margin-bottom:3px">截止</div><span class="fp-detail-date" style="font-family:var(--mono)">2026-04-20</span></div>
+                <div id="fpFieldMenu" class="fp-field-menu"></div>
               </div>
             </div>
           </div>
@@ -6742,8 +6774,8 @@ FocusPilot/
     <script>
       /* ═══ Unified Work Items Data Source ═══ */
       var workItems = [
-        { id: 'FP-001', title: '数据模型设计', status: 'done', priority: 'p0', projectId: 'FocusPilot', workspaceType: 'local_project', executionMode: 'auto', schedule: '', month: '', goal: '4月/FP 0.0.1', agent: '代码工程师', date: '04-15' },
-        { id: 'FP-002', title: '看板状态模型实现', status: 'in_progress', priority: 'p0', projectId: 'FocusPilot', workspaceType: 'local_project', executionMode: 'auto', schedule: 'week', month: '5', goal: '5月/FP 0.0.1', agent: '代码工程师', agentStatus: 'Agent 执行中', date: '05-25' },
+        { id: 'FP-001', title: '数据模型设计', status: 'done', priority: 'p0', projectId: 'FocusPilot', workspaceType: 'local_project', executionMode: 'auto', schedule: '', month: '', goal: '4月/FP 0.0.1', agent: '代码工程师', date: '04-15', tags: ['架构','backend'] },
+        { id: 'FP-002', title: '看板状态模型实现', status: 'in_progress', priority: 'p0', projectId: 'FocusPilot', workspaceType: 'local_project', executionMode: 'auto', schedule: 'week', month: '5', goal: '5月/FP 0.0.1', agent: '代码工程师', agentStatus: 'Agent 执行中', date: '05-25', tags: ['backend','状态管理'] },
         { id: 'FP-003', title: 'Agent Pull 执行管道', status: 'todo', priority: 'p1', projectId: 'FocusPilot', workspaceType: 'local_project', executionMode: 'auto', run_substate: 'waiting_local_directory', schedule: 'week', month: '5', goal: '5月/AI', agent: '代码工程师', date: '05-28' },
         { id: 'FP-004', title: 'Terminal 手动执行模式', status: 'todo', priority: 'p1', projectId: 'FocusPilot', workspaceType: 'local_project', executionMode: 'manual', schedule: 'week', month: '5', goal: '5月/AI', agent: '', date: '05-29' },
         { id: 'FP-005', title: '规划引擎接口设计', status: 'in_review', priority: 'p0', projectId: 'git-focuspilot-ai', workspaceType: 'git_project', executionMode: 'auto', schedule: 'week', month: '5', goal: '5月/AI', agent: '代码工程师', decision: true, date: '05-26' },
@@ -7427,6 +7459,29 @@ FocusPilot/
         if (lane) lane.classList.remove('drag-over');
       }
 
+      // 同状态/同分组内拖拽排序工具：按落点 Y 找应插入到哪张卡之前
+      function getDropBeforeId(container, clientY, excludeId, selector) {
+        var cards = Array.prototype.slice.call(container.querySelectorAll(selector || '.fp-card'));
+        for (var i = 0; i < cards.length; i++) {
+          if (cards[i].dataset.taskId === excludeId) continue;
+          if (cards[i].style.display === 'none') continue;
+          var r = cards[i].getBoundingClientRect();
+          if (clientY < r.top + r.height / 2) return cards[i].dataset.taskId;
+        }
+        return null; // 落在末尾
+      }
+      // 把 taskId 移到 beforeId 之前（beforeId 为空=移到末位）。渲染按 workItems 顺序分组，故重排数组=重排卡片
+      function reorderWorkItemBefore(taskId, beforeId) {
+        var moved = null, i;
+        for (i = 0; i < workItems.length; i++) { if (workItems[i].id === taskId) { moved = workItems[i]; break; } }
+        if (!moved) return;
+        workItems.splice(i, 1);
+        if (beforeId && beforeId !== taskId) {
+          for (var j = 0; j < workItems.length; j++) { if (workItems[j].id === beforeId) { workItems.splice(j, 0, moved); return; } }
+        }
+        workItems.push(moved);
+      }
+
       function handleKanbanDrop(event) {
         event.preventDefault();
         var lane = event.currentTarget || (event.target && event.target.closest('.lane'));
@@ -7436,10 +7491,47 @@ FocusPilot/
         taskId = taskId || kanbanDraggedTaskId;
         kanbanDraggedTaskId = '';
         var targetStatus = lane.dataset.kanbanStatus;
-        var item = moveWorkItemToStatus(taskId, targetStatus);
+        var item = workItems.find(function(w) { return w.id === taskId; });
         if (!item) return;
+        var prevWs = item.projectId;
+        var statusChanged = item.status !== targetStatus;
+        var beforeId = getDropBeforeId(lane, event.clientY, taskId, '.fp-card');  // 同列内落点
+        item.status = targetStatus;
+        reorderWorkItemBefore(taskId, beforeId);                                  // 调整顺序
+        refreshTaskProjectionsForMove(prevWs, item.projectId);
         var statusDef = taskStatusDefs.find(function(def) { return def.status === targetStatus; });
-        showToast('已移动 ' + taskId + ' 到 ' + (statusDef ? statusDef.label : targetStatus));
+        showToast(statusChanged ? ('已移动 ' + taskId + ' 到 ' + (statusDef ? statusDef.label : targetStatus)) : ('已调整 ' + taskId + ' 顺序'));
+      }
+
+      // 列表视图：行拖拽排序（对齐目标所在分组 + 同组内重排）
+      var listDraggedTaskId = '';
+      function handleListDragStart(event, id) {
+        listDraggedTaskId = id;
+        if (event.dataTransfer) { event.dataTransfer.effectAllowed = 'move'; event.dataTransfer.setData('text/plain', id); }
+      }
+      function handleListDragOver(event) {
+        event.preventDefault();
+        if (event.dataTransfer) event.dataTransfer.dropEffect = 'move';
+      }
+      function handleListDrop(event) {
+        event.preventDefault();
+        var draggedId = listDraggedTaskId; listDraggedTaskId = '';
+        var row = event.target.closest && event.target.closest('.fp-list-row');
+        if (!row || !draggedId) return;
+        var targetId = row.dataset.taskId;
+        if (!targetId || targetId === draggedId) return;
+        var dragged = workItems.find(function(w) { return w.id === draggedId; });
+        var target = workItems.find(function(w) { return w.id === targetId; });
+        if (!dragged || !target) return;
+        // 对齐到目标所在分组（按当前列表分组维度）
+        if (listGroupMode === 'status') dragged.status = target.status;
+        else if (listGroupMode === 'goal') dragged.goal = target.goal;
+        else if (listGroupMode === 'project') { dragged.projectId = target.projectId; dragged.workspaceType = target.workspaceType; }
+        else if (listGroupMode === 'agent') dragged.agent = target.agent;
+        else if (listGroupMode === 'owner') dragged.owner = target.owner;
+        reorderWorkItemBefore(draggedId, targetId);   // 落到目标行之前
+        refreshTaskProjectionsForMove(dragged.projectId, dragged.projectId);
+        showToast('已调整 ' + draggedId + ' 顺序');
       }
 
       function renderKanbanFromItems(filter) {
@@ -7733,6 +7825,7 @@ FocusPilot/
           item.projectId = targetWorkspace;
           item.workspaceType = targetMeta.type;
         }
+        reorderWorkItemBefore(taskId, getDropBeforeId(cell, event.clientY, taskId, '.swimlane-card'));  // 同单元格内排序
         refreshTaskProjectionsForMove(previousWorkspace, item.projectId);
         var statusLabel = taskStatusDefs.find(function(def) { return def.status === targetStatus; }).label;
         var targetLabel = swimlaneGroupMode === 'agent'
@@ -8972,10 +9065,13 @@ FocusPilot/
 
       function openTaskDetail(taskId) {
         resetTaskDetailActions();
+        closeFieldMenu();
+        _detailTaskId = taskId || null;
         // If taskId provided, try to populate detail from workItems
         if (taskId) {
           var item = workItems.find(function(w) { return w.id === taskId; });
           if (item) {
+            item.tags = item.tags || [];
             var idEl = document.querySelector('#fpDetailPanel .fp-detail-id');
             var titleEl = document.querySelector('#fpDetailPanel .fp-detail-title');
             if (idEl) idEl.textContent = item.id;
@@ -9026,6 +9122,7 @@ FocusPilot/
             // Date
             var dateEl = document.querySelector('#fpDetailPanel .fp-detail-date');
             if (dateEl) dateEl.textContent = item.date || '—';
+            renderDetailTags(item);
           }
           // Also render complex content (plan/exec tabs, live card) from focusTaskDemoData if available
           // but skip attribute overrides since workItems is the primary source for those
@@ -9040,10 +9137,126 @@ FocusPilot/
         document.getElementById('fpDetailPanel').style.transform = 'translateX(0)';
       }
       function closeTaskDetail() {
+        closeFieldMenu();
         document.getElementById('fpDetailOverlay').style.opacity = '0';
         document.getElementById('fpDetailOverlay').style.pointerEvents = 'none';
         document.getElementById('fpDetailPanel').style.transform = 'translateX(100%)';
       }
+
+      /* ── 详情面板：字段内联编辑 + 标签 + 删除 ── */
+      var _detailTaskId = null;
+      // 可枚举字段模型：key→中文，options 为可选值
+      var DETAIL_FIELDS = {
+        status:   { options: ['backlog','todo','in_progress','in_review','done','blocked'],
+                    label: { backlog:'待规划', todo:'待办', in_progress:'进行中', in_review:'审核中', done:'已完成', blocked:'已阻塞' } },
+        priority: { options: ['p0','p1','p2'], label: { p0:'P0', p1:'P1', p2:'P2' } },
+        schedule: { options: ['today','week','month',''], label: { today:'今天', week:'本周', month:'本月', '':'—' } },
+        goal:     { options: ['4月/FP 0.0.1','5月/FP 0.0.1','5月/AI','6月/FP 0.0.1',''], label: null },
+        agent:    { options: ['代码工程师','数据分析师','架构师',''], label: { '':'未分配' } }
+      };
+      var PRESET_TAGS = ['backend','frontend','架构','AI','知识管道','SwiftUI','状态管理','重构','文档','测试'];
+
+      function fieldDisplay(field, val) {
+        var def = DETAIL_FIELDS[field];
+        if (def && def.label && def.label[val] !== undefined) return def.label[val];
+        return val || '—';
+      }
+
+      function renderDetailTags(item) {
+        var box = document.getElementById('fp-detail-tags');
+        if (!box) return;
+        var html = (item.tags || []).map(function(t) {
+          return '<span class="fp-tag"><b>' + t + '</b><span class="x" onclick="removeDetailTag(\'' + t + '\')">×</span></span>';
+        }).join('');
+        html += '<button class="fp-tag-add" data-edit-field="tags" type="button">+ 标签</button>';
+        box.innerHTML = html;
+      }
+
+      function closeFieldMenu() {
+        var m = document.getElementById('fpFieldMenu');
+        if (m) m.classList.remove('open');
+      }
+
+      function openFieldMenu(field, anchorEl) {
+        var item = workItems.find(function(w){ return w.id === _detailTaskId; });
+        if (!item) return;
+        var menu = document.getElementById('fpFieldMenu');
+        var attrs = document.getElementById('fpDetailAttrs');
+        var html = '';
+        if (field === 'tags') {
+          html = PRESET_TAGS.filter(function(t){ return (item.tags||[]).indexOf(t) < 0; })
+            .map(function(t){ return '<button class="fp-field-item" type="button" onclick="addDetailTag(\'' + t + '\')"><span class="tick"></span>' + t + '</button>'; }).join('');
+          html += '<button class="fp-field-item" type="button" onclick="addDetailTagPrompt()" style="color:var(--accent)"><span class="tick">+</span>自定义…</button>';
+        } else {
+          var def = DETAIL_FIELDS[field];
+          var cur = item[field];
+          html = def.options.map(function(v){
+            return '<button class="fp-field-item" type="button" onclick="setDetailField(\'' + field + '\',\'' + v + '\')"><span class="tick">' + (v === cur ? '✓' : '') + '</span>' + fieldDisplay(field, v) + '</button>';
+          }).join('');
+        }
+        menu.innerHTML = html;
+        // 定位到锚点下方（相对 fpDetailAttrs）
+        menu.style.left = (anchorEl.offsetLeft) + 'px';
+        menu.style.top = (anchorEl.offsetTop + anchorEl.offsetHeight + 4) + 'px';
+        menu.classList.add('open');
+      }
+
+      function setDetailField(field, val) {
+        var item = workItems.find(function(w){ return w.id === _detailTaskId; });
+        if (!item) return;
+        item[field] = val;
+        closeFieldMenu();
+        openTaskDetail(_detailTaskId);          // 重渲染详情
+        refreshTaskProjectionsForMove(item.projectId, item.projectId);  // 同步看板等视图
+      }
+
+      function addDetailTag(tag) {
+        var item = workItems.find(function(w){ return w.id === _detailTaskId; });
+        if (!item) return;
+        item.tags = item.tags || [];
+        if (item.tags.indexOf(tag) < 0) item.tags.push(tag);
+        closeFieldMenu();
+        renderDetailTags(item);
+      }
+      function addDetailTagPrompt() {
+        var t = (prompt('输入标签名称') || '').trim();
+        closeFieldMenu();
+        if (t) addDetailTag(t);
+      }
+      function removeDetailTag(tag) {
+        var item = workItems.find(function(w){ return w.id === _detailTaskId; });
+        if (!item || !item.tags) return;
+        item.tags = item.tags.filter(function(t){ return t !== tag; });
+        renderDetailTags(item);
+      }
+
+      function deleteCurrentTask() {
+        if (!_detailTaskId) return;
+        var item = workItems.find(function(w){ return w.id === _detailTaskId; });
+        if (!item) return;
+        if (!confirm('确定删除任务「' + item.title + '」？此操作不可撤销。')) return;
+        var ws = item.projectId;
+        var idx = workItems.indexOf(item);
+        if (idx >= 0) workItems.splice(idx, 1);
+        closeTaskDetail();
+        refreshTaskProjectionsForMove(ws, ws);
+      }
+
+      // 点可编辑字段 → 弹下拉（事件委托）；点别处收起
+      document.addEventListener('click', function(e) {
+        var trigger = e.target.closest && e.target.closest('#fpDetailAttrs [data-edit-field]');
+        if (trigger) {
+          e.stopPropagation();
+          var menu = document.getElementById('fpFieldMenu');
+          var f = trigger.getAttribute('data-edit-field');
+          if (menu.classList.contains('open') && menu.dataset.field === f) { closeFieldMenu(); return; }
+          menu.dataset.field = f;
+          openFieldMenu(f, trigger);
+          return;
+        }
+        if (!(e.target.closest && e.target.closest('#fpFieldMenu'))) closeFieldMenu();
+      });
+
       // 详情页已改为对话流（单容器 #fp-t-plan），原 5-tab 切换逻辑移除
 
       /* ── Focus: New Task Modal ── */
@@ -11968,7 +12181,7 @@ FocusPilot/
           var modeIcon = item.executionMode === 'auto' ? '🤖' : (item.executionMode === 'dialog' ? '💬' : '🖐');
           var dateText = isDone && item.date ? '✓ ' + item.date : (item.date || '—');
           var dateColor = isDone ? 'var(--green)' : 'var(--muted)';
-          var r = '<tr class="fp-list-row" onclick="openTaskDetail(\'' + item.id + '\')" style="cursor:pointer" data-task-id="' + item.id + '" data-fp-schedule="' + (item.schedule || '') + '" data-fp-mode="' + (item.executionMode || '') + '">';
+          var r = '<tr class="fp-list-row" draggable="true" ondragstart="handleListDragStart(event,\'' + item.id + '\')" ondragover="handleListDragOver(event)" ondrop="handleListDrop(event)" onclick="openTaskDetail(\'' + item.id + '\')" style="cursor:pointer" data-task-id="' + item.id + '" data-fp-schedule="' + (item.schedule || '') + '" data-fp-mode="' + (item.executionMode || '') + '">';
           r += '<td style="padding:8px 10px"><input type="checkbox" class="fp-list-check" onclick="event.stopPropagation()" onchange="toggleListTaskSelection(event,\'' + item.id + '\')"' + (checked ? ' checked' : '') + '></td>';
           r += '<td style="padding:8px 10px">' + statusPill + '</td>';
           r += '<td style="padding:8px 10px;' + (isDone ? 'text-decoration:line-through;color:var(--dim)' : '') + '"><strong style="' + (isDone ? 'color:var(--dim)' : '') + '">' + item.title + '</strong></td>';
