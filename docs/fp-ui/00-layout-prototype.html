@@ -2606,6 +2606,118 @@
     .area-ctx-sep { height:1px;background:var(--line-soft);margin:4px 0; }
     .area-hidden { display:none !important; }
     </style>
+    <!-- ═══ Home 收件箱（hib-）样式 ═══ -->
+    <style>
+    .hib-filterbar{display:flex;align-items:center;flex-wrap:wrap;gap:8px;padding:8px 14px 9px}
+    .hib-stab{display:inline-flex;align-items:center;gap:5px;font-size:12px;color:var(--muted);padding:4px 9px;border-radius:8px;cursor:pointer;user-select:none}
+    .hib-stab:hover{background:var(--hover)}
+    .hib-stab.active{background:var(--hover);color:var(--text);font-weight:600}
+    .hib-stab .cdot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+    .hib-stab .cn{font-size:11px;color:var(--dim);font-variant-numeric:tabular-nums}
+    .hib-stab.active .cn{color:var(--muted)}
+    .hib-unread{display:flex;align-items:center;gap:5px;padding:4px 9px;border-radius:7px;font-size:12px;color:var(--muted);cursor:pointer;border:1px solid var(--line-soft)}
+    .hib-unread:hover{background:var(--hover)}
+    .hib-unread.on{color:var(--accent);border-color:color-mix(in srgb,var(--accent) 45%,transparent);background:var(--hover)}
+    .hib-unread .dot{width:7px;height:7px;border-radius:50%;background:#3b82f6}
+    .hib-group{position:relative}
+    .hib-gbtn{display:flex;align-items:center;gap:5px;font-size:12px;color:var(--muted);padding:4px 9px;border-radius:7px;cursor:pointer;border:1px solid var(--line-soft);user-select:none}
+    .hib-gbtn:hover{background:var(--hover)}
+    .hib-menu{position:absolute;top:calc(100% + 4px);left:0;background:var(--surface);border:1px solid var(--line);border-radius:9px;padding:4px;min-width:150px;box-shadow:0 8px 24px rgba(0,0,0,.28);display:none;z-index:30}
+    .hib-menu.open{display:block}
+    .hib-menu .ml{font-size:10.5px;color:var(--dim);font-weight:600;padding:5px 10px 4px}
+    .hib-menu .mi{padding:7px 10px;border-radius:6px;font-size:12.5px;color:var(--text);cursor:pointer}
+    .hib-menu .mi:hover{background:var(--hover)}
+    .hib-divider{height:1px;background:var(--line-soft);margin:0 14px 9px}
+    .hib-tabs{display:flex;flex-wrap:wrap;gap:4px;padding:0 12px 9px}
+    .hib-list{flex:1;overflow-y:auto;border-top:1px solid var(--line)}
+    .hib-msg{display:flex;align-items:flex-start;gap:10px;padding:11px 14px;cursor:pointer;border-bottom:1px solid var(--line-soft);position:relative}
+    .hib-msg:hover{background:var(--hover)}
+    .hib-msg.sel{background:var(--hover)}
+    .hib-msg.sel::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--accent)}
+    .hib-av{width:30px;height:30px;border-radius:50%;flex-shrink:0;margin-top:1px;overflow:hidden}
+    .hib-av svg{width:100%;height:100%;display:block}
+    .hib-body{flex:1;min-width:0}
+    .hib-mt{display:flex;align-items:center;gap:6px}
+    .hib-udot{width:7px;height:7px;border-radius:50%;background:#3b82f6;flex-shrink:0}
+    .hib-title{font-size:13px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .hib-msg.unread .hib-title{font-weight:600}
+    .hib-msg.read .hib-title{color:var(--muted)}
+    .hib-sub{font-size:11.5px;color:var(--dim);margin-top:2px;display:flex;align-items:center;gap:5px;white-space:nowrap;overflow:hidden}
+    .hib-sub .si{width:13px;height:13px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:8px;color:#fff;flex-shrink:0}
+    .hib-sub .tx{overflow:hidden;text-overflow:ellipsis}
+    .hib-right{display:flex;flex-direction:column;align-items:flex-end;gap:3px;flex-shrink:0}
+    .hib-time{font-size:11px;color:var(--dim);font-variant-numeric:tabular-nums}
+    .hib-pin{font-size:11px;line-height:1;color:var(--dim);opacity:0;cursor:pointer;transition:.1s;padding:1px 3px;border-radius:4px}
+    .hib-msg:hover .hib-pin{opacity:.5}
+    .hib-pin:hover{opacity:1 !important;color:var(--accent);background:var(--hover)}
+    .hib-msg.pinned .hib-pin{opacity:1;color:var(--accent)}
+    .hib-ghead{display:flex;align-items:center;gap:7px;padding:11px 14px 5px;font-size:10.5px;font-weight:600;color:var(--dim)}
+    .hib-ghead .gdot{width:8px;height:8px;border-radius:50%;background:var(--accent)}
+    .hib-listsep{height:1px;background:var(--line);margin:4px 0}
+    /* 工作区：概览 + 覆盖式详情 */
+    .hib-work{position:relative;flex:1;min-height:0}
+    .hib-overview{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;text-align:center;padding:46px 30px;overflow:auto}
+    .hib-greet{font-size:15px;color:var(--muted);margin-bottom:16px}
+    .hib-focus{width:100%;max-width:560px;margin-top:30px;text-align:left;background:var(--surface);border:1px solid var(--line-soft);border-radius:14px;padding:14px 18px 8px}
+    .hib-focus-head{display:flex;align-items:center;justify-content:space-between;font-size:13px;font-weight:600;margin-bottom:6px}
+    .hib-focus-head .cnt{font-size:12px;color:var(--dim);font-weight:400}
+    .hib-focus-row{display:flex;align-items:center;gap:10px;padding:10px 6px;border-radius:8px;cursor:pointer;border-top:1px solid var(--line-soft)}
+    .hib-focus-row:hover{background:var(--hover)}
+    .hib-focus-row .fdot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+    .hib-focus-row .ft{flex:1;font-size:13px;color:var(--text)}
+    .hib-focus-row .fm{font-size:11.5px;color:var(--dim);flex-shrink:0}
+    .hib-cards{display:flex;gap:18px;flex-wrap:wrap;justify-content:center;margin-bottom:22px}
+    .hib-card{background:var(--surface);border:1px solid var(--line-soft);border-radius:16px;padding:22px 30px;cursor:pointer;min-width:140px;transition:.12s}
+    .hib-card:hover{border-color:color-mix(in srgb,var(--accent) 45%,transparent)}
+    .hib-card.active{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 9%,var(--surface))}
+    .hib-card.active .n{color:var(--accent)}
+    .hib-card .n{font-size:40px;font-weight:700;font-variant-numeric:tabular-nums;line-height:1}
+    .hib-card .c{font-size:13px;color:var(--dim);margin-top:8px}
+    .hib-pills{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin-bottom:28px}
+    .hib-pill{display:flex;align-items:center;gap:6px;background:var(--surface);border:1px solid var(--line-soft);border-radius:11px;padding:10px 16px;font-size:13px;color:var(--muted);cursor:pointer}
+    .hib-pill:hover{border-color:color-mix(in srgb,var(--accent) 45%,transparent);color:var(--text)}
+    .hib-pill b{color:var(--text);font-weight:600}
+    .hib-hint{margin-top:34px;color:var(--dim);font-size:12.5px}
+    .hib-hint b{color:#3b82f6}
+    .hib-detail{position:absolute;inset:0;background:var(--content-bg);display:none;flex-direction:column;z-index:6}
+    .hib-detail.show{display:flex}
+    .hib-dhead{display:flex;align-items:center;gap:14px;padding:16px 22px 14px;border-bottom:1px solid var(--line-soft)}
+    .hib-crumb{display:flex;align-items:center;gap:7px;min-width:0;flex:1}
+    .hib-crumb .proj{font-size:12px;color:var(--dim);cursor:pointer;white-space:nowrap;flex-shrink:0}
+    .hib-crumb .proj:hover{color:var(--accent)}
+    .hib-crumb .arr{color:var(--dim);font-size:12px}
+    .hib-crumb .cid{font-size:11px;color:var(--dim);font-variant-numeric:tabular-nums}
+    .hib-crumb .ctitle{font-size:16px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .hib-dnav{display:flex;gap:4px}
+    .hib-dnav .nb{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--muted);border:1px solid var(--line);font-size:13px}
+    .hib-dnav .nb:hover{background:var(--hover);color:var(--text)}
+    .hib-dpill{padding:4px 11px;border-radius:13px;font-size:12px;font-weight:600;display:flex;align-items:center;gap:6px;flex-shrink:0}
+    .hib-dpill .pd{width:7px;height:7px;border-radius:50%}
+    .hib-dbody{flex:1;display:flex;overflow:hidden}
+    .hib-dmain{flex:1;overflow-y:auto;padding:20px 26px 90px}
+    .hib-daside{width:220px;border-left:1px solid var(--line-soft);padding:18px;overflow-y:auto;flex-shrink:0}
+    .hib-daside .fld{margin-bottom:15px}
+    .hib-daside .fl{font-size:10px;color:var(--dim);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px}
+    .hib-daside .fv{font-size:13px;color:var(--text)}
+    .hib-desc{background:var(--surface);border:1px solid var(--line-soft);border-radius:10px;padding:14px 16px;font-size:13px;color:var(--muted);line-height:1.7;margin-bottom:8px}
+    .hib-trow{padding:14px 0;border-top:1px dashed var(--line-soft)}
+    .hib-tactor{display:flex;align-items:center;gap:8px;font-size:13px;margin-bottom:8px;flex-wrap:wrap}
+    .hib-tactor .nm{font-weight:600}
+    .hib-tactor .meta{color:var(--dim);font-size:12px}
+    .hib-tactor .badge{font-size:11px;padding:2px 8px;border-radius:9px;background:color-mix(in srgb,var(--amber) 20%,transparent);color:var(--amber);font-weight:600}
+    .hib-tactor .pass{font-size:11px;padding:2px 8px;border-radius:9px;background:color-mix(in srgb,var(--green) 20%,transparent);color:var(--green);font-weight:600}
+    .hib-code{background:var(--surface);border:1px solid var(--line-soft);border-radius:9px;padding:12px 14px;font-family:var(--mono);font-size:12px;color:var(--muted);line-height:1.7;white-space:pre-wrap}
+    .hib-code .ok{color:var(--green)}
+    .hib-op{border-left:3px solid;border-radius:4px;padding:8px 12px;font-size:12.5px;margin-top:8px}
+    .hib-op.crit{border-color:var(--red);background:color-mix(in srgb,var(--red) 9%,transparent)}
+    .hib-op.imp{border-color:var(--amber);background:color-mix(in srgb,var(--amber) 9%,transparent)}
+    .hib-op b{margin-right:6px}.hib-op.crit b{color:var(--red)}.hib-op.imp b{color:var(--amber)}
+    .hib-accept{background:color-mix(in srgb,var(--green) 12%,transparent);border:1px solid color-mix(in srgb,var(--green) 30%,transparent);border-radius:9px;padding:12px 14px;font-size:13px;color:var(--text);margin-top:14px}
+    .hib-accept b{color:var(--green)}
+    .hib-dreply{position:absolute;left:0;right:220px;bottom:0;padding:14px 26px;background:linear-gradient(transparent,var(--content-bg) 30%);display:flex;gap:10px}
+    .hib-dreply input{flex:1;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:11px 14px;color:var(--text);font-size:13px;outline:none}
+    .hib-dreply .send{background:var(--primary-action-bg);color:var(--primary-action-text);border:none;border-radius:10px;padding:11px 16px;font-size:13px;font-weight:600;cursor:pointer}
+    </style>
   </head>
   <body>
     <div class="app">
@@ -2653,53 +2765,49 @@
 
       <aside class="sidebar">
         <section class="side-view active" data-page="home">
+          <!-- FocusPilot 禅圆 logo symbol（消息头像复用；独立 gradient id 防冲突）-->
+          <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+            <symbol id="fp-enso-msg" viewBox="0 0 64 64">
+              <radialGradient id="fp-enso-grad" cx="34%" cy="26%" r="72%">
+                <stop offset="0%" stop-color="var(--ball-light)"/><stop offset="54%" stop-color="var(--ball-mid)"/><stop offset="100%" stop-color="var(--ball-dark)"/>
+              </radialGradient>
+              <linearGradient id="fp-enso-hl" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stop-color="#fff" stop-opacity=".54"/><stop offset="54%" stop-color="#fff" stop-opacity=".10"/><stop offset="100%" stop-color="#fff" stop-opacity="0"/>
+              </linearGradient>
+              <circle cx="32" cy="32" r="31" fill="url(#fp-enso-grad)"/>
+              <ellipse cx="22" cy="16" rx="18" ry="11" fill="url(#fp-enso-hl)" transform="rotate(-28 22 16)"/>
+              <circle cx="32" cy="32" r="30.25" fill="none" stroke="#fff" stroke-opacity=".18" stroke-width="1"/>
+              <g transform="translate(0 -2)">
+                <path d="M20.3 23.4 C25.2 16.8 33.7 14.6 41.8 17.2" fill="none" stroke="#fff" stroke-width="8.0" stroke-linecap="round" stroke-opacity=".94"/>
+                <path d="M39.4 17.2 C48.5 19.8 53.3 27.6 52.8 36.0" fill="none" stroke="#fff" stroke-width="6.6" stroke-linecap="round" stroke-opacity=".92"/>
+                <path d="M52.4 35.0 C52.2 39.6 50.5 43.7 47.9 46.8" fill="none" stroke="#fff" stroke-width="4.5" stroke-linecap="round" stroke-opacity=".88"/>
+                <path d="M19.2 37.9 C20.0 46.8 28.1 52.1 38.1 51.3" fill="none" stroke="#fff" stroke-width="2.25" stroke-linecap="round" stroke-opacity=".80"/>
+                <path d="M20.0 40.4 C24.4 48.6 36.0 52.5 47.4 48.5" fill="none" stroke="#fff" stroke-width="1.08" stroke-linecap="round" stroke-opacity=".70"/>
+                <circle cx="45.2" cy="48.0" r="1.85" fill="#fff" fill-opacity=".82"/><circle cx="41.8" cy="50.4" r="1.34" fill="#fff" fill-opacity=".64"/><circle cx="38.4" cy="51.7" r=".88" fill="#fff" fill-opacity=".46"/>
+              </g>
+            </symbol>
+          </defs></svg>
           <div class="side-head">
             <div class="side-title">
-              <h2>Home</h2>
-              <div class="seg" data-scope="homeMode">
-                <button data-target="home-chat">对话</button>
-                <button class="active" data-target="home-overview">概览</button>
+              <h2>收件箱 <span id="hib-count" style="font-size:11px;color:var(--dim);font-weight:400"></span></h2>
+              <span id="hib-markall" onclick="hibMarkAllRead()" title="全部标为已读" style="cursor:pointer;color:var(--dim);font-size:15px;padding:2px 6px">⋯</span>
+            </div>
+          </div>
+          <div class="hib-filterbar">
+            <div class="hib-stab" id="hib-tab-all" onclick="hibSetStatus('all')">全部 <span class="cn" id="hib-all-count"></span></div>
+            <div class="hib-unread" id="hib-unread-toggle" onclick="hibToggleUnread()"><span class="dot"></span>只看未读</div>
+            <div class="hib-group">
+              <div class="hib-gbtn" id="hib-group-btn" onclick="hibToggleMenu(event)">⊟ 时间 ▾</div>
+              <div class="hib-menu" id="hib-group-menu">
+                <div class="ml">分组方式</div>
+                <div class="mi" onclick="hibSetGroup('none',this)">✓ 无（按时间倒序）</div>
+                <div class="mi" onclick="hibSetGroup('project',this)">按项目</div>
               </div>
             </div>
           </div>
-          <div class="side-scroll panel active" id="home-overview-side">
-            <div class="label">数据导航</div>
-            <div class="side-item active" data-jump="today">
-              <span>🔥 今日待办</span><span class="count">4</span>
-            </div>
-            <div class="side-item">
-              <span>📅 本周待办</span><span class="count">12</span>
-            </div>
-            <div class="side-item">
-              <span>📆 本月目标</span><span class="count">28</span>
-            </div>
-            <div class="side-item">
-              <span>📋 全部 TODO</span><span class="count">45</span>
-            </div>
-            <div class="label">项目与状态</div>
-            <div class="side-item">
-              <span>📁 活跃项目</span><span class="count">5</span>
-            </div>
-            <div class="side-item">
-              <span>🔄 执行中</span><span class="count">3</span>
-            </div>
-            <div class="side-item">
-              <span>📥 待沉淀素材</span><span class="count">3</span>
-            </div>
-          </div>
-          <div class="side-scroll panel" id="home-chat-side">
-            <button
-              class="btn primary"
-              data-new-chat
-              style="width: 100%; margin-bottom: 12px"
-            >
-              + 新建对话
-            </button>
-            <div class="label">置顶</div>
-            <div id="homeChatPinnedList"></div>
-            <div class="label">最近</div>
-            <div id="homeChatRecentList"></div>
-          </div>
+          <div class="hib-divider"></div>
+          <div class="hib-tabs" id="hib-status-tabs"></div>
+          <div class="hib-list" id="hib-list"></div>
         </section>
 
         <section class="side-view" data-page="studio">
@@ -3101,128 +3209,81 @@
 
       <main class="main">
         <section class="page active" data-page="home">
-          <header class="topbar">
-            <h1>Home</h1>
-            <span class="meta">全局概览入口</span>
-          </header>
-          <div class="work panel active" id="home-overview">
-            <div class="grid cols-6 summary-strip">
-              <div class="metric" data-go="studio" data-studio-filter="today">
-                <div class="value">4</div>
-                <div class="name">今日待办</div>
-                <div class="hint">今日聚焦</div>
+          <div class="hib-work">
+            <!-- 默认态：概览 dashboard -->
+            <div class="hib-overview" id="hib-overview">
+              <div class="hib-greet">☀ 早上好，Bruce ·  6月13日 周六</div>
+              <div class="hib-pills">
+                <span class="hib-pill">📁 项目 <b>5</b></span>
+                <span class="hib-pill">📚 待阅读 <b>5</b></span>
+                <span class="hib-pill">💡 灵感 <b>2</b></span>
+                <span class="hib-pill">📌 临时事项 <b>3</b></span>
               </div>
-              <div class="metric" data-go="studio" data-studio-filter="week">
-                <div class="value">12</div>
-                <div class="name">本周待办</div>
-                <div class="hint">跨项目</div>
-              </div>
-              <div class="metric" data-go="studio" data-studio-filter="month">
-                <div class="value">28</div>
-                <div class="name">本月目标</div>
-                <div class="hint">月度目标</div>
-              </div>
-              <div class="metric" data-go="studio" data-studio-filter="all" data-studio-view="focus-list">
-                <div class="value">45</div>
-                <div class="name">全部 TODO</div>
-                <div class="hint">未完成</div>
-              </div>
-              <div class="metric" id="home-metric-projects" style="cursor:pointer">
-                <div class="value">5</div>
-                <div class="name">活跃项目</div>
-                <div class="hint">Projects</div>
-              </div>
-              <div class="metric" id="home-metric-inbox" style="cursor:pointer">
-                <div class="value" style="color:var(--accent)">10</div>
-                <div class="name">待处理</div>
-                <div class="hint">Inbox</div>
-              </div>
-              <div class="metric" data-go="studio" data-studio-filter="agent">
-                <div class="value">3</div>
-                <div class="name">执行中</div>
-                <div class="hint">含评估中</div>
-              </div>
+              <div class="hib-cards" id="hib-cards"></div>
+              <div class="hib-focus" id="hib-focus"></div>
+              <div class="hib-hint">左侧收件箱有 <b id="hib-ov-unread">5</b> 条未读 · 点击任意消息查看详情</div>
             </div>
-            <div class="grid cols-2" style="margin-top: 14px">
-              <div class="card">
-                <div class="card-head">
-                  <h3>执行中</h3>
-                  <span class="pill blue">3 项</span>
+            <!-- 详情态：覆盖工作区（ExecutionRun + 面包屑）-->
+            <div class="hib-detail" id="hib-detail">
+              <div class="hib-dhead">
+                <div class="hib-crumb">
+                  <span class="proj" id="hib-d-proj" onclick="hibClose()" title="返回 / 打开项目">FocusPilot</span>
+                  <span class="arr">›</span>
+                  <span class="cid" id="hib-d-id">FP-001</span>
+                  <span class="ctitle" id="hib-d-title">数据模型设计</span>
                 </div>
-                <div class="card-body">
-                  <div class="row" data-go="studio">
-                    <strong>客户画像生成</strong>
-                    <div class="progress"><span style="width: 60%"></span></div>
-                    <span class="right">大客户</span>
+                <div class="hib-dnav">
+                  <div class="nb" onclick="hibNav(-1)" title="上一条">↑</div>
+                  <div class="nb" onclick="hibNav(1)" title="下一条">↓</div>
+                </div>
+                <div class="hib-dpill" id="hib-d-pill"><span class="pd"></span><span class="pl"></span></div>
+              </div>
+              <div class="hib-dbody">
+                <div class="hib-dmain">
+                  <div class="hib-desc">设计 FocusPilot 核心数据模型，包括 Workspace、Task、CrewMember、CrewRuntime 等实体的字段定义、关系映射和持久化方案。要求：Codable 可序列化、支持单字段增量保存、覆盖单元测试。</div>
+                  <div class="hib-trow">
+                    <div class="hib-tactor">🤖 <span class="nm">代码工程师</span><span class="meta">· 自动执行（第 1 轮）· 00:08:12</span></div>
+                    <div class="hib-code">新建 Models.swift (+318)：定义 Workspace / Task / CrewMember / CrewRuntime 四个 Codable 结构体
+新建 ModelsTests.swift (+142)：12 个单测
+<span class="ok">✓ Build succeeded · 12 tests passed</span></div>
                   </div>
-                  <div class="row" data-go="studio">
-                    <strong>API 文档更新</strong>
-                    <div class="progress"><span style="width: 30%"></span></div>
-                    <span class="right">FocusPilot</span>
+                  <div class="hib-trow">
+                    <div class="hib-tactor">🔍 <span class="nm">质量审查员</span><span class="meta">· 评估 · 第 1 轮 / 共 3 轮</span><span class="badge">2 条意见</span></div>
+                    <div class="hib-op crit"><b>Critical</b>CrewRuntime 缺少 daemon 心跳时间戳字段，无法做超时回收</div>
+                    <div class="hib-op imp"><b>Important</b>Task 全量写入 UserDefaults，大对象建议按 id 分片存储</div>
                   </div>
-                  <div class="row" data-go="studio">
-                    <strong>周报自动汇总</strong>
-                    <div class="progress"><span style="width: 10%"></span></div>
-                    <span class="right">内部</span>
+                  <div class="hib-trow">
+                    <div class="hib-tactor">🤖 <span class="nm">代码工程师</span><span class="meta">· 自动修复（第 2 轮）· 00:04:18</span></div>
+                    <div class="hib-code">CrewRuntime 增加 lastHeartbeatAt: Date 字段；Task 持久化改为按 id 分片键存储
+<span class="ok">✓ Build succeeded · 14 tests passed</span></div>
                   </div>
+                  <div class="hib-trow">
+                    <div class="hib-tactor">🔍 <span class="nm">质量审查员</span><span class="meta">· 评估 · 第 2 轮</span><span class="pass">✓ 通过</span><span class="meta">→ 落「审核中」</span></div>
+                  </div>
+                  <div class="hib-trow">
+                    <div class="hib-tactor">👤 <span class="nm">你</span><span class="meta">· 回复 = 触发下一轮 · 04-15 16:20</span></div>
+                    <div class="hib-desc" style="margin:0">CrewMember 的能力标签（capabilities）也加一个索引，后面按能力筛选 Agent 要用</div>
+                  </div>
+                  <div class="hib-trow">
+                    <div class="hib-tactor">🤖 <span class="nm">代码工程师</span><span class="meta">· 自动执行（第 3 轮）· 00:02:36</span></div>
+                    <div class="hib-code">CrewMember 增加 capabilityIndex 反向索引 + 增量维护
+<span class="ok">✓ Build succeeded · 16 tests passed</span></div>
+                  </div>
+                  <div class="hib-accept">✅ <b>你已验收通过</b> · 拖入「已完成」· 04-16 09:30 · 共 3 轮 · 累计耗时 15m06s</div>
+                </div>
+                <div class="hib-daside">
+                  <div class="fld"><div class="fl">状态</div><div class="fv" id="hib-d-status">● 已完成</div></div>
+                  <div class="fld"><div class="fl">优先级</div><div class="fv">P0</div></div>
+                  <div class="fld"><div class="fl">项目</div><div class="fv" id="hib-d-proj2">FocusPilot</div></div>
+                  <div class="fld"><div class="fl">归属目标</div><div class="fv">4月/FP 0.0.1</div></div>
+                  <div class="fld"><div class="fl">调度</div><div class="fv">🤖 全自动</div></div>
+                  <div class="fld"><div class="fl">Agent</div><div class="fv">代码工程师</div></div>
+                  <div class="fld"><div class="fl">截止</div><div class="fv">04-15</div></div>
                 </div>
               </div>
-              <div class="card">
-                <div class="card-head">
-                  <h3>今日待办 (4/7)</h3>
-                  <button class="btn" data-go="studio">查看全部</button>
-                </div>
-                <div class="card-body">
-                  <div class="row" data-go="studio">
-                    <span>☐</span><strong>frontmatter 解析</strong
-                    ><span class="right">FocusPilot</span>
-                  </div>
-                  <div class="row" data-go="studio">
-                    <span>☐</span><strong>审阅 PR #18</strong
-                    ><span class="right">FocusPilot</span>
-                  </div>
-                  <div class="row" data-go="studio">
-                    <span>☐</span><strong>客户跟进电话</strong
-                    ><span class="right">大客户</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div class="work panel" id="home-chat">
-            <div class="chat-state" id="home-chat-empty">
-              <div class="card chat-empty">
-                <div class="chat-empty-inner">
-                  <div class="chat-mark">✳</div>
-                  <h2>FocusPilot</h2>
-                  <div class="composer with-agent" style="width: 100%">
-                    <select class="agent-select" id="homeNewChatAgent">
-                      <option value="🤖 通用">🤖 通用</option>
-                      <option value="✳ Claude Code">✳ Claude Code</option>
-                      <option value="⚡ Codex CLI">⚡ Codex CLI</option>
-                      <option value="🔎 研究员">🔎 研究员</option>
-                      <option value="🧭 规划师">🧭 规划师</option>
-                    </select>
-                    <textarea id="homeNewChatInput" placeholder="描述你想做的事..."></textarea>
-                    <button class="btn primary" onclick="sendHomeChatMessage()">发送</button>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div class="chat-state active" id="home-chat-thread">
-              <div class="card chat-shell">
-                <div class="chat-title">
-                  <h3 id="homeChatTitle">市场分析报告</h3>
-                  <span class="pill blue" id="homeChatAgentPill">🤖 研究员 🔒</span>
-                </div>
-                <div class="chat-thread" id="homeChatThread"></div>
-                <div class="card-body">
-                  <div class="composer with-agent">
-                    <span class="pill" id="homeChatComposerAgent">🤖 研究员 🔒</span>
-                    <textarea id="homeChatInput" placeholder="继续提问..."></textarea>
-                    <button class="btn primary" onclick="sendHomeChatMessage()">发送</button>
-                  </div>
-                </div>
+              <div class="hib-dreply">
+                <input placeholder="让 Agent 继续调整…（回复即触发下一轮执行）">
+                <button class="send">↑ 发送</button>
               </div>
             </div>
           </div>
@@ -12450,6 +12511,105 @@ FocusPilot/
 	      renderHomeChatList();
 	      var initialHomeSession = getAllStudioSessionsSorted()[0];
 	      if (initialHomeSession) renderHomeChatFromSession(initialHomeSession.sid);
+    </script>
+
+    <!-- ═══ Home 收件箱（hib）逻辑 ═══ -->
+    <script>
+    (function(){
+      var ST_ICON = {backlog:'◌', todo:'○', in_progress:'◔', in_review:'◑', done:'✓', blocked:'⊘'};
+      var ORDER = ['backlog','todo','in_progress','in_review','done','blocked'];
+      function stDef(k){ for(var i=0;i<taskStatusDefs.length;i++){ if(taskStatusDefs[i].status===k) return taskStatusDefs[i]; } return taskStatusDefs[0]; }
+      var hibMsgs = [
+        {id:'FP-031', title:'于都的天气', sub:'状态设为 审核中', st:'in_review', proj:'天气查询', time:'2 天', unread:false},
+        {id:'FP-030', title:'上海和北京的天气', sub:'补上完整日期（含星期）：## 上海｜日期｜…', st:'in_review', proj:'天气查询', time:'2 天', unread:true, pinned:true},
+        {id:'FP-029', title:'北京离上海多远', sub:'北京到香港的距离和耗时： - 直线距离…', st:'in_review', proj:'地理问答', time:'3 天', unread:true},
+        {id:'FP-028', title:'简单介绍一下 Multica', sub:'状态设为 审核中', st:'in_review', proj:'竞品调研', time:'3 天', unread:true},
+        {id:'FP-027', title:'缓存层重构', sub:'状态设为 已阻塞', st:'blocked', proj:'FocusPilot', time:'3 天', unread:true, pinned:true},
+        {id:'FP-026', title:'登录态过期处理', sub:'状态设为 已阻塞', st:'blocked', proj:'FocusPilot', time:'3 天', unread:false},
+        {id:'FP-025', title:'测试三级任务', sub:'状态设为 审核中', st:'in_review', proj:'内部', time:'3 天', unread:false},
+        {id:'FP-024', title:'测试四级任务', sub:'状态设为 审核中', st:'in_review', proj:'内部', time:'4 天', unread:false},
+        {id:'FP-023', title:'用 slides 介绍 Multica', sub:'这条任务上一轮已经完成了：完整…', st:'in_progress', proj:'竞品调研', time:'5 天', unread:true},
+        {id:'FP-022', title:'数据模型设计', sub:'状态设为 已完成', st:'done', proj:'FocusPilot', time:'6 天', unread:false},
+        {id:'FP-021', title:'任务执行间隔', sub:'状态设为 审核中', st:'in_review', proj:'FocusPilot', time:'13 天', unread:false},
+        {id:'FP-020', title:'调研核心功能以及竞品', sub:'状态设为 审核中', st:'in_review', proj:'竞品调研', time:'13 天', unread:false},
+        {id:'FP-019', title:'二级测试任务', sub:'有的，当前任务下有 1 个子任务…', st:'in_progress', proj:'内部', time:'13 天', unread:false},
+        {id:'FP-018', title:'番茄钟时长可配置', sub:'状态设为 进行中', st:'in_progress', proj:'FocusPilot', time:'14 天', unread:false},
+        {id:'FP-017', title:'拆出子任务：导出 PDF', sub:'状态设为 待办', st:'todo', proj:'竞品调研', time:'14 天', unread:true},
+        {id:'FP-016', title:'权限体系初步方案', sub:'状态设为 待办', st:'todo', proj:'FocusPilot', time:'15 天', unread:false},
+        {id:'FP-015', title:'V2 路线图梳理', sub:'状态设为 待规划', st:'backlog', proj:'FocusPilot', time:'16 天', unread:false}
+      ];
+      var hibStatus='all', hibUnread=false, hibGroup='none', hibVisible=[], hibCur=null;
+      function counts(){ var c={}; ORDER.forEach(function(k){c[k]={t:0,u:0};}); hibMsgs.forEach(function(m){ if(!c[m.st])return; c[m.st].t++; if(m.unread)c[m.st].u++; }); return c; }
+      function unreadN(){ return hibMsgs.filter(function(m){return m.unread;}).length; }
+      function $(id){ return document.getElementById(id); }
+      function renderHead(){ var u=unreadN(); var el=$('hib-count'); if(el) el.innerHTML=hibMsgs.length+' · <b style="color:#3b82f6">'+u+' 未读</b>'; var ov=$('hib-ov-unread'); if(ov) ov.textContent=u; var ut=$('hib-unread-toggle'); if(ut) ut.classList.toggle('on',hibUnread); }
+      function renderTabs(){ var c=counts(), wrap=$('hib-status-tabs'); if(!wrap)return; wrap.innerHTML=''; var ac=$('hib-all-count'); if(ac) ac.textContent=hibMsgs.length; var allt=$('hib-tab-all'); if(allt) allt.classList.toggle('active',hibStatus==='all'); ORDER.forEach(function(k){ var d=stDef(k), cnt=c[k]; if(cnt.t===0)return; var el=document.createElement('div'); el.className='hib-stab'+(hibStatus===k?' active':''); el.onclick=function(){window.hibSetStatus(k);}; el.innerHTML='<span class="cdot" style="background:'+d.color+'"></span>'+d.label+' <span class="cn">'+cnt.t+'</span>'; wrap.appendChild(el); }); }
+      function filtered(){ return hibMsgs.filter(function(m){ return (hibStatus==='all'||m.st===hibStatus) && (!hibUnread||m.unread); }); }
+      function msgEl(m){ var d=stDef(m.st); var el=document.createElement('div'); el.className='hib-msg '+(m.unread?'unread':'read')+(m.pinned?' pinned':'')+(m.id===hibCur?' sel':''); el.onclick=function(){ m.id===hibCur?window.hibClose():window.hibOpen(m.id); }; el.innerHTML='<div class="hib-av"><svg><use href="#fp-enso-msg"/></svg></div><div class="hib-body"><div class="hib-mt">'+(m.unread?'<span class="hib-udot"></span>':'')+'<span class="hib-title">'+m.title+'</span></div><div class="hib-sub"><span class="si" style="background:'+d.color+'">'+ST_ICON[m.st]+'</span><span class="tx">'+m.sub+'</span></div></div><div class="hib-right"><div class="hib-pin" title="置顶 / 取消置顶" onclick="event.stopPropagation();window.hibTogglePin(\''+m.id+'\')">📌</div><div class="hib-time">'+m.time+'</div></div>'; return el; }
+      function renderList(){ var list=$('hib-list'); if(!list)return; list.innerHTML=''; hibVisible=[]; var data=filtered(); if(!data.length){ list.innerHTML='<div style="padding:40px;text-align:center;color:var(--dim);font-size:12px">没有符合当前筛选的消息</div>'; return; }
+        var pinned=data.filter(function(m){return m.pinned;}), rest=data.filter(function(m){return !m.pinned;});
+        if(pinned.length){ var ph=document.createElement('div'); ph.className='hib-ghead'; ph.innerHTML='📌 置顶 <span style="font-weight:400">'+pinned.length+'</span>'; list.appendChild(ph); pinned.forEach(function(m){ list.appendChild(msgEl(m)); hibVisible.push(m.id); }); }
+        if(pinned.length && rest.length){ var sep=document.createElement('div'); sep.className='hib-listsep'; list.appendChild(sep); }
+        if(hibGroup==='none'){ rest.forEach(function(m){ list.appendChild(msgEl(m)); hibVisible.push(m.id); }); }
+        else { var g={}; rest.forEach(function(m){ (g[m.proj]=g[m.proj]||[]).push(m); }); Object.keys(g).forEach(function(key){ var h=document.createElement('div'); h.className='hib-ghead'; h.innerHTML='<span class="gdot"></span>'+key+' <span style="font-weight:400">'+g[key].length+'</span>'; list.appendChild(h); g[key].forEach(function(m){ list.appendChild(msgEl(m)); hibVisible.push(m.id); }); }); } }
+      window.hibSetStatus=function(k){ hibStatus=k; renderTabs(); renderList(); };
+      window.hibToggleUnread=function(){ hibUnread=!hibUnread; renderHead(); renderList(); };
+      window.hibSetGroup=function(g,el){ hibGroup=g; var menu=$('hib-group-menu'); menu.querySelectorAll('.mi').forEach(function(x){x.textContent=x.textContent.replace('✓ ','');}); el.textContent='✓ '+el.textContent; $('hib-group-btn').textContent='⊟ '+(g==='none'?'时间':'项目')+' ▾'; menu.classList.remove('open'); renderList(); };
+      window.hibToggleMenu=function(e){ e.stopPropagation(); $('hib-group-menu').classList.toggle('open'); };
+      document.addEventListener('click',function(){ var m=$('hib-group-menu'); if(m) m.classList.remove('open'); });
+      window.hibMarkAllRead=function(){ hibMsgs.forEach(function(m){m.unread=false;}); renderHead(); renderTabs(); renderList(); };
+      window.hibTogglePin=function(id){ for(var i=0;i<hibMsgs.length;i++){ if(hibMsgs[i].id===id){ hibMsgs[i].pinned=!hibMsgs[i].pinned; break; } } renderList(); };
+      window.hibOpen=function(id){ var m=null; for(var i=0;i<hibMsgs.length;i++){ if(hibMsgs[i].id===id){m=hibMsgs[i];break;} } if(!m)return; if(m.unread) m.unread=false; hibCur=id; var d=stDef(m.st); $('hib-d-id').textContent=m.id; $('hib-d-title').textContent=m.title; $('hib-d-proj').textContent=m.proj; $('hib-d-proj2').textContent=m.proj; $('hib-d-status').textContent='● '+d.label; var pill=$('hib-d-pill'); pill.style.background='color-mix(in srgb, '+d.color+' 16%, transparent)'; pill.style.color=d.color; pill.querySelector('.pd').style.background=d.color; pill.querySelector('.pl').textContent=d.label; renderHead(); renderTabs(); renderList(); var _sel=$('hib-list')&&$('hib-list').querySelector('.hib-msg.sel'); if(_sel)_sel.scrollIntoView({block:'nearest'}); $('hib-overview').style.display='none'; $('hib-detail').classList.add('show'); };
+      window.hibNav=function(dir){ var i=hibVisible.indexOf(hibCur)+dir; if(i<0||i>=hibVisible.length)return; window.hibOpen(hibVisible[i]); };
+      window.hibClose=function(){ hibCur=null; var d=$('hib-detail'); if(d)d.classList.remove('show'); var o=$('hib-overview'); if(o)o.style.display='flex'; renderList(); };
+      document.addEventListener('keydown',function(e){ var d=$('hib-detail'); if(!d||!d.classList.contains('show'))return; if(e.key==='Escape')window.hibClose(); if(e.key==='ArrowUp'){e.preventDefault();window.hibNav(-1);} if(e.key==='ArrowDown'){e.preventDefault();window.hibNav(1);} });
+      // 进入 Home 页一律回到概览默认态：详情是处理消息时的临时态，不跨页面持久
+      // 概览三 scope（对应 Studio 今日/本周/本月）；点大卡切换下方任务列表（今日聚焦 ⊂ 本周计划 ⊂ 本月计划）
+      var hibScope='today';
+      var hibScopes={
+        today:{label:'今日聚焦',icon:'🔥',count:4,tasks:[
+          {id:'FP-018',t:'番茄钟时长可配置',st:'in_progress',proj:'FocusPilot'},
+          {id:'FP-030',t:'上海和北京的天气',st:'in_review',proj:'天气查询'},
+          {id:'FP-027',t:'缓存层重构',st:'blocked',proj:'FocusPilot'},
+          {id:'FP-023',t:'用 slides 介绍 Multica',st:'in_progress',proj:'竞品调研'}]},
+        week:{label:'本周计划',icon:'📅',count:9,tasks:[
+          {id:'FP-018',t:'番茄钟时长可配置',st:'in_progress',proj:'FocusPilot'},
+          {id:'FP-030',t:'上海和北京的天气',st:'in_review',proj:'天气查询'},
+          {id:'FP-027',t:'缓存层重构',st:'blocked',proj:'FocusPilot'},
+          {id:'FP-023',t:'用 slides 介绍 Multica',st:'in_progress',proj:'竞品调研'},
+          {id:'FP-029',t:'北京离上海多远',st:'in_review',proj:'地理问答'},
+          {id:'FP-028',t:'简单介绍一下 Multica',st:'in_review',proj:'竞品调研'},
+          {id:'FP-021',t:'任务执行间隔',st:'in_review',proj:'FocusPilot'},
+          {id:'FP-017',t:'拆出子任务：导出 PDF',st:'todo',proj:'竞品调研'},
+          {id:'FP-016',t:'权限体系初步方案',st:'todo',proj:'FocusPilot'}]},
+        month:{label:'本月计划',icon:'📆',count:28,tasks:[
+          {id:'FP-018',t:'番茄钟时长可配置',st:'in_progress',proj:'FocusPilot'},
+          {id:'FP-030',t:'上海和北京的天气',st:'in_review',proj:'天气查询'},
+          {id:'FP-027',t:'缓存层重构',st:'blocked',proj:'FocusPilot'},
+          {id:'FP-023',t:'用 slides 介绍 Multica',st:'in_progress',proj:'竞品调研'},
+          {id:'FP-029',t:'北京离上海多远',st:'in_review',proj:'地理问答'},
+          {id:'FP-021',t:'任务执行间隔',st:'in_review',proj:'FocusPilot'},
+          {id:'FP-020',t:'调研核心功能以及竞品',st:'in_review',proj:'竞品调研'},
+          {id:'FP-019',t:'二级测试任务',st:'in_progress',proj:'内部'},
+          {id:'FP-016',t:'权限体系初步方案',st:'todo',proj:'FocusPilot'},
+          {id:'FP-022',t:'数据模型设计',st:'done',proj:'FocusPilot'},
+          {id:'FP-015',t:'V2 路线图梳理',st:'backlog',proj:'FocusPilot'}]}
+      };
+      var SCOPE_ORDER=['today','week','month'];
+      function renderOverview(){
+        var cw=$('hib-cards');
+        if(cw){ cw.innerHTML=''; SCOPE_ORDER.forEach(function(s){ var sc=hibScopes[s]; var el=document.createElement('div'); el.className='hib-card'+(hibScope===s?' active':''); el.onclick=function(){ window.hibSetScope(s); }; el.innerHTML='<div class="n">'+sc.count+'</div><div class="c">'+sc.label+'</div>'; cw.appendChild(el); }); }
+        var fw=$('hib-focus');
+        if(fw){ var sc=hibScopes[hibScope]; var html='<div class="hib-focus-head">'+sc.icon+' '+sc.label+' <span class="cnt">'+sc.count+' 项</span></div>';
+          sc.tasks.forEach(function(t){ var d=stDef(t.st); html+='<div class="hib-focus-row" onclick="window.hibOpen(\''+t.id+'\')"><span class="fdot" style="background:'+d.color+'"></span><span class="ft">'+t.t+'</span><span class="fm">'+t.proj+' · '+d.label+'</span></div>'; });
+          if(sc.tasks.length<sc.count){ html+='<div class="hib-focus-row" style="justify-content:center;cursor:default"><span class="fm" style="margin:0">…还有 '+(sc.count-sc.tasks.length)+' 项 · 去 Studio 查看全部</span></div>'; }
+          fw.innerHTML=html; }
+      }
+      window.hibSetScope=function(s){ hibScope=s; renderOverview(); };
+      var homeNav=document.querySelector('.nav-btn[data-page="home"]');
+      if(homeNav) homeNav.addEventListener('click',function(){ if(window.hibClose) window.hibClose(); });
+      renderHead(); renderTabs(); renderList(); renderOverview();
+    })();
     </script>
 
     <!-- ═══ Studio: Workspace 菜单 popover ═══ -->

@@ -112,21 +112,37 @@ body{
 .msg .msub{font-size:11.5px;color:var(--t3);margin-top:2px;display:flex;align-items:center;gap:5px;white-space:nowrap;overflow:hidden}
 .msg .msub .si{width:13px;height:13px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:8px;color:#fff;flex-shrink:0}
 .msg .msub .sub-txt{overflow:hidden;text-overflow:ellipsis}
-.msg .mtime{font-size:11px;color:var(--t3);font-variant-numeric:tabular-nums;flex-shrink:0;margin-top:1px}
+.msg .right{display:flex;flex-direction:column;align-items:flex-end;gap:3px;flex-shrink:0}
+.msg .mtime{font-size:11px;color:var(--t3);font-variant-numeric:tabular-nums}
+.msg .pin{font-size:11px;line-height:1;color:var(--t3);opacity:0;cursor:pointer;transition:.1s;padding:1px 3px;border-radius:4px}
+.msg:hover .pin{opacity:.5}
+.msg .pin:hover{opacity:1 !important;color:var(--accent);background:var(--row)}
+.msg.pinned .pin{opacity:1;color:var(--accent)}
+.list-sep{height:1px;background:var(--line);margin:4px 0}
 .empty-list{padding:40px 16px;text-align:center;color:var(--t3);font-size:12px}
 
 /* ===== C 栏 工作区 ===== */
 .work{flex:1;display:flex;flex-direction:column;min-width:0;position:relative;background:var(--bg)}
 
 /* —— 默认态：概览 dashboard（屏幕中央、放大）—— */
-.overview{flex:1;overflow-y:auto;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:40px}
-.ov-greet{font-size:15px;color:var(--t2);margin-bottom:28px}
+.overview{flex:1;overflow-y:auto;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;text-align:center;padding:46px 30px}
+.ov-greet{font-size:15px;color:var(--t2);margin-bottom:16px}
+.ov-focus{width:100%;max-width:560px;margin-top:30px;text-align:left;background:var(--surface);border:1px solid var(--line-soft);border-radius:14px;padding:14px 18px 8px}
+.ov-focus-head{display:flex;align-items:center;justify-content:space-between;font-size:13px;font-weight:600;margin-bottom:6px}
+.ov-focus-head .cnt{font-size:12px;color:var(--t3);font-weight:400}
+.ov-focus-row{display:flex;align-items:center;gap:10px;padding:10px 6px;border-radius:8px;cursor:pointer;border-top:1px solid var(--line-soft)}
+.ov-focus-row:hover{background:var(--row)}
+.ov-focus-row .fdot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.ov-focus-row .ft{flex:1;font-size:13px;color:var(--t1)}
+.ov-focus-row .fm{font-size:11.5px;color:var(--t3);flex-shrink:0}
 .ov-cards{display:flex;gap:18px;flex-wrap:wrap;justify-content:center;margin-bottom:22px}
-.ov-card{background:var(--surface);border:1px solid var(--line-soft);border-radius:16px;padding:24px 30px;cursor:pointer;transition:.12s;min-width:140px}
+.ov-card{background:var(--surface);border:1px solid var(--line-soft);border-radius:16px;padding:22px 30px;cursor:pointer;transition:.12s;min-width:140px}
 .ov-card:hover{border-color:color-mix(in srgb,var(--accent) 45%,transparent);transform:translateY(-2px)}
+.ov-card.active{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 9%,var(--surface))}
+.ov-card.active .n{color:var(--accent)}
 .ov-card .n{font-size:40px;font-weight:700;font-variant-numeric:tabular-nums;line-height:1}
 .ov-card .c{font-size:13px;color:var(--t3);margin-top:8px}
-.ov-sub{display:flex;gap:12px;flex-wrap:wrap;justify-content:center}
+.ov-sub{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin-bottom:28px}
 .ov-pill{display:flex;align-items:center;gap:6px;background:var(--surface);border:1px solid var(--line-soft);border-radius:11px;padding:10px 16px;font-size:13px;color:var(--t2);cursor:pointer;transition:.12s}
 .ov-pill:hover{border-color:color-mix(in srgb,var(--accent) 45%,transparent);color:var(--t1)}
 .ov-pill b{color:var(--t1);font-weight:600}
@@ -267,18 +283,14 @@ body{
     <!-- 默认态：概览（屏幕中央、放大）-->
     <div class="overview" id="overview">
       <div class="ov-greet">☀ 早上好，Bruce ·  6月13日 周六</div>
-      <div class="ov-cards">
-        <div class="ov-card"><div class="n">4</div><div class="c">今日聚焦</div></div>
-        <div class="ov-card"><div class="n">12</div><div class="c">本周待办</div></div>
-        <div class="ov-card"><div class="n">9</div><div class="c">本周计划</div></div>
-        <div class="ov-card"><div class="n">28</div><div class="c">本月计划</div></div>
-      </div>
       <div class="ov-sub">
-        <span class="ov-pill">📁 项目 <b>5</b> · 待处理 <b>8</b></span>
+        <span class="ov-pill">📁 项目 <b>5</b></span>
         <span class="ov-pill">📚 待阅读 <b>5</b></span>
         <span class="ov-pill">💡 灵感 <b>2</b></span>
         <span class="ov-pill">📌 临时事项 <b>3</b></span>
       </div>
+      <div class="ov-cards" id="ov-cards"></div>
+      <div class="ov-focus" id="ov-focus"></div>
       <div class="ov-hint">左侧收件箱有 <b id="ov-unread">5</b> 条未读 · 点击任意消息在此查看详情</div>
     </div>
 
@@ -375,10 +387,10 @@ const ORDER = ['plan','todo','in_progress','in_review','done','blocked'];
 
 let messages = [
   {id:'FP-031', title:'于都的天气',            sub:'状态设为 审核中',                          st:'in_review', proj:'天气查询', time:'2 天', unread:false},
-  {id:'FP-030', title:'上海和北京的天气',       sub:'补上完整日期（含星期）：## 上海｜日期｜…',  st:'in_review', proj:'天气查询', time:'2 天', unread:true},
+  {id:'FP-030', title:'上海和北京的天气',       sub:'补上完整日期（含星期）：## 上海｜日期｜…',  st:'in_review', proj:'天气查询', time:'2 天', unread:true, pinned:true},
   {id:'FP-029', title:'北京离上海多远',         sub:'北京到香港的距离和耗时： - **直线距离**…', st:'in_review', proj:'地理问答', time:'3 天', unread:true},
   {id:'FP-028', title:'简单介绍一下 Multica',   sub:'状态设为 审核中',                          st:'in_review', proj:'竞品调研', time:'3 天', unread:true},
-  {id:'FP-027', title:'缓存层重构',             sub:'状态设为 已阻塞',                          st:'blocked',   proj:'FocusPilot', time:'3 天', unread:true},
+  {id:'FP-027', title:'缓存层重构',             sub:'状态设为 已阻塞',                          st:'blocked',   proj:'FocusPilot', time:'3 天', unread:true, pinned:true},
   {id:'FP-026', title:'登录态过期处理',         sub:'状态设为 已阻塞',                          st:'blocked',   proj:'FocusPilot', time:'3 天', unread:false},
   {id:'FP-025', title:'测试三级任务',           sub:'状态设为 审核中',                          st:'in_review', proj:'内部', time:'3 天', unread:false},
   {id:'FP-024', title:'测试四级任务',           sub:'状态设为 审核中',                          st:'in_review', proj:'内部', time:'4 天', unread:false},
@@ -431,25 +443,33 @@ function setStatus(k){ activeStatus=k; renderTabs(); renderList(); }
 function filtered(){ return messages.filter(m=> (activeStatus==='all'||m.st===activeStatus) && (!unreadOnly||m.unread)); }
 
 function renderList(){
-  const list=document.getElementById('list'); list.innerHTML='';
-  const data=filtered(); visibleIds=data.map(m=>m.id);
+  const list=document.getElementById('list'); list.innerHTML=''; visibleIds=[];
+  const data=filtered();
   if(data.length===0){ list.innerHTML='<div class="empty-list">没有符合当前筛选的消息</div>'; return; }
-  if(groupBy==='none'){ data.forEach(m=>list.appendChild(msgEl(m))); }
+  const pinned=data.filter(m=>m.pinned), rest=data.filter(m=>!m.pinned);
+  if(pinned.length){
+    const ph=document.createElement('div'); ph.className='grp-head';
+    ph.innerHTML=`📌 置顶<span class="gn">${pinned.length}</span>`;
+    list.appendChild(ph);
+    pinned.forEach(m=>{ list.appendChild(msgEl(m)); visibleIds.push(m.id); });
+  }
+  if(pinned.length && rest.length){ const sep=document.createElement('div'); sep.className='list-sep'; list.appendChild(sep); }
+  if(groupBy==='none'){ rest.forEach(m=>{ list.appendChild(msgEl(m)); visibleIds.push(m.id); }); }
   else{ // 按项目
     const groups={};
-    data.forEach(m=>{ (groups[m.proj]=groups[m.proj]||[]).push(m); });
+    rest.forEach(m=>{ (groups[m.proj]=groups[m.proj]||[]).push(m); });
     Object.keys(groups).forEach(key=>{
       const head=document.createElement('div'); head.className='grp-head';
       head.innerHTML=`<span class="gdot" style="background:var(--accent)"></span>${key}<span class="gn">${groups[key].length}</span>`;
       list.appendChild(head);
-      groups[key].forEach(m=>list.appendChild(msgEl(m)));
+      groups[key].forEach(m=>{ list.appendChild(msgEl(m)); visibleIds.push(m.id); });
     });
   }
 }
 function msgEl(m){
   const s=STATUS[m.st];
   const el=document.createElement('div');
-  el.className='msg '+(m.unread?'unread':'read')+(m.id===currentId?' sel':'');
+  el.className='msg '+(m.unread?'unread':'read')+(m.pinned?' pinned':'')+(m.id===currentId?' sel':'');
   el.onclick=()=>{ m.id===currentId ? closeDetail() : openDetail(m.id); };
   el.innerHTML=`
     <div class="av"><svg class="enso-ic"><use href="#fp-enso"/></svg></div>
@@ -457,9 +477,13 @@ function msgEl(m){
       <div class="mt">${m.unread?'<span class="udot"></span>':''}<span class="mtitle">${m.title}</span></div>
       <div class="msub"><span class="si" style="background:${s.color}">${s.icon}</span><span class="sub-txt">${m.sub}</span></div>
     </div>
-    <div class="mtime">${m.time}</div>`;
+    <div class="right">
+      <div class="pin" title="置顶 / 取消置顶" onclick="event.stopPropagation();togglePin('${m.id}')">📌</div>
+      <div class="mtime">${m.time}</div>
+    </div>`;
   return el;
 }
+function togglePin(id){ const m=messages.find(x=>x.id===id); if(m){ m.pinned=!m.pinned; renderList(); } }
 
 function toggleUnreadOnly(){ unreadOnly=!unreadOnly; renderHead(); renderList(); }
 function setGroup(g,el){
@@ -481,6 +505,7 @@ function openDetail(id){
   currentId=id;
   fillDetail(m);
   renderHead(); renderTabs(); renderList();
+  const sel=document.querySelector('#list .msg.sel'); if(sel) sel.scrollIntoView({block:'nearest'});
   document.getElementById('overview').style.display='none';
   document.getElementById('detail').classList.add('show');
 }
@@ -521,7 +546,50 @@ function setTheme(t,el){
   el.classList.add('on');
 }
 
-renderHead(); renderTabs(); renderList();
+/* 概览三 scope（对应 Studio 今日/本周/本月）；点大卡切换下方任务列表 */
+let ovScope='today';
+const OV_SCOPES={
+  today:{label:'今日聚焦',icon:'🔥',count:4,tasks:[
+    {id:'FP-018',t:'番茄钟时长可配置',st:'in_progress',proj:'FocusPilot'},
+    {id:'FP-030',t:'上海和北京的天气',st:'in_review',proj:'天气查询'},
+    {id:'FP-027',t:'缓存层重构',st:'blocked',proj:'FocusPilot'},
+    {id:'FP-023',t:'用 slides 介绍 Multica',st:'in_progress',proj:'竞品调研'}]},
+  week:{label:'本周计划',icon:'📅',count:9,tasks:[
+    {id:'FP-018',t:'番茄钟时长可配置',st:'in_progress',proj:'FocusPilot'},
+    {id:'FP-030',t:'上海和北京的天气',st:'in_review',proj:'天气查询'},
+    {id:'FP-027',t:'缓存层重构',st:'blocked',proj:'FocusPilot'},
+    {id:'FP-023',t:'用 slides 介绍 Multica',st:'in_progress',proj:'竞品调研'},
+    {id:'FP-029',t:'北京离上海多远',st:'in_review',proj:'地理问答'},
+    {id:'FP-028',t:'简单介绍一下 Multica',st:'in_review',proj:'竞品调研'},
+    {id:'FP-021',t:'任务执行间隔',st:'in_review',proj:'FocusPilot'},
+    {id:'FP-017',t:'拆出子任务：导出 PDF',st:'todo',proj:'竞品调研'},
+    {id:'FP-016',t:'权限体系初步方案',st:'todo',proj:'FocusPilot'}]},
+  month:{label:'本月计划',icon:'📆',count:28,tasks:[
+    {id:'FP-018',t:'番茄钟时长可配置',st:'in_progress',proj:'FocusPilot'},
+    {id:'FP-030',t:'上海和北京的天气',st:'in_review',proj:'天气查询'},
+    {id:'FP-027',t:'缓存层重构',st:'blocked',proj:'FocusPilot'},
+    {id:'FP-023',t:'用 slides 介绍 Multica',st:'in_progress',proj:'竞品调研'},
+    {id:'FP-029',t:'北京离上海多远',st:'in_review',proj:'地理问答'},
+    {id:'FP-021',t:'任务执行间隔',st:'in_review',proj:'FocusPilot'},
+    {id:'FP-020',t:'调研核心功能以及竞品',st:'in_review',proj:'竞品调研'},
+    {id:'FP-019',t:'二级测试任务',st:'in_progress',proj:'内部'},
+    {id:'FP-016',t:'权限体系初步方案',st:'todo',proj:'FocusPilot'},
+    {id:'FP-022',t:'数据模型设计',st:'done',proj:'FocusPilot'},
+    {id:'FP-015',t:'V2 路线图梳理',st:'plan',proj:'FocusPilot'}]}
+};
+const OV_ORDER=['today','week','month'];
+function renderOverview(){
+  const cw=document.getElementById('ov-cards');
+  if(cw){ cw.innerHTML=''; OV_ORDER.forEach(s=>{ const sc=OV_SCOPES[s]; const el=document.createElement('div'); el.className='ov-card'+(ovScope===s?' active':''); el.onclick=()=>setScope(s); el.innerHTML=`<div class="n">${sc.count}</div><div class="c">${sc.label}</div>`; cw.appendChild(el); }); }
+  const fw=document.getElementById('ov-focus');
+  if(fw){ const sc=OV_SCOPES[ovScope]; let html=`<div class="ov-focus-head">${sc.icon} ${sc.label} <span class="cnt">${sc.count} 项</span></div>`;
+    sc.tasks.forEach(t=>{ const d=STATUS[t.st]; html+=`<div class="ov-focus-row" onclick="openDetail('${t.id}')"><span class="fdot" style="background:${d.color}"></span><span class="ft">${t.t}</span><span class="fm">${t.proj} · ${d.label}</span></div>`; });
+    if(sc.tasks.length<sc.count){ html+=`<div class="ov-focus-row" style="justify-content:center;cursor:default"><span class="fm" style="margin:0">…还有 ${sc.count-sc.tasks.length} 项 · 去 Studio 查看全部</span></div>`; }
+    fw.innerHTML=html; }
+}
+function setScope(s){ ovScope=s; renderOverview(); }
+
+renderHead(); renderTabs(); renderList(); renderOverview();
 </script>
 </body>
 </html>
