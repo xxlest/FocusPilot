@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FocusPilot · Home 收件箱原型</title>
+<style>
+/* ===== 主题变量（沿用 DesignGuide 8 主题中的 3 个，data-theme 切换） ===== */
+:root,[data-theme="classicDark"]{
+  --bg:#1C1C1E; --sidebar:#131313; --accent:#529CCA;
+  --t1:#E6E6E6; --t2:#999999; --t3:#6B6B6B;
+  --row:rgba(82,156,202,.12); --line:#383838; --line-soft:#2a2a2c;
+  --surface:#242426; --surface2:#2a2a2d;
+  --green:#4ade80; --amber:#f2c40f; --danger:#f87171;
+}
+[data-theme="defaultWhite"]{
+  --bg:#FFFFFF; --sidebar:#F7F7F7; --accent:#E53935;
+  --t1:#252525; --t2:#747474; --t3:#A0A0A0;
+  --row:rgba(229,57,53,.08); --line:#E5E5E5; --line-soft:#efefef;
+  --surface:#FAFAFA; --surface2:#F2F2F2;
+  --green:#16a34a; --amber:#d97706; --danger:#dc2626;
+}
+[data-theme="warmIvory"]{
+  --bg:#FBF8F4; --sidebar:#F4F0EA; --accent:#D97706;
+  --t1:#2E2924; --t2:#7A7066; --t3:#A6998F;
+  --row:rgba(217,119,6,.08); --line:#E0D9CC; --line-soft:#ece6db;
+  --surface:#F6F2EC; --surface2:#EFE9DF;
+  --green:#16a34a; --amber:#d97706; --danger:#dc2626;
+}
+/* 状态语义色：见 JS STATUS——采用浮球 STATUS_MODEL 固定 hex（主题无关）。--green/--amber/--danger 仅供详情 UI 强调用。 */
+:root{ --unread:#3B82F6;
+  /* 悬浮球/Logo 渐变从 accent 派生（DesignGuide §4.5），随主题自动变 */
+  --ball-light:color-mix(in srgb,var(--accent) 70%,#fff);
+  --ball-mid:var(--accent);
+  --ball-dark:color-mix(in srgb,var(--accent) 58%,#000); }
+
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","SF Pro","PingFang SC","Helvetica Neue",sans-serif;
+  background:var(--bg); color:var(--t1); font-size:13px; line-height:1.5;
+  -webkit-font-smoothing:antialiased; overflow:hidden;
+}
+.app{display:flex; height:100vh; width:100vw}
+
+/* ===== A 栏 活动栏 ===== */
+.rail{width:52px; background:var(--sidebar); border-right:1px solid var(--line);
+  display:flex; flex-direction:column; align-items:center; padding:10px 0; gap:4px; flex-shrink:0;}
+.rail .logo{width:30px;height:30px;border-radius:50%;margin-bottom:10px;overflow:hidden;box-shadow:0 0 0 1px rgba(255,255,255,.06)}
+.rail .ico{width:36px;height:36px;border-radius:9px;display:flex;align-items:center;justify-content:center;
+  font-size:17px;color:var(--t2);cursor:pointer;transition:.12s; user-select:none;}
+.rail .ico:hover{background:var(--row);color:var(--t1)}
+.rail .ico.active{background:var(--row);color:var(--accent)}
+.rail .spacer{flex:1}
+
+/* ===== B 栏 侧边栏 = 列表面板 ===== */
+.sidebar{width:328px;background:var(--sidebar);border-right:1px solid var(--line);display:flex;flex-direction:column;flex-shrink:0;min-width:0}
+.sb-head{display:flex;align-items:center;gap:8px;padding:13px 14px 10px}
+.sb-head .title{font-size:14px;font-weight:600}
+.sb-head .count{font-size:11px;color:var(--t3)}
+.sb-head .count b{color:var(--unread);font-weight:600}
+.sb-head .more{margin-left:auto;color:var(--t3);cursor:pointer;font-size:15px;padding:2px 6px;border-radius:6px}
+.sb-head .more:hover{background:var(--row);color:var(--t1)}
+
+/* 6 态单选小 tab（默认全部） */
+.status-tabs{display:flex;flex-wrap:wrap;gap:4px;padding:0 12px 9px}
+.stab{display:inline-flex;align-items:center;gap:5px;font-size:12px;color:var(--t2);padding:4px 9px;border-radius:8px;cursor:pointer;transition:.1s;user-select:none}
+.stab:hover{background:var(--row)}
+.stab.active{background:var(--row);color:var(--t1);font-weight:600}
+.stab .cdot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.stab .cn{font-size:11px;color:var(--t3);font-variant-numeric:tabular-nums}
+.stab.active .cn{color:var(--t2)}
+
+/* 第一行 控制条：全部 + 只看未读 + 分组 */
+.sb-filterbar{display:flex;align-items:center;flex-wrap:wrap;gap:8px;padding:0 14px 9px}
+/* 两行之间的淡灰分割线 */
+.sb-divider-soft{height:1px;background:var(--line-soft);margin:0 14px 9px}
+.tb-group{position:relative}
+.tb-btn{display:flex;align-items:center;gap:5px;font-size:12px;color:var(--t2);padding:4px 9px;border-radius:7px;cursor:pointer;transition:.1s;user-select:none;border:1px solid var(--line-soft)}
+.tb-btn:hover{background:var(--row);color:var(--t1)}
+.tb-menu{position:absolute;top:calc(100% + 4px);left:0;background:var(--surface);border:1px solid var(--line);border-radius:9px;padding:4px;min-width:150px;box-shadow:0 8px 24px rgba(0,0,0,.28);display:none;z-index:30}
+.tb-menu.open{display:block}
+.tb-menu .ml{font-size:10.5px;color:var(--t3);font-weight:600;padding:5px 10px 4px;letter-spacing:.3px}
+.tb-menu .mi{padding:7px 10px;border-radius:6px;font-size:12.5px;color:var(--t1);cursor:pointer;display:flex;align-items:center;gap:8px}
+.tb-menu .mi:hover{background:var(--row)}
+.tb-menu .mi .ck{width:14px;color:var(--accent);opacity:0}
+.tb-menu .mi.sel .ck{opacity:1}
+.unread-toggle{display:flex;align-items:center;gap:5px;padding:4px 9px;border-radius:7px;font-size:12px;color:var(--t2);cursor:pointer;border:1px solid var(--line-soft);transition:.12s}
+.unread-toggle:hover{background:var(--row)}
+.unread-toggle.on{color:var(--accent);border-color:color-mix(in srgb,var(--accent) 45%,transparent);background:var(--row)}
+.unread-toggle .dot{width:7px;height:7px;border-radius:50%;background:var(--unread)}
+
+.sb-sep{height:1px;background:var(--line);margin:0}
+
+/* 消息列表 = 侧边栏主滚动区 */
+.list{flex:1;overflow-y:auto;padding:4px 0}
+.grp-head{display:flex;align-items:center;gap:7px;padding:12px 14px 5px;font-size:10.5px;font-weight:600;color:var(--t3)}
+.grp-head .gdot{width:8px;height:8px;border-radius:50%}
+.grp-head .gn{color:var(--t3);font-weight:400}
+.msg{display:flex;align-items:flex-start;gap:10px;padding:11px 14px;cursor:pointer;border-bottom:1px solid var(--line-soft);transition:.1s;position:relative}
+.msg:hover{background:var(--row)}
+.msg.sel{background:var(--row)}
+.msg.sel::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--accent)}
+.msg .av{width:30px;height:30px;border-radius:50%;flex-shrink:0;margin-top:1px;overflow:hidden}
+.enso-ic{width:100%;height:100%;display:block}
+.msg .body{flex:1;min-width:0}
+.msg .mt{display:flex;align-items:center;gap:6px}
+.msg .udot{width:7px;height:7px;border-radius:50%;background:var(--unread);flex-shrink:0}
+.msg .mtitle{font-size:13px;color:var(--t1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.msg.unread .mtitle{font-weight:600}
+.msg.read .mtitle{color:var(--t2)}
+.msg .msub{font-size:11.5px;color:var(--t3);margin-top:2px;display:flex;align-items:center;gap:5px;white-space:nowrap;overflow:hidden}
+.msg .msub .si{width:13px;height:13px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:8px;color:#fff;flex-shrink:0}
+.msg .msub .sub-txt{overflow:hidden;text-overflow:ellipsis}
+.msg .right{display:flex;flex-direction:column;align-items:flex-end;gap:3px;flex-shrink:0}
+.msg .mtime{font-size:11px;color:var(--t3);font-variant-numeric:tabular-nums}
+.msg .pin{font-size:11px;line-height:1;color:var(--t3);opacity:0;cursor:pointer;transition:.1s;padding:1px 3px;border-radius:4px}
+.msg:hover .pin{opacity:.5}
+.msg .pin:hover{opacity:1 !important;color:var(--accent);background:var(--row)}
+.msg.pinned .pin{opacity:1;color:var(--accent)}
+.list-sep{height:1px;background:var(--line);margin:4px 0}
+.empty-list{padding:40px 16px;text-align:center;color:var(--t3);font-size:12px}
+
+/* ===== C 栏 工作区 ===== */
+.work{flex:1;display:flex;flex-direction:column;min-width:0;position:relative;background:var(--bg)}
+
+/* —— 默认态：概览 dashboard（屏幕中央、放大）—— */
+.overview{flex:1;overflow-y:auto;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;text-align:center;padding:46px 30px}
+.ov-greet{font-size:15px;color:var(--t2);margin-bottom:16px}
+.ov-focus{width:100%;max-width:560px;margin-top:30px;text-align:left;background:var(--surface);border:1px solid var(--line-soft);border-radius:14px;padding:14px 18px 8px}
+.ov-focus-head{display:flex;align-items:center;justify-content:space-between;font-size:13px;font-weight:600;margin-bottom:6px}
+.ov-focus-head .cnt{font-size:12px;color:var(--t3);font-weight:400}
+.ov-focus-row{display:flex;align-items:center;gap:10px;padding:10px 6px;border-radius:8px;cursor:pointer;border-top:1px solid var(--line-soft)}
+.ov-focus-row:hover{background:var(--row)}
+.ov-focus-row .fdot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.ov-focus-row .ft{flex:1;font-size:13px;color:var(--t1)}
+.ov-focus-row .fm{font-size:11.5px;color:var(--t3);flex-shrink:0}
+.ov-cards{display:flex;gap:18px;flex-wrap:wrap;justify-content:center;margin-bottom:22px}
+.ov-card{background:var(--surface);border:1px solid var(--line-soft);border-radius:16px;padding:22px 30px;cursor:pointer;transition:.12s;min-width:140px}
+.ov-card:hover{border-color:color-mix(in srgb,var(--accent) 45%,transparent);transform:translateY(-2px)}
+.ov-card.active{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 9%,var(--surface))}
+.ov-card.active .n{color:var(--accent)}
+.ov-card .n{font-size:40px;font-weight:700;font-variant-numeric:tabular-nums;line-height:1}
+.ov-card .c{font-size:13px;color:var(--t3);margin-top:8px}
+.ov-sub{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin-bottom:28px}
+.ov-pill{display:flex;align-items:center;gap:6px;background:var(--surface);border:1px solid var(--line-soft);border-radius:11px;padding:10px 16px;font-size:13px;color:var(--t2);cursor:pointer;transition:.12s}
+.ov-pill:hover{border-color:color-mix(in srgb,var(--accent) 45%,transparent);color:var(--t1)}
+.ov-pill b{color:var(--t1);font-weight:600}
+.ov-hint{margin-top:34px;color:var(--t3);font-size:12.5px}
+.ov-hint b{color:var(--unread)}
+
+/* —— 详情态 —— */
+.detail{position:absolute;inset:0;background:var(--bg);display:none;flex-direction:column;z-index:5}
+.detail.show{display:flex}
+.dt-head{display:flex;align-items:center;gap:14px;padding:16px 22px 14px;border-bottom:1px solid var(--line-soft)}
+.dt-crumb{display:flex;align-items:center;gap:7px;min-width:0;flex:1}
+.dt-crumb .proj{font-size:12px;color:var(--t3);cursor:pointer;white-space:nowrap;flex-shrink:0}
+.dt-crumb .proj:hover{color:var(--accent)}
+.dt-crumb .arr{color:var(--t3);font-size:12px;flex-shrink:0}
+.dt-crumb .cur{display:flex;align-items:baseline;gap:8px;min-width:0}
+.dt-crumb .cur .cid{font-size:11px;color:var(--t3);font-variant-numeric:tabular-nums;flex-shrink:0}
+.dt-crumb .cur .ctitle{font-size:16px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dt-nav{display:flex;gap:4px}
+.dt-nav .nb{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--t2);border:1px solid var(--line);font-size:13px;transition:.1s}
+.dt-nav .nb:hover{background:var(--row);color:var(--t1)}
+.dt-pill{padding:4px 11px;border-radius:13px;font-size:12px;font-weight:600;display:flex;align-items:center;gap:6px;flex-shrink:0}
+.dt-pill .pd{width:7px;height:7px;border-radius:50%}
+.dt-body{flex:1;display:flex;overflow:hidden}
+.dt-main{flex:1;overflow-y:auto;padding:20px 26px 90px}
+.dt-aside{width:230px;border-left:1px solid var(--line-soft);padding:18px;overflow-y:auto;flex-shrink:0}
+.dt-aside .fld{margin-bottom:16px}
+.dt-aside .fl{font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px}
+.dt-aside .fv{font-size:13px;color:var(--t1)}
+.dt-aside .fv.sub{font-size:11px;color:var(--t3);margin-top:2px}
+.dt-aside .tag{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:6px;font-size:12px;background:var(--surface2)}
+.desc{background:var(--surface);border:1px solid var(--line-soft);border-radius:10px;padding:14px 16px;font-size:13px;color:var(--t2);line-height:1.7;margin-bottom:8px}
+.tl-row{padding:14px 0;border-top:1px dashed var(--line-soft)}
+.tl-actor{display:flex;align-items:center;gap:8px;font-size:13px;margin-bottom:8px;flex-wrap:wrap}
+.tl-actor .nm{font-weight:600}
+.tl-actor .meta{color:var(--t3);font-size:12px}
+.tl-actor .badge{font-size:11px;padding:2px 8px;border-radius:9px;background:color-mix(in srgb,var(--amber) 20%,transparent);color:var(--amber);font-weight:600}
+.tl-actor .pass{font-size:11px;padding:2px 8px;border-radius:9px;background:color-mix(in srgb,var(--green) 20%,transparent);color:var(--green);font-weight:600}
+.code{background:var(--surface);border:1px solid var(--line-soft);border-radius:9px;padding:12px 14px;font-family:"SF Mono",ui-monospace,Menlo,monospace;font-size:12px;color:var(--t2);line-height:1.7;white-space:pre-wrap}
+.code .ok{color:var(--green)}
+.tl-tools{display:flex;gap:8px;margin-top:8px}
+.tl-tools .b{font-size:12px;color:var(--t2);padding:5px 11px;border:1px solid var(--line);border-radius:7px;cursor:pointer}
+.tl-tools .b:hover{background:var(--row)}
+.op{border-left:3px solid;border-radius:4px;padding:8px 12px;font-size:12.5px;margin-top:8px}
+.op.crit{border-color:var(--danger);background:color-mix(in srgb,var(--danger) 9%,transparent)}
+.op.imp{border-color:var(--amber);background:color-mix(in srgb,var(--amber) 9%,transparent)}
+.op b{margin-right:6px}
+.op.crit b{color:var(--danger)} .op.imp b{color:var(--amber)}
+.tl-reply{background:var(--surface);border-radius:9px;padding:12px 14px;font-size:13px;color:var(--t1);line-height:1.6;margin-top:6px}
+.tl-accept{background:color-mix(in srgb,var(--green) 12%,transparent);border:1px solid color-mix(in srgb,var(--green) 30%,transparent);border-radius:9px;padding:12px 14px;font-size:13px;color:var(--t1);margin-top:14px;display:flex;align-items:center;gap:8px}
+.tl-accept b{color:var(--green)}
+.dt-reply{position:absolute;left:0;right:230px;bottom:0;padding:14px 26px;background:linear-gradient(transparent,var(--bg) 30%);display:flex;gap:10px;align-items:flex-end}
+.dt-reply input{flex:1;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:11px 14px;color:var(--t1);font-size:13px;outline:none}
+.dt-reply input:focus{border-color:var(--accent)}
+.dt-reply .send{background:var(--t1);color:var(--bg);border:none;border-radius:10px;padding:11px 16px;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap}
+
+/* 主题切换 */
+.theme-sw{position:fixed;bottom:14px;left:62px;z-index:100;display:flex;gap:4px;background:var(--surface);border:1px solid var(--line);border-radius:9px;padding:4px}
+.theme-sw .ts{padding:5px 9px;font-size:11px;border-radius:6px;cursor:pointer;color:var(--t2)}
+.theme-sw .ts.on{background:var(--row);color:var(--t1)}
+
+.list::-webkit-scrollbar,.dt-main::-webkit-scrollbar,.dt-aside::-webkit-scrollbar,.overview::-webkit-scrollbar{width:8px}
+.list::-webkit-scrollbar-thumb,.dt-main::-webkit-scrollbar-thumb,.dt-aside::-webkit-scrollbar-thumb,.overview::-webkit-scrollbar-thumb{background:var(--line);border-radius:4px}
+</style>
+</head>
+<body data-theme="classicDark">
+<!-- FocusPilot 禅圆品牌 logo（symbol，复用母版 clean-logo 形态；球体渐变随主题 accent 派生） -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+  <symbol id="fp-enso" viewBox="0 0 64 64">
+    <radialGradient id="fp-logo-gradient" cx="34%" cy="26%" r="72%">
+      <stop offset="0%" stop-color="var(--ball-light)"/>
+      <stop offset="54%" stop-color="var(--ball-mid)"/>
+      <stop offset="100%" stop-color="var(--ball-dark)"/>
+    </radialGradient>
+    <linearGradient id="fp-logo-highlight" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#fff" stop-opacity=".54"/>
+      <stop offset="54%" stop-color="#fff" stop-opacity=".10"/>
+      <stop offset="100%" stop-color="#fff" stop-opacity="0"/>
+    </linearGradient>
+    <circle cx="32" cy="32" r="31" fill="url(#fp-logo-gradient)"/>
+    <ellipse cx="22" cy="16" rx="18" ry="11" fill="url(#fp-logo-highlight)" transform="rotate(-28 22 16)"/>
+    <circle cx="32" cy="32" r="30.25" fill="none" stroke="#fff" stroke-opacity=".18" stroke-width="1"/>
+    <g transform="translate(0 -2)">
+      <path d="M20.3 23.4 C25.2 16.8 33.7 14.6 41.8 17.2" fill="none" stroke="#fff" stroke-width="8.0" stroke-linecap="round" stroke-opacity=".94"/>
+      <path d="M39.4 17.2 C48.5 19.8 53.3 27.6 52.8 36.0" fill="none" stroke="#fff" stroke-width="6.6" stroke-linecap="round" stroke-opacity=".92"/>
+      <path d="M52.4 35.0 C52.2 39.6 50.5 43.7 47.9 46.8" fill="none" stroke="#fff" stroke-width="4.5" stroke-linecap="round" stroke-opacity=".88"/>
+      <path d="M19.2 37.9 C20.0 46.8 28.1 52.1 38.1 51.3" fill="none" stroke="#fff" stroke-width="2.25" stroke-linecap="round" stroke-opacity=".80"/>
+      <path d="M20.0 40.4 C24.4 48.6 36.0 52.5 47.4 48.5" fill="none" stroke="#fff" stroke-width="1.08" stroke-linecap="round" stroke-opacity=".70"/>
+      <path d="M18.7 42.4 C23.8 50.7 35.8 54.4 46.7 50.8" fill="none" stroke="#fff" stroke-width=".62" stroke-linecap="round" stroke-opacity=".52"/>
+      <circle cx="45.2" cy="48.0" r="1.85" fill="#fff" fill-opacity=".82"/>
+      <circle cx="41.8" cy="50.4" r="1.34" fill="#fff" fill-opacity=".64"/>
+      <circle cx="38.4" cy="51.7" r=".88" fill="#fff" fill-opacity=".46"/>
+    </g>
+  </symbol>
+</defs></svg>
+<div class="app">
+  <!-- A 栏 -->
+  <div class="rail">
+    <div class="logo"><svg class="enso-ic"><use href="#fp-enso"/></svg></div>
+    <div class="ico active" title="Home">🏠</div>
+    <div class="ico" title="Projects">📁</div>
+    <div class="ico" title="Studio">🛠</div>
+    <div class="ico" title="Review">✅</div>
+    <div class="ico" title="AICrew">🤖</div>
+    <div class="spacer"></div>
+    <div class="ico" title="Settings">⚙</div>
+  </div>
+
+  <!-- B 栏 侧边栏 = 列表面板（6 态单选小 tab + 消息列表，无对话 Tab） -->
+  <div class="sidebar">
+    <div class="sb-head">
+      <span class="title">收件箱</span>
+      <span class="count" id="sb-count"></span>
+      <span class="more" title="全部标为已读" onclick="markAllRead()">⋯</span>
+    </div>
+    <!-- 第一行：全部 + 只看未读 + 分组 -->
+    <div class="sb-filterbar">
+      <div class="stab" id="tab-all" onclick="setStatus('all')">全部 <span class="cn" id="all-count"></span></div>
+      <div class="unread-toggle" id="unread-toggle" onclick="toggleUnreadOnly()"><span class="dot"></span>只看未读</div>
+      <div class="tb-group">
+        <div class="tb-btn" onclick="toggleMenu(event)" id="group-btn">⊟ 时间 ▾</div>
+        <div class="tb-menu" id="group-menu">
+          <div class="ml">分组方式</div>
+          <div class="mi sel" onclick="setGroup('none',this)"><span class="ck">✓</span>无（按时间倒序）</div>
+          <div class="mi" onclick="setGroup('sched',this)"><span class="ck">✓</span>按规划</div>
+          <div class="mi" onclick="setGroup('project',this)"><span class="ck">✓</span>按项目</div>
+        </div>
+      </div>
+    </div>
+    <!-- 淡灰分割线 -->
+    <div class="sb-divider-soft"></div>
+    <!-- 第二行：6 态状态 tab -->
+    <div class="status-tabs" id="status-tabs"></div>
+    <div class="sb-sep"></div>
+    <div class="list" id="list"></div>
+  </div>
+
+  <!-- C 栏 工作区 = 详情面板（默认概览，点消息才显详情） -->
+  <div class="work">
+    <!-- 默认态：概览（屏幕中央、放大）-->
+    <div class="overview" id="overview">
+      <div class="ov-greet">☀ 早上好，Bruce ·  6月13日 周六</div>
+      <div class="ov-sub">
+        <span class="ov-pill">📁 项目 <b>5</b></span>
+        <span class="ov-pill">📚 待阅读 <b>5</b></span>
+        <span class="ov-pill">💡 灵感 <b>2</b></span>
+        <span class="ov-pill">📌 临时事项 <b>3</b></span>
+      </div>
+      <div class="ov-cards" id="ov-cards"></div>
+      <div class="ov-focus" id="ov-focus"></div>
+      <div class="ov-hint">左侧收件箱有 <b id="ov-unread">5</b> 条未读 · 点击任意消息在此查看详情</div>
+    </div>
+
+    <!-- 详情态 -->
+    <div class="detail" id="detail">
+      <div class="dt-head">
+        <div class="dt-crumb">
+          <span class="proj" id="dt-proj" onclick="closeDetail()" title="返回 / 打开项目">FocusPilot</span>
+          <span class="arr">›</span>
+          <span class="cur"><span class="cid" id="dt-id">FP-001</span><span class="ctitle" id="dt-title">数据模型设计</span></span>
+        </div>
+        <div class="dt-nav">
+          <div class="nb" onclick="navDetail(-1)" title="上一条">↑</div>
+          <div class="nb" onclick="navDetail(1)" title="下一条">↓</div>
+        </div>
+        <div class="dt-pill" id="dt-pill"><span class="pd"></span><span class="pl"></span></div>
+      </div>
+      <div class="dt-body">
+        <div class="dt-main">
+          <div class="desc">设计 FocusPilot 核心数据模型，包括 Workspace、Task、CrewMember、CrewRuntime 等实体的字段定义、关系映射和持久化方案。要求：Codable 可序列化、支持单字段增量保存、覆盖单元测试。</div>
+          <div class="tl-row">
+            <div class="tl-actor">🤖 <span class="nm">代码工程师</span><span class="meta">· 自动执行（第 1 轮）· 00:08:12</span></div>
+            <div class="code">新建 Models.swift (+318)：定义 Workspace / Task / CrewMember / CrewRuntime 四个 Codable 结构体
+新建 ConfigStore+Codable.swift (+96)：UserDefaults 序列化 + 单字段保存
+新建 ModelsTests.swift (+142)：12 个单测
+<span class="ok">✓ Build succeeded · 12 tests passed</span></div>
+            <div class="tl-tools"><span class="b">查看 Diff</span><span class="b">日志</span></div>
+          </div>
+          <div class="tl-row">
+            <div class="tl-actor">🔍 <span class="nm">质量审查员</span><span class="meta">· 评估 · 第 1 轮 / 共 3 轮</span><span class="badge">2 条意见</span></div>
+            <div class="op crit"><b>Critical</b>CrewRuntime 缺少 daemon 心跳时间戳字段，无法做超时回收</div>
+            <div class="op imp"><b>Important</b>Task 全量写入 UserDefaults，大对象建议按 id 分片存储</div>
+          </div>
+          <div class="tl-row">
+            <div class="tl-actor">🤖 <span class="nm">代码工程师</span><span class="meta">· 自动修复（第 2 轮）· 00:04:18</span></div>
+            <div class="code">CrewRuntime 增加 lastHeartbeatAt: Date 字段 + 编解码
+Task 持久化改为按 id 分片键存储
+<span class="ok">✓ Build succeeded · 14 tests passed</span></div>
+          </div>
+          <div class="tl-row">
+            <div class="tl-actor">🔍 <span class="nm">质量审查员</span><span class="meta">· 评估 · 第 2 轮</span><span class="pass">✓ 通过</span><span class="meta">→ 落「审核中」</span></div>
+          </div>
+          <div class="tl-row">
+            <div class="tl-actor">👤 <span class="nm">你</span><span class="meta">· 回复 = 触发下一轮 · 04-15 16:20</span></div>
+            <div class="tl-reply">CrewMember 的能力标签（capabilities）也加一个索引，后面按能力筛选 Agent 要用</div>
+          </div>
+          <div class="tl-row">
+            <div class="tl-actor">🤖 <span class="nm">代码工程师</span><span class="meta">· 自动执行（第 3 轮）· 00:02:36</span></div>
+            <div class="code">CrewMember 增加 capabilityIndex: [String: [UUID]] 反向索引 + 增量维护
+<span class="ok">✓ Build succeeded · 16 tests passed</span></div>
+          </div>
+          <div class="tl-row">
+            <div class="tl-actor">🔍 <span class="nm">质量审查员</span><span class="meta">· 评估 · 第 3 轮</span><span class="pass">✓ 通过</span></div>
+          </div>
+          <div class="tl-accept">✅ <b>你已验收通过</b> · 拖入「已完成」· 04-16 09:30 · 共 3 轮 · 累计耗时 15m06s</div>
+        </div>
+        <div class="dt-aside">
+          <div class="fld"><div class="fl">状态</div><div class="fv"><span class="tag" id="aside-status">● Done</span></div></div>
+          <div class="fld"><div class="fl">优先级</div><div class="fv"><span class="tag">P0</span></div></div>
+          <div class="fld"><div class="fl">Workspace</div><div class="fv">🗂 本地项目</div></div>
+          <div class="fld"><div class="fl">项目</div><div class="fv" id="aside-proj">FocusPilot</div></div>
+          <div class="fld"><div class="fl">归属目标</div><div class="fv">4月/FP 0.0.1</div><div class="fv sub">FocusPilot 0.0.1</div></div>
+          <div class="fld"><div class="fl">调度</div><div class="fv">🤖 全自动</div></div>
+          <div class="fld"><div class="fl">评估 Agent</div><div class="fv">质量审查员 · 3 轮</div></div>
+          <div class="fld"><div class="fl">Agent</div><div class="fv">代码工程师</div></div>
+          <div class="fld"><div class="fl">截止</div><div class="fv">04-15</div></div>
+        </div>
+      </div>
+      <div class="dt-reply">
+        <input placeholder="让 Agent 继续调整…（回复即触发下一轮执行）">
+        <button class="send">↑ 发送</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="theme-sw">
+  <div class="ts on" onclick="setTheme('classicDark',this)">经典深</div>
+  <div class="ts" onclick="setTheme('defaultWhite',this)">默认白</div>
+  <div class="ts" onclick="setTheme('warmIvory',this)">暖象牙</div>
+</div>
+
+<script>
+/* ===== 状态：对齐浮球 STATUS_MODEL（固定 hex、主题无关）。权威源 commit a1dff70 + floating-ball:2117 ===== */
+const STATUS = {
+  plan:       {label:'待规划', color:'#999ca2', icon:'◌'},
+  todo:       {label:'待办',   color:'#74777d', icon:'○'},
+  in_progress:{label:'进行中', color:'#147af3', icon:'◔'},
+  in_review:  {label:'审核中', color:'#8b5cf6', icon:'◑'},
+  done:       {label:'已完成', color:'#31c75a', icon:'✓'},
+  blocked:    {label:'已阻塞', color:'#f97316', icon:'⊘'},
+};
+const ORDER = ['plan','todo','in_progress','in_review','done','blocked'];
+
+let messages = [
+  {id:'FP-031', title:'于都的天气',            sub:'状态设为 审核中',                          st:'in_review', proj:'天气查询', time:'2 天', unread:false},
+  {id:'FP-030', title:'上海和北京的天气',       sub:'补上完整日期（含星期）：## 上海｜日期｜…',  st:'in_review', proj:'天气查询', time:'2 天', unread:true, pinned:true},
+  {id:'FP-029', title:'北京离上海多远',         sub:'北京到香港的距离和耗时： - **直线距离**…', st:'in_review', proj:'地理问答', time:'3 天', unread:true},
+  {id:'FP-028', title:'简单介绍一下 Multica',   sub:'状态设为 审核中',                          st:'in_review', proj:'竞品调研', time:'3 天', unread:true},
+  {id:'FP-027', title:'缓存层重构',             sub:'状态设为 已阻塞',                          st:'blocked',   proj:'FocusPilot', time:'3 天', unread:true, pinned:true},
+  {id:'FP-026', title:'登录态过期处理',         sub:'状态设为 已阻塞',                          st:'blocked',   proj:'FocusPilot', time:'3 天', unread:false},
+  {id:'FP-025', title:'测试三级任务',           sub:'状态设为 审核中',                          st:'in_review', proj:'内部', time:'3 天', unread:false},
+  {id:'FP-024', title:'测试四级任务',           sub:'状态设为 审核中',                          st:'in_review', proj:'内部', time:'4 天', unread:false},
+  {id:'FP-023', title:'用 slides 介绍 Multica 能为我做什么', sub:'这条任务上一轮已经完成了：完整…', st:'in_progress', proj:'竞品调研', time:'5 天', unread:true},
+  {id:'FP-022', title:'数据模型设计',           sub:'状态设为 已完成',                          st:'done',      proj:'FocusPilot', time:'6 天', unread:false},
+  {id:'FP-021', title:'任务执行间隔',           sub:'状态设为 审核中',                          st:'in_review', proj:'FocusPilot', time:'13 天', unread:false},
+  {id:'FP-020', title:'调研核心功能以及竞品',   sub:'状态设为 审核中',                          st:'in_review', proj:'竞品调研', time:'13 天', unread:false},
+  {id:'FP-019', title:'二级测试任务',           sub:'有的，当前任务下有 1 个子任务： - [T…',    st:'in_progress', proj:'内部', time:'13 天', unread:false},
+  {id:'FP-018', title:'番茄钟时长可配置',       sub:'状态设为 进行中',                          st:'in_progress', proj:'FocusPilot', time:'14 天', unread:false},
+  {id:'FP-017', title:'拆出子任务：导出 PDF',   sub:'状态设为 待办',                            st:'todo',      proj:'竞品调研', time:'14 天', unread:true},
+  {id:'FP-016', title:'权限体系初步方案',       sub:'状态设为 待办',                            st:'todo',      proj:'FocusPilot', time:'15 天', unread:false},
+  {id:'FP-015', title:'V2 路线图梳理',          sub:'状态设为 待规划',                          st:'plan',      proj:'FocusPilot', time:'16 天', unread:false},
+];
+
+// 规划维度（schedule）：今日聚焦 ⊂ 本周计划 ⊂ 本月计划；分组时归到最具体的桶
+const SCHED_MAP={'FP-018':'today','FP-030':'today','FP-027':'today','FP-023':'today','FP-029':'week','FP-028':'week','FP-021':'week','FP-017':'week','FP-016':'week'};
+messages.forEach(m=>{ m.sched=SCHED_MAP[m.id]||'month'; });
+
+let activeStatus = 'all';   // 单选：'all' 或某个状态 key
+let unreadOnly = false;
+let groupBy = 'none';
+let visibleIds = [];
+let currentId = null;
+
+function statusCounts(){
+  const c={}; ORDER.forEach(k=>c[k]={total:0,unread:0});
+  messages.forEach(m=>{ if(!c[m.st])return; c[m.st].total++; if(m.unread)c[m.st].unread++; });
+  return c;
+}
+function unreadTotal(){ return messages.filter(m=>m.unread).length; }
+
+function renderHead(){
+  const u=unreadTotal();
+  document.getElementById('sb-count').innerHTML = `${messages.length} · <b>${u} 未读</b>`;
+  document.getElementById('ov-unread').textContent = u;
+  document.getElementById('unread-toggle').classList.toggle('on', unreadOnly);
+}
+function renderTabs(){
+  const c=statusCounts(), wrap=document.getElementById('status-tabs'); wrap.innerHTML='';
+  // 第一行的「全部」（静态元素，仅切换 active + 计数）
+  document.getElementById('all-count').textContent=messages.length;
+  document.getElementById('tab-all').classList.toggle('active', activeStatus==='all');
+  // 第二行：6 态
+  ORDER.forEach(k=>{
+    const s=STATUS[k], cnt=c[k]; if(cnt.total===0) return;
+    const el=document.createElement('div');
+    el.className='stab'+(activeStatus===k?' active':'');
+    el.onclick=()=>setStatus(k);
+    el.innerHTML=`<span class="cdot" style="background:${s.color}"></span>${s.label} <span class="cn">${cnt.total}</span>`;
+    wrap.appendChild(el);
+  });
+}
+function setStatus(k){ activeStatus=k; renderTabs(); renderList(); }
+function filtered(){ return messages.filter(m=> (activeStatus==='all'||m.st===activeStatus) && (!unreadOnly||m.unread)); }
+
+function renderList(){
+  const list=document.getElementById('list'); list.innerHTML=''; visibleIds=[];
+  const data=filtered();
+  if(data.length===0){ list.innerHTML='<div class="empty-list">没有符合当前筛选的消息</div>'; return; }
+  const pinned=data.filter(m=>m.pinned), rest=data.filter(m=>!m.pinned);
+  if(pinned.length){
+    const ph=document.createElement('div'); ph.className='grp-head';
+    ph.innerHTML=`📌 置顶<span class="gn">${pinned.length}</span>`;
+    list.appendChild(ph);
+    pinned.forEach(m=>{ list.appendChild(msgEl(m)); visibleIds.push(m.id); });
+  }
+  if(pinned.length && rest.length){ const sep=document.createElement('div'); sep.className='list-sep'; list.appendChild(sep); }
+  if(groupBy==='none'){ rest.forEach(m=>{ list.appendChild(msgEl(m)); visibleIds.push(m.id); }); }
+  else if(groupBy==='sched'){ // 按规划
+    [['today','🔥 今日聚焦'],['week','📅 本周计划'],['month','📆 本月计划']].forEach(sc=>{
+      const arr=rest.filter(m=>m.sched===sc[0]); if(!arr.length) return;
+      const head=document.createElement('div'); head.className='grp-head';
+      head.innerHTML=`${sc[1]}<span class="gn">${arr.length}</span>`;
+      list.appendChild(head);
+      arr.forEach(m=>{ list.appendChild(msgEl(m)); visibleIds.push(m.id); });
+    });
+  }
+  else{ // 按项目
+    const groups={};
+    rest.forEach(m=>{ (groups[m.proj]=groups[m.proj]||[]).push(m); });
+    Object.keys(groups).forEach(key=>{
+      const head=document.createElement('div'); head.className='grp-head';
+      head.innerHTML=`<span class="gdot" style="background:var(--accent)"></span>${key}<span class="gn">${groups[key].length}</span>`;
+      list.appendChild(head);
+      groups[key].forEach(m=>{ list.appendChild(msgEl(m)); visibleIds.push(m.id); });
+    });
+  }
+}
+function msgEl(m){
+  const s=STATUS[m.st];
+  const el=document.createElement('div');
+  el.className='msg '+(m.unread?'unread':'read')+(m.pinned?' pinned':'')+(m.id===currentId?' sel':'');
+  el.onclick=()=>{ m.id===currentId ? closeDetail() : openDetail(m.id); };
+  el.innerHTML=`
+    <div class="av"><svg class="enso-ic"><use href="#fp-enso"/></svg></div>
+    <div class="body">
+      <div class="mt">${m.unread?'<span class="udot"></span>':''}<span class="mtitle">${m.title}</span></div>
+      <div class="msub"><span class="si" style="background:${s.color}">${s.icon}</span><span class="sub-txt">${m.sub}</span></div>
+    </div>
+    <div class="right">
+      <div class="pin" title="置顶 / 取消置顶" onclick="event.stopPropagation();togglePin('${m.id}')">📌</div>
+      <div class="mtime">${m.time}</div>
+    </div>`;
+  return el;
+}
+function togglePin(id){ const m=messages.find(x=>x.id===id); if(m){ m.pinned=!m.pinned; renderList(); } }
+
+function toggleUnreadOnly(){ unreadOnly=!unreadOnly; renderHead(); renderList(); }
+function setGroup(g,el){
+  groupBy=g;
+  document.querySelectorAll('#group-menu .mi').forEach(x=>x.classList.remove('sel'));
+  el.classList.add('sel');
+  document.getElementById('group-btn').textContent=`⊟ ${({none:'无 · 按时间',sched:'按规划',project:'按项目'})[g]||'无 · 按时间'} ▾`;
+  document.getElementById('group-menu').classList.remove('open');
+  renderList();
+}
+function toggleMenu(e){ e.stopPropagation(); document.getElementById('group-menu').classList.toggle('open'); }
+document.addEventListener('click',()=>document.getElementById('group-menu').classList.remove('open'));
+function markAllRead(){ messages.forEach(m=>m.unread=false); renderHead(); renderTabs(); renderList(); }
+
+/* 详情：工作区内切换 概览 <-> 详情 */
+function openDetail(id){
+  const m=messages.find(x=>x.id===id);
+  if(m.unread){ m.unread=false; }
+  currentId=id;
+  fillDetail(m);
+  renderHead(); renderTabs(); renderList();
+  const sel=document.querySelector('#list .msg.sel'); if(sel) sel.scrollIntoView({block:'nearest'});
+  document.getElementById('overview').style.display='none';
+  document.getElementById('detail').classList.add('show');
+}
+function fillDetail(m){
+  const s=STATUS[m.st];
+  document.getElementById('dt-id').textContent=m.id;
+  document.getElementById('dt-title').textContent=m.title;
+  document.getElementById('dt-proj').textContent=m.proj;   // 面包屑：项目
+  document.getElementById('aside-proj').textContent=m.proj;
+  const pill=document.getElementById('dt-pill');
+  pill.style.background=`color-mix(in srgb, ${s.color} 16%, transparent)`;
+  pill.style.color=s.color;
+  pill.querySelector('.pd').style.background=s.color;
+  pill.querySelector('.pl').textContent=s.label;
+  document.getElementById('aside-status').textContent='● '+s.label;
+}
+function navDetail(dir){
+  const i=visibleIds.indexOf(currentId)+dir;
+  if(i<0||i>=visibleIds.length) return;
+  openDetail(visibleIds[i]);
+}
+function closeDetail(){
+  currentId=null;
+  document.getElementById('detail').classList.remove('show');
+  document.getElementById('overview').style.display='flex';
+  renderList();
+}
+document.addEventListener('keydown',e=>{
+  if(!document.getElementById('detail').classList.contains('show')) return;
+  if(e.key==='Escape') closeDetail();
+  if(e.key==='ArrowUp'){ e.preventDefault(); navDetail(-1); }
+  if(e.key==='ArrowDown'){ e.preventDefault(); navDetail(1); }
+});
+
+function setTheme(t,el){
+  document.body.dataset.theme=t;
+  document.querySelectorAll('.theme-sw .ts').forEach(x=>x.classList.remove('on'));
+  el.classList.add('on');
+}
+
+/* 概览三 scope（对应 Studio 今日/本周/本月）；点大卡切换下方任务列表 */
+let ovScope='today';
+const OV_SCOPES={
+  today:{label:'今日聚焦',icon:'🔥',count:4,tasks:[
+    {id:'FP-018',t:'番茄钟时长可配置',st:'in_progress',proj:'FocusPilot'},
+    {id:'FP-030',t:'上海和北京的天气',st:'in_review',proj:'天气查询'},
+    {id:'FP-027',t:'缓存层重构',st:'blocked',proj:'FocusPilot'},
+    {id:'FP-023',t:'用 slides 介绍 Multica',st:'in_progress',proj:'竞品调研'}]},
+  week:{label:'本周计划',icon:'📅',count:9,tasks:[
+    {id:'FP-018',t:'番茄钟时长可配置',st:'in_progress',proj:'FocusPilot'},
+    {id:'FP-030',t:'上海和北京的天气',st:'in_review',proj:'天气查询'},
+    {id:'FP-027',t:'缓存层重构',st:'blocked',proj:'FocusPilot'},
+    {id:'FP-023',t:'用 slides 介绍 Multica',st:'in_progress',proj:'竞品调研'},
+    {id:'FP-029',t:'北京离上海多远',st:'in_review',proj:'地理问答'},
+    {id:'FP-028',t:'简单介绍一下 Multica',st:'in_review',proj:'竞品调研'},
+    {id:'FP-021',t:'任务执行间隔',st:'in_review',proj:'FocusPilot'},
+    {id:'FP-017',t:'拆出子任务：导出 PDF',st:'todo',proj:'竞品调研'},
+    {id:'FP-016',t:'权限体系初步方案',st:'todo',proj:'FocusPilot'}]},
+  month:{label:'本月计划',icon:'📆',count:28,tasks:[
+    {id:'FP-018',t:'番茄钟时长可配置',st:'in_progress',proj:'FocusPilot'},
+    {id:'FP-030',t:'上海和北京的天气',st:'in_review',proj:'天气查询'},
+    {id:'FP-027',t:'缓存层重构',st:'blocked',proj:'FocusPilot'},
+    {id:'FP-023',t:'用 slides 介绍 Multica',st:'in_progress',proj:'竞品调研'},
+    {id:'FP-029',t:'北京离上海多远',st:'in_review',proj:'地理问答'},
+    {id:'FP-021',t:'任务执行间隔',st:'in_review',proj:'FocusPilot'},
+    {id:'FP-020',t:'调研核心功能以及竞品',st:'in_review',proj:'竞品调研'},
+    {id:'FP-019',t:'二级测试任务',st:'in_progress',proj:'内部'},
+    {id:'FP-016',t:'权限体系初步方案',st:'todo',proj:'FocusPilot'},
+    {id:'FP-022',t:'数据模型设计',st:'done',proj:'FocusPilot'},
+    {id:'FP-015',t:'V2 路线图梳理',st:'plan',proj:'FocusPilot'}]}
+};
+const OV_ORDER=['today','week','month'];
+function renderOverview(){
+  const cw=document.getElementById('ov-cards');
+  if(cw){ cw.innerHTML=''; OV_ORDER.forEach(s=>{ const sc=OV_SCOPES[s]; const el=document.createElement('div'); el.className='ov-card'+(ovScope===s?' active':''); el.onclick=()=>setScope(s); el.innerHTML=`<div class="n">${sc.count}</div><div class="c">${sc.label}</div>`; cw.appendChild(el); }); }
+  const fw=document.getElementById('ov-focus');
+  if(fw){ const sc=OV_SCOPES[ovScope]; let html=`<div class="ov-focus-head">${sc.icon} ${sc.label} <span class="cnt">${sc.count} 项</span></div>`;
+    sc.tasks.forEach(t=>{ const d=STATUS[t.st]; html+=`<div class="ov-focus-row" onclick="openDetail('${t.id}')"><span class="fdot" style="background:${d.color}"></span><span class="ft">${t.t}</span><span class="fm">${t.proj} · ${d.label}</span></div>`; });
+    if(sc.tasks.length<sc.count){ html+=`<div class="ov-focus-row" style="justify-content:center;cursor:default"><span class="fm" style="margin:0">…还有 ${sc.count-sc.tasks.length} 项 · 去 Studio 查看全部</span></div>`; }
+    fw.innerHTML=html; }
+}
+function setScope(s){ ovScope=s; renderOverview(); }
+
+renderHead(); renderTabs(); renderList(); renderOverview();
+</script>
+</body>
+</html>
