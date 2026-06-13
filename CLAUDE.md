@@ -71,7 +71,7 @@ FocusPilot 定位为 macOS 上的个人自迭代系统（Personal AIOS）—— 
 
 ### UI 设计进度（fp-ui/）
 
-一级导航 6 项：Home · Projects · Studio · Review · AICrew · Settings
+一级导航 6 项：Home · Studio · Projects · Review · AICrew · Settings
 
 | 页面 | 完整度 | 状态 | 下一步 |
 |------|:------:|------|--------|
