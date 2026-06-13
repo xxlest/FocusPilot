@@ -989,7 +989,7 @@ struct ChangedFile: Codable {
 }
 ```
 
-**变更来源（按 Workspace 类型）**：`git_project` = worktree 分支 vs `baseCommit`；`local_directory` = 工作区未提交变更；`temporary` = 全新增产物。复审裁决：通过(`done`，git 合并分支)/ 打回(`in_progress`)/ 丢弃(放弃 worktree·还原)。代码改动渲染 diff，新建产物（md/图片）直接预览。
+**变更来源（按 Workspace 类型）**：`git_project` = worktree 分支 vs `baseCommit`；`local_directory` = 工作区未提交变更；`temporary` = 全新增产物。任务详情「变更」Tab 只读查看（代码→diff，md/图片→预览），「文件」Tab 浏览所属 Workspace 全量文件树；状态流转由看板拖拽与对话回复驱动，变更视图不内嵌裁决动作。
 
 ### WorkspaceWriteLease
 
