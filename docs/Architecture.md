@@ -963,12 +963,33 @@ struct ExecutionRun: Identifiable, Codable {
 
     var workspaceSnapshot: WorkspaceSnapshot
     var writeLease: WorkspaceWriteLease?
+
+    var changeSet: ChangeSet?               // 本次 Run 产物，供任务详情「变更」视图复审
 }
 
 enum RunStatus: String, Codable {
     case pending, running, paused, completed, aborted
 }
+
+// 任务级变更集：Agent 完成后在任务详情「变更」视图按文件树 + diff/预览复审
+struct ChangeSet: Codable {
+    var branch: String?                     // git_project：worktree 分支
+    var baseCommit: String?                 // diff 基准（git_project 有；local/temporary 无）
+    var gates: [String: String]             // 客观闸结果，如 ["build":"pass","test":"fail"]
+    var files: [ChangedFile]
+}
+
+struct ChangedFile: Codable {
+    var path: String
+    var changeType: String                  // A 新增 | M 修改 | D 删除
+    var additions: Int
+    var deletions: Int
+    var kind: String                        // code | markdown | image | ...
+    // code/markdown → diff/preview 文本；二进制（图片等）只给路径占位
+}
 ```
+
+**变更来源（按 Workspace 类型）**：`git_project` = worktree 分支 vs `baseCommit`；`local_directory` = 工作区未提交变更；`temporary` = 全新增产物。复审裁决：通过(`done`，git 合并分支)/ 打回(`in_progress`)/ 丢弃(放弃 worktree·还原)。代码改动渲染 diff，新建产物（md/图片）直接预览。
 
 ### WorkspaceWriteLease
 

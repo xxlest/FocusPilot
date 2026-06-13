@@ -818,10 +818,12 @@
         border: 1px dashed var(--line); background: transparent; color: var(--dim); font-size: 10px; cursor: pointer;
       }
       .fp-tag-add:hover { color: var(--accent); border-color: var(--accent-line); }
+      /* 状态徽标固定色：对齐浮球 STATUS_MODEL（主题无关）。in_progress 用固定蓝 #147af3，
+         不再跟 accent（避免默认白主题下进行中变红）。green/amber 仍为通用成功/警示色不改。 */
       .pill.blue {
-        border-color: var(--accent-line);
-        color: var(--accent);
-        background: var(--accent-bg);
+        border-color: rgba(20, 122, 243, 0.3);
+        color: #147af3;
+        background: rgba(20, 122, 243, 0.12);
       }
       .pill.green {
         border-color: rgba(74, 222, 128, 0.28);
@@ -837,6 +839,22 @@
         border-color: rgba(248, 113, 113, 0.3);
         color: var(--red);
         background: rgba(248, 113, 113, 0.1);
+      }
+      /* 状态徽标：in_review 紫 / blocked 橙 / backlog·todo 灰（之前未定义，状态 pill 无色） */
+      .pill.purple {
+        border-color: rgba(139, 92, 246, 0.3);
+        color: #8b5cf6;
+        background: rgba(139, 92, 246, 0.12);
+      }
+      .pill.orange {
+        border-color: rgba(249, 115, 22, 0.3);
+        color: #f97316;
+        background: rgba(249, 115, 22, 0.12);
+      }
+      .pill.dim {
+        border-color: rgba(153, 156, 162, 0.32);
+        color: #9aa0a8;
+        background: rgba(153, 156, 162, 0.14);
       }
 
       .progress {
@@ -1164,6 +1182,25 @@
         color: var(--text);
         letter-spacing: .04em;
       }
+      /* 任务详情：对话/变更 Tab + 变更复审视图 */
+      .fp-detail-tabbar { display: flex; gap: 2px; padding: 6px 18px 0; border-bottom: 1px solid var(--line-soft); flex-shrink: 0; }
+      .fp-dtab2 { border: none; background: transparent; color: var(--muted); font-size: 12px; font-weight: 500; padding: 6px 12px; cursor: pointer; border-bottom: 2px solid transparent; }
+      .fp-dtab2:hover { color: var(--text); }
+      .fp-dtab2.active { color: var(--text); font-weight: 600; border-bottom-color: var(--accent); }
+      .fp-change-badge { display: inline-flex; align-items: center; gap: 3px; font-size: 9px; font-weight: 600; padding: 1px 6px; border-radius: 10px; background: var(--accent-bg); color: var(--accent); cursor: pointer; }
+      .fp-cs-file { display: flex; align-items: center; gap: 6px; padding: 6px 8px; font-size: 11px; cursor: pointer; border-radius: 5px; color: var(--text); }
+      .fp-cs-file:hover { background: var(--surface-2); }
+      .fp-cs-file.active { background: var(--accent-bg); }
+      .fp-cs-file .fp-cs-stat { margin-left: auto; font-family: var(--mono); font-size: 10px; flex-shrink: 0; }
+      .fp-cs-type { width: 13px; text-align: center; font-family: var(--mono); font-weight: 700; font-size: 10px; flex-shrink: 0; }
+      .fp-cs-type.A { color: var(--green); }
+      .fp-cs-type.M { color: var(--amber); }
+      .fp-cs-type.D { color: var(--red); }
+      .fp-diff-line { font-family: var(--mono); font-size: 11px; line-height: 1.65; padding: 0 10px; white-space: pre-wrap; word-break: break-all; }
+      .fp-diff-line.add { background: rgba(46,204,113,.14); }
+      .fp-diff-line.del { background: rgba(248,113,113,.14); }
+      .fp-diff-line.ctx { color: var(--muted); }
+      .fp-verdict-bar { display: flex; gap: 8px; align-items: center; padding: 10px 18px; border-top: 1px solid var(--line-soft); flex-shrink: 0; }
       .studio-filter-select {
         min-height: 28px;
         padding: 0 24px 0 9px;
@@ -4222,6 +4259,11 @@
             </div>
             <div style="display:flex;flex:1;overflow:hidden">
               <div style="flex:1;display:flex;flex-direction:column;overflow:hidden">
+                <div class="fp-detail-tabbar">
+                  <button class="fp-dtab2 active" data-detail-view="chat" onclick="switchTaskDetailView('chat')">对话</button>
+                  <button class="fp-dtab2" data-detail-view="diff" onclick="switchTaskDetailView('diff')">变更<span id="fp-detail-diff-count" style="margin-left:4px;font-family:var(--mono);font-size:10px;color:var(--dim)"></span></button>
+                </div>
+                <div id="fp-detail-view-chat" style="flex:1;display:flex;flex-direction:column;overflow:hidden;min-height:0">
                 <div id="fp-t-plan" style="flex:1;overflow-y:auto;padding:14px 18px">
                   <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);margin-bottom:6px">📄 任务描述</div>
                   <div style="background:var(--bg);border:1px solid var(--line-soft);border-radius:var(--radius);padding:10px;font-size:12px;line-height:1.6;color:var(--muted);margin-bottom:14px">实现 Workspace 看板视图的状态模型，采用 Multica 7 态流转：backlog → todo → in_progress ⇄ in_review → done，旁路状态 blocked / cancelled。</div>
@@ -4236,6 +4278,20 @@
                 <div style="border-top:1px solid var(--line-soft);padding:10px 18px;display:flex;gap:8px;align-items:center">
                   <input type="text" placeholder="让 Agent 继续调整…（回复即触发下一轮执行）" style="flex:1;background:var(--bg);border:1px solid var(--line-soft);border-radius:var(--radius);padding:7px 10px;color:var(--text);font-size:12px;font-family:var(--sans);outline:none">
                   <button class="btn primary" style="font-size:11px;min-height:30px">↑ 发送</button>
+                </div>
+                </div><!-- /对话视图 -->
+                <div id="fp-detail-view-diff" style="flex:1;display:none;flex-direction:column;overflow:hidden;min-height:0">
+                  <div id="fp-cs-meta" style="padding:10px 18px;border-bottom:1px solid var(--line-soft);font-size:11px;color:var(--dim);flex-shrink:0"></div>
+                  <div style="flex:1;display:flex;overflow:hidden;min-height:0">
+                    <div id="fp-cs-filetree" style="width:240px;border-right:1px solid var(--line-soft);overflow-y:auto;padding:8px;flex-shrink:0"></div>
+                    <div id="fp-cs-detail" style="flex:1;overflow:auto"></div>
+                  </div>
+                  <div class="fp-verdict-bar">
+                    <button class="btn primary" style="font-size:11px" onclick="taskChangeApprove()">✅ 通过并交付</button>
+                    <button class="btn" style="font-size:11px" onclick="taskChangeReject()">↩ 打回继续</button>
+                    <button class="btn" style="font-size:11px;color:var(--red);border-color:rgba(248,113,113,.3)" onclick="taskChangeDiscard()">🗑 丢弃变更</button>
+                    <span id="fp-cs-verdict-note" style="margin-left:auto;font-size:10px;color:var(--dim)"></span>
+                  </div>
                 </div>
               </div>
               <div id="fpDetailAttrs" style="width:200px;border-left:1px solid var(--line-soft);padding:14px;overflow-y:auto;font-size:11px;position:relative">
@@ -6789,6 +6845,53 @@ FocusPilot/
         { id: 'PO-002', title: 'API 文档更新', status: 'in_progress', priority: 'p1', projectId: 'tmp-pilotone-api', workspaceType: 'temporary', executionMode: 'dialog', schedule: 'today', month: '', goal: '', agent: '代码工程师' },
       ];
 
+      // Agent 执行产物：任务级变更集（diff + 文件预览），供看板卡片角标与任务详情「变更」视图复审
+      var taskChangesets = {
+        'FP-002': {
+          branch: 'task/FP-002', base: '3764760', summary: '3 文件 · +228 −12',
+          gates: { build: 'pass', test: 'pass', lint: 'pass' },
+          files: [
+            { path: 'FocusPilot/Models.swift', type: 'M', add: 42, del: 8, kind: 'code', diff: [
+              { t: 'ctx', s: 'enum TaskStatus: String, Codable {' },
+              { t: 'ctx', s: '    case backlog, todo, inProgress' },
+              { t: 'del', s: '    case evaluation' },
+              { t: 'add', s: '    case inReview' },
+              { t: 'add', s: '    case done, blocked, cancelled' },
+              { t: 'ctx', s: '}' },
+              { t: 'add', s: 'extension TaskStatus {' },
+              { t: 'add', s: '    var canRollback: Bool { self == .blocked }' },
+              { t: 'add', s: '}' }
+            ] },
+            { path: 'FocusPilot/KanbanDataSource.swift', type: 'A', add: 186, del: 0, kind: 'code', diff: [
+              { t: 'add', s: 'final class KanbanDataSource: NSObject {' },
+              { t: 'add', s: '    private(set) var columns: [TaskStatus: [WorkItem]] = [:]' },
+              { t: 'add', s: '    func reload(_ items: [WorkItem]) { /* 分组+排序 */ }' },
+              { t: 'add', s: '    func move(_ id: String, to status: TaskStatus) { /* 跨列拖拽 */ }' },
+              { t: 'add', s: '}' }
+            ] },
+            { path: 'docs/执行报告.md', type: 'A', kind: 'markdown', preview: '# 看板状态模型实现报告\n\n## 主要改动\n- 新增 in_review 状态，替换旧 evaluation\n- KanbanDataSource 支持拖拽跨列变更状态\n\n## 验证\n- build ✓   测试 ✓（12 passed）\n- 拖拽响应 < 100ms' }
+          ]
+        },
+        'FP-005': {
+          branch: 'feature/planning-engine', base: 'a13625b', summary: '2 文件 · +94 −3',
+          gates: { build: 'pass', test: 'fail', lint: 'pass' },
+          files: [
+            { path: 'engine/PlanningEngine.swift', type: 'M', add: 78, del: 3, kind: 'code', diff: [
+              { t: 'ctx', s: 'protocol PlanningEngine {' },
+              { t: 'del', s: '    func split(_ epic: Node) -> [Node]' },
+              { t: 'add', s: '    func decompose(_ epic: Node) async -> [Node]' },
+              { t: 'add', s: '    func refine(_ task: Node) async -> Node' },
+              { t: 'ctx', s: '}' }
+            ] },
+            { path: 'engine/IntentParser.swift', type: 'A', add: 16, del: 0, kind: 'code', diff: [
+              { t: 'add', s: 'struct IntentParser {' },
+              { t: 'add', s: '    func parse(_ input: String) -> Intent { /* ... */ }' },
+              { t: 'add', s: '}' }
+            ] }
+          ]
+        }
+      };
+
       var workspaceRegistry = {
         'FocusPilot': { id: 'FocusPilot', name: 'FocusPilot', type: 'local_project', icon: '📁', path: '~/Workspace/FocusPilot', branch: 'main', remote: 'origin/main (同步)' },
         'PilotOne': { id: 'PilotOne', name: 'PilotOne', type: 'local_project', icon: '📁', path: '~/Workspace/PilotOne', branch: 'develop', remote: 'origin/develop (同步)' },
@@ -7198,6 +7301,9 @@ FocusPilot/
         var subBadge = { queued: ['🕐 正在排队中', 'rgba(112,120,135,.14)', 'var(--dim)'], working: ['⚡ 正在工作', 'rgba(46,204,113,.15)', 'var(--green)'], waiting_local_directory: ['🔒 等待本地目录', 'rgba(242,196,15,.15)', 'var(--amber)'] };
         if (ssKey && subBadge[ssKey]) { var sb = subBadge[ssKey]; html += '<span class="pill" style="font-size:9px;padding:1px 5px;font-weight:600;border:none;background:' + sb[1] + ';color:' + sb[2] + '">' + sb[0] + '</span>'; }
         if (item.decision) html += '<span class="pill amber" style="font-size:9px;padding:1px 5px;font-weight:600">等你决策</span>';
+        if (typeof taskChangesets !== 'undefined' && taskChangesets[item.id]) {
+          html += '<span class="fp-change-badge" onclick="event.stopPropagation();openTaskChangeReview(\'' + item.id + '\')" title="查看变更/产物：' + taskChangesets[item.id].summary + '">📝 ' + taskChangesets[item.id].files.length + ' 变更</span>';
+        }
         html += '</div>';
         if (!compact) {
           html += '<div style="display:flex;align-items:center;justify-content:space-between;margin-top:6px;padding-top:6px;border-top:1px solid var(--line-soft);font-size:10px;color:var(--dim)">';
@@ -8454,14 +8560,14 @@ FocusPilot/
           exec: { agent: '代码工程师', status: '执行中', time: '00:03:42', step: '步骤 3/5', logs: '> 正在修改 Models.swift...<br>> 添加 blocked→todo 状态转换<br>> 运行测试套件...' }
         },
         'FP-003': {
-          id: 'FP-003', title: 'Agent Pull 执行管道', status: 'todo', statusLabel: '● Todo', statusClass: 'amber',
+          id: 'FP-003', title: 'Agent Pull 执行管道', status: 'todo', statusLabel: '● Todo', statusClass: 'dim',
           priority: 'P1', mode: 'auto', agent: '代码工程师', schedule: '本周', goal: 'AI',
           desc: '实现 Agent Pull 模式的执行管道，支持任务队列消费、执行状态上报、失败重试和结果回写。对接 CrewRuntime daemon 心跳。',
           plan: '<strong>实现步骤</strong><ol style="padding-left:18px;margin:6px 0"><li>定义 TaskQueue 协议</li><li>实现 Pull Consumer</li><li>状态上报 + 心跳</li><li>失败重试策略</li></ol>',
           exec: null
         },
         'FP-004': {
-          id: 'FP-004', title: 'Terminal 手动执行模式', status: 'todo', statusLabel: '● Todo', statusClass: 'amber',
+          id: 'FP-004', title: 'Terminal 手动执行模式', status: 'todo', statusLabel: '● Todo', statusClass: 'dim',
           priority: 'P1', mode: 'manual', agent: '手动执行', schedule: '本周', goal: 'AI',
           desc: '支持用户通过终端手动执行 Task，记录执行过程、时间和结果。提供 CLI 交互界面和状态同步。',
           plan: '<strong>实现步骤</strong><ol style="padding-left:18px;margin:6px 0"><li>CLI 参数解析</li><li>执行状态跟踪</li><li>结果回写到 Task</li></ol>',
@@ -8506,7 +8612,7 @@ FocusPilot/
           exec: null
         },
         'FP-010': {
-          id: 'FP-010', title: '整理本周会议记录', status: 'todo', statusLabel: '● Todo', statusClass: 'amber',
+          id: 'FP-010', title: '整理本周会议记录', status: 'todo', statusLabel: '● Todo', statusClass: 'dim',
           priority: 'P2', mode: 'manual', agent: '手动执行', schedule: '今天', goal: '—',
           desc: '整理本周团队会议的讨论要点、决策事项和行动项，归档到项目文档。',
           plan: null,
@@ -9134,6 +9240,9 @@ FocusPilot/
         }
         var defaultTab = document.querySelector('.fp-dtab[data-t="fp-t-plan"]');
         if (defaultTab) defaultTab.click();
+        renderTaskChangeset(taskId);
+        var _it = taskId ? workItems.find(function(w) { return w.id === taskId; }) : null;
+        switchTaskDetailView((_it && _it.status === 'in_review' && taskChangesets[taskId]) ? 'diff' : 'chat');
         document.getElementById('fpDetailOverlay').style.opacity = '1';
         document.getElementById('fpDetailOverlay').style.pointerEvents = 'all';
         document.getElementById('fpDetailPanel').style.transform = 'translateX(0)';
@@ -9143,6 +9252,117 @@ FocusPilot/
         document.getElementById('fpDetailOverlay').style.opacity = '0';
         document.getElementById('fpDetailOverlay').style.pointerEvents = 'none';
         document.getElementById('fpDetailPanel').style.transform = 'translateX(100%)';
+      }
+
+      /* ── 任务详情：对话 / 变更 双视图 + 变更复审闭环 ── */
+      var _currentChangeset = null;
+      var _currentChangeFileIdx = 0;
+      function escChange(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+
+      function openTaskChangeReview(taskId) {
+        openTaskDetail(taskId);
+        switchTaskDetailView('diff');
+      }
+
+      function switchTaskDetailView(view) {
+        document.querySelectorAll('#fpDetailPanel .fp-dtab2').forEach(function(b) {
+          b.classList.toggle('active', b.getAttribute('data-detail-view') === view);
+        });
+        var chat = document.getElementById('fp-detail-view-chat');
+        var diff = document.getElementById('fp-detail-view-diff');
+        if (chat) chat.style.display = view === 'chat' ? 'flex' : 'none';
+        if (diff) diff.style.display = view === 'diff' ? 'flex' : 'none';
+      }
+
+      function renderTaskChangeset(taskId) {
+        _currentChangeset = (taskId && taskChangesets[taskId]) ? taskChangesets[taskId] : null;
+        _currentChangeFileIdx = 0;
+        var countEl = document.getElementById('fp-detail-diff-count');
+        var diffTab = document.querySelector('#fpDetailPanel .fp-dtab2[data-detail-view="diff"]');
+        if (!_currentChangeset) {
+          if (countEl) countEl.textContent = '';
+          if (diffTab) diffTab.style.display = 'none';
+          return;
+        }
+        if (diffTab) diffTab.style.display = '';
+        if (countEl) countEl.textContent = _currentChangeset.files.length;
+        var cs = _currentChangeset;
+        var gateHtml = '';
+        if (cs.gates) {
+          Object.keys(cs.gates).forEach(function(g) {
+            var ok = cs.gates[g] === 'pass';
+            gateHtml += '<span style="margin-left:8px;color:' + (ok ? 'var(--green)' : 'var(--red)') + '">' + g + ' ' + (ok ? '✓' : '✗') + '</span>';
+          });
+        }
+        var meta = document.getElementById('fp-cs-meta');
+        if (meta) meta.innerHTML = '基于 <span style="font-family:var(--mono);color:var(--muted)">' + escChange(cs.branch) + ' @ ' + escChange(cs.base) + '</span> · ' + escChange(cs.summary) + gateHtml;
+        renderChangesetFileTree();
+        selectChangesetFile(0);
+      }
+
+      function renderChangesetFileTree() {
+        var tree = document.getElementById('fp-cs-filetree');
+        if (!tree || !_currentChangeset) return;
+        var html = '';
+        _currentChangeset.files.forEach(function(f, i) {
+          var stat = (f.kind !== 'code') ? (f.kind === 'image' ? '图片' : '预览') : ('+' + (f.add || 0) + ' −' + (f.del || 0));
+          var name = f.path.split('/').pop();
+          html += '<div class="fp-cs-file' + (i === _currentChangeFileIdx ? ' active' : '') + '" onclick="selectChangesetFile(' + i + ')" title="' + escChange(f.path) + '">';
+          html += '<span class="fp-cs-type ' + f.type + '">' + f.type + '</span>';
+          html += '<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + escChange(name) + '</span>';
+          html += '<span class="fp-cs-stat" style="color:var(--dim)">' + stat + '</span>';
+          html += '</div>';
+        });
+        tree.innerHTML = html;
+      }
+
+      function selectChangesetFile(i) {
+        if (!_currentChangeset) return;
+        _currentChangeFileIdx = i;
+        renderChangesetFileTree();
+        var f = _currentChangeset.files[i];
+        var d = document.getElementById('fp-cs-detail');
+        if (!d || !f) return;
+        var html = '<div style="padding:8px 12px;border-bottom:1px solid var(--line-soft);font-family:var(--mono);font-size:11px;color:var(--muted)">' + escChange(f.path) + '</div>';
+        if (f.kind === 'image') {
+          html += '<div style="padding:32px;text-align:center;color:var(--dim)"><div style="font-size:36px">🖼</div><div style="font-size:11px;margin-top:8px">图片产物预览 · ' + escChange(f.path.split('/').pop()) + '</div></div>';
+        } else if (f.kind === 'markdown' || (f.preview && !f.diff)) {
+          html += '<div style="padding:8px 12px 2px;font-size:10px;color:var(--dim);text-transform:uppercase;letter-spacing:.04em">Markdown 预览</div>';
+          html += '<div style="padding:6px 16px 16px;font-size:12px;line-height:1.7;color:var(--text);white-space:pre-wrap">' + escChange(f.preview || '') + '</div>';
+        } else if (f.diff) {
+          f.diff.forEach(function(line) {
+            var cls = line.t === 'add' ? 'add' : (line.t === 'del' ? 'del' : 'ctx');
+            var prefix = line.t === 'add' ? '+ ' : (line.t === 'del' ? '- ' : '  ');
+            html += '<div class="fp-diff-line ' + cls + '">' + prefix + escChange(line.s) + '</div>';
+          });
+        }
+        d.innerHTML = html;
+      }
+
+      function taskChangeApprove() {
+        if (!_detailTaskId) return;
+        var item = workItems.find(function(w) { return w.id === _detailTaskId; });
+        if (item) { item.status = 'done'; if (!item.date) item.date = '今天'; }
+        delete taskChangesets[_detailTaskId];
+        refreshStudioTaskViews();
+        closeTaskDetail();
+      }
+
+      function taskChangeReject() {
+        if (!_detailTaskId) return;
+        var item = workItems.find(function(w) { return w.id === _detailTaskId; });
+        if (item) item.status = 'in_progress';
+        refreshStudioTaskViews();
+        switchTaskDetailView('chat');
+      }
+
+      function taskChangeDiscard() {
+        if (!_detailTaskId) return;
+        if (!confirm('确定丢弃该任务的全部变更？此操作不可撤销。')) return;
+        delete taskChangesets[_detailTaskId];
+        renderTaskChangeset(_detailTaskId);
+        refreshStudioTaskViews();
+        switchTaskDetailView('chat');
       }
 
       /* ── 详情面板：字段内联编辑 + 标签 + 删除 ── */
