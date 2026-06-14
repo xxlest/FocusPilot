@@ -14178,7 +14178,8 @@ FocusPilot/
 
 /* ===== 浮球覆盖层基座（压制浮球 body 派生的全屏背景，改为透明悬浮层）===== */
 .fb-root { position: fixed; inset: 0; min-height: 0; background: none; color: var(--ink); pointer-events: none; z-index: 9000; }
-.fb-root.fb-hidden { display: none; }
+/* 「显示悬浮球」开关只隐藏悬浮球本体 + 其快捷面板，不连带 Focus Bar（Focus Bar 由 bar-pinned 独立控制）*/
+.fb-root.fb-hidden #floatingZone { display: none; }
 .fb-root .focus-bar, .fb-root .float-stack, .fb-root .float-panel,
 .fb-root .quick-chat-window, .fb-root .modal-backdrop { pointer-events: auto; }
 /* .floating-zone/.float-menu/.rd-overlay/.rd-card 保持浮球原 pointer-events 编排，勿强制 */
