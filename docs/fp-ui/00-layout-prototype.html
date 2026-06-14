@@ -13533,8 +13533,9 @@ FocusPilot/
 .fb-root .ur-grp button { font-size: 10px; line-height: 1; border: 0; background: transparent; color: var(--muted); padding: 2px 6px; border-radius: 5px; cursor: pointer; font-weight: 600; }
 .fb-root .ur-grp button:hover { background: rgba(0, 0, 0, 0.05); }
 .fb-root .ur-grp button.active { background: rgba(0, 0, 0, 0.08); color: var(--ink); }
-.fb-root .ur-head { font-size: 10px; color: var(--muted); font-weight: 700; padding: 6px 8px 2px; }
-.fb-root .ur-head:first-child { padding-top: 2px; }
+/* 分组标题专用强调色（青绿），区别于任务行的灰色文字，避免分组名与清单内容撞色 */
+.fb-root .ur-head { font-size: 10px; color: #0d9488; font-weight: 800; letter-spacing: .02em; padding: 6px 8px 3px; margin-top: 3px; border-top: 1px solid var(--line); }
+.fb-root .ur-head:first-child { margin-top: 0; border-top: 0; padding-top: 2px; }
 .fb-root .chat-strip {
         display: grid;
         grid-template-columns: minmax(0, 1fr) 46px;
