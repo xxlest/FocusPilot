@@ -206,6 +206,8 @@ make clean      # 清理
 
 ## 开发规范
 
+- **开发流程统一走 git worktree**：每个改动在独立工作树（`EnterWorktree` / `.claude/worktrees/`）里开发 + 验证，合并进 `main` 后清理工作树；保持主目录 `main` 始终干净可看，**不在 main 上直接改**。一次一个改动 → PR → 合并 → 清理
+- **原型功能改动在 PR/合并前必须做真实运行时验证**：本环境 `preview_*` 工具端口检测失灵，改用 **playwright-core + 系统 Chrome（headless，`channel`/`executablePath` 直连，不下载浏览器）真点交互**验证功能可用。「`node --check` JS 能解析」≠「功能能用」，只交静态校验不算验证
 - 使用 **Teams**（多 Agent 协作）进行开发和修复
 - **每次修改功能，都要更新 PRD（docs/PRD.md）和架构设计（docs/Architecture.md）；修改 UI 时同步更新设计规范（docs/DesignGuide.md）**
 - **每完成一个功能或大修改，自动使用 `/commit` skill 提交并推送到远程仓库**
