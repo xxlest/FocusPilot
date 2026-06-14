@@ -13108,13 +13108,48 @@ FocusPilot/
 .fb-root.bar-pinned .focus-bar, .fb-root[data-mode="focus"] .focus-bar, .fb-root[data-mode="rest"] .focus-bar {
         display: flex;
       }
+/* 休息态：整条草绿 */
 .fb-root .focus-bar.resting {
-        border-color: rgba(49, 199, 90, 0.34);
-        background: #e8f6ea;
+        border-color: rgba(124, 179, 66, 0.55);
+        background: #e6f4d9;
+      }
+/* 工作/专注态：整条暖橙 */
+.fb-root[data-mode="focus"] .focus-bar {
+        border-color: rgba(245, 158, 11, 0.5);
+        background: #fdefda;
       }
 .fb-root .bar-group {
         position: relative;
       }
+/* ① 点标题钉住下拉 + 高亮 */
+.fb-root .bar-group.pinned > .bar-menu { display: block; }
+.fb-root .bar-group.pinned > .bar-btn {
+        background: rgba(20, 122, 243, 0.14);
+        box-shadow: inset 0 0 0 1.5px rgba(20, 122, 243, 0.55);
+      }
+/* ④ 规划清单 CRUD */
+.fb-root .plan-item {
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr) auto auto;
+        gap: 7px;
+        align-items: center;
+        padding: 7px 8px;
+        border-radius: 7px;
+        font-size: 12px;
+        color: var(--ink);
+      }
+.fb-root .plan-item:hover { background: rgba(0, 0, 0, 0.04); }
+.fb-root .plan-item .pdot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.fb-root .plan-item .ptitle { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fb-root .plan-item .pst { font-size: 10.5px; color: var(--muted); }
+.fb-root .plan-item .pdel { border: 0; background: transparent; color: var(--muted); font-size: 14px; line-height: 1; cursor: pointer; padding: 0 3px; opacity: 0; border-radius: 4px; }
+.fb-root .plan-item:hover .pdel { opacity: 0.7; }
+.fb-root .plan-item .pdel:hover { opacity: 1; color: var(--red); background: rgba(239, 80, 71, 0.12); }
+.fb-root .plan-empty { padding: 10px 8px; font-size: 11px; color: var(--muted); text-align: center; }
+.fb-root .plan-add { display: flex; gap: 6px; padding: 6px 4px 2px; border-top: 1px solid var(--line); margin-top: 4px; }
+.fb-root .plan-add input { flex: 1; min-width: 0; border: 1px solid var(--line); border-radius: 6px; padding: 5px 8px; font-size: 12px; background: var(--surface); color: var(--ink); outline: none; }
+.fb-root .plan-add input:focus { border-color: rgba(20, 122, 243, 0.5); }
+.fb-root .plan-add button { border: 0; border-radius: 6px; background: rgba(20, 122, 243, 0.12); color: var(--blue); font-size: 12px; font-weight: 600; padding: 0 10px; cursor: pointer; }
 .fb-root .bar-btn {
         height: 28px;
         border: 0;
@@ -14149,7 +14184,7 @@ FocusPilot/
             <div class="bar-group">
               <button class="bar-btn" data-tone="unread" type="button"><span class="bar-dot"></span>未读 <b class="bar-num">6</b></button>
               <div class="bar-menu" id="unreadMenu">
-                <div class="sub-title">未读消息（收件箱）<span class="ur-grp"><button type="button" data-ur="status" class="active">按状态</button><button type="button" data-ur="project">按项目</button></span></div>
+                <div class="sub-title">未读消息（收件箱）<span class="ur-grp"><button type="button" data-ur="status">按状态</button><button type="button" data-ur="project">按项目</button></span></div>
                 <div id="unreadList">
                   <button class="mini-task" type="button" data-run-detail="FP-097" data-st="审核中" data-pj="FocusPilot"><span>看板 Workspace 行<small>FocusPilot · 审核中</small></span><small>详情</small></button>
                   <button class="mini-task" type="button" data-run-detail="KB-031" data-st="审核中" data-pj="VaultOne"><span>资料卡片归档<small>VaultOne · 审核中</small></span><small>详情</small></button>
@@ -14194,13 +14229,36 @@ FocusPilot/
               </div>
             </div>
             <span class="bar-sep" aria-hidden="true"></span>
-            <div class="bar-group">
-              <button class="bar-btn" data-tone="focus" type="button">今日聚焦 <b class="bar-num">5</b></button>
-              <div class="bar-menu">
-                <div class="sub-title">今日聚焦实时状态</div>
-                <button class="mini-task" type="button" data-run-detail="FP-104"><span>浮球原型定稿<small>进行中 · FocusPilot</small></span><small>详情</small></button>
-                <button class="mini-task" type="button" data-run-detail="FP-112"><span>PRD 同步检查<small>待办 · FocusPilot</small></span><small>详情</small></button>
-                <button class="mini-task" type="button" data-run-detail="FP-097"><span>看板 Workspace 行验收<small>审核中</small></span><small>详情</small></button>
+            <div class="bar-group plan-group">
+              <button class="bar-btn" data-tone="focus" type="button">今日聚焦 <b class="bar-num" id="planCount-today">0</b></button>
+              <div class="bar-menu plan-menu">
+                <div class="sub-title">今日聚焦</div>
+                <div class="plan-list" id="planList-today"></div>
+                <div class="plan-add"><input type="text" data-plan-add="today" placeholder="+ 新增任务，回车添加"><button type="button" data-plan-addbtn="today">添加</button></div>
+              </div>
+            </div>
+            <div class="bar-group plan-group">
+              <button class="bar-btn" data-tone="focus" type="button">本周计划 <b class="bar-num" id="planCount-week">0</b></button>
+              <div class="bar-menu plan-menu">
+                <div class="sub-title">本周计划</div>
+                <div class="plan-list" id="planList-week"></div>
+                <div class="plan-add"><input type="text" data-plan-add="week" placeholder="+ 新增任务，回车添加"><button type="button" data-plan-addbtn="week">添加</button></div>
+              </div>
+            </div>
+            <div class="bar-group plan-group">
+              <button class="bar-btn" data-tone="focus" type="button">本月计划 <b class="bar-num" id="planCount-month">0</b></button>
+              <div class="bar-menu plan-menu">
+                <div class="sub-title">本月计划</div>
+                <div class="plan-list" id="planList-month"></div>
+                <div class="plan-add"><input type="text" data-plan-add="month" placeholder="+ 新增任务，回车添加"><button type="button" data-plan-addbtn="month">添加</button></div>
+              </div>
+            </div>
+            <div class="bar-group plan-group">
+              <button class="bar-btn" data-tone="focus" type="button">全局规划 <b class="bar-num" id="planCount-all">0</b></button>
+              <div class="bar-menu plan-menu">
+                <div class="sub-title">全局规划</div>
+                <div class="plan-list" id="planList-all"></div>
+                <div class="plan-add"><input type="text" data-plan-add="all" placeholder="+ 新增任务，回车添加"><button type="button" data-plan-addbtn="all">添加</button></div>
               </div>
             </div>
             <span class="bar-sep" aria-hidden="true"></span>
@@ -14973,39 +15031,110 @@ FocusPilot/
   document.addEventListener('mouseup', function(){ if(drag){ drag=false; document.body.style.userSelect=''; } });
 })();
 </script>
-<!-- Focus Bar 未读段：按状态/按项目分组（移动现有按钮，保留 data-run-detail 点击绑定）-->
+<!-- Focus Bar 增强：未读分组三态 + 标题钉住高亮 + 规划清单增删 -->
 <script>
 (function(){
-  var list = document.getElementById('unreadList');
-  if(!list) return;
-  var items = [].slice.call(list.querySelectorAll('.mini-task'));
-  var ST_ORDER = ['审核中','已阻塞','进行中','待办','已完成','待规划'];
-  function regroup(by){
-    [].slice.call(list.querySelectorAll('.ur-head')).forEach(function(h){ h.remove(); });
-    var groups = {};
-    items.forEach(function(it){
-      var k = (by === 'project' ? it.getAttribute('data-pj') : it.getAttribute('data-st')) || '其他';
-      (groups[k] = groups[k] || []).push(it);
+  var fbRoot = document.getElementById('fbRoot');
+  if(!fbRoot) return;
+
+  /* ② 未读分组：按状态 / 按项目 / 都不选（默认不分组，再点取消）*/
+  var ulist = document.getElementById('unreadList');
+  if(ulist){
+    var uitems = [].slice.call(ulist.querySelectorAll('.mini-task'));
+    var ST_ORDER = ['审核中','已阻塞','进行中','待办','已完成','待规划'];
+    var ugroup = null;
+    function ungroupApply(){
+      [].slice.call(ulist.querySelectorAll('.ur-head')).forEach(function(h){ h.remove(); });
+      if(!ugroup){ uitems.forEach(function(it){ ulist.appendChild(it); }); return; }
+      var groups = {};
+      uitems.forEach(function(it){
+        var k = (ugroup === 'project' ? it.getAttribute('data-pj') : it.getAttribute('data-st')) || '其他';
+        (groups[k] = groups[k] || []).push(it);
+      });
+      var keys = Object.keys(groups);
+      if(ugroup === 'project') keys.sort();
+      else keys = ST_ORDER.filter(function(k){ return groups[k]; }).concat(keys.filter(function(k){ return ST_ORDER.indexOf(k) < 0; }));
+      keys.forEach(function(k){
+        var h = document.createElement('div'); h.className='ur-head'; h.textContent = k + ' · ' + groups[k].length;
+        ulist.appendChild(h);
+        groups[k].forEach(function(it){ ulist.appendChild(it); });
+      });
+    }
+    var ubtns = [].slice.call(document.querySelectorAll('#unreadMenu .ur-grp button'));
+    ubtns.forEach(function(b){
+      b.addEventListener('click', function(e){
+        e.stopPropagation();
+        var v = b.getAttribute('data-ur');
+        ugroup = (ugroup === v) ? null : v;
+        ubtns.forEach(function(x){ x.classList.toggle('active', x.getAttribute('data-ur') === ugroup); });
+        ungroupApply();
+      });
     });
-    var keys = Object.keys(groups);
-    if (by === 'project') keys.sort();
-    else keys = ST_ORDER.filter(function(k){ return groups[k]; })
-                        .concat(keys.filter(function(k){ return ST_ORDER.indexOf(k) < 0; }));
-    keys.forEach(function(k){
-      var h = document.createElement('div'); h.className = 'ur-head'; h.textContent = k + ' · ' + groups[k].length;
-      list.appendChild(h);
-      groups[k].forEach(function(it){ list.appendChild(it); });
-    });
+    ungroupApply();
   }
-  var btns = [].slice.call(document.querySelectorAll('#unreadMenu .ur-grp button'));
-  btns.forEach(function(b){
-    b.addEventListener('click', function(e){
+
+  /* ① 点 bar 标题 → 钉住下拉常开 + 高亮；再点取消；点外部取消 */
+  fbRoot.querySelectorAll('.focus-bar .bar-group > .bar-btn').forEach(function(btn){
+    btn.addEventListener('click', function(e){
       e.stopPropagation();
-      btns.forEach(function(x){ x.classList.toggle('active', x === b); });
-      regroup(b.getAttribute('data-ur'));
+      var grp = btn.parentNode;
+      var willPin = !grp.classList.contains('pinned');
+      fbRoot.querySelectorAll('.focus-bar .bar-group.pinned').forEach(function(g){ g.classList.remove('pinned'); });
+      if(willPin) grp.classList.add('pinned');
     });
   });
-  regroup('status');
+  document.addEventListener('click', function(e){
+    if(e.target.closest && e.target.closest('.focus-bar')) return;
+    fbRoot.querySelectorAll('.focus-bar .bar-group.pinned').forEach(function(g){ g.classList.remove('pinned'); });
+  });
+
+  /* ④ 规划清单（今日聚焦/本周计划/本月计划/全局规划）+ 新增/删除 */
+  var planData = {
+    today: [{t:'浮球原型定稿',st:'进行中'},{t:'PRD 同步检查',st:'待办'},{t:'看板 Workspace 行验收',st:'审核中'},{t:'未读角标联调',st:'进行中'},{t:'Focus Bar 拖动微调',st:'待办'}],
+    week:  [{t:'状态条实现计划',st:'待规划'},{t:'资料卡片归档',st:'审核中'},{t:'快捷面板差分刷新',st:'已完成'},{t:'API 授权回调修复',st:'已阻塞'}],
+    month: [{t:'主题色槽统一',st:'已完成'},{t:'Studio 状态投影',st:'进行中'},{t:'Review 卡片批处理',st:'待办'}],
+    all:   [{t:'V2 路线图梳理',st:'待规划'},{t:'权限体系设计',st:'待办'},{t:'知识管道接入 Anki',st:'待规划'}]
+  };
+  var ST_DOT = {待规划:'#999ca2',待办:'#74777d',进行中:'#147af3',审核中:'#8b5cf6',已完成:'#31c75a',已阻塞:'#f97316'};
+  function esc(s){ return String(s).replace(/[&<>"]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
+  function renderPlan(scope){
+    var list = document.getElementById('planList-'+scope), cnt = document.getElementById('planCount-'+scope);
+    if(!list) return;
+    var arr = planData[scope];
+    if(cnt) cnt.textContent = arr.length;
+    if(!arr.length){ list.innerHTML = '<div class="plan-empty">暂无任务，下面新增一条</div>'; return; }
+    list.innerHTML = arr.map(function(it,i){
+      return '<div class="plan-item"><span class="pdot" style="background:'+(ST_DOT[it.st]||'#999ca2')+'"></span>'
+        + '<span class="ptitle">'+esc(it.t)+'</span><span class="pst">'+esc(it.st)+'</span>'
+        + '<button class="pdel" type="button" data-del-scope="'+scope+'" data-del-i="'+i+'" title="删除">×</button></div>';
+    }).join('');
+  }
+  ['today','week','month','all'].forEach(renderPlan);
+  fbRoot.addEventListener('click', function(e){
+    var d = e.target.closest && e.target.closest('.pdel');
+    if(!d) return;
+    e.stopPropagation();
+    var scope = d.getAttribute('data-del-scope');
+    planData[scope].splice(+d.getAttribute('data-del-i'), 1);
+    renderPlan(scope);
+  });
+  function addTask(scope){
+    var input = document.querySelector('[data-plan-add="'+scope+'"]');
+    if(!input) return;
+    var v = input.value.trim();
+    if(!v) return;
+    planData[scope].push({t:v, st:'待办'});
+    input.value = '';
+    renderPlan(scope);
+    input.focus();
+  }
+  fbRoot.querySelectorAll('[data-plan-add]').forEach(function(input){
+    input.addEventListener('keydown', function(e){ if(e.key === 'Enter'){ e.preventDefault(); addTask(input.getAttribute('data-plan-add')); } });
+    input.addEventListener('click', function(e){ e.stopPropagation(); });
+  });
+  fbRoot.querySelectorAll('[data-plan-addbtn]').forEach(function(b){
+    b.addEventListener('click', function(e){ e.stopPropagation(); addTask(b.getAttribute('data-plan-addbtn')); });
+  });
 })();
 </script>
 </body>
