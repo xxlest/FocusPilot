@@ -13150,6 +13150,7 @@ FocusPilot/
 .fb-root .plan-add input { flex: 1; min-width: 0; border: 1px solid var(--line); border-radius: 6px; padding: 5px 8px; font-size: 12px; background: var(--surface); color: var(--ink); outline: none; }
 .fb-root .plan-add input:focus { border-color: rgba(20, 122, 243, 0.5); }
 .fb-root .plan-add button { border: 0; border-radius: 6px; background: rgba(20, 122, 243, 0.12); color: var(--blue); font-size: 12px; font-weight: 600; padding: 0 10px; cursor: pointer; }
+.fb-root .qp-count { font-size: 11px; color: var(--muted); font-weight: 700; min-width: 16px; text-align: right; }
 .fb-root .bar-btn {
         height: 28px;
         border: 0;
@@ -14229,36 +14230,13 @@ FocusPilot/
               </div>
             </div>
             <span class="bar-sep" aria-hidden="true"></span>
-            <div class="bar-group plan-group">
-              <button class="bar-btn" data-tone="focus" type="button">今日聚焦 <b class="bar-num" id="planCount-today">0</b></button>
-              <div class="bar-menu plan-menu">
-                <div class="sub-title">今日聚焦</div>
-                <div class="plan-list" id="planList-today"></div>
-                <div class="plan-add"><input type="text" data-plan-add="today" placeholder="+ 新增任务，回车添加"><button type="button" data-plan-addbtn="today">添加</button></div>
-              </div>
-            </div>
-            <div class="bar-group plan-group">
-              <button class="bar-btn" data-tone="focus" type="button">本周计划 <b class="bar-num" id="planCount-week">0</b></button>
-              <div class="bar-menu plan-menu">
-                <div class="sub-title">本周计划</div>
-                <div class="plan-list" id="planList-week"></div>
-                <div class="plan-add"><input type="text" data-plan-add="week" placeholder="+ 新增任务，回车添加"><button type="button" data-plan-addbtn="week">添加</button></div>
-              </div>
-            </div>
-            <div class="bar-group plan-group">
-              <button class="bar-btn" data-tone="focus" type="button">本月计划 <b class="bar-num" id="planCount-month">0</b></button>
-              <div class="bar-menu plan-menu">
-                <div class="sub-title">本月计划</div>
-                <div class="plan-list" id="planList-month"></div>
-                <div class="plan-add"><input type="text" data-plan-add="month" placeholder="+ 新增任务，回车添加"><button type="button" data-plan-addbtn="month">添加</button></div>
-              </div>
-            </div>
-            <div class="bar-group plan-group">
-              <button class="bar-btn" data-tone="focus" type="button">全局规划 <b class="bar-num" id="planCount-all">0</b></button>
-              <div class="bar-menu plan-menu">
-                <div class="sub-title">全局规划</div>
-                <div class="plan-list" id="planList-all"></div>
-                <div class="plan-add"><input type="text" data-plan-add="all" placeholder="+ 新增任务，回车添加"><button type="button" data-plan-addbtn="all">添加</button></div>
+            <div class="bar-group">
+              <button class="bar-btn" data-tone="focus" type="button">今日聚焦 <b class="bar-num">5</b></button>
+              <div class="bar-menu">
+                <div class="sub-title">今日聚焦实时状态</div>
+                <button class="mini-task" type="button" data-run-detail="FP-104"><span>浮球原型定稿<small>进行中 · FocusPilot</small></span><small>详情</small></button>
+                <button class="mini-task" type="button" data-run-detail="FP-112"><span>PRD 同步检查<small>待办 · FocusPilot</small></span><small>详情</small></button>
+                <button class="mini-task" type="button" data-run-detail="FP-097"><span>看板 Workspace 行验收<small>审核中</small></span><small>详情</small></button>
               </div>
             </div>
             <span class="bar-sep" aria-hidden="true"></span>
@@ -14298,29 +14276,49 @@ FocusPilot/
                   <div class="action-row">
                     <button class="float-action" type="button">
                       <span class="action-icon">今</span>
-                      <span>今日聚焦<small>hover 查看今日所有任务及状态</small></span>
-                      <span>›</span>
+                      <span>今日聚焦<small>查看 / 新增 / 删除今日任务</small></span>
+                      <b class="qp-count" id="planCount-today">0</b><span>›</span>
                     </button>
                     <div class="sub-menu">
-                      <div class="sub-title">今日聚焦 · 按状态分组</div>
-                      <button class="mini-task" type="button" data-run-detail="FP-104"><span>进行中 · 浮球原型定稿<small>FocusPilot · Codex · 62%</small></span><small>打开</small></button>
-                      <button class="mini-task" type="button" data-run-detail="FP-112"><span>待办 · PRD 同步检查<small>FocusPilot · 今天</small></span><small>打开</small></button>
-                      <button class="mini-task" type="button" data-run-detail="FP-097"><span>审核中 · 看板 Workspace 行<small>FocusPilot · 审核中</small></span><small>验收</small></button>
-                      <button class="mini-task" type="button" data-run-detail="OPS-018"><span>已阻塞 · API 授权回调<small>PilotOne · blocked</small></span><small>打开</small></button>
+                      <div class="sub-title">今日聚焦</div>
+                      <div class="plan-list" id="planList-today"></div>
+                      <div class="plan-add"><input type="text" data-plan-add="today" placeholder="+ 新增任务，回车添加"><button type="button" data-plan-addbtn="today">添加</button></div>
                     </div>
                   </div>
                   <div class="action-row">
                     <button class="float-action" type="button">
                       <span class="action-icon">周</span>
-                      <span>本周计划<small>今天 / 明天 / 本周稍后 / 已逾期</small></span>
-                      <span>›</span>
+                      <span>本周计划<small>查看 / 新增 / 删除本周任务</small></span>
+                      <b class="qp-count" id="planCount-week">0</b><span>›</span>
                     </button>
                     <div class="sub-menu">
-                      <div class="sub-title">本周计划 · 按时间分组</div>
-                      <button class="mini-task" type="button" data-run-detail="FP-104"><span>今天 · 浮球原型定稿<small>进行中</small></span><small>打开</small></button>
-                      <button class="mini-task" type="button" data-run-detail="FP-130"><span>明天 · 状态条实现计划<small>待办</small></span><small>打开</small></button>
-                      <button class="mini-task" type="button" data-run-detail="KB-041"><span>本周稍后 · Review 卡片批处理<small>VaultOne</small></span><small>打开</small></button>
-                      <button class="mini-task" type="button" data-run-detail="OPS-018"><span>已逾期 · API 授权回调<small>blocked</small></span><small>打开</small></button>
+                      <div class="sub-title">本周计划</div>
+                      <div class="plan-list" id="planList-week"></div>
+                      <div class="plan-add"><input type="text" data-plan-add="week" placeholder="+ 新增任务，回车添加"><button type="button" data-plan-addbtn="week">添加</button></div>
+                    </div>
+                  </div>
+                  <div class="action-row">
+                    <button class="float-action" type="button">
+                      <span class="action-icon">月</span>
+                      <span>本月计划<small>查看 / 新增 / 删除本月任务</small></span>
+                      <b class="qp-count" id="planCount-month">0</b><span>›</span>
+                    </button>
+                    <div class="sub-menu">
+                      <div class="sub-title">本月计划</div>
+                      <div class="plan-list" id="planList-month"></div>
+                      <div class="plan-add"><input type="text" data-plan-add="month" placeholder="+ 新增任务，回车添加"><button type="button" data-plan-addbtn="month">添加</button></div>
+                    </div>
+                  </div>
+                  <div class="action-row">
+                    <button class="float-action" type="button">
+                      <span class="action-icon">全</span>
+                      <span>全局规划<small>查看 / 新增 / 删除全部任务</small></span>
+                      <b class="qp-count" id="planCount-all">0</b><span>›</span>
+                    </button>
+                    <div class="sub-menu">
+                      <div class="sub-title">全局规划</div>
+                      <div class="plan-list" id="planList-all"></div>
+                      <div class="plan-add"><input type="text" data-plan-add="all" placeholder="+ 新增任务，回车添加"><button type="button" data-plan-addbtn="all">添加</button></div>
                     </div>
                   </div>
                 </div>
