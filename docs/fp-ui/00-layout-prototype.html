@@ -12320,7 +12320,7 @@ FocusPilot/
         workItems.push(newItem);
         // 浮球快捷面板规划清单：从规划入口创建时同步加入对应清单
         if (_newTaskContext && _newTaskContext.source === 'plan' && typeof window.fbPlanAdd === 'function') {
-          window.fbPlanAdd(_newTaskContext.scope, title, explicitStatus);
+          window.fbPlanAdd(_newTaskContext.scope, newId, title, explicitStatus);
         }
         populateStudioToolbarFilters();
         refreshStudioTaskViews();
@@ -13133,8 +13133,14 @@ FocusPilot/
       }
 /* ④ 规划清单 CRUD */
 .fb-root .plan-item {
+        width: 100%;
+        border: 0;
+        background: transparent;
+        text-align: left;
+        font: inherit;
+        cursor: pointer;
         display: grid;
-        grid-template-columns: auto minmax(0, 1fr) auto auto;
+        grid-template-columns: auto minmax(0, 1fr) auto;
         gap: 7px;
         align-items: center;
         padding: 7px 8px;
@@ -13146,9 +13152,6 @@ FocusPilot/
 .fb-root .plan-item .pdot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
 .fb-root .plan-item .ptitle { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .fb-root .plan-item .pst { font-size: 10.5px; color: var(--muted); }
-.fb-root .plan-item .pdel { border: 0; background: transparent; color: var(--muted); font-size: 14px; line-height: 1; cursor: pointer; padding: 0 3px; opacity: 0; border-radius: 4px; }
-.fb-root .plan-item:hover .pdel { opacity: 0.7; }
-.fb-root .plan-item .pdel:hover { opacity: 1; color: var(--red); background: rgba(239, 80, 71, 0.12); }
 .fb-root .plan-empty { padding: 10px 8px; font-size: 11px; color: var(--muted); text-align: center; }
 .fb-root .plan-add { padding: 6px 4px 2px; border-top: 1px solid var(--line); margin-top: 4px; }
 .fb-root .plan-newbtn { width: 100%; display: flex; align-items: center; justify-content: center; gap: 4px; padding: 7px; border: 1px dashed var(--line); border-radius: 7px; background: transparent; color: var(--blue); font-size: 12px; font-weight: 600; cursor: pointer; }
@@ -13623,6 +13626,8 @@ FocusPilot/
 .fb-root .rd-top-main { flex: 1; min-width: 0; }
 .fb-root .rd-id { font-size: 10px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; color: var(--dim); }
 .fb-root .rd-title { font-size: 15px; font-weight: 700; color: var(--ink); }
+.fb-root .rd-del { border: 1px solid rgba(239, 80, 71, 0.35); background: transparent; color: var(--red); font-size: 12px; font-weight: 600; border-radius: 7px; padding: 4px 9px; cursor: pointer; white-space: nowrap; }
+.fb-root .rd-del:hover { background: rgba(239, 80, 71, 0.1); }
 .fb-root .rd-statuspill {
         padding: 3px 10px;
         border-radius: 999px;
@@ -14265,11 +14270,6 @@ FocusPilot/
           <div class="floating-zone" id="floatingZone">
             <div class="float-menu">
               <div class="float-panel">
-                <div class="float-overview">
-                  <span>进行中 2</span>
-                  <span>审核中 3</span>
-                  <span>今日 5</span>
-                </div>
                 <div class="float-actions">
                   <div class="action-row">
                     <button class="float-action" type="button" id="pinBarBtn">
@@ -14439,6 +14439,7 @@ FocusPilot/
                 <div class="rd-title" id="rdTitle">浮球 hover 面板实现</div>
               </div>
               <span class="rd-statuspill" id="rdStatusPill">● In Progress</span>
+              <button class="rd-del" id="rdDelete" type="button" title="删除任务" onclick="deleteCurrentRunTask()">🗑 删除</button>
             </div>
             <div class="rd-metawrap">
               <div class="rd-metastrip" id="rdMeta"></div>
@@ -14881,8 +14882,28 @@ FocusPilot/
       let currentDetailId = null;
 
       function renderRunDetail(id) {
-        const d = RUN_DETAILS[id];
-        if (!d) return false;
+        let d = RUN_DETAILS[id];
+        if (!d) {
+          // fallback：无富执行记录的任务（如新建任务）从 workItems 构建最小详情，避免死按钮
+          var wi = (typeof workItems !== 'undefined') ? workItems.find(function(w){ return w.id === id; }) : null;
+          d = {
+            id: id,
+            title: (wi && wi.title) || id,
+            statusKey: (wi && wi.status) || 'todo',
+            desc: (wi && wi.description) || '这条任务暂无执行记录。可在下方对话发起首轮执行、下发指令或验收。',
+            live: null,
+            rounds: [],
+            attrs: {
+              priorityKey: (wi && wi.priority) || 'p1',
+              agentKey: (wi && wi.agent) ? 'code' : 'none',
+              project: (wi && wi.projectId) || '—',
+              goal: [(wi && wi.goal) || '—'],
+              execmodeKey: (wi && wi.executionMode === 'auto') ? 'auto' : 'manual',
+              evalKey: 'none',
+              date: (wi && wi.date) || '—'
+            }
+          };
+        }
         currentDetailId = id;
         const sk = statusKeyOf(d);
         const sm = STATUS_MODEL[sk];
@@ -14971,6 +14992,27 @@ FocusPilot/
         document.getElementById("runDetailOverlay").classList.remove("open");
         document.getElementById("runDetailPanel").classList.remove("open");
       }
+      // 对话详情里删除任务（与看板 deleteCurrentTask 行为一致：确认 → 删 workItems + 规划清单 → 关闭）
+      function deleteCurrentRunTask() {
+        if (!currentDetailId) return;
+        var id = currentDetailId;
+        var wi = (typeof workItems !== 'undefined') ? workItems.find(function(w){ return w.id === id; }) : null;
+        var rd = RUN_DETAILS[id];
+        var title = (wi && wi.title) || (rd && rd.title) || id;
+        if (!confirm('确定删除任务「' + title + '」？此操作不可撤销。')) return;
+        if (wi) {
+          var ws = wi.projectId;
+          var idx = workItems.indexOf(wi);
+          if (idx >= 0) workItems.splice(idx, 1);
+          if (typeof refreshTaskProjectionsForMove === 'function') refreshTaskProjectionsForMove(ws, ws);
+        }
+        if (typeof window.fbPlanRemove === 'function') window.fbPlanRemove(id);
+        closeRunDetail();
+      }
+      // 暴露到全局：规划清单/删除按钮的 inline onclick 在全局作用域执行，需可访问这些 IIFE 内函数
+      window.openRunDetail = openRunDetail;
+      window.closeRunDetail = closeRunDetail;
+      window.deleteCurrentRunTask = deleteCurrentRunTask;
 
       fbRoot.querySelectorAll("[data-run-detail]").forEach((btn) => {
         btn.addEventListener("click", () => openRunDetail(btn.dataset.runDetail));
@@ -15092,11 +15134,13 @@ FocusPilot/
   });
 
   /* ④ 规划清单（今日聚焦/本周计划/本月计划/全局规划）+ 新增/删除 */
+  // 规划清单任务带真实 id（seed 用 RUN_DETAILS 已有 id，点开是富详情；新建任务用其 workItem id，
+  // 经 renderRunDetail 的 fallback 也能开详情）。点任务 → openRunDetail(id) 进入「对话详情」做后续操作。
   var planData = {
-    today: [{t:'浮球原型定稿',st:'进行中'},{t:'PRD 同步检查',st:'待办'},{t:'看板 Workspace 行验收',st:'审核中'},{t:'未读角标联调',st:'进行中'},{t:'Focus Bar 拖动微调',st:'待办'}],
-    week:  [{t:'状态条实现计划',st:'待规划'},{t:'资料卡片归档',st:'审核中'},{t:'快捷面板差分刷新',st:'已完成'},{t:'API 授权回调修复',st:'已阻塞'}],
-    month: [{t:'主题色槽统一',st:'已完成'},{t:'Studio 状态投影',st:'进行中'},{t:'Review 卡片批处理',st:'待办'}],
-    all:   [{t:'V2 路线图梳理',st:'待规划'},{t:'权限体系设计',st:'待办'},{t:'知识管道接入 Anki',st:'待规划'}]
+    today: [{id:'FP-104',t:'浮球 hover 面板实现',st:'进行中'},{id:'FP-112',t:'PRD 同步检查',st:'待办'},{id:'FP-097',t:'看板 Workspace 行',st:'审核中'},{id:'FP-088',t:'Studio 状态投影',st:'进行中'},{id:'FP-130',t:'状态条实现计划',st:'待规划'}],
+    week:  [{id:'FP-130',t:'状态条实现计划',st:'待规划'},{id:'KB-031',t:'资料卡片归档',st:'审核中'},{id:'FP-085',t:'快捷面板差分刷新',st:'已完成'},{id:'OPS-018',t:'API 授权回调',st:'已阻塞'}],
+    month: [{id:'FP-090',t:'主题色槽统一',st:'已完成'},{id:'FP-088',t:'Studio 状态投影',st:'进行中'},{id:'KB-041',t:'Review 卡片批处理',st:'待办'}],
+    all:   [{id:'FP-130',t:'状态条实现计划',st:'待规划'},{id:'KB-041',t:'Review 卡片批处理',st:'待办'},{id:'OPS-018',t:'API 授权回调',st:'已阻塞'}]
   };
   var ST_DOT = {待规划:'#999ca2',待办:'#74777d',进行中:'#147af3',审核中:'#8b5cf6',已完成:'#31c75a',已阻塞:'#f97316'};
   function esc(s){ return String(s).replace(/[&<>"]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
@@ -15105,29 +15149,27 @@ FocusPilot/
     if(!list) return;
     var arr = planData[scope];
     if(cnt) cnt.textContent = arr.length;
-    if(!arr.length){ list.innerHTML = '<div class="plan-empty">暂无任务，下面新增一条</div>'; return; }
-    list.innerHTML = arr.map(function(it,i){
-      return '<div class="plan-item"><span class="pdot" style="background:'+(ST_DOT[it.st]||'#999ca2')+'"></span>'
-        + '<span class="ptitle">'+esc(it.t)+'</span><span class="pst">'+esc(it.st)+'</span>'
-        + '<button class="pdel" type="button" data-del-scope="'+scope+'" data-del-i="'+i+'" title="删除">×</button></div>';
+    if(!arr.length){ list.innerHTML = '<div class="plan-empty">暂无任务，下面新建一条</div>'; return; }
+    list.innerHTML = arr.map(function(it){
+      return '<button class="plan-item" type="button" onclick="openRunDetail(\''+it.id+'\')"><span class="pdot" style="background:'+(ST_DOT[it.st]||'#999ca2')+'"></span>'
+        + '<span class="ptitle">'+esc(it.t)+'</span><span class="pst">'+esc(it.st)+'</span></button>';
     }).join('');
   }
   ['today','week','month','all'].forEach(renderPlan);
-  fbRoot.addEventListener('click', function(e){
-    var d = e.target.closest && e.target.closest('.pdel');
-    if(!d) return;
-    e.stopPropagation();
-    var scope = d.getAttribute('data-del-scope');
-    planData[scope].splice(+d.getAttribute('data-del-i'), 1);
-    renderPlan(scope);
-  });
-  // 新建任务走母版完整弹窗（plan-newbtn → openNewTaskModal({source:'plan',scope})）。
-  // 创建提交时 createWorkItemFromModal 回调此桥接，把任务加进对应规划清单。
+  // 新建任务走母版完整弹窗；createWorkItemFromModal 回调此桥接把任务（含 id）加进对应规划清单
   var ST_LABEL = {backlog:'待规划',todo:'待办',in_progress:'进行中',in_review:'审核中',done:'已完成',blocked:'已阻塞'};
-  window.fbPlanAdd = function(scope, title, statusKey){
+  window.fbPlanAdd = function(scope, id, title, statusKey){
     if(!planData[scope] || !title) return;
-    planData[scope].push({t:title, st:(ST_LABEL[statusKey] || '待办')});
+    planData[scope].push({id:id, t:title, st:(ST_LABEL[statusKey] || '待办')});
     renderPlan(scope);
+  };
+  // 对话详情删除任务时回调：从所有规划清单移除该 id 并刷新
+  window.fbPlanRemove = function(id){
+    ['today','week','month','all'].forEach(function(scope){
+      var before = planData[scope].length;
+      planData[scope] = planData[scope].filter(function(it){ return it.id !== id; });
+      if(planData[scope].length !== before) renderPlan(scope);
+    });
   };
 })();
 </script>
