@@ -2617,7 +2617,7 @@
     .hib-unread{display:flex;align-items:center;gap:5px;padding:4px 9px;border-radius:7px;font-size:12px;color:var(--muted);cursor:pointer;border:1px solid var(--line-soft)}
     .hib-unread:hover{background:var(--hover)}
     .hib-unread.on{color:var(--accent);border-color:color-mix(in srgb,var(--accent) 45%,transparent);background:var(--hover)}
-    .hib-unread .dot{width:7px;height:7px;border-radius:50%;background:#3b82f6}
+    .hib-unread .dot{width:7px;height:7px;border-radius:50%;background:#ef5047}
     .hib-group{position:relative}
     .hib-gbtn{display:flex;align-items:center;gap:5px;font-size:12px;color:var(--muted);padding:4px 9px;border-radius:7px;cursor:pointer;border:1px solid var(--line-soft);user-select:none}
     .hib-gbtn:hover{background:var(--hover)}
@@ -2637,7 +2637,7 @@
     .hib-av svg{width:100%;height:100%;display:block}
     .hib-body{flex:1;min-width:0}
     .hib-mt{display:flex;align-items:center;gap:6px}
-    .hib-udot{width:7px;height:7px;border-radius:50%;background:#3b82f6;flex-shrink:0}
+    .hib-udot{width:7px;height:7px;border-radius:50%;background:#ef5047;flex-shrink:0}
     .hib-title{font-size:13px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
     .hib-msg.unread .hib-title{font-weight:600}
     .hib-msg.read .hib-title{color:var(--muted)}
@@ -2677,7 +2677,7 @@
     .hib-pill:hover{border-color:color-mix(in srgb,var(--accent) 45%,transparent);color:var(--text)}
     .hib-pill b{color:var(--text);font-weight:600}
     .hib-hint{margin-top:34px;color:var(--dim);font-size:12.5px}
-    .hib-hint b{color:#3b82f6}
+    .hib-hint b{color:#ef5047}
     .hib-detail{position:absolute;inset:0;background:var(--content-bg);display:none;flex-direction:column;z-index:6}
     .hib-detail.show{display:flex}
     .hib-dhead{display:flex;align-items:center;gap:14px;padding:16px 22px 14px;border-bottom:1px solid var(--line-soft)}
@@ -12665,7 +12665,7 @@ FocusPilot/
       function counts(){ var c={}; ORDER.forEach(function(k){c[k]={t:0,u:0};}); hibMsgs.forEach(function(m){ if(!c[m.st])return; c[m.st].t++; if(m.unread)c[m.st].u++; }); return c; }
       function unreadN(){ return hibMsgs.filter(function(m){return m.unread;}).length; }
       function $(id){ return document.getElementById(id); }
-      function renderHead(){ var u=unreadN(); var el=$('hib-count'); if(el) el.innerHTML=hibMsgs.length+' · <b style="color:#3b82f6">'+u+' 未读</b>'; var ov=$('hib-ov-unread'); if(ov) ov.textContent=u; var ut=$('hib-unread-toggle'); if(ut) ut.classList.toggle('on',hibUnread); }
+      function renderHead(){ var u=unreadN(); var el=$('hib-count'); if(el) el.innerHTML=hibMsgs.length+' · <b style="color:#ef5047">'+u+' 未读</b>'; var ov=$('hib-ov-unread'); if(ov) ov.textContent=u; var ut=$('hib-unread-toggle'); if(ut) ut.classList.toggle('on',hibUnread); }
       function renderTabs(){ var c=counts(), wrap=$('hib-status-tabs'); if(!wrap)return; wrap.innerHTML=''; var ac=$('hib-all-count'); if(ac) ac.textContent=hibMsgs.length; var allt=$('hib-tab-all'); if(allt) allt.classList.toggle('active',hibStatus==='all'); ORDER.forEach(function(k){ var d=stDef(k), cnt=c[k]; if(cnt.t===0)return; var el=document.createElement('div'); el.className='hib-stab'+(hibStatus===k?' active':''); el.onclick=function(){window.hibSetStatus(k);}; el.innerHTML='<span class="cdot" style="background:'+d.color+'"></span>'+d.label+' <span class="cn">'+cnt.t+'</span>'; wrap.appendChild(el); }); }
       function filtered(){ return hibMsgs.filter(function(m){ return (hibStatus==='all'||m.st===hibStatus) && (!hibUnread||m.unread); }); }
       function msgEl(m){ var d=stDef(m.st); var el=document.createElement('div'); el.className='hib-msg '+(m.unread?'unread':'read')+(m.pinned?' pinned':'')+(m.id===hibCur?' sel':''); el.onclick=function(){ m.id===hibCur?window.hibClose():window.hibOpen(m.id); }; el.innerHTML='<div class="hib-av"><svg><use href="#fp-enso-msg"/></svg></div><div class="hib-body"><div class="hib-mt">'+(m.unread?'<span class="hib-udot"></span>':'')+'<span class="hib-title">'+m.title+'</span></div><div class="hib-sub"><span class="si" style="background:'+d.color+'">'+ST_ICON[m.st]+'</span><span class="tx">'+m.sub+'</span></div></div><div class="hib-right"><div class="hib-pin" title="置顶 / 取消置顶" onclick="event.stopPropagation();window.hibTogglePin(\''+m.id+'\')">📌</div><div class="hib-time">'+m.time+'</div></div>'; return el; }
@@ -13139,11 +13139,14 @@ FocusPilot/
 .fb-root .bar-btn[data-tone="review"]  .bar-num { color: #b4690e; }
 .fb-root .bar-btn[data-tone="done"]    .bar-num { color: #1f8f43; }
 .fb-root .bar-btn[data-tone="focus"]   .bar-num { color: var(--blue); }
+.fb-root .bar-btn[data-tone="unread"]  .bar-num { color: var(--red); }
+.fb-root .bar-dot { display:inline-block; width:6px; height:6px; border-radius:50%; background:var(--red); margin-right:5px; vertical-align:middle; }
 .fb-root .bar-btn[data-tone="plan"]:hover { background: rgba(107, 114, 128, 0.12); }
 .fb-root .bar-btn[data-tone="running"]:hover { background: rgba(20, 122, 243, 0.12); }
 .fb-root .bar-btn[data-tone="review"]:hover { background: rgba(245, 158, 11, 0.16); }
 .fb-root .bar-btn[data-tone="done"]:hover { background: rgba(49, 199, 90, 0.14); }
 .fb-root .bar-btn[data-tone="focus"]:hover { background: rgba(20, 122, 243, 0.12); }
+.fb-root .bar-btn[data-tone="unread"]:hover { background: color-mix(in srgb, var(--red) 12%, transparent); }
 .fb-root .bar-sep {
         width: 1px;
         height: 18px;
@@ -14137,6 +14140,19 @@ FocusPilot/
 </style>
 <div class="fb-root" id="fbRoot">
           <div class="focus-bar" id="focusBar">
+            <div class="bar-group">
+              <button class="bar-btn" data-tone="unread" type="button"><span class="bar-dot"></span>未读 <b class="bar-num">6</b></button>
+              <div class="bar-menu">
+                <div class="sub-title">未读消息（收件箱）</div>
+                <button class="mini-task" type="button" data-run-detail="FP-097"><span>看板 Workspace 行<small>FocusPilot · 审核中</small></span><small>详情</small></button>
+                <button class="mini-task" type="button" data-run-detail="KB-031"><span>资料卡片归档<small>VaultOne · 审核中</small></span><small>详情</small></button>
+                <button class="mini-task" type="button" data-run-detail="OPS-018"><span>API 授权回调<small>PilotOne · 已阻塞</small></span><small>详情</small></button>
+                <button class="mini-task" type="button" data-run-detail="FP-088"><span>Studio 状态投影<small>PilotOne · 进行中</small></span><small>详情</small></button>
+                <button class="mini-task" type="button" data-run-detail="FP-104"><span>浮球 hover 面板实现<small>FocusPilot · 进行中</small></span><small>详情</small></button>
+                <button class="mini-task" type="button" data-run-detail="FP-112"><span>PRD 同步检查<small>FocusPilot · 待办</small></span><small>详情</small></button>
+              </div>
+            </div>
+            <span class="bar-sep" aria-hidden="true"></span>
             <div class="bar-group">
               <button class="bar-btn" data-tone="plan" type="button">待规划 <b class="bar-num">3</b></button>
               <div class="bar-menu">
