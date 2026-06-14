@@ -14214,7 +14214,7 @@ FocusPilot/
               <button class="bar-btn" data-tone="unread" type="button"><span class="bar-dot"></span>未读 <b class="bar-num">6</b></button>
               <div class="bar-menu" id="unreadMenu">
                 <div class="sub-title">未读消息（收件箱）<span class="ur-grp"><button type="button" data-ur="status">按状态</button><button type="button" data-ur="project">按项目</button></span></div>
-                <div id="unreadList">
+                <div id="unreadList" class="bar-list">
                   <button class="mini-task" type="button" data-run-detail="FP-097" data-st="审核中" data-pj="FocusPilot"><span>看板 Workspace 行<small>FocusPilot · 审核中</small></span><small>详情</small></button>
                   <button class="mini-task" type="button" data-run-detail="KB-031" data-st="审核中" data-pj="VaultOne"><span>资料卡片归档<small>VaultOne · 审核中</small></span><small>详情</small></button>
                   <button class="mini-task" type="button" data-run-detail="OPS-018" data-st="已阻塞" data-pj="PilotOne"><span>API 授权回调<small>PilotOne · 已阻塞</small></span><small>详情</small></button>
@@ -14228,43 +14228,53 @@ FocusPilot/
             <div class="bar-group">
               <button class="bar-btn" data-tone="plan" type="button">待规划 <b class="bar-num">3</b></button>
               <div class="bar-menu">
-                <div class="sub-title">待规划 / 待办</div>
-                <button class="mini-task" type="button" data-run-detail="FP-112"><span>FP-112 PRD 同步检查<small>FocusPilot · 待办</small></span><small>详情</small></button>
-                <button class="mini-task" type="button" data-run-detail="FP-130"><span>FP-130 状态条实现计划<small>FocusPilot · 待规划</small></span><small>详情</small></button>
+                <div class="sub-title">待规划 / 待办<span class="ur-grp"><button type="button" data-ur="status">按状态</button><button type="button" data-ur="project">按项目</button></span></div>
+                <div class="bar-list">
+                  <button class="mini-task" type="button" data-run-detail="FP-112" data-st="待办" data-pj="FocusPilot"><span>FP-112 PRD 同步检查<small>FocusPilot · 待办</small></span><small>详情</small></button>
+                  <button class="mini-task" type="button" data-run-detail="FP-130" data-st="待规划" data-pj="FocusPilot"><span>FP-130 状态条实现计划<small>FocusPilot · 待规划</small></span><small>详情</small></button>
+                </div>
               </div>
             </div>
             <div class="bar-group">
               <button class="bar-btn" data-tone="running" type="button">进行中 <b class="bar-num">2</b></button>
               <div class="bar-menu">
-                <div class="sub-title">正在运行的任务</div>
-                <button class="mini-task" type="button" data-run-detail="FP-104"><span>FP-104 浮球 hover 面板实现<small>Codex · FocusPilot · 62%</small></span><small>详情</small></button>
-                <button class="mini-task" type="button" data-run-detail="FP-088"><span>FP-088 Studio 状态投影<small>Claude Code · PilotOne · 31%</small></span><small>详情</small></button>
+                <div class="sub-title">正在运行的任务<span class="ur-grp"><button type="button" data-ur="status">按状态</button><button type="button" data-ur="project">按项目</button></span></div>
+                <div class="bar-list">
+                  <button class="mini-task" type="button" data-run-detail="FP-104" data-st="进行中" data-pj="FocusPilot"><span>FP-104 浮球 hover 面板实现<small>Codex · FocusPilot · 62%</small></span><small>详情</small></button>
+                  <button class="mini-task" type="button" data-run-detail="FP-088" data-st="进行中" data-pj="PilotOne"><span>FP-088 Studio 状态投影<small>Claude Code · PilotOne · 31%</small></span><small>详情</small></button>
+                </div>
               </div>
             </div>
             <div class="bar-group">
               <button class="bar-btn" data-tone="review" type="button">审核中 <b class="bar-num">3</b></button>
               <div class="bar-menu">
-                <div class="sub-title">审核中</div>
-                <button class="mini-task" type="button" data-run-detail="FP-097"><span>FP-097 看板 Workspace 行<small>FocusPilot · 审核中</small></span><small>详情</small></button>
-                <button class="mini-task" type="button" data-run-detail="KB-031"><span>KB-031 资料卡片归档<small>VaultOne · 审核中</small></span><small>详情</small></button>
+                <div class="sub-title">审核中<span class="ur-grp"><button type="button" data-ur="status">按状态</button><button type="button" data-ur="project">按项目</button></span></div>
+                <div class="bar-list">
+                  <button class="mini-task" type="button" data-run-detail="FP-097" data-st="审核中" data-pj="FocusPilot"><span>FP-097 看板 Workspace 行<small>FocusPilot · 审核中</small></span><small>详情</small></button>
+                  <button class="mini-task" type="button" data-run-detail="KB-031" data-st="审核中" data-pj="VaultOne"><span>KB-031 资料卡片归档<small>VaultOne · 审核中</small></span><small>详情</small></button>
+                </div>
               </div>
             </div>
             <div class="bar-group">
               <button class="bar-btn" data-tone="done" type="button">已完成 <b class="bar-num">4</b></button>
               <div class="bar-menu">
-                <div class="sub-title">今日已完成</div>
-                <button class="mini-task" type="button" data-run-detail="FP-090"><span>FP-090 主题色槽统一<small>FocusPilot · 已完成</small></span><small>详情</small></button>
-                <button class="mini-task" type="button" data-run-detail="FP-085"><span>FP-085 快捷面板差分刷新<small>FocusPilot · 已完成</small></span><small>详情</small></button>
+                <div class="sub-title">今日已完成<span class="ur-grp"><button type="button" data-ur="status">按状态</button><button type="button" data-ur="project">按项目</button></span></div>
+                <div class="bar-list">
+                  <button class="mini-task" type="button" data-run-detail="FP-090" data-st="已完成" data-pj="FocusPilot"><span>FP-090 主题色槽统一<small>FocusPilot · 已完成</small></span><small>详情</small></button>
+                  <button class="mini-task" type="button" data-run-detail="FP-085" data-st="已完成" data-pj="FocusPilot"><span>FP-085 快捷面板差分刷新<small>FocusPilot · 已完成</small></span><small>详情</small></button>
+                </div>
               </div>
             </div>
             <span class="bar-sep" aria-hidden="true"></span>
             <div class="bar-group">
               <button class="bar-btn" data-tone="focus" type="button">今日聚焦 <b class="bar-num">5</b></button>
               <div class="bar-menu">
-                <div class="sub-title">今日聚焦实时状态</div>
-                <button class="mini-task" type="button" data-run-detail="FP-104"><span>浮球原型定稿<small>进行中 · FocusPilot</small></span><small>详情</small></button>
-                <button class="mini-task" type="button" data-run-detail="FP-112"><span>PRD 同步检查<small>待办 · FocusPilot</small></span><small>详情</small></button>
-                <button class="mini-task" type="button" data-run-detail="FP-097"><span>看板 Workspace 行验收<small>审核中</small></span><small>详情</small></button>
+                <div class="sub-title">今日聚焦实时状态<span class="ur-grp"><button type="button" data-ur="status">按状态</button><button type="button" data-ur="project">按项目</button></span></div>
+                <div class="bar-list">
+                  <button class="mini-task" type="button" data-run-detail="FP-104" data-st="进行中" data-pj="FocusPilot"><span>浮球原型定稿<small>进行中 · FocusPilot</small></span><small>详情</small></button>
+                  <button class="mini-task" type="button" data-run-detail="FP-112" data-st="待办" data-pj="FocusPilot"><span>PRD 同步检查<small>待办 · FocusPilot</small></span><small>详情</small></button>
+                  <button class="mini-task" type="button" data-run-detail="FP-097" data-st="审核中" data-pj="FocusPilot"><span>看板 Workspace 行验收<small>审核中</small></span><small>详情</small></button>
+                </div>
               </div>
             </div>
             <span class="bar-sep" aria-hidden="true"></span>
@@ -15107,41 +15117,44 @@ FocusPilot/
   var fbRoot = document.getElementById('fbRoot');
   if(!fbRoot) return;
 
-  /* ② 未读分组：按状态 / 按项目 / 都不选（默认不分组，再点取消）*/
-  var ulist = document.getElementById('unreadList');
-  if(ulist){
-    var uitems = [].slice.call(ulist.querySelectorAll('.mini-task'));
-    var ST_ORDER = ['审核中','已阻塞','进行中','待办','已完成','待规划'];
-    var ugroup = null;
-    function ungroupApply(){
-      [].slice.call(ulist.querySelectorAll('.ur-head')).forEach(function(h){ h.remove(); });
-      if(!ugroup){ uitems.forEach(function(it){ ulist.appendChild(it); }); return; }
+  /* ② Focus Bar 下拉分组：按状态 / 按项目 / 都不选（默认不分组，再点取消）
+     通用化——对每个带 .ur-grp + .bar-list 的下拉（未读/待规划/进行中/审核中/已完成/今日聚焦）独立生效 */
+  var BAR_ST_ORDER = ['待规划','待办','进行中','审核中','已完成','已阻塞'];
+  fbRoot.querySelectorAll('.focus-bar .bar-menu').forEach(function(menu){
+    var grpWrap = menu.querySelector('.ur-grp');
+    var list = menu.querySelector('.bar-list');
+    if(!grpWrap || !list) return;
+    var items = [].slice.call(list.querySelectorAll('.mini-task'));
+    var mode = null; // null=不分组 / 'status' / 'project'
+    function apply(){
+      [].slice.call(list.querySelectorAll('.ur-head')).forEach(function(h){ h.remove(); });
+      if(!mode){ items.forEach(function(it){ list.appendChild(it); }); return; }
       var groups = {};
-      uitems.forEach(function(it){
-        var k = (ugroup === 'project' ? it.getAttribute('data-pj') : it.getAttribute('data-st')) || '其他';
+      items.forEach(function(it){
+        var k = (mode === 'project' ? it.getAttribute('data-pj') : it.getAttribute('data-st')) || '其他';
         (groups[k] = groups[k] || []).push(it);
       });
       var keys = Object.keys(groups);
-      if(ugroup === 'project') keys.sort();
-      else keys = ST_ORDER.filter(function(k){ return groups[k]; }).concat(keys.filter(function(k){ return ST_ORDER.indexOf(k) < 0; }));
+      if(mode === 'project') keys.sort();
+      else keys = BAR_ST_ORDER.filter(function(k){ return groups[k]; }).concat(keys.filter(function(k){ return BAR_ST_ORDER.indexOf(k) < 0; }));
       keys.forEach(function(k){
         var h = document.createElement('div'); h.className='ur-head'; h.textContent = k + ' · ' + groups[k].length;
-        ulist.appendChild(h);
-        groups[k].forEach(function(it){ ulist.appendChild(it); });
+        list.appendChild(h);
+        groups[k].forEach(function(it){ list.appendChild(it); });
       });
     }
-    var ubtns = [].slice.call(document.querySelectorAll('#unreadMenu .ur-grp button'));
-    ubtns.forEach(function(b){
+    var btns = [].slice.call(grpWrap.querySelectorAll('button'));
+    btns.forEach(function(b){
       b.addEventListener('click', function(e){
         e.stopPropagation();
         var v = b.getAttribute('data-ur');
-        ugroup = (ugroup === v) ? null : v;
-        ubtns.forEach(function(x){ x.classList.toggle('active', x.getAttribute('data-ur') === ugroup); });
-        ungroupApply();
+        mode = (mode === v) ? null : v;
+        btns.forEach(function(x){ x.classList.toggle('active', x.getAttribute('data-ur') === mode); });
+        apply();
       });
     });
-    ungroupApply();
-  }
+    apply();
+  });
 
   /* ① 点 bar 标题 → 钉住下拉常开 + 高亮；再点取消；点外部取消 */
   fbRoot.querySelectorAll('.focus-bar .bar-group > .bar-btn').forEach(function(btn){
