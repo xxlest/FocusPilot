@@ -6397,6 +6397,7 @@ FocusPilot/
                   <div class="settings-row">
                     <div class="row-left">
                       <div class="row-label">hover 离开后自动收起面板</div>
+                      <div class="row-desc">关闭后面板常驻；也可点击悬浮球（变琥珀色）临时锁定，再点解除</div>
                     </div>
                     <div class="toggle on" onclick="this.classList.toggle('on');window.fbAutoCollapse=this.classList.contains('on');"></div>
                   </div>
@@ -13390,6 +13391,13 @@ FocusPilot/
         border-color: var(--green);
         border-left-color: rgba(49, 199, 90, 0.18);
       }
+/* 锁定态：点击浮球后变琥珀色，面板不自动收起；再次点击解除 */
+.fb-root.fb-locked .ball {
+        background:
+          radial-gradient(circle at 32% 24%, rgba(255,255,255,.82), transparent 18%),
+          radial-gradient(circle at 46% 45%, #ffc266 0%, #f59e0b 58%, #c2740a 100%);
+        box-shadow: 0 18px 46px rgba(0, 0, 0, 0.34), 0 0 0 7px rgba(245, 158, 11, 0.22);
+      }
 .fb-root .ball-badge {
         position: absolute;
         right: -7px;
@@ -13503,8 +13511,17 @@ FocusPilot/
         pointer-events: auto;
         z-index: 20;
       }
-.fb-root .action-row:hover .sub-menu, .fb-root .action-row.submenu-open .sub-menu {
+.fb-root .action-row:hover .sub-menu, .fb-root .action-row.submenu-open .sub-menu, .fb-root .sub-menu:hover {
         display: block;
+      }
+/* 桥接一/二级菜单之间的 10px 空隙：填充透明热区，鼠标从一级移向二级时不脱离 hover，避免面板秒收 */
+.fb-root .sub-menu::after {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 100%;
+        width: 14px;
+        height: 100%;
       }
 .fb-root .sub-title {
         padding: 5px 7px 8px;
@@ -14503,17 +14520,24 @@ FocusPilot/
         floatingZone.classList.add("open");
       }
       function scheduleFloatingClose() {
-        if (window.fbAutoCollapse === false) return;
+        // 锁定态或设置关闭了自动收起时，面板保持常驻
+        if (window.fbAutoCollapse === false || fbRoot.classList.contains("fb-locked")) return;
         window.clearTimeout(floatingCloseTimer);
-        floatingCloseTimer = window.setTimeout(() => floatingZone.classList.remove("open"), 240);
+        floatingCloseTimer = window.setTimeout(() => floatingZone.classList.remove("open"), 320);
       }
       [floatStack, floatPanel].forEach((node) => {
         node.addEventListener("mouseenter", openFloatingMenu);
         node.addEventListener("mouseleave", scheduleFloatingClose);
       });
+      // 点击浮球：切换锁定态（变色 + 面板不自动消失）；再次点击解除并允许收起
       fbRoot.querySelector(".ball").addEventListener("click", () => {
         window.clearTimeout(floatingCloseTimer);
-        floatingZone.classList.toggle("open");
+        var locked = fbRoot.classList.toggle("fb-locked");
+        if (locked) {
+          floatingZone.classList.add("open");
+        } else {
+          scheduleFloatingClose();
+        }
       });
       fbRoot.querySelectorAll(".action-row").forEach((row) => {
         if (!row.querySelector(".sub-menu")) return;
