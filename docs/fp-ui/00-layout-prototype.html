@@ -12320,7 +12320,7 @@ FocusPilot/
         workItems.push(newItem);
         // 浮球快捷面板规划清单：从规划入口创建时同步加入对应清单
         if (_newTaskContext && _newTaskContext.source === 'plan' && typeof window.fbPlanAdd === 'function') {
-          window.fbPlanAdd(_newTaskContext.scope, newId, title, explicitStatus);
+          window.fbPlanAdd(_newTaskContext.scope, newId, title, explicitStatus, projectId);
         }
         populateStudioToolbarFilters();
         refreshStudioTaskViews();
@@ -14285,7 +14285,7 @@ FocusPilot/
                       <span class="qp-tail"><b class="qp-count" id="planCount-today">0</b><span>›</span></span>
                     </button>
                     <div class="sub-menu">
-                      <div class="sub-title">今日聚焦</div>
+                      <div class="sub-title">今日聚焦<span class="ur-grp"><button type="button" data-pg-scope="today" data-pg="status">按状态</button><button type="button" data-pg-scope="today" data-pg="project">按项目</button></span></div>
                       <div class="plan-list" id="planList-today"></div>
                       <div class="plan-add"><button type="button" class="plan-newbtn" onclick="openNewTaskModal({source:'plan',scope:'today'})">＋ 新建任务</button></div>
                     </div>
@@ -14297,7 +14297,7 @@ FocusPilot/
                       <span class="qp-tail"><b class="qp-count" id="planCount-week">0</b><span>›</span></span>
                     </button>
                     <div class="sub-menu">
-                      <div class="sub-title">本周计划</div>
+                      <div class="sub-title">本周计划<span class="ur-grp"><button type="button" data-pg-scope="week" data-pg="status">按状态</button><button type="button" data-pg-scope="week" data-pg="project">按项目</button></span></div>
                       <div class="plan-list" id="planList-week"></div>
                       <div class="plan-add"><button type="button" class="plan-newbtn" onclick="openNewTaskModal({source:'plan',scope:'week'})">＋ 新建任务</button></div>
                     </div>
@@ -14309,7 +14309,7 @@ FocusPilot/
                       <span class="qp-tail"><b class="qp-count" id="planCount-month">0</b><span>›</span></span>
                     </button>
                     <div class="sub-menu">
-                      <div class="sub-title">本月计划</div>
+                      <div class="sub-title">本月计划<span class="ur-grp"><button type="button" data-pg-scope="month" data-pg="status">按状态</button><button type="button" data-pg-scope="month" data-pg="project">按项目</button></span></div>
                       <div class="plan-list" id="planList-month"></div>
                       <div class="plan-add"><button type="button" class="plan-newbtn" onclick="openNewTaskModal({source:'plan',scope:'month'})">＋ 新建任务</button></div>
                     </div>
@@ -14321,7 +14321,7 @@ FocusPilot/
                       <span class="qp-tail"><b class="qp-count" id="planCount-all">0</b><span>›</span></span>
                     </button>
                     <div class="sub-menu">
-                      <div class="sub-title">全局规划</div>
+                      <div class="sub-title">全局规划<span class="ur-grp"><button type="button" data-pg-scope="all" data-pg="status">按状态</button><button type="button" data-pg-scope="all" data-pg="project">按项目</button></span></div>
                       <div class="plan-list" id="planList-all"></div>
                       <div class="plan-add"><button type="button" class="plan-newbtn" onclick="openNewTaskModal({source:'plan',scope:'all'})">＋ 新建任务</button></div>
                     </div>
@@ -15137,30 +15137,51 @@ FocusPilot/
   // 规划清单任务带真实 id（seed 用 RUN_DETAILS 已有 id，点开是富详情；新建任务用其 workItem id，
   // 经 renderRunDetail 的 fallback 也能开详情）。点任务 → openRunDetail(id) 进入「对话详情」做后续操作。
   var planData = {
-    today: [{id:'FP-104',t:'浮球 hover 面板实现',st:'进行中'},{id:'FP-112',t:'PRD 同步检查',st:'待办'},{id:'FP-097',t:'看板 Workspace 行',st:'审核中'},{id:'FP-088',t:'Studio 状态投影',st:'进行中'},{id:'FP-130',t:'状态条实现计划',st:'待规划'}],
-    week:  [{id:'FP-130',t:'状态条实现计划',st:'待规划'},{id:'KB-031',t:'资料卡片归档',st:'审核中'},{id:'FP-085',t:'快捷面板差分刷新',st:'已完成'},{id:'OPS-018',t:'API 授权回调',st:'已阻塞'}],
-    month: [{id:'FP-090',t:'主题色槽统一',st:'已完成'},{id:'FP-088',t:'Studio 状态投影',st:'进行中'},{id:'KB-041',t:'Review 卡片批处理',st:'待办'}],
-    all:   [{id:'FP-130',t:'状态条实现计划',st:'待规划'},{id:'KB-041',t:'Review 卡片批处理',st:'待办'},{id:'OPS-018',t:'API 授权回调',st:'已阻塞'}]
+    today: [{id:'FP-104',t:'浮球 hover 面板实现',st:'进行中',pj:'FocusPilot'},{id:'FP-112',t:'PRD 同步检查',st:'待办',pj:'FocusPilot'},{id:'FP-097',t:'看板 Workspace 行',st:'审核中',pj:'FocusPilot'},{id:'FP-088',t:'Studio 状态投影',st:'进行中',pj:'PilotOne'},{id:'FP-130',t:'状态条实现计划',st:'待规划',pj:'FocusPilot'}],
+    week:  [{id:'FP-130',t:'状态条实现计划',st:'待规划',pj:'FocusPilot'},{id:'KB-031',t:'资料卡片归档',st:'审核中',pj:'VaultOne'},{id:'FP-085',t:'快捷面板差分刷新',st:'已完成',pj:'FocusPilot'},{id:'OPS-018',t:'API 授权回调',st:'已阻塞',pj:'PilotOne'}],
+    month: [{id:'FP-090',t:'主题色槽统一',st:'已完成',pj:'FocusPilot'},{id:'FP-088',t:'Studio 状态投影',st:'进行中',pj:'PilotOne'},{id:'KB-041',t:'Review 卡片批处理',st:'待办',pj:'VaultOne'}],
+    all:   [{id:'FP-130',t:'状态条实现计划',st:'待规划',pj:'FocusPilot'},{id:'KB-041',t:'Review 卡片批处理',st:'待办',pj:'VaultOne'},{id:'OPS-018',t:'API 授权回调',st:'已阻塞',pj:'PilotOne'}]
   };
   var ST_DOT = {待规划:'#999ca2',待办:'#74777d',进行中:'#147af3',审核中:'#8b5cf6',已完成:'#31c75a',已阻塞:'#f97316'};
+  var planGroup = {today:null, week:null, month:null, all:null}; // null=不分组 / 'status' / 'project'
+  var PLAN_ST_ORDER = ['待规划','待办','进行中','审核中','已完成','已阻塞'];
   function esc(s){ return String(s).replace(/[&<>"]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
+  function planItemHtml(it){
+    return '<button class="plan-item" type="button" onclick="openRunDetail(\''+it.id+'\')"><span class="pdot" style="background:'+(ST_DOT[it.st]||'#999ca2')+'"></span>'
+      + '<span class="ptitle">'+esc(it.t)+'</span><span class="pst">'+esc(it.st)+'</span></button>';
+  }
   function renderPlan(scope){
     var list = document.getElementById('planList-'+scope), cnt = document.getElementById('planCount-'+scope);
     if(!list) return;
     var arr = planData[scope];
     if(cnt) cnt.textContent = arr.length;
+    document.querySelectorAll('[data-pg-scope="'+scope+'"]').forEach(function(b){ b.classList.toggle('active', b.getAttribute('data-pg') === planGroup[scope]); });
     if(!arr.length){ list.innerHTML = '<div class="plan-empty">暂无任务，下面新建一条</div>'; return; }
-    list.innerHTML = arr.map(function(it){
-      return '<button class="plan-item" type="button" onclick="openRunDetail(\''+it.id+'\')"><span class="pdot" style="background:'+(ST_DOT[it.st]||'#999ca2')+'"></span>'
-        + '<span class="ptitle">'+esc(it.t)+'</span><span class="pst">'+esc(it.st)+'</span></button>';
+    var g = planGroup[scope];
+    if(!g){ list.innerHTML = arr.map(planItemHtml).join(''); return; }
+    var groups = {};
+    arr.forEach(function(it){ var k = (g==='project' ? (it.pj||'未分配') : (it.st||'其他')); (groups[k]=groups[k]||[]).push(it); });
+    var keys = (g==='project') ? Object.keys(groups).sort()
+      : PLAN_ST_ORDER.filter(function(k){return groups[k];}).concat(Object.keys(groups).filter(function(k){return PLAN_ST_ORDER.indexOf(k)<0;}));
+    list.innerHTML = keys.map(function(k){
+      return '<div class="ur-head">'+esc(k)+' · '+groups[k].length+'</div>' + groups[k].map(planItemHtml).join('');
     }).join('');
   }
   ['today','week','month','all'].forEach(renderPlan);
-  // 新建任务走母版完整弹窗；createWorkItemFromModal 回调此桥接把任务（含 id）加进对应规划清单
+  // 二级菜单分组切换（按状态/按项目，再点已选项=取消=不分组）
+  fbRoot.querySelectorAll('[data-pg-scope]').forEach(function(b){
+    b.addEventListener('click', function(e){
+      e.stopPropagation();
+      var scope = b.getAttribute('data-pg-scope'), v = b.getAttribute('data-pg');
+      planGroup[scope] = (planGroup[scope] === v) ? null : v;
+      renderPlan(scope);
+    });
+  });
+  // 新建任务走母版完整弹窗；createWorkItemFromModal 回调此桥接把任务（含 id/项目）加进对应规划清单
   var ST_LABEL = {backlog:'待规划',todo:'待办',in_progress:'进行中',in_review:'审核中',done:'已完成',blocked:'已阻塞'};
-  window.fbPlanAdd = function(scope, id, title, statusKey){
+  window.fbPlanAdd = function(scope, id, title, statusKey, project){
     if(!planData[scope] || !title) return;
-    planData[scope].push({id:id, t:title, st:(ST_LABEL[statusKey] || '待办')});
+    planData[scope].push({id:id, t:title, st:(ST_LABEL[statusKey] || '待办'), pj:(project||'未分配')});
     renderPlan(scope);
   };
   // 对话详情删除任务时回调：从所有规划清单移除该 id 并刷新
