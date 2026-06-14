@@ -283,8 +283,9 @@
 
       .focus-bar {
         position: absolute;
-        left: 88px;
+        left: 50%;
         right: auto;
+        transform: translateX(-50%);
         max-width: calc(100% - 116px);
         width: max-content;
         top: 14px;
@@ -386,6 +387,17 @@
         display: flex;
         gap: 6px;
       }
+.fb-pin-toggle { width:30px; height:17px; flex:0 0 auto; border-radius:999px; background:rgba(0,0,0,.16); position:relative; transition:background .2s; }
+.fb-pin-toggle::after { content:""; position:absolute; top:2px; left:2px; width:13px; height:13px; border-radius:50%; background:#fff; box-shadow:0 1px 2px rgba(0,0,0,.25); transition:left .2s; }
+.fb-pin-toggle.on { background:var(--blue); }
+.fb-pin-toggle.on::after { left:15px; }
+.bar-timer-idle { position: relative; }
+.timer-caret { padding: 0 7px; }
+.bar-timer-menu { position:absolute; top:32px; right:0; display:none; min-width:120px; padding:5px; border:1px solid var(--line); border-radius:10px; background:var(--surface); box-shadow:0 16px 44px rgba(0,0,0,.25); z-index:40; }
+.bar-timer-menu.open { display:block; }
+.bar-timer-menu button { display:block; width:100%; text-align:left; border:0; background:transparent; padding:7px 9px; border-radius:7px; font-size:12px; color:var(--ink); cursor:pointer; }
+.bar-timer-menu button:hover { background:rgba(0,0,0,.06); }
+
 
       .timer-pill {
         height: 28px;
@@ -760,6 +772,7 @@
       }
 
       .modal {
+        transform: scale(0.82);
         width: min(640px, calc(100% - 34px));
         max-height: calc(100% - 38px);
         overflow: auto;
@@ -1074,18 +1087,18 @@
       }
 
       .modal h2 {
-        margin: 0 0 12px;
+        margin: 0 0 8px;
         text-align: center;
-        font-size: 24px;
+        font-size: 18px;
       }
 
       .modal .lead {
-        margin: 0 0 20px;
+        margin: 0 0 16px;
         text-align: center;
-        color: #3f4248;
-        font-size: 20px;
-        line-height: 1.45;
-        font-weight: 700;
+        color: #6b6e74;
+        font-size: 13px;
+        line-height: 1.5;
+        font-weight: 500;
       }
 
       .choice-list {
@@ -1535,8 +1548,11 @@
             <span class="bar-sep" aria-hidden="true"></span>
             <div class="bar-timer" id="barTimer">
               <div class="bar-timer-idle" id="barTimerIdle">
-                <button class="timer-pill timer-start" id="barStartFocus" type="button">▶ 开始专注</button>
-                <button class="timer-pill timer-rest" id="barStartRest" type="button">☕ 休息</button>
+                <button class="timer-pill timer-start" id="barTimerMain" type="button">🍅 启动专注 ▾</button>
+                <div class="bar-timer-menu" id="barTimerMenu">
+                  <button type="button" data-timer-go="focus">▶ 工作</button>
+                  <button type="button" data-timer-go="rest">☕ 休息</button>
+                </div>
               </div>
               <button class="bar-timer-active" id="barTimerActive" type="button">
                 <span id="barTimerAction">工作中</span>
@@ -1586,7 +1602,7 @@
                     <button class="float-action" type="button" id="pinBarBtn">
                       <span class="action-icon">顶</span>
                       <span>实时状态<small id="pinBarText">打开 Focus Bar，显示所有项目实时状态</small></span>
-                      <span>⌃</span>
+                      <span class="fb-pin-toggle" id="pinBarToggle" aria-hidden="true"></span>
                     </button>
                   </div>
                   <div class="action-row">
@@ -1798,6 +1814,7 @@
         floatingZone.classList.add("open");
       }
       function scheduleFloatingClose() {
+        if (window.fbAutoCollapse === false) return;
         window.clearTimeout(floatingCloseTimer);
         floatingCloseTimer = window.setTimeout(() => floatingZone.classList.remove("open"), 240);
       }
@@ -1850,6 +1867,13 @@
           ? "关闭 Focus Bar，回到常规视图"
           : "打开 Focus Bar，显示所有项目实时状态";
       });
+      (function(){
+        var pinToggle = document.getElementById("pinBarToggle");
+        if (!pinToggle) return;
+        var syncPin = function(){ pinToggle.classList.toggle("on", body.classList.contains("bar-pinned")); };
+        new MutationObserver(syncPin).observe(body, { attributes: true, attributeFilter: ["class"] });
+        syncPin();
+      })();
 
       // Focus Bar 内的关闭按钮 → 收起状态条，回到常规视图
       document.getElementById("barClose").addEventListener("click", () => {
@@ -1863,8 +1887,13 @@
       });
 
       // 番茄钟 idle 双按钮：开始专注 / 休息
-      document.getElementById("barStartFocus").addEventListener("click", () => openModal("focusModal"));
-      document.getElementById("barStartRest").addEventListener("click", () => openModal("restModal"));
+      (function(){
+        var main = document.getElementById("barTimerMain"), menu = document.getElementById("barTimerMenu");
+        if (!main || !menu) return;
+        main.addEventListener("click", function(e){ e.stopPropagation(); menu.classList.toggle("open"); });
+        menu.addEventListener("click", function(e){ var b = e.target.closest("[data-timer-go]"); if(!b) return; menu.classList.remove("open"); openModal(b.dataset.timerGo === "focus" ? "focusModal" : "restModal"); });
+        document.addEventListener("click", function(){ menu.classList.remove("open"); });
+      })();
       // 点击状态块：专注中 → 停止/暂停/继续；休息中 → 当前休息动作 + 暂停/停止
       document.getElementById("barTimerActive").addEventListener("click", () => {
         if (focusBar.classList.contains("resting")) {
@@ -2290,5 +2319,30 @@
         if (document.getElementById("runDetailPanel").classList.contains("open")) closeRunDetail();
       });
     </script>
-  </body>
+  
+<script>
+/* Focus Bar 可拖动：按住状态条空白处拖动，避开按钮/菜单，限制在视口内 */
+(function(){
+  var bar = document.getElementById('focusBar');
+  if (!bar) return;
+  bar.style.cursor = 'move';
+  var drag=false, sx, sy, sl, st;
+  bar.addEventListener('mousedown', function(e){
+    if (window.fbBarDragOff) return;
+    if (e.target.closest('button, input, textarea, .bar-btn, .bar-close, .bar-timer, .timer-pill, .bar-timer-active, .bar-menu, .mini-task')) return;
+    var r = bar.getBoundingClientRect();
+    drag=true; sx=e.clientX; sy=e.clientY; sl=r.left; st=r.top;
+    bar.style.transform='none'; bar.style.right='auto'; bar.style.left=r.left+'px'; bar.style.top=r.top+'px';
+    document.body.style.userSelect='none'; e.preventDefault();
+  });
+  document.addEventListener('mousemove', function(e){
+    if(!drag) return;
+    var nl = Math.max(0, Math.min(sl + (e.clientX - sx), window.innerWidth  - bar.offsetWidth));
+    var nt = Math.max(0, Math.min(st + (e.clientY - sy), window.innerHeight - bar.offsetHeight));
+    bar.style.left = nl+'px'; bar.style.top = nt+'px';
+  });
+  document.addEventListener('mouseup', function(){ if(drag){ drag=false; document.body.style.userSelect=''; } });
+})();
+</script>
+</body>
 </html>
