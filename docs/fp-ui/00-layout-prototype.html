@@ -13469,6 +13469,12 @@ FocusPilot/
         font-size: 11px;
         font-weight: 800;
       }
+.fb-root .ur-grp { float: right; display: inline-flex; gap: 2px; }
+.fb-root .ur-grp button { font-size: 10px; line-height: 1; border: 0; background: transparent; color: var(--muted); padding: 2px 6px; border-radius: 5px; cursor: pointer; font-weight: 600; }
+.fb-root .ur-grp button:hover { background: rgba(0, 0, 0, 0.05); }
+.fb-root .ur-grp button.active { background: rgba(0, 0, 0, 0.08); color: var(--ink); }
+.fb-root .ur-head { font-size: 10px; color: var(--muted); font-weight: 700; padding: 6px 8px 2px; }
+.fb-root .ur-head:first-child { padding-top: 2px; }
 .fb-root .chat-strip {
         display: grid;
         grid-template-columns: minmax(0, 1fr) 46px;
@@ -14142,14 +14148,16 @@ FocusPilot/
           <div class="focus-bar" id="focusBar">
             <div class="bar-group">
               <button class="bar-btn" data-tone="unread" type="button"><span class="bar-dot"></span>未读 <b class="bar-num">6</b></button>
-              <div class="bar-menu">
-                <div class="sub-title">未读消息（收件箱）</div>
-                <button class="mini-task" type="button" data-run-detail="FP-097"><span>看板 Workspace 行<small>FocusPilot · 审核中</small></span><small>详情</small></button>
-                <button class="mini-task" type="button" data-run-detail="KB-031"><span>资料卡片归档<small>VaultOne · 审核中</small></span><small>详情</small></button>
-                <button class="mini-task" type="button" data-run-detail="OPS-018"><span>API 授权回调<small>PilotOne · 已阻塞</small></span><small>详情</small></button>
-                <button class="mini-task" type="button" data-run-detail="FP-088"><span>Studio 状态投影<small>PilotOne · 进行中</small></span><small>详情</small></button>
-                <button class="mini-task" type="button" data-run-detail="FP-104"><span>浮球 hover 面板实现<small>FocusPilot · 进行中</small></span><small>详情</small></button>
-                <button class="mini-task" type="button" data-run-detail="FP-112"><span>PRD 同步检查<small>FocusPilot · 待办</small></span><small>详情</small></button>
+              <div class="bar-menu" id="unreadMenu">
+                <div class="sub-title">未读消息（收件箱）<span class="ur-grp"><button type="button" data-ur="status" class="active">按状态</button><button type="button" data-ur="project">按项目</button></span></div>
+                <div id="unreadList">
+                  <button class="mini-task" type="button" data-run-detail="FP-097" data-st="审核中" data-pj="FocusPilot"><span>看板 Workspace 行<small>FocusPilot · 审核中</small></span><small>详情</small></button>
+                  <button class="mini-task" type="button" data-run-detail="KB-031" data-st="审核中" data-pj="VaultOne"><span>资料卡片归档<small>VaultOne · 审核中</small></span><small>详情</small></button>
+                  <button class="mini-task" type="button" data-run-detail="OPS-018" data-st="已阻塞" data-pj="PilotOne"><span>API 授权回调<small>PilotOne · 已阻塞</small></span><small>详情</small></button>
+                  <button class="mini-task" type="button" data-run-detail="FP-088" data-st="进行中" data-pj="PilotOne"><span>Studio 状态投影<small>PilotOne · 进行中</small></span><small>详情</small></button>
+                  <button class="mini-task" type="button" data-run-detail="FP-104" data-st="进行中" data-pj="FocusPilot"><span>浮球 hover 面板实现<small>FocusPilot · 进行中</small></span><small>详情</small></button>
+                  <button class="mini-task" type="button" data-run-detail="FP-112" data-st="待办" data-pj="FocusPilot"><span>PRD 同步检查<small>FocusPilot · 待办</small></span><small>详情</small></button>
+                </div>
               </div>
             </div>
             <span class="bar-sep" aria-hidden="true"></span>
@@ -14963,6 +14971,41 @@ FocusPilot/
     bar.style.left = nl+'px'; bar.style.top = nt+'px';
   });
   document.addEventListener('mouseup', function(){ if(drag){ drag=false; document.body.style.userSelect=''; } });
+})();
+</script>
+<!-- Focus Bar 未读段：按状态/按项目分组（移动现有按钮，保留 data-run-detail 点击绑定）-->
+<script>
+(function(){
+  var list = document.getElementById('unreadList');
+  if(!list) return;
+  var items = [].slice.call(list.querySelectorAll('.mini-task'));
+  var ST_ORDER = ['审核中','已阻塞','进行中','待办','已完成','待规划'];
+  function regroup(by){
+    [].slice.call(list.querySelectorAll('.ur-head')).forEach(function(h){ h.remove(); });
+    var groups = {};
+    items.forEach(function(it){
+      var k = (by === 'project' ? it.getAttribute('data-pj') : it.getAttribute('data-st')) || '其他';
+      (groups[k] = groups[k] || []).push(it);
+    });
+    var keys = Object.keys(groups);
+    if (by === 'project') keys.sort();
+    else keys = ST_ORDER.filter(function(k){ return groups[k]; })
+                        .concat(keys.filter(function(k){ return ST_ORDER.indexOf(k) < 0; }));
+    keys.forEach(function(k){
+      var h = document.createElement('div'); h.className = 'ur-head'; h.textContent = k + ' · ' + groups[k].length;
+      list.appendChild(h);
+      groups[k].forEach(function(it){ list.appendChild(it); });
+    });
+  }
+  var btns = [].slice.call(document.querySelectorAll('#unreadMenu .ur-grp button'));
+  btns.forEach(function(b){
+    b.addEventListener('click', function(e){
+      e.stopPropagation();
+      btns.forEach(function(x){ x.classList.toggle('active', x === b); });
+      regroup(b.getAttribute('data-ur'));
+    });
+  });
+  regroup('status');
 })();
 </script>
 </body>
