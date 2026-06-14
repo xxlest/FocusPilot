@@ -13154,6 +13154,7 @@ FocusPilot/
 .fb-root .plan-newbtn { width: 100%; display: flex; align-items: center; justify-content: center; gap: 4px; padding: 7px; border: 1px dashed var(--line); border-radius: 7px; background: transparent; color: var(--blue); font-size: 12px; font-weight: 600; cursor: pointer; }
 .fb-root .plan-newbtn:hover { background: rgba(20, 122, 243, 0.08); border-color: rgba(20, 122, 243, 0.4); }
 .fb-root .qp-count { font-size: 11px; color: var(--muted); font-weight: 700; min-width: 16px; text-align: right; }
+.fb-root .qp-tail { display: inline-flex; align-items: center; gap: 8px; white-space: nowrap; }
 .fb-root .bar-btn {
         height: 28px;
         border: 0;
@@ -14280,7 +14281,7 @@ FocusPilot/
                     <button class="float-action" type="button">
                       <span class="action-icon">今</span>
                       <span>今日聚焦<small>查看 / 新增 / 删除今日任务</small></span>
-                      <b class="qp-count" id="planCount-today">0</b><span>›</span>
+                      <span class="qp-tail"><b class="qp-count" id="planCount-today">0</b><span>›</span></span>
                     </button>
                     <div class="sub-menu">
                       <div class="sub-title">今日聚焦</div>
@@ -14292,7 +14293,7 @@ FocusPilot/
                     <button class="float-action" type="button">
                       <span class="action-icon">周</span>
                       <span>本周计划<small>查看 / 新增 / 删除本周任务</small></span>
-                      <b class="qp-count" id="planCount-week">0</b><span>›</span>
+                      <span class="qp-tail"><b class="qp-count" id="planCount-week">0</b><span>›</span></span>
                     </button>
                     <div class="sub-menu">
                       <div class="sub-title">本周计划</div>
@@ -14304,7 +14305,7 @@ FocusPilot/
                     <button class="float-action" type="button">
                       <span class="action-icon">月</span>
                       <span>本月计划<small>查看 / 新增 / 删除本月任务</small></span>
-                      <b class="qp-count" id="planCount-month">0</b><span>›</span>
+                      <span class="qp-tail"><b class="qp-count" id="planCount-month">0</b><span>›</span></span>
                     </button>
                     <div class="sub-menu">
                       <div class="sub-title">本月计划</div>
@@ -14316,7 +14317,7 @@ FocusPilot/
                     <button class="float-action" type="button">
                       <span class="action-icon">全</span>
                       <span>全局规划<small>查看 / 新增 / 删除全部任务</small></span>
-                      <b class="qp-count" id="planCount-all">0</b><span>›</span>
+                      <span class="qp-tail"><b class="qp-count" id="planCount-all">0</b><span>›</span></span>
                     </button>
                     <div class="sub-menu">
                       <div class="sub-title">全局规划</div>
