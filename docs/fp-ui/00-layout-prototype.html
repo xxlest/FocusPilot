@@ -12318,6 +12318,10 @@ FocusPilot/
         }
         // Push to workItems
         workItems.push(newItem);
+        // 浮球快捷面板规划清单：从规划入口创建时同步加入对应清单
+        if (_newTaskContext && _newTaskContext.source === 'plan' && typeof window.fbPlanAdd === 'function') {
+          window.fbPlanAdd(_newTaskContext.scope, title, explicitStatus);
+        }
         populateStudioToolbarFilters();
         refreshStudioTaskViews();
         renderStudioWorkspaceList();
@@ -13146,10 +13150,9 @@ FocusPilot/
 .fb-root .plan-item:hover .pdel { opacity: 0.7; }
 .fb-root .plan-item .pdel:hover { opacity: 1; color: var(--red); background: rgba(239, 80, 71, 0.12); }
 .fb-root .plan-empty { padding: 10px 8px; font-size: 11px; color: var(--muted); text-align: center; }
-.fb-root .plan-add { display: flex; gap: 6px; padding: 6px 4px 2px; border-top: 1px solid var(--line); margin-top: 4px; }
-.fb-root .plan-add input { flex: 1; min-width: 0; border: 1px solid var(--line); border-radius: 6px; padding: 5px 8px; font-size: 12px; background: var(--surface); color: var(--ink); outline: none; }
-.fb-root .plan-add input:focus { border-color: rgba(20, 122, 243, 0.5); }
-.fb-root .plan-add button { border: 0; border-radius: 6px; background: rgba(20, 122, 243, 0.12); color: var(--blue); font-size: 12px; font-weight: 600; padding: 0 10px; cursor: pointer; }
+.fb-root .plan-add { padding: 6px 4px 2px; border-top: 1px solid var(--line); margin-top: 4px; }
+.fb-root .plan-newbtn { width: 100%; display: flex; align-items: center; justify-content: center; gap: 4px; padding: 7px; border: 1px dashed var(--line); border-radius: 7px; background: transparent; color: var(--blue); font-size: 12px; font-weight: 600; cursor: pointer; }
+.fb-root .plan-newbtn:hover { background: rgba(20, 122, 243, 0.08); border-color: rgba(20, 122, 243, 0.4); }
 .fb-root .qp-count { font-size: 11px; color: var(--muted); font-weight: 700; min-width: 16px; text-align: right; }
 .fb-root .bar-btn {
         height: 28px;
@@ -14282,7 +14285,7 @@ FocusPilot/
                     <div class="sub-menu">
                       <div class="sub-title">今日聚焦</div>
                       <div class="plan-list" id="planList-today"></div>
-                      <div class="plan-add"><input type="text" data-plan-add="today" placeholder="+ 新增任务，回车添加"><button type="button" data-plan-addbtn="today">添加</button></div>
+                      <div class="plan-add"><button type="button" class="plan-newbtn" onclick="openNewTaskModal({source:'plan',scope:'today'})">＋ 新建任务</button></div>
                     </div>
                   </div>
                   <div class="action-row">
@@ -14294,7 +14297,7 @@ FocusPilot/
                     <div class="sub-menu">
                       <div class="sub-title">本周计划</div>
                       <div class="plan-list" id="planList-week"></div>
-                      <div class="plan-add"><input type="text" data-plan-add="week" placeholder="+ 新增任务，回车添加"><button type="button" data-plan-addbtn="week">添加</button></div>
+                      <div class="plan-add"><button type="button" class="plan-newbtn" onclick="openNewTaskModal({source:'plan',scope:'week'})">＋ 新建任务</button></div>
                     </div>
                   </div>
                   <div class="action-row">
@@ -14306,7 +14309,7 @@ FocusPilot/
                     <div class="sub-menu">
                       <div class="sub-title">本月计划</div>
                       <div class="plan-list" id="planList-month"></div>
-                      <div class="plan-add"><input type="text" data-plan-add="month" placeholder="+ 新增任务，回车添加"><button type="button" data-plan-addbtn="month">添加</button></div>
+                      <div class="plan-add"><button type="button" class="plan-newbtn" onclick="openNewTaskModal({source:'plan',scope:'month'})">＋ 新建任务</button></div>
                     </div>
                   </div>
                   <div class="action-row">
@@ -14318,7 +14321,7 @@ FocusPilot/
                     <div class="sub-menu">
                       <div class="sub-title">全局规划</div>
                       <div class="plan-list" id="planList-all"></div>
-                      <div class="plan-add"><input type="text" data-plan-add="all" placeholder="+ 新增任务，回车添加"><button type="button" data-plan-addbtn="all">添加</button></div>
+                      <div class="plan-add"><button type="button" class="plan-newbtn" onclick="openNewTaskModal({source:'plan',scope:'all'})">＋ 新建任务</button></div>
                     </div>
                   </div>
                 </div>
@@ -15116,23 +15119,14 @@ FocusPilot/
     planData[scope].splice(+d.getAttribute('data-del-i'), 1);
     renderPlan(scope);
   });
-  function addTask(scope){
-    var input = document.querySelector('[data-plan-add="'+scope+'"]');
-    if(!input) return;
-    var v = input.value.trim();
-    if(!v) return;
-    planData[scope].push({t:v, st:'待办'});
-    input.value = '';
+  // 新建任务走母版完整弹窗（plan-newbtn → openNewTaskModal({source:'plan',scope})）。
+  // 创建提交时 createWorkItemFromModal 回调此桥接，把任务加进对应规划清单。
+  var ST_LABEL = {backlog:'待规划',todo:'待办',in_progress:'进行中',in_review:'审核中',done:'已完成',blocked:'已阻塞'};
+  window.fbPlanAdd = function(scope, title, statusKey){
+    if(!planData[scope] || !title) return;
+    planData[scope].push({t:title, st:(ST_LABEL[statusKey] || '待办')});
     renderPlan(scope);
-    input.focus();
-  }
-  fbRoot.querySelectorAll('[data-plan-add]').forEach(function(input){
-    input.addEventListener('keydown', function(e){ if(e.key === 'Enter'){ e.preventDefault(); addTask(input.getAttribute('data-plan-add')); } });
-    input.addEventListener('click', function(e){ e.stopPropagation(); });
-  });
-  fbRoot.querySelectorAll('[data-plan-addbtn]').forEach(function(b){
-    b.addEventListener('click', function(e){ e.stopPropagation(); addTask(b.getAttribute('data-plan-addbtn')); });
-  });
+  };
 })();
 </script>
 </body>
