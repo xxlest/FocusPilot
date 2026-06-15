@@ -163,6 +163,17 @@
 | [06-review-today-prototype.html](fp-ui/06-review-today-prototype.html) | Review 今日复习（专项参考） | 队列概览、逐卡复习、完成后引导内化。核心状态已合入壳层母版，专项文件保留为流程参考 |
 | [06-review-challenge-prototype.html](fp-ui/06-review-challenge-prototype.html) | Review 内化挑战（专项参考） | 费曼复述、场景应用、结果反馈。核心状态已合入壳层母版，专项文件保留为流程参考 |
 
+### 6.1 浮球/Focus Bar 任务数据：单一同源池 + 常驻自检
+
+母版 `00-layout-prototype.html` 中，浮球**规划清单**（今日/本周/本月/全局）与 **Focus Bar 各状态下拉**（未读/待规划/进行中/审核中/已完成/今日聚焦）的任务**全部从同一个 `FB_POOL` 任务池派生**，杜绝"同一任务在多处各写一份、可独立漂移"：
+
+- `FB_POOL`：`id → {标题/状态/项目/未读标记/副标题}`，是浮球域任务属性的唯一来源；所有 id 均为 `RUN_DETAILS` 已有项，点击详情统一走 `openRunDetail`。
+- `planScopes`：规划清单各 scope 仅存成员 id；**`all`（全局规划）自动 = 今日∪本周∪本月并集**，保证全局是各子集的超集（修复过去"全局 < 子集"的包含倒置）。
+- Focus Bar 下拉内容与 `bar-num` 计数均由池按状态/未读派生，**计数恒等于列表条数**。
+- **看板 `workItems` 是独立的真实任务数据，不并入本池**（轻量统一：不改动详情面板路径，浮球/bar 仍走 `openRunDetail`、看板走自身详情）。
+
+**常驻自检（P3.7）**：母版内置一段不变量自检，访问 `00-layout-prototype.html?selfcheck`（或 `#selfcheck`）时运行，断言并在页面顶部显示 PASS/FAIL 横幅（结果亦写入 `window.__SELFCHECK__`）。校验项：全局=并集(I1)、三处计数一致(I2)、今日聚焦=今日规划(I3)、展示 id 详情可开(I4)、`.float-action` 行恰好 3 列即箭头不换行(I5)、下拉属性与池一致(I6)。改动浮球/Focus Bar 数据或结构后，应带 `?selfcheck` 复跑确认全绿，避免"断言只贴当轮功能"导致回归漏网。
+
 ---
 
 ## 7. 技术架构
