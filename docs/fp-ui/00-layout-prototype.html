@@ -15048,6 +15048,7 @@ FocusPilot/
       window.openRunDetail = openRunDetail;
       window.closeRunDetail = closeRunDetail;
       window.deleteCurrentRunTask = deleteCurrentRunTask;
+      window.__RUN_DETAIL_IDS__ = Object.keys(RUN_DETAILS); // P3.7 自检：校验展示 id 详情可开
 
       fbRoot.querySelectorAll("[data-run-detail]").forEach((btn) => {
         btn.addEventListener("click", () => openRunDetail(btn.dataset.runDetail));
@@ -15117,6 +15118,57 @@ FocusPilot/
   var fbRoot = document.getElementById('fbRoot');
   if(!fbRoot) return;
 
+  function esc(s){ return String(s).replace(/[&<>"]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
+
+  /* ★ 单一任务池（P0 数据统一）：id → 属性。浮球规划清单 + Focus Bar 各下拉全部从这里派生，
+     杜绝"同一任务在多处各写一份、可独立漂移"。所有 id 均为 RUN_DETAILS 已有项，详情仍走 openRunDetail。
+     看板 workItems 是独立的真实数据，不并入本池（轻量统一，不动详情面板路径）。 */
+  var FB_POOL = {
+    'FP-104': {t:'浮球 hover 面板实现', st:'进行中', pj:'FocusPilot', unread:true, sub:'Codex · FocusPilot · 62%'},
+    'FP-112': {t:'PRD 同步检查',       st:'待办',   pj:'FocusPilot', unread:true},
+    'FP-097': {t:'看板 Workspace 行',  st:'审核中', pj:'FocusPilot', unread:true},
+    'FP-088': {t:'Studio 状态投影',    st:'进行中', pj:'PilotOne',   unread:true, sub:'Claude Code · PilotOne · 31%'},
+    'FP-130': {t:'状态条实现计划',     st:'待规划', pj:'FocusPilot'},
+    'KB-031': {t:'资料卡片归档',       st:'审核中', pj:'VaultOne',   unread:true},
+    'FP-085': {t:'快捷面板差分刷新',   st:'已完成', pj:'FocusPilot'},
+    'FP-090': {t:'主题色槽统一',       st:'已完成', pj:'FocusPilot'},
+    'KB-041': {t:'Review 卡片批处理',  st:'待办',   pj:'VaultOne'},
+    'OPS-018':{t:'API 授权回调',       st:'已阻塞', pj:'PilotOne',   unread:true}
+  };
+  var POOL_ORDER = ['FP-104','FP-112','FP-097','FP-088','FP-130','KB-031','FP-085','FP-090','KB-041','OPS-018'];
+  // 规划清单 scope 成员（仅存 id；属性从池取）。all 自动=今日∪本周∪本月并集 → 修复"全局 < 子集"的包含倒置。
+  var planScopes = {
+    today: ['FP-104','FP-112','FP-097','FP-088','FP-130'],
+    week:  ['FP-130','KB-031','FP-085','OPS-018'],
+    month: ['FP-090','FP-088','KB-041']
+  };
+  planScopes.all = (function(){ var seen={}, out=[]; ['today','week','month'].forEach(function(s){ planScopes[s].forEach(function(id){ if(!seen[id]){ seen[id]=1; out.push(id); } }); }); return out; })();
+  var UNREAD_ORDER = ['FP-097','KB-031','OPS-018','FP-088','FP-104','FP-112']; // 未读=收件箱，固定展示顺序
+
+  // 从池派生 Focus Bar 各下拉内容 + bar-num 计数（统一来源：杜绝下拉与规划清单漂移、计数与列表条数不符）
+  function fbMiniHtml(id){
+    var p = FB_POOL[id]; if(!p) return '';
+    var sub = p.sub || (p.pj + ' · ' + p.st);
+    // 用 inline onclick（与规划清单 plan-item 一致）：派生节点经 innerHTML 重建，不能依赖加载时绑定的委托监听
+    return '<button class="mini-task" type="button" data-run-detail="'+id+'" data-st="'+esc(p.st)+'" data-pj="'+esc(p.pj)+'" onclick="openRunDetail(\''+id+'\')">'
+      + '<span>'+esc(p.t)+'<small>'+esc(sub)+'</small></span><small>详情</small></button>';
+  }
+  function fbFillBar(tone, ids){
+    var btn = fbRoot.querySelector('.focus-bar .bar-btn[data-tone="'+tone+'"]');
+    if(!btn) return;
+    var grp = btn.closest('.bar-group'), list = grp && grp.querySelector('.bar-list');
+    if(list) list.innerHTML = ids.map(fbMiniHtml).join('');
+    var num = btn.querySelector('.bar-num');
+    if(num) num.textContent = ids.length;
+  }
+  var byStatus = function(st){ return POOL_ORDER.filter(function(id){ return FB_POOL[id].st === st; }); };
+  fbFillBar('unread',  UNREAD_ORDER);
+  fbFillBar('plan',    POOL_ORDER.filter(function(id){ return FB_POOL[id].st==='待规划' || FB_POOL[id].st==='待办'; }));
+  fbFillBar('running', byStatus('进行中'));
+  fbFillBar('review',  byStatus('审核中'));
+  fbFillBar('done',    byStatus('已完成'));
+  fbFillBar('focus',   planScopes.today);
+
   /* ② Focus Bar 下拉分组：按状态 / 按项目 / 都不选（默认不分组，再点取消）
      通用化——对每个带 .ur-grp + .bar-list 的下拉（未读/待规划/进行中/审核中/已完成/今日聚焦）独立生效 */
   var BAR_ST_ORDER = ['待规划','待办','进行中','审核中','已完成','已阻塞'];
@@ -15174,16 +15226,14 @@ FocusPilot/
   /* ④ 规划清单（今日聚焦/本周计划/本月计划/全局规划）+ 新增/删除 */
   // 规划清单任务带真实 id（seed 用 RUN_DETAILS 已有 id，点开是富详情；新建任务用其 workItem id，
   // 经 renderRunDetail 的 fallback 也能开详情）。点任务 → openRunDetail(id) 进入「对话详情」做后续操作。
-  var planData = {
-    today: [{id:'FP-104',t:'浮球 hover 面板实现',st:'进行中',pj:'FocusPilot'},{id:'FP-112',t:'PRD 同步检查',st:'待办',pj:'FocusPilot'},{id:'FP-097',t:'看板 Workspace 行',st:'审核中',pj:'FocusPilot'},{id:'FP-088',t:'Studio 状态投影',st:'进行中',pj:'PilotOne'},{id:'FP-130',t:'状态条实现计划',st:'待规划',pj:'FocusPilot'}],
-    week:  [{id:'FP-130',t:'状态条实现计划',st:'待规划',pj:'FocusPilot'},{id:'KB-031',t:'资料卡片归档',st:'审核中',pj:'VaultOne'},{id:'FP-085',t:'快捷面板差分刷新',st:'已完成',pj:'FocusPilot'},{id:'OPS-018',t:'API 授权回调',st:'已阻塞',pj:'PilotOne'}],
-    month: [{id:'FP-090',t:'主题色槽统一',st:'已完成',pj:'FocusPilot'},{id:'FP-088',t:'Studio 状态投影',st:'进行中',pj:'PilotOne'},{id:'KB-041',t:'Review 卡片批处理',st:'待办',pj:'VaultOne'}],
-    all:   [{id:'FP-130',t:'状态条实现计划',st:'待规划',pj:'FocusPilot'},{id:'KB-041',t:'Review 卡片批处理',st:'待办',pj:'VaultOne'},{id:'OPS-018',t:'API 授权回调',st:'已阻塞',pj:'PilotOne'}]
-  };
+  // 规划清单从同一任务池派生（仅成员 id 来自 planScopes，属性来自 FB_POOL）→ 与 Focus Bar 同源
+  var planData = {};
+  ['today','week','month','all'].forEach(function(s){
+    planData[s] = planScopes[s].map(function(id){ var p = FB_POOL[id]; return {id:id, t:p.t, st:p.st, pj:p.pj}; });
+  });
   var ST_DOT = {待规划:'#999ca2',待办:'#74777d',进行中:'#147af3',审核中:'#8b5cf6',已完成:'#31c75a',已阻塞:'#f97316'};
   var planGroup = {today:null, week:null, month:null, all:null}; // null=不分组 / 'status' / 'project'
   var PLAN_ST_ORDER = ['待规划','待办','进行中','审核中','已完成','已阻塞'];
-  function esc(s){ return String(s).replace(/[&<>"]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
   function planItemHtml(it){
     return '<button class="plan-item" type="button" onclick="openRunDetail(\''+it.id+'\')"><span class="pdot" style="background:'+(ST_DOT[it.st]||'#999ca2')+'"></span>'
       + '<span class="ptitle">'+esc(it.t)+'</span><span class="pst">'+esc(it.st)+'</span></button>';
@@ -15230,6 +15280,72 @@ FocusPilot/
       if(planData[scope].length !== before) renderPlan(scope);
     });
   };
+  // P3.7 自检数据源（仅供 ?selfcheck 不变量校验读取）
+  window.__FB_DATA__ = { pool: FB_POOL, planScopes: planScopes, unreadOrder: UNREAD_ORDER };
+})();
+</script>
+<script>
+/* P3.7 常驻不变量自检：访问 00-layout-prototype.html?selfcheck（或 #selfcheck）时运行，
+   断言"三处数据同源/计数一致/详情可开/箭头不换行"等回归点，输出 window.__SELFCHECK__ + 顶部横幅。
+   平时不加载，零成本；手测/回归带 ?selfcheck 触发，避免"断言只贴当轮功能"导致回归漏网。 */
+(function(){
+  function run(){
+    if((location.search + location.hash).indexOf('selfcheck') < 0) return;
+    var D = window.__FB_DATA__ || {}, POOL = D.pool || {}, SC = D.planScopes || {};
+    var RID = window.__RUN_DETAIL_IDS__ || [];
+    var res = [];
+    function ok(name, cond, detail){ res.push({name:name, pass:!!cond, detail:detail||''}); }
+    function setEq(a, b){ if(a.length !== b.length) return false; var s={}; a.forEach(function(x){ s[x]=1; }); return b.every(function(x){ return s[x]; }); }
+
+    // I1 全局规划 = 今日∪本周∪本月 并集（修复包含倒置）
+    var uni = {}; ['today','week','month'].forEach(function(s){ (SC[s]||[]).forEach(function(id){ uni[id]=1; }); });
+    ok('I1 全局=今日∪本周∪本月并集', setEq(Object.keys(uni), SC.all || []), '并集'+Object.keys(uni).length+' / all '+((SC.all||[]).length));
+
+    // I2 Focus Bar 各下拉：DOM 条数 = bar-num = 池派生数（同源 + 计数一致）
+    var spec = { unread:function(p){return p.unread;}, plan:function(p){return p.st==='待规划'||p.st==='待办';},
+      running:function(p){return p.st==='进行中';}, review:function(p){return p.st==='审核中';}, done:function(p){return p.st==='已完成';} };
+    Object.keys(spec).forEach(function(tone){
+      var btn = document.querySelector('.focus-bar .bar-btn[data-tone="'+tone+'"]');
+      if(!btn){ ok('I2 '+tone, false, '下拉缺失'); return; }
+      var dom = btn.closest('.bar-group').querySelectorAll('.bar-list .mini-task').length;
+      var num = parseInt((btn.querySelector('.bar-num')||{}).textContent, 10);
+      var pool = Object.keys(POOL).filter(function(id){ return spec[tone](POOL[id]); }).length;
+      ok('I2 '+tone+' 计数一致', dom===num && dom===pool, 'dom '+dom+' / num '+num+' / pool '+pool);
+    });
+    var fb = document.querySelector('.focus-bar .bar-btn[data-tone="focus"]');
+    if(fb){
+      var fdom = fb.closest('.bar-group').querySelectorAll('.bar-list .mini-task').length;
+      var fnum = parseInt((fb.querySelector('.bar-num')||{}).textContent, 10);
+      ok('I2 focus 计数一致', fdom===fnum && fdom===((SC.today||[]).length), 'dom '+fdom+' / num '+fnum+' / today '+((SC.today||[]).length));
+      var fids = [].map.call(fb.closest('.bar-group').querySelectorAll('.bar-list .mini-task'), function(b){ return b.getAttribute('data-run-detail'); });
+      ok('I3 今日聚焦=今日规划', setEq(fids, SC.today || []), fids.join(','));
+    }
+
+    // I4 所有展示 id 详情可开（∈ RUN_DETAILS）
+    var allIds = [].map.call(document.querySelectorAll('#fbRoot [data-run-detail]'), function(b){ return b.getAttribute('data-run-detail'); });
+    var miss = allIds.filter(function(id){ return RID.indexOf(id) < 0; });
+    ok('I4 详情可开(∈RUN_DETAILS)', miss.length===0, miss.length ? '缺失:'+miss.join(',') : '共'+allIds.length+'处');
+
+    // I5 .float-action 行恰好 3 个子元素（箭头不换行回归）
+    var bad5 = [].filter.call(document.querySelectorAll('#fbRoot .float-action'), function(el){ return el.children.length !== 3; });
+    ok('I5 .float-action=3子元素', bad5.length===0, bad5.length ? bad5.length+'行异常' : '全部3列');
+
+    // I6 mini-task 的 data-st/data-pj 与池一致（多源一致）
+    var bad6 = [].filter.call(document.querySelectorAll('.focus-bar .mini-task[data-run-detail]'), function(b){
+      var id = b.getAttribute('data-run-detail'), p = POOL[id]; if(!p) return false;
+      return b.getAttribute('data-st') !== p.st || b.getAttribute('data-pj') !== p.pj;
+    });
+    ok('I6 下拉属性与池一致', bad6.length===0, bad6.length ? bad6.length+'处不符' : '一致');
+
+    var pass = res.every(function(r){ return r.pass; });
+    window.__SELFCHECK__ = { pass: pass, results: res };
+    res.forEach(function(r){ (r.pass ? console.log : console.warn)((r.pass?'✓':'✗')+' '+r.name+(r.detail?'  ['+r.detail+']':'')); });
+    var bar = document.createElement('div');
+    bar.style.cssText = 'position:fixed;left:0;right:0;top:0;z-index:99999;padding:6px 12px;font:600 12px/1.4 -apple-system,sans-serif;color:#fff;text-align:center;background:'+(pass?'#16a34a':'#dc2626');
+    bar.textContent = (pass ? '✓ SELFCHECK PASS' : '✗ SELFCHECK FAIL')+' · '+res.filter(function(r){ return r.pass; }).length+'/'+res.length+' 通过';
+    document.body.appendChild(bar);
+  }
+  if(document.readyState === 'complete') run(); else window.addEventListener('load', run);
 })();
 </script>
 </body>
