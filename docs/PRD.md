@@ -153,7 +153,7 @@
 
 任务的细化与执行都通过统一的**对话面板**进行，用户不需要感知 Skill、Agent 等技术概念——输入自然语言（如"帮我拆分这个 Epic"、"把这个 Task 交给代码工程师做"），Engine 理解意图、调用合适的能力或调度 Crew 执行并实时反馈。
 
-全局右下角提供快捷对话助手，作为同一对话面板的轻量入口（Home 不再提供独立对话入口，自由对话统一由快捷助手承载）。它不新增独立历史：快捷助手对话和 Studio 项目视图 Session 共享 `StudioSession`；在 Studio 中优先使用当前 Workspace，在其他页面发起的临时对话归属 `tmp-quick-chat` 临时 Workspace。快捷面板标题区下拉只用于选择已有历史，历史按 Workspace 分组并显示 Workspace 项目符号；`+` 新建时进入 `新对话` 草稿态，发送首条消息后自动从内容提取标题并锁定所选 Agent。
+全局右下角提供快捷对话助手，作为同一对话面板的轻量入口（Home 不再提供独立对话入口，自由对话统一由快捷助手承载）。它不新增独立历史：快捷助手对话和 Studio 项目视图 Session 共享 `StudioSession`；在 Studio 中优先使用当前 Workspace，在其他页面发起的临时对话归属 `tmp-quick-chat` 临时项目。快捷面板标题区下拉只用于选择已有历史，历史按 Workspace 分组并显示 Workspace 项目符号；`+` 新建时进入 `新对话` 草稿态，发送首条消息后自动从内容提取标题并锁定所选 Agent。
 
 ### 3.2 四种项目模式
 
@@ -224,11 +224,17 @@ Task 的 frontmatter 通过 `status` + `scheduled_date` / `due_date` 形成**双
 
 | 入口 | 交互 | 归属项目 |
 |------|------|---------|
-| Dashboard / Studio 看板状态列标题栏 `+` | 输入内容 → 选择 Workspace（临时 / 本地项目 / Git 远程）→ 确认初始状态（从某列 `+` 创建时自动预选该列状态，否则默认待规划） | Workspace 必选，Project 可选 |
+| Dashboard / Studio 看板状态列标题栏 `+` | 输入内容 → 选择 Workspace（临时项目 / 本地项目 / Git 远程）→ 确认初始状态（从某列 `+` 创建时自动预选该列状态，否则默认待规划） | Workspace 必选，Project 可选 |
 | Studio 项目视图 / Session 右面板创建 | 当前 Workspace 已确定，创建弹窗灰色只读展示当前 Workspace | 自动继承当前 Workspace |
 | 项目树内右键创建 | 在某个项目/Epic/Phase 下创建 | 自动继承本地 Project Workspace |
 
-无项目上下文的快捷对话不创建 Task，默认创建到 `tmp-quick-chat` 临时 Workspace。后续如从对话中派生任务，再按 Task 创建规则选择或继承 Workspace。
+无项目上下文的快捷对话不创建 Task，默认创建到 `tmp-quick-chat` 临时项目。后续如从对话中派生任务，再按 Task 创建规则选择或继承 Workspace。
+
+**临时项目（原「临时 Workspace」）规则**：
+
+- **存储路径**：临时项目与本地项目共用同一项目数据根目录 `{projects_dir}`，统一收纳在其下的临时项目总根目录 `_temp/` 中，即 `{projects_dir}/_temp/<临时项目名>/`，内部结构与普通项目一致（`_project.md` 等），仅以 frontmatter 标记 `type: temp`。
+- **命名**：临时项目名与其对话 Session 名保持一致。新建任务弹窗中提供可选的「项目名」输入；**留空时以该临时项目下首个对话 Session 名回填**为项目名。
+- **统一入口**：所有「新建任务」入口（悬浮球快捷面板规划清单、Dashboard / Studio 看板·泳道·列表各视图的就地 `+`）均复用同一新建任务弹窗，临时项目的命名与落盘规则在此统一。
 
 #### Studio 任务视图
 
@@ -752,6 +758,8 @@ agent_runs: 4
 │       │       └── _us.md
 │       └── ...
 ├── _logs/                       # 自动日志（跨项目）
+├── _temp/                       # 临时项目总根目录（所有临时项目落此，结构同普通项目，frontmatter 标记 type: temp）
+│   └── <临时项目名>/             # 名称与对话 Session 名一致；留空时以首个 Session 名回填
 └── tech/
     └── ...
 ```

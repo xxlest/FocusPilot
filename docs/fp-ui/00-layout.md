@@ -98,4 +98,4 @@ Studio 独有区域：右侧栏（⌘⇧B 切换，多 Tab 文件浏览）、终
 - Agent 选择器：仅 `新对话` 草稿态可选，发送第一条消息后自动提取标题并锁定 Agent
 - 展开按钮：保留原展开箭头符号，关闭快捷面板并切到 Home 的对话视图，显示同一条 Session
 
-所有快捷对话、Home 对话和 Studio 项目视图对话都复用同一份 `StudioSession` 数据。无项目上下文的临时对话统一归属到 `tmp-quick-chat`（快捷对话临时项目），在 Studio 项目视图的临时 Workspace 中可见。
+所有快捷对话、Home 对话和 Studio 项目视图对话都复用同一份 `StudioSession` 数据。无项目上下文的临时对话统一归属到 `tmp-quick-chat`（快捷对话临时项目），在 Studio 项目视图的临时项目 中可见。
