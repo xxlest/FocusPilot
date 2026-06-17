@@ -14300,14 +14300,14 @@ FocusPilot/
                 <div class="float-actions">
                   <div class="action-row">
                     <button class="float-action" type="button" id="pinBarBtn">
-                      <span class="action-icon">顶</span>
-                      <span>实时状态<small id="pinBarText">打开 Focus Bar，显示所有项目实时状态</small></span>
+                      <span class="action-icon"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2.6" width="12" height="2.8" rx="1" fill="currentColor" stroke="none"/><rect x="2" y="7.4" width="12" height="6.2" rx="1.4"/></svg></span>
+                      <span>实时状态</span>
                       <span class="fb-pin-toggle" id="pinBarToggle" aria-hidden="true"></span>
                     </button>
                   </div>
                   <div class="action-row">
                     <button class="float-action" type="button">
-                      <span class="action-icon">今</span>
+                      <span class="action-icon"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="5.3"/><circle cx="8" cy="8" r="1.7" fill="currentColor" stroke="none"/></svg></span>
                       <span>今日聚焦<small>查看 / 新增 / 删除今日任务</small></span>
                       <span class="qp-tail"><b class="qp-count" id="planCount-today">0</b><span>›</span></span>
                     </button>
@@ -14319,7 +14319,7 @@ FocusPilot/
                   </div>
                   <div class="action-row">
                     <button class="float-action" type="button">
-                      <span class="action-icon">周</span>
+                      <span class="action-icon"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="2" y="3" width="12" height="11" rx="1.6"/><path d="M2 6h12"/><path d="M5 1.6v2.6M11 1.6v2.6"/><rect x="3.4" y="8" width="9.2" height="2.4" rx="0.7" fill="currentColor" stroke="none"/></svg></span>
                       <span>本周计划<small>查看 / 新增 / 删除本周任务</small></span>
                       <span class="qp-tail"><b class="qp-count" id="planCount-week">0</b><span>›</span></span>
                     </button>
@@ -14331,7 +14331,7 @@ FocusPilot/
                   </div>
                   <div class="action-row">
                     <button class="float-action" type="button">
-                      <span class="action-icon">月</span>
+                      <span class="action-icon"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="2" y="3" width="12" height="11" rx="1.6"/><path d="M2 6h12"/><path d="M5 1.6v2.6M11 1.6v2.6"/><g fill="currentColor" stroke="none"><circle cx="5" cy="8.6" r=".7"/><circle cx="8" cy="8.6" r=".7"/><circle cx="11" cy="8.6" r=".7"/><circle cx="5" cy="11.2" r=".7"/><circle cx="8" cy="11.2" r=".7"/><circle cx="11" cy="11.2" r=".7"/></g></svg></span>
                       <span>本月计划<small>查看 / 新增 / 删除本月任务</small></span>
                       <span class="qp-tail"><b class="qp-count" id="planCount-month">0</b><span>›</span></span>
                     </button>
@@ -14343,7 +14343,7 @@ FocusPilot/
                   </div>
                   <div class="action-row">
                     <button class="float-action" type="button">
-                      <span class="action-icon">全</span>
+                      <span class="action-icon"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2.2" y="2.2" width="4.6" height="4.6" rx="1.1"/><rect x="9.2" y="2.2" width="4.6" height="4.6" rx="1.1"/><rect x="2.2" y="9.2" width="4.6" height="4.6" rx="1.1"/><rect x="9.2" y="9.2" width="4.6" height="4.6" rx="1.1"/></svg></span>
                       <span>全局规划<small>查看 / 新增 / 删除全部任务</small></span>
                       <span class="qp-tail"><b class="qp-count" id="planCount-all">0</b><span>›</span></span>
                     </button>
@@ -14510,7 +14510,6 @@ FocusPilot/
       const floatingZone = document.getElementById("floatingZone");
       const floatStack = fbRoot.querySelector(".float-stack");
       const floatPanel = fbRoot.querySelector(".float-panel");
-      const pinBarText = document.getElementById("pinBarText");
       const barTime = document.getElementById("barTime");
       const barTimerAction = document.getElementById("barTimerAction");
       const chatWindow = document.getElementById("chatWindow");
@@ -14574,9 +14573,6 @@ FocusPilot/
           barTime.textContent = "35:00";
           barTimerAction.textContent = "工作中";
         }
-        pinBarText.textContent = body.classList.contains("bar-pinned")
-          ? "关闭 Focus Bar，回到常规视图"
-          : "打开 Focus Bar，显示所有项目实时状态";
         fbRoot.querySelectorAll("[data-demo-mode]").forEach((btn) => btn.classList.toggle("active", btn.dataset.demoMode === mode));
       }
 
@@ -14586,9 +14582,6 @@ FocusPilot/
 
       document.getElementById("pinBarBtn").addEventListener("click", () => {
         body.classList.toggle("bar-pinned");
-        pinBarText.textContent = body.classList.contains("bar-pinned")
-          ? "关闭 Focus Bar，回到常规视图"
-          : "打开 Focus Bar，显示所有项目实时状态";
       });
       (function(){
         var pinToggle = document.getElementById("pinBarToggle");
@@ -14605,7 +14598,6 @@ FocusPilot/
         focusBar.classList.remove("resting");
         barTimerAction.textContent = "工作中";
         barTime.textContent = "35:00";
-        pinBarText.textContent = "打开 Focus Bar，显示所有项目实时状态";
         fbRoot.querySelectorAll("[data-demo-mode]").forEach((b) => b.classList.remove("active"));
       });
 
