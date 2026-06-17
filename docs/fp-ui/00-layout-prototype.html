@@ -4388,8 +4388,8 @@
                   <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--dim);margin-bottom:8px">Workspace</div>
                   <label id="ws-temp-label" style="display:flex;align-items:center;gap:8px;font-size:11px;color:var(--text);cursor:pointer;padding:5px 0;border-radius:4px" onclick="selectWorkspace('temp')">
                     <input type="radio" name="fp-ws" value="temp" checked style="accent-color:var(--accent)">
-                    <span>📦 临时 Workspace</span>
-                    <span style="font-size:10px;color:var(--dim);margin-left:auto">自动创建，适合快速任务</span>
+                    <span>📦 临时项目</span>
+                    <input id="ws-temp-name" type="text" placeholder="项目名 · 留空用首个对话名" title="临时项目会创建在本地项目根目录的 _temp/ 下；留空则以首个对话 session 名命名" style="margin-left:auto;width:200px;background:var(--surface);border:1px solid var(--line-soft);border-radius:var(--radius);padding:3px 6px;color:var(--text);font-size:10px;font-family:var(--sans);outline:none" onclick="event.stopPropagation();selectWorkspace('temp')">
                   </label>
                   <label id="ws-local-label" style="display:flex;align-items:center;gap:8px;font-size:11px;color:var(--text);cursor:pointer;padding:5px 0;border-radius:4px" onclick="selectWorkspace('local')">
                     <input type="radio" name="fp-ws" value="local" style="accent-color:var(--accent)">
@@ -7137,12 +7137,14 @@ FocusPilot/
         return workItems.filter(function(item) { return (item.projectId || deriveWorkspaceIdForItem(item)) === workspaceId; });
       }
 
-      function createTempWorkspaceId() {
+      function createTempWorkspaceId(customName) {
         var id;
         do {
           id = 'tmp-' + String(DEMO_TODAY.getFullYear()) + String(DEMO_TODAY.getMonth() + 1).padStart(2, '0') + String(DEMO_TODAY.getDate()).padStart(2, '0') + '-' + String(tempWorkspaceCounter++).padStart(2, '0');
         } while (workspaceRegistry[id]);
-        registerWorkspace(id, 'temporary', { name: '临时项目 ' + id });
+        // 填了名字就用，留空则用自动名占位（真实行为：留空时以首个对话 session 名命名）
+        var nm = (customName && customName.trim()) ? customName.trim() : '临时项目 ' + id;
+        registerWorkspace(id, 'temporary', { name: nm });
         return id;
       }
 
@@ -9339,7 +9341,7 @@ FocusPilot/
             // Workspace type
             var wsEl = document.querySelector('#fpDetailPanel .fp-detail-wstype');
             if (wsEl) {
-              var wsLabels = { temporary: '📦 临时 Workspace', local_project: '📁 本地项目', git_project: '🔗 Git 项目' };
+              var wsLabels = { temporary: '📦 临时项目', local_project: '📁 本地项目', git_project: '🔗 Git 项目' };
               wsEl.textContent = wsLabels[item.workspaceType] || item.workspaceType;
             }
             // Project name
@@ -10104,7 +10106,7 @@ FocusPilot/
           wsType: info.icon + ' ' + info.label,
           path: meta.path,
           branch: meta.branch || '—',
-          commit: meta.type === 'temporary' ? '临时 Workspace · 未提交' : '—',
+          commit: meta.type === 'temporary' ? '临时项目 · 未提交' : '—',
           changes: getItemsForWorkspace(projectId).length + ' 个任务',
           automations: meta.type === 'temporary' ? '无自动化' : '空闲'
         };
@@ -12260,7 +12262,8 @@ FocusPilot/
         if (isProjectScopedCreate) {
           projectId = _newTaskContext.projectId;
         } else if (wsType === 'temp') {
-          projectId = createTempWorkspaceId();
+          var tempNameEl = document.getElementById('ws-temp-name');
+          projectId = createTempWorkspaceId(tempNameEl ? tempNameEl.value : '');
         } else if (wsType === 'git') {
           var gitUrl = document.getElementById('ws-git-url');
           projectId = createGitWorkspaceId(gitUrl ? gitUrl.value : '');

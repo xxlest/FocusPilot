@@ -385,7 +385,7 @@ worktree 化后，**WorkspaceWriteLease 不再是 app 级共享写锁**——git
 
 "创建任务分支"：自动 `git checkout -b task/{task_id}`。
 
-### 4.7 临时 Workspace 生命周期
+### 4.7 临时项目 生命周期
 
 ```
 物化: 首次写入附件、启动执行或打开目录时创建真实目录（延迟物化）
@@ -521,7 +521,7 @@ WorkItem (Task)
 - **本地项目**：目录与 Project 项目保持一致
 - **Git 远程项目**：远程 repo clone 到默认 Workspace 根目录下，以 Workspace ID 执行
 
-`tmp-quick-chat` 是 V1 固定保留的快捷对话临时 Workspace。Home 自由对话和非 Studio 页面发起的右下角快捷对话默认归属到这里；它在项目视图中按临时项目展示，不单独新增一级入口。
+`tmp-quick-chat` 是 V1 固定保留的快捷对话临时项目。Home 自由对话和非 Studio 页面发起的右下角快捷对话默认归属到这里；它在项目视图中按临时项目展示，不单独新增一级入口。
 
 每个 Workspace 展开后显示：
 - **📋 工作项**：该 `workspace_id` 下的 WorkItem 数量
@@ -573,7 +573,7 @@ WorkItem (Task)
 
 ### 7.2 场景 B：选中某个 Workspace 项目（未进入 Session）
 
-项目视图把三类 Workspace 统一当作可进入的项目实体：临时 Workspace、本地项目 Workspace、Git 远程 Workspace。主区域显示 Workspace 概览 + Session 历史列表，右侧 Inspector 显示该 Workspace 下的任务投影。
+项目视图把三类 Workspace 统一当作可进入的项目实体：临时项目、本地项目 Workspace、Git 远程 Workspace。主区域显示 Workspace 概览 + Session 历史列表，右侧 Inspector 显示该 Workspace 下的任务投影。
 
 ```
 ┌─ 主区域 ──────────────────────────────┬─ 右面板（可显隐）──────┐
@@ -734,7 +734,7 @@ WorkItem (Task)
 │  描述: [                                        ]   │
 │                                                     │
 │  ── Workspace ────────────────────────────────────  │
-│  (●) 临时 Workspace  （自动创建，适合快速任务）        │
+│  (●) 临时项目  （项目名 · 留空用首个对话名）        │
 │  ( ) 本地项目        [选择项目... ▾]                  │
 │  ( ) Git 项目        [git@github.com:xxx/xxx.git  ]  │
 │                                                     │
