@@ -1552,6 +1552,14 @@
       .task:hover {
         border-color: var(--accent-line);
       }
+      /* 执行状态「执行中」呼吸光晕（青）+ 左色条，整卡一眼可辨正在跑 */
+      @keyframes execRunningGlow {
+        0%, 100% { box-shadow: inset 4px 0 0 #14b8a6, 0 0 0 0 rgba(20,184,166,0); }
+        50%      { box-shadow: inset 4px 0 0 #14b8a6, 0 0 0 3px rgba(20,184,166,.20); }
+      }
+      .task.exec-running-glow {
+        animation: execRunningGlow 1.6s ease-in-out infinite;
+      }
       .task-title {
         font-weight: 700;
         margin-bottom: 8px;
@@ -4359,6 +4367,7 @@
               </div>
               <div id="fpDetailAttrs" style="width:200px;border-left:1px solid var(--line-soft);padding:14px;overflow-y:auto;font-size:11px;position:relative">
                 <div style="margin-bottom:12px"><div style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);margin-bottom:3px">状态</div><span class="pill blue fp-detail-status fp-editable" data-edit-field="status">in_progress</span></div>
+                <div class="fp-detail-execstate-row" style="margin-bottom:12px;display:none"><div style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);margin-bottom:3px">执行</div><span class="pill fp-detail-execstate" style="border:none;font-weight:700">—</span></div>
                 <div style="margin-bottom:12px"><div style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);margin-bottom:3px">优先级</div><span class="pill fp-detail-priority fp-editable" data-edit-field="priority" style="background:rgba(248,113,113,.15);color:var(--red)">P0</span></div>
                 <div style="margin-bottom:12px"><div style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);margin-bottom:3px">安排</div><span class="fp-detail-schedule fp-editable" data-edit-field="schedule">本周</span></div>
                 <div style="margin-bottom:12px"><div style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);margin-bottom:3px">标签</div><span class="fp-detail-tags" id="fp-detail-tags"></span></div>
@@ -6922,10 +6931,10 @@ FocusPilot/
       /* ═══ Unified Work Items Data Source ═══ */
       var workItems = [
         { id: 'FP-001', title: '数据模型设计', status: 'done', priority: 'p0', projectId: 'FocusPilot', workspaceType: 'local_project', executionMode: 'auto', schedule: '', month: '', goal: '4月/FP 0.0.1', agent: '代码工程师', date: '04-15', tags: ['架构','backend'] },
-        { id: 'FP-002', title: '看板状态模型实现', status: 'in_progress', priority: 'p0', projectId: 'FocusPilot', workspaceType: 'local_project', executionMode: 'auto', schedule: 'week', month: '5', goal: '5月/FP 0.0.1', agent: '代码工程师', agentStatus: 'Agent 执行中', date: '05-25', tags: ['backend','状态管理'] },
-        { id: 'FP-003', title: 'Agent Pull 执行管道', status: 'todo', priority: 'p1', projectId: 'FocusPilot', workspaceType: 'local_project', executionMode: 'auto', run_substate: 'waiting_local_directory', schedule: 'week', month: '5', goal: '5月/AI', agent: '代码工程师', date: '05-28' },
+        { id: 'FP-002', title: '看板状态模型实现', status: 'in_progress', priority: 'p0', projectId: 'FocusPilot', workspaceType: 'local_project', executionMode: 'auto', run_state: 'running', schedule: 'week', month: '5', goal: '5月/FP 0.0.1', agent: '代码工程师', agentStatus: 'Agent 执行中', date: '05-25', tags: ['backend','状态管理'] },
+        { id: 'FP-003', title: 'Agent Pull 执行管道', status: 'todo', priority: 'p1', projectId: 'FocusPilot', workspaceType: 'local_project', executionMode: 'auto', run_state: 'queued', schedule: 'week', month: '5', goal: '5月/AI', agent: '代码工程师', date: '05-28' },
         { id: 'FP-004', title: 'Terminal 手动执行模式', status: 'todo', priority: 'p1', projectId: 'FocusPilot', workspaceType: 'local_project', executionMode: 'manual', schedule: 'week', month: '5', goal: '5月/AI', agent: '', date: '05-29' },
-        { id: 'FP-005', title: '规划引擎接口设计', status: 'in_review', priority: 'p0', projectId: 'git-focuspilot-ai', workspaceType: 'git_project', executionMode: 'auto', schedule: 'week', month: '5', goal: '5月/AI', agent: '代码工程师', decision: true, date: '05-26' },
+        { id: 'FP-005', title: '规划引擎接口设计', status: 'in_review', priority: 'p0', projectId: 'git-focuspilot-ai', workspaceType: 'git_project', executionMode: 'auto', run_state: 'completed', schedule: 'week', month: '5', goal: '5月/AI', agent: '代码工程师', decision: true, date: '05-26' },
         { id: 'FP-006', title: '主题系统适配', status: 'backlog', priority: 'p2', projectId: 'FocusPilot', workspaceType: 'local_project', executionMode: 'auto', schedule: 'month', month: '6', goal: '6月/FP 0.0.1', agent: '代码工程师' },
         { id: 'FP-007', title: 'PRD 文档整合', status: 'done', priority: 'p1', projectId: 'FocusPilot', workspaceType: 'local_project', executionMode: 'manual', schedule: '', month: '', goal: '4月/FP 0.0.1', agent: '', date: '04-16' },
         { id: 'FP-008', title: '配置迁移脚本', status: 'blocked', priority: 'p1', projectId: 'FocusPilot', workspaceType: 'local_project', executionMode: 'auto', schedule: '', month: '', goal: '', agent: '代码工程师' },
@@ -6933,7 +6942,7 @@ FocusPilot/
         { id: 'FP-010', title: '整理本周会议记录', status: 'todo', priority: 'p2', projectId: 'tmp-20260527-01', workspaceType: 'temporary', executionMode: 'manual', schedule: 'today', month: '', goal: '', agent: '', date: '05-27' },
         { id: 'FP-011', title: '研究 Multica 执行模型', status: 'in_progress', priority: 'p1', projectId: 'tmp-20260527-01', workspaceType: 'temporary', executionMode: 'manual', schedule: 'today', month: '', goal: '', agent: '', date: '05-27' },
         { id: 'PO-001', title: '首页重构', status: 'todo', priority: 'p1', projectId: 'PilotOne', workspaceType: 'local_project', executionMode: 'none', schedule: 'week', month: '', goal: '', agent: '' },
-        { id: 'PO-002', title: 'API 文档更新', status: 'in_progress', priority: 'p1', projectId: 'tmp-pilotone-api', workspaceType: 'temporary', executionMode: 'dialog', schedule: 'today', month: '', goal: '', agent: '代码工程师' },
+        { id: 'PO-002', title: 'API 文档更新', status: 'in_progress', priority: 'p1', projectId: 'tmp-pilotone-api', workspaceType: 'temporary', executionMode: 'dialog', run_state: 'timeout', schedule: 'today', month: '', goal: '', agent: '代码工程师' },
       ];
 
       // Agent 执行产物：任务级变更集（diff + 文件预览），供看板卡片角标与任务详情「变更」视图复审
@@ -7169,6 +7178,26 @@ FocusPilot/
         { status: 'done', label: '已完成', color: '#31c75a' },
         { status: 'blocked', label: '已阻塞', color: '#f97316' }
       ];
+
+      // 执行状态 run_state（独立于生命周期 status 的第二条轴；引擎自动驱动）。
+      // 颜色刻意避开生命周期的蓝/紫/绿/橙；整卡 tint + 左色条，执行中额外呼吸光晕。
+      var EXEC_STATE_MODEL = {
+        idle:         { label: '未执行',  color: '#b5b8bd', icon: '○',  tint: '' },
+        queued:       { label: '排队',    color: '#e6a23c', icon: '🕐', tint: 'rgba(230,162,60,.12)' },
+        running:      { label: '执行中',  color: '#14b8a6', icon: '⚡', tint: 'rgba(20,184,166,.14)', glow: true },
+        waiting_lock: { label: '等目录锁', color: '#64748b', icon: '🔒', tint: 'rgba(100,116,139,.12)' },
+        completed:    { label: '执行完成', color: '#22c55e', icon: '✓', tint: 'rgba(34,197,94,.14)' },
+        timeout:      { label: '执行超时', color: '#ef4444', icon: '⏱', tint: 'rgba(239,68,68,.12)' },
+        failed:       { label: '执行失败', color: '#dc2626', icon: '✕', tint: 'rgba(220,38,38,.12)' }
+      };
+      // 取任务执行状态；兼容旧 run_substate（working→running / waiting_local_directory→等目录锁）
+      function execStateOf(item) {
+        var k = item && item.run_state;
+        if (!k && item && item.run_substate) {
+          k = { working: 'running', queued: 'queued', waiting_local_directory: 'waiting_lock' }[item.run_substate];
+        }
+        return k || 'idle';
+      }
 
       function itemMatchesFocusFilter(item, filter) {
         filter = filter || currentFocusFilter || 'all';
@@ -7434,10 +7463,12 @@ FocusPilot/
         html += '<span class="pill" style="font-size:9px;padding:1px 5px;border-color:' + priorityBorder + ';color:' + priorityColor + '">' + item.priority.toUpperCase() + '</span>';
         if (!compact) html += '<span class="pill" title="' + meta.name + '" style="font-size:9px;padding:1px 5px;border-color:var(--line-soft);color:var(--dim)">' + wsInfo.icon + ' ' + wsInfo.label + '</span>';
         if (item.goal && !compact) html += '<span style="font-size:10px;color:var(--dim)">&rarr; ' + item.goal + '</span>';
-        // 运行子状态角标（run_substate）：🕐 排队 / ⚡ 工作 / 🔒 等待本地目录
-        var ssKey = item.run_substate || (item.agentStatus ? (item.agentStatus.indexOf('排队') >= 0 ? 'queued' : 'working') : '');
-        var subBadge = { queued: ['🕐 正在排队中', 'rgba(112,120,135,.14)', 'var(--dim)'], working: ['⚡ 正在工作', 'rgba(46,204,113,.15)', 'var(--green)'], waiting_local_directory: ['🔒 等待本地目录', 'rgba(242,196,15,.15)', 'var(--amber)'] };
-        if (ssKey && subBadge[ssKey]) { var sb = subBadge[ssKey]; html += '<span class="pill" style="font-size:9px;padding:1px 5px;font-weight:600;border:none;background:' + sb[1] + ';color:' + sb[2] + '">' + sb[0] + '</span>'; }
+        // 执行状态角标（run_state）：🕐 排队 / ⚡ 执行中 / 🔒 等目录锁 / ✓ 执行完成 / ⏱ 执行超时 / ✕ 执行失败
+        var ekey = execStateOf(item);
+        if (ekey && ekey !== 'idle' && EXEC_STATE_MODEL[ekey]) {
+          var em = EXEC_STATE_MODEL[ekey];
+          html += '<span class="pill exec-badge" style="font-size:9px;padding:1px 6px;font-weight:700;border:none;background:' + em.color + '22;color:' + em.color + '">' + em.icon + ' ' + em.label + '</span>';
+        }
         if (item.decision) html += '<span class="pill amber" style="font-size:9px;padding:1px 5px;font-weight:600">等你决策</span>';
         if (typeof taskChangesets !== 'undefined' && taskChangesets[item.id]) {
           html += '<span class="fp-change-badge" onclick="event.stopPropagation();openTaskChangeReview(\'' + item.id + '\')" title="查看变更/产物：' + taskChangesets[item.id].summary + '">📝 ' + taskChangesets[item.id].files.length + ' 变更</span>';
@@ -7475,6 +7506,17 @@ FocusPilot/
         if (item.status === 'done') card.style.opacity = '.7';
         if (item.agentStatus) card.style.borderColor = 'var(--accent-line)';
         if (item.decision) card.style.borderColor = 'rgba(167,139,250,.3)';
+        // 执行状态整卡视觉：大面积 tint + 左色条；执行中额外呼吸光晕（CSS 动画）
+        var _ek = execStateOf(item);
+        if (_ek !== 'idle' && EXEC_STATE_MODEL[_ek]) {
+          var _em = EXEC_STATE_MODEL[_ek];
+          card.style.background = _em.tint;
+          card.style.borderColor = _em.color + '55';
+          card.style.opacity = '';
+          card.dataset.execState = _ek;
+          if (_em.glow) { card.classList.add('exec-running-glow'); }
+          else { card.style.boxShadow = 'inset 4px 0 0 ' + _em.color; }
+        }
         card.onclick = function() {
           if (card.dataset.dragged === 'true') return;
           openTaskDetail(item.id);
@@ -9329,6 +9371,21 @@ FocusPilot/
               var s = statusMap[item.status] || [item.status, ''];
               statusEl.textContent = (item.status === 'in_progress' ? '● ' : '') + s[0];
               statusEl.className = 'pill fp-detail-status' + (s[1] ? ' ' + s[1] : '');
+            }
+            // 执行状态（run_state）：详情页同步显示彩色徽标，未执行时整行隐藏
+            var execRow = document.querySelector('#fpDetailPanel .fp-detail-execstate-row');
+            var execEl = document.querySelector('#fpDetailPanel .fp-detail-execstate');
+            if (execRow && execEl) {
+              var ek = execStateOf(item);
+              if (ek !== 'idle' && EXEC_STATE_MODEL[ek]) {
+                var em = EXEC_STATE_MODEL[ek];
+                execRow.style.display = '';
+                execEl.textContent = em.icon + ' ' + em.label;
+                execEl.style.background = em.color + '1f';
+                execEl.style.color = em.color;
+              } else {
+                execRow.style.display = 'none';
+              }
             }
             // Priority
             var prioEl = document.querySelector('#fpDetailPanel .fp-detail-priority');
@@ -14971,6 +15028,13 @@ FocusPilot/
         const a = d.attrs;
         document.getElementById("rdMeta").innerHTML =
           rdChip("状态", sm.label, sm.chip, "status") +
+          (function () {
+            var wi = (typeof workItems !== "undefined") ? workItems.filter(function (w) { return w.id === currentDetailId; })[0] : null;
+            var ek = execStateOf(wi || {});
+            if (ek === "idle" || !EXEC_STATE_MODEL[ek]) return "";
+            var em = EXEC_STATE_MODEL[ek];
+            return '<span class="rd-chip" style="border:none;background:' + em.color + '1f;color:' + em.color + '"><span class="k">执行</span><b style="color:' + em.color + '">' + em.icon + " " + em.label + "</b></span>";
+          })() +
           rdChip("优先级", PRIORITY_MODEL[a.priorityKey].label, PRIORITY_MODEL[a.priorityKey].chip, "priority") +
           rdChip("Agent", AGENT_MODEL[a.agentKey].label, "", "agent") +
           rdChip("项目", a.project, "") +
