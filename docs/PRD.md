@@ -149,6 +149,32 @@
 
 > 终止态 `cancelled` 进入归档，不在主甬道常驻。**状态机/流转图/运行子状态的权威定义见 [04-studio §2.4](fp-ui/04-studio.md)**，本文不重复维护枚举。
 
+**执行状态 `run_state`（第二条轴，独立于生命周期 `status`）**：`status` 是任务在流程里的位置（人拖动 / 接力），`run_state` 是后台引擎此刻对它做什么（引擎自动驱动）。看板以**整卡大面积 tint + 左色条**表现（执行中额外呼吸光晕），任务详情页同步显示同色执行徽标——不新增看板列。
+
+| 执行状态 | key | 主色 | 图标 |
+|---------|-----|------|------|
+| 未执行 | `idle` | `#B5B8BD` 灰 | ○ |
+| 排队 | `queued` | `#E6A23C` 琥珀 | 🕐 |
+| 执行中 | `running` | `#14B8A6` 青 | ⚡ |
+| 等目录锁 | `waiting_lock` | `#64748B` 灰蓝 | 🔒 |
+| 执行完成 | `completed` | `#22C55E` 绿 | ✓ |
+| 执行超时 | `timeout` | `#EF4444` 红 | ⏱ |
+| 执行失败 | `failed` | `#DC2626` 深红 | ✕ |
+
+执行状态转换（何时进入）：
+
+| 转换 | 触发条件 |
+|------|---------|
+| → `queued` | 配了执行 Agent 且 `status ∈ {todo, in_progress, in_review, done}`，被扫描到但并发槽满 / 路径锁被占 / 未到开始时间 |
+| → `running` | 扫描器抢到并发槽 + 拿到执行环境（worktree / 目录锁）→ 创建 `ExecutionRun(running)` |
+| → `waiting_lock` | `local_directory` 任务目标目录被同目录另一任务占用（queued 特例） |
+| → `completed` | 当前 Run 正常跑完（瞬态）→ 随即 `status` 落「审核中」，执行状态回 `idle` |
+| → `timeout` | Run 运行时长超上限（Settings 可配）→ 中止，等人工 |
+| → `failed` | Run 报错/崩溃中止，等人工 |
+| → `idle` | 手动卡片任何状态；或 `status ∈ {backlog, blocked}`（不扫）；或 `done` 且无待处理输入；或一轮跑完无后续 |
+
+> **调度集变更**：中央扫描器扫 `todo/in_progress/in_review/done`（除 `backlog`/`blocked` 外全部）；`done` 仅在有待处理输入（详情页回复）时重新触发执行，解决"已完成任务回复却不执行"的痛点。权威定义见 [04-studio §2.4/§3.2](fp-ui/04-studio.md)。
+
 **对话式交互**：
 
 任务的细化与执行都通过统一的**对话面板**进行，用户不需要感知 Skill、Agent 等技术概念——输入自然语言（如"帮我拆分这个 Epic"、"把这个 Task 交给代码工程师做"），Engine 理解意图、调用合适的能力或调度 Crew 执行并实时反馈。

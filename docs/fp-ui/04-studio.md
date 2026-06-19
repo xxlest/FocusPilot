@@ -156,7 +156,19 @@ Free:   Group → ... → Task (→ Sub-task)
 
 > **命名变更**：原 `in_evaluation` 重命名为 `in_review`——AI 评估接力在「进行中」内部进行（§3.4），该态真实语义是"人工审核/等回复"。中文名「审核中」不变。
 
-**运行子状态 `run_substate`**（卡片角标，独立于 `status`，不新增看板列）：🕐 `queued`（等并发槽）/ ⚡ `working`（执行中）/ 🔒 `waiting_local_directory`（本地目录被同目录另一任务占用，仅 local_directory 任务）。
+**执行状态 `run_state`**（原 `run_substate` 升级，独立于生命周期 `status` 的第二条轴，由执行引擎自动驱动，**不新增看板列**）。看板卡片以**整卡大面积 tint + 左色条**表现（执行中额外呼吸光晕），任务详情页同步显示同色执行徽标，使"此刻引擎在对它做什么"一眼可辨。七态：
+
+| 执行状态 | 枚举 | 主色 | 图标 | 含义 |
+|---------|------|------|------|------|
+| 未执行 | `idle` | `#B5B8BD` 灰 | ○ | 默认；手动卡片或不在调度态，整卡不变色 |
+| 排队 | `queued` | `#E6A23C` 琥珀 | 🕐 | 已配执行 Agent、状态在可调度集内，等并发槽 / 路径锁 / 到达开始时间 |
+| 执行中 | `running` | `#14B8A6` 青 | ⚡ | 抢到槽 + 拿到执行环境，`ExecutionRun(running)` 进行中 |
+| 等目录锁 | `waiting_lock` | `#64748B` 灰蓝 | 🔒 | `local_directory` 任务目标目录被同目录另一任务占用（queued 特例） |
+| 执行完成 | `completed` | `#22C55E` 绿 | ✓ | 当前 Run 正常跑完（瞬态）→ 随即 `status` 落「审核中」，执行状态回 `idle` |
+| 执行超时 | `timeout` | `#EF4444` 红 | ⏱ | Run 运行时长超过上限（Settings 可配）→ 中止，等人工重试/干预 |
+| 执行失败 | `failed` | `#DC2626` 深红 | ✕ | Run 报错/崩溃中止，等人工处理 |
+
+> 兼容：旧 `run_substate` 的 `working→running`、`waiting_local_directory→waiting_lock` 自动映射。
 
 乒乓流转、自动调度触发、手动卡片、blocked 触发细则等**执行视角**见 §3.2/§3.3。
 
@@ -266,7 +278,8 @@ StudioSession:
 
 - **乒乓**：`进行中 ⇄ 审核中`——自动执行（含评估接力）跑完一律落「审核中」等人；人**回复**即重新触发执行、回到「进行中」（抢到并发槽则进，槽满/路径锁被占则先排队）；人**满意**则拖到「已完成」。「审核中」是强制的人工确认关卡（必经站，非终点）。
 - **卡片角标**（运行子状态 `run_substate`，不新增看板列）：🕐 `queued` 等并发槽 / ⚡ `working` 执行中 / 🔒 `waiting_local_directory` 本地目录被同目录另一任务占用。
-- **调度行为**：仅扫 `todo / in_progress / in_review` 三态；`backlog`（规划区）/`done`/`blocked`/`cancelled` 不扫。手动卡片（无执行 Agent）任何状态都不进调度、不触发强制审核中、状态全人工拖动。
+- **调度行为**：扫 `todo / in_progress / in_review / done` 四态（**除 `backlog`（规划区）/ `blocked` 外全部**；`cancelled` 归档不扫）。其中 `done` 仅在**有待处理输入**（详情页回复，`has_pending_input`）时才重新触发执行 → 抢槽进「进行中」；无输入的 `done` 保持执行状态 `idle`、不自动跑。手动卡片（无执行 Agent）任何状态都不进调度、不触发强制审核中、状态全人工拖动。
+  > 设计意图：解决"在『已完成』任务详情页继续回复却不执行"的痛点——`done` 现在也可被回复重新唤起执行，执行状态轴让"在跑 / 没在跑"显式可见。
 - **blocked 触发与恢复**：V1 仅人工标 blocked；标时写 `blocked_from_status`，进行中被标则当前 Run aborted、释放槽/路径锁；解除回到来源状态，回 `todo` 则重新入调度、不自动续跑旧 Run。
 
 ### 3.3 执行引擎
