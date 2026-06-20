@@ -1,10 +1,11 @@
 # FocusPilot 项目指南
 
-> 本文件是 AI Agent 项目指令的唯一权威来源。`AGENTS.md` 作为 Codex 入口文件应指向本文件，避免与 Claude Code 入口重复维护。
+> 本文件是 AI Agent 项目指令的唯一权威入口，只承载**核心规则 + 文档分流**。架构、开发规范、构建、UI 进度等明细一律下沉到二级文档单点维护，避免重复漂移。`AGENTS.md`（Codex 入口）指向本文件。
 
 ## 协作约定
 
 - **回复语言永远使用中文**（包括所有文字说明、提问、选项、计划与分析，不得使用其他语言）
+- **Review comment 必须统一、完整**：每次给 review 时，不仅审当轮 diff，还要主动纳入跨轮次/跨文件的系统性问题（如多源数据不一致、跨界面状态色/主题不统一、重复实现），一次性给出按严重度排序的完整清单，避免零散漏项让用户自己发现
 
 ## 项目概述
 
@@ -12,221 +13,46 @@ FocusPilot 定位为 macOS 上的个人自迭代系统（Personal AIOS）—— 
 
 核心理念：信息采集→知识加工→认知规律→智慧实践→个人判断，以 Project 为组织单元，Agent+Runtime 为执行引擎，形成个人自迭代闭环。AI 驱动采集与加工，人掌控判断与方向。
 
-当前实现（V4.3）：macOS 悬浮球应用，支持窗口快捷切换 + AI 编码会话管理。
-纯 Swift 5 + AppKit/SwiftUI，无第三方依赖。Bundle ID: `com.focuspilot.FocusPilot`
+当前实现（V4.3）：macOS 悬浮球应用，支持窗口快捷切换 + AI 编码会话管理。纯 Swift 5 + AppKit/SwiftUI，无第三方依赖。Bundle ID: `com.focuspilot.FocusPilot`。三层交互：悬浮球（常驻入口）→ 快捷面板（hover/单击弹出）→ 主看板（双击/Dock 图标）。
 
-三层交互：悬浮球（常驻入口）→ 快捷面板（hover/单击弹出）→ 主看板（双击/Dock 图标）
+## 产品设计基调
 
-## 文档体系
+**新增功能时必须对照以下四条准则评估，不符合的不做。**
+
+- **干净** — 每个功能只解决一个问题，三层架构各司其职，功能之间不互相污染
+- **高级** — 宁做一个极致的功能，不做三个粗糙的。追求完成度，不追求数量
+- **克制** — 新功能必须能回答"没有它用户会怎样"。不做平台化、社交化。设置项能用默认值解决的不暴露选项
+- **专业** — 不打断（弹窗失焦自动关闭）、不抢焦点（nonactivating）、不制造决策负担（默认覆盖 90% 场景）
+
+## 文档体系（分流入口）
 
 ### 核心产品
 - **产品需求（主）**：`docs/PRD.md` — FocusPilot 0.0.1 主 PRD（两阶段模型、四模式、Crew、知识管道、Dashboard）
-- **产品需求（归档）**：`docs/archive/PRD-v4-legacy.md` — FocusPilot V4.x 既有功能清单、交互规则、验收标准
-- **技术架构**：`docs/Architecture.md` — 模块划分、接口契约、状态机
-- **设计规范**：`docs/DesignGuide.md` — 视觉准则、主题色值、动画参数、修改规则
+- **产品需求（归档）**：`docs/archive/PRD-v4-legacy.md` — V4.x 既有功能清单、交互规则、验收标准
+- **技术架构**：`docs/Architecture.md` — **架构明细唯一权威源**（文件结构 / 模块职责 / 数据模型 / 接口契约 / 模块交互 / 行为约束 / 关键设计决策 / 配置迁移 / 验收用例）
+- **设计规范**：`docs/DesignGuide.md` — 视觉准则、主题色值、动画参数、修改规则、Task 两轴状态色板（§4.8）
 - **版本规划**：`docs/Editions.md` — 个人版/企业版功能边界、付费方案
 
 ### 产品战略
 - **产品理念**：`docs/产品战略/FocusPilot产品理念与市场定位.md` — AIOS 定位、知行一体化系统论述（权威版本）
 - **V1 执行方案**：`docs/产品战略/FocusPilot-V1-MVP-Scope与市场策略.md` — MVP scope、目标用户、定价
 - **市场分析**：`docs/产品战略/FocusPilot市场分析与阶段验证方案.md` — 市场机会、用户画像、五阶段验证
+
 ### UI 设计（V1 新界面）
-- **设计总览**：`docs/FP-UI.md` — 8 个页面进度、技术架构、参考来源
-- **页面设计**：`docs/fp-ui/00~08` — Layout / Home / ~~Inbox~~ / ~~Focus~~ / Studio（含原 Focus 全局视图）/ Projects（含 Inbox Tab）/ Review / AICrew / Settings
+- **设计总览 + 8 页进度**：`docs/FP-UI.md` — **UI 设计与进度唯一权威源**
+- **页面设计**：`docs/fp-ui/00~08` — Layout / Home / Studio / Projects / Review / AICrew / Settings
 - **功能说明书**：`docs/focuspilot-ui-features.md` — 从产品定位到 UI 细节的递进式讲解
+
+### 开发
+- **开发指南**：`docs/Development.md` — **开发流程唯一权威源，动手前必读**（开发规范 / 构建 / 参考项目 / 修改前必读 / 高频 Bug 防范）
 
 ### 竞品分析
 - `docs/竞品分析/` — Z Code / Codex / Plane / Multica 四份 UI 功能层次梳理
 
-修改 UI 前必读 DesignGuide.md，修改业务逻辑前必读 Architecture.md，修改功能边界时必读 Editions.md。PilotOne 新功能开发前必读 PRD.md。V1 新界面开发前必读 FP-UI.md 和对应页面设计文档。
-
 **原型变更联动规则**：每次调整 `docs/fp-ui/` 下的原型或页面规格时，必须检查 `docs/PRD.md` 中对应章节是否需要同步更新（如数据模型、状态定义、过滤规则、页面职责等）。原型是 PRD 的可视化表达，两者不能出现矛盾。
 
-**Task 两轴状态模型（权威源·设计参考根据）**：Task 有两条独立状态轴——生命周期 `status`（6 态：待规划/待办/进行中/审核中/已完成/已阻塞）+ 执行状态 `run_state`（7 态：未执行/排队/执行中/等目录锁/执行完成/执行超时/执行失败，引擎自动驱动、整卡变色）。颜色清单见 `docs/DesignGuide.md §4.8`；状态机/枚举/转换/调度集见 `docs/fp-ui/04-studio.md §2.4·§3.2`；产品级模型+颜色表+转换表见 `docs/PRD.md`。**改任一状态/颜色/转换都以这三处为准并保持同步，勿在本文件内重复明细。**
-
-## 参考项目
-
-| 项目 | GitHub | 本地路径 | 参考用途 |
-|------|--------|---------|---------|
-| **Multica** | [multica-ai/multica](https://github.com/multica-ai/multica.git) | `/Users/bruce/Workspace/2-Code/02-oss/ai/agent/coding/multica` | 看板状态模型、Agent Runtime 执行模式、Workspace 数据模型 |
-| **Plane** | [makeplane/plane](https://github.com/makeplane/plane.git)（[商业版官网](https://plane.so)） | `/Users/bruce/Workspace/2-Code/02-oss/ai/agent/coding/plane` | Home 页设计、Stickies 便签、项目管理结构（Cycles/Modules/Views） |
-| **Z Code** | 闭源（[官网](https://zcode-ai.com/cn/docs)） | 本机已安装 App（`~/Library/Application Support/ai.z.zcode/`） | Workspace Session 模式、多 Agent 框架热切换、对话式开发 ADE、Checkpoint 版本管理。竞品分析见 `docs/竞品分析/Z Code UI 功能层次梳理.md` |
-| **Codex** | [openai/codex](https://github.com/openai/codex) | 本机已安装 App | 任务流、代码审查、Agent 执行模式。竞品分析见 `docs/竞品分析/Codex UI 功能层次梳理.md` |
-
-## 产品设计基调
-
-**新增功能时必须对照以下四条准则评估，不符合的不做。**
-
-**干净** — 每个功能只解决一个问题，三层架构各司其职，功能之间不互相污染
-
-**高级** — 宁做一个极致的功能，不做三个粗糙的。追求完成度，不追求数量
-
-**克制** — 新功能必须能回答"没有它用户会怎样"。不做平台化、社交化。设置项能用默认值解决的不暴露选项
-
-**专业** — 不打断（弹窗失焦自动关闭）、不抢焦点（nonactivating）、不制造决策负担（默认覆盖 90% 场景）
+**Task 两轴状态模型（权威源·设计参考根据）**：生命周期 `status`（6 态：待规划/待办/进行中/审核中/已完成/已阻塞）+ 执行状态 `run_state`（7 态：未执行/排队/执行中/等目录锁/执行完成/执行超时/执行失败，引擎自动驱动、整卡变色）。颜色见 `docs/DesignGuide.md §4.8`；状态机/枚举/转换/调度集见 `docs/fp-ui/04-studio.md §2.4·§3.2`；产品级模型+颜色表+转换表见 `docs/PRD.md`。改任一状态/颜色/转换都以这三处为准并保持同步，勿在本文件内重复明细。
 
 ## 当前工作状态
 
-- V4.3 悬浮球版本已稳定运行
-- 产品战略文档已定稿，V1 MVP scope 明确
-- V1（FP-UI）新界面设计中，页面进度如下：
-
-### UI 设计进度（fp-ui/）
-
-一级导航 6 项：Home · Studio · Projects · Review · AICrew · Settings
-
-| 页面 | 完整度 | 状态 | 下一步 |
-|------|:------:|------|--------|
-| 00-layout | 5/5 | 可开发 | — |
-| 01-home | 5/5 | 可开发 | — |
-| 02-inbox | — | 已合并至 Projects | 历史参考，见 05-area-projects.md §7 |
-| 03-focus | — | 已合并至 Studio | 历史参考，见 04-studio.md |
-| 04-studio (Studio) | 5/5 | 可开发 | 含全局视图（原 Focus）+ 项目视图（原 Studio）+ Workspace + ExecutionRun |
-| 05-area-projects (Projects) | 5/5 | 可开发 | 含 Inbox Tab + Projects Tab |
-| 06-review | 5/5 | 可开发 | — |
-| 07-ai-crew | 5/5 | 可开发 | — |
-| 08-settings | 5/5 | 可开发 | — |
-
-## 架构（V4.2）
-
-技术栈：Swift 5, macOS 14+, arm64, AppKit + SwiftUI, CGS Private API, AX API, Carbon API, DistributedNotificationCenter
-
-### 文件结构（25 个 .swift，~11000 行）
-
-```
-FocusPilot/
-├── App/
-│   ├── FocusPilotApp.swift         # @main 入口
-│   ├── AppDelegate.swift           # 生命周期、窗口管理、菜单栏、快捷键、CoderBridgeService 初始化
-│   └── PermissionManager.swift     # 辅助功能权限检测（权限授予后自动停止轮询）
-├── FloatingBall/
-│   ├── FloatingBallWindow.swift    # NSPanel, 层级 statusWindow+100
-│   └── FloatingBallView.swift      # 毛玻璃圆球、拖拽吸附、hover 弹出、贴边半隐藏、呼吸动画
-├── QuickPanel/
-│   ├── QuickPanelWindow.swift        # NSPanel, 层级 statusWindow+50, 动画弹出/收起, 钉住, resize
-│   ├── QuickPanelView.swift          # UI 骨架、状态管理、三 Tab 切换（活跃/关注/AI）、reloadData 调度、HoverableRowView
-│   ├── QuickPanelRowBuilder.swift    # App 行/窗口行/AI Session 行构建、工具方法、SF Symbol 缓存（extension QuickPanelView）
-│   ├── QuickPanelMenuHandler.swift   # 右键菜单、@objc 事件处理、星号关注、App 关闭/启动、AI 会话移除（extension QuickPanelView）
-│   └── QuickPanelTimerHandler.swift  # FocusByTime 计时器栏 UI、编辑/阶段转换弹窗、引导休息、辅助类（extension QuickPanelView）
-├── MainKanban/
-│   ├── MainKanbanWindow.swift      # NSWindow 包裹 SwiftUI
-│   ├── MainKanbanView.swift        # 侧边栏+内容区（关注管理 + 偏好设置）
-│   ├── AppConfigView.swift         # 关注管理（全部/活跃/关注 三 Tab + 星标切换）
-│   └── PreferencesView.swift       # 偏好设置（快捷键、主题选择、悬浮球外观）
-├── Models/
-│   ├── Models.swift                # AppConfig, RunningApp, WindowInfo, Preferences, AppTheme, ThemeColors 等
-│   └── CoderSession.swift          # CoderSession, CoderTool, SessionStatus, SessionLifecycle, HostKind, HostAppMapping, CoderSessionPreference
-├── Services/
-│   ├── ConfigStore.swift           # UserDefaults 持久化 + 单字段保存（saveBallPosition/savePanelSize/saveWindowRenames）
-│   ├── WindowService.swift         # 窗口枚举(CGWindowList+AX)、两阶段刷新、AX 后台队列、titleCache
-│   ├── AppMonitor.swift            # App 运行监控、自适应刷新（1s→3s）、scanInstalledApps 后台线程
-│   ├── HotkeyManager.swift         # Carbon 全局快捷键（⌘⇧B 显示/隐藏）
-│   ├── FocusTimerService.swift     # FocusByTime 番茄钟服务（状态机、计时、阶段切换通知、时长持久化、FocusPendingAction、引导休息分步倒计时）
-│   └── CoderBridgeService.swift    # AI 编码工具会话管理（DistributedNotification 监听、session 列表、BindingState 统一 helper、hostKind 策略分流、前台窗口关联、回退匹配、清理定时器、窗口级未读查询/已读标记）
-└── Helpers/
-    └── Constants.swift             # Ball, Panel, Keys, Notifications 常量
-```
-
-### coder-bridge 模块（shell 脚本，安装到 ~/.coder-bridge/）
-
-```
-coder-bridge/
-├── lib/coder-bridge/
-│   ├── adapters/
-│   │   ├── claude.sh              # Claude Code hook 适配（解析 stdin JSON → 分发到 registry）
-│   │   ├── codex.sh               # Codex 适配（预留）
-│   │   └── gemini.sh              # Gemini CLI 适配（预留）
-│   ├── core/
-│   │   ├── registry.sh            # 会话注册/状态更新/hostKind 上报/osascript DistributedNotification 发送
-│   │   ├── notifier.sh            # 桌面通知（原 code-notify）
-│   │   └── config.sh              # 配置管理
-│   └── utils/                     # colors.sh, detect.sh, help.sh, sound.sh, voice.sh
-└── scripts/                       # install.sh, run_tests.sh
-```
-
-### 关键设计决策
-
-- **通知驱动架构**：FloatingBall → AppDelegate → QuickPanel，通过 NotificationCenter
-- **两阶段窗口刷新**：Phase 1 CG 标题主线程快速渲染 → Phase 2 AX 标题后台补全（不阻塞 UI）
-- **差分 UI 更新**：QuickPanelView.reloadData 通过 buildStructuralKey 对比，标题变化走 updateWindowTitles 轻量路径
-- **forceReload() 封装**：统一强制全量刷新入口，封装 lastStructuralKey 清除细节
-- **窗口标题四级解析**：AX 标题 → 缓存 AX → CG 标题 → "(无标题)"
-- **自适应刷新**：面板显示时 1s，无变化时逐步降至 3s；面板隐藏时完全停止
-- **关注机制**：ConfigStore.appConfigs 中存在即为关注（V3.1 移除了 isFavorite 字段）
-- **关注排序**：右键菜单"置顶"操作，通过 ConfigStore.reorderApps 持久化
-- **窗口前置**：NSWorkspace.openApplication + AXRaise + AXMain + AXFocused 三重设置
-- **QuickPanel 模块化**：extension 拆分（RowBuilder 负责视图构建、MenuHandler 负责菜单和事件、TimerHandler 负责 FocusByTime 计时器栏+弹窗），不引入新类型
-- **Coder-Bridge AI Tab**：第三个 Tab「AI」展示 AI 编码工具会话，通过 DistributedNotificationCenter 接收 coder-bridge 事件
-- **AI 会话生命周期**：session.start（注册+前台窗口关联）→ session.update（状态变更）→ session.end（标记 ended 保留显示）
-- **两层窗口匹配**：第一层 session.start 时记录前台宿主窗口 → 第二层回退匹配（cwd basename + z-order 最前窗口兜底）
-- **HostKind 绑定策略分化**：coder-bridge 上报 hostKind（ide/terminal）作为启发式策略标签；IDE（Cursor/VSCode）允许多 session 共享同一窗口，Terminal 保持独占策略
-- **BindingState 统一 helper**：`bindingState(for:)` 枚举（manual/autoValid/autoConflicted/missing）统一供 UI 标记、窗口切换、绑定引导三处调用，消除重复判断
-- **两条绑定入口差异化**：promptBindToCurrentWindow（点击触发，隐式）对 terminal 冲突拦截不允许替换；handleBindToCurrentWindow（右键菜单，显式）对 terminal 冲突允许确认替换。IDE 两处均跳过冲突检测
-- **Cursor/VSCode 区分**：coder-bridge 通过 CURSOR_TRACE_ID 环境变量区分 Cursor 和 VS Code（两者 $TERM_PROGRAM 均为 vscode）
-- **会话不持久化**：CoderSession 列表纯运行时，FocusPilot 重启后清空（AI 工具中断后需重新启动注册）
-- **AI 会话偏好持久化**：CoderSessionPreference 按 tool+cwdNormalized+hostApp 索引，存储 displayName；新 session 自动继承同 key 的偏好
-- **Transcript 读取**：从 ~/.claude/projects/<sanitized-cwd>/<session-id>.jsonl 提取用户消息（type=="user" + message.role=="user"），用于 query 摘要
-- **双行 Session 行**：第一行主信息（工具图标+displayName+宿主图标+状态），第二行最近 query 摘要（10pt nsTextTertiary）
-- **Tab 双状态模型**：`selectedTab`（持久，写 UserDefaults）+ `displayTab`（渲染态，hover 预览临时切换）；面板关闭/进入固定模式时 displayTab 回退到 selectedTab
-- **Hover 展开/折叠**：非固定模式下 `hoverExpandedBundleID` 驱动，App 行+窗口列表容器包装，`isHidden` 轻量切换不触发 forceReload；displayTab 切换/进入固定模式/面板关闭时清空
-- **浮球 AI 角标**：非固定模式下复用 `badgeLabel` 显示 `CoderBridgeService.actionableCount`，监听 coderBridgeSessionChanged + panelPinStateChanged 自驱动
-- **关注 Tab 未读角标**：窗口行图标区域根据 `CoderBridgeService.actionableCount(for:)` 动态切换为红色 pill 角标；点击窗口行 `markAsRead(windowID:)` 标记已读（内置 count==1 保护，多 session 共享窗口时静默跳过），通过 `coderBridgeSessionChanged` 通知驱动三处同步刷新
-- **Notion 风格主题系统**：AppTheme 枚举 8 种预设 → ThemeColors 9 色槽（ns* + sw* 双套，含 sidebarBackground），覆盖全 UI
-- **主题刷新链路**：PreferencesView → @Published → AppDelegate.applyPreferences → NSApp.appearance + quickPanelWindow.applyTheme + themeChanged 通知
-- **FocusByTime 番茄钟**：FocusTimerService 单例管理状态机（idle/running/paused × work/rest），通过 NotificationCenter 驱动 QuickPanel 底部计时器栏和 FloatingBall 进度环
-- **引导休息模式**：RestIntensity 三级强度（轻度~3min/中度~5min/深度~8min），RestStep 分步定义覆盖脑/眼/肌肉三维恢复；tick() 自动推进步骤，计时器栏显示步骤名+步骤图标+步骤倒计时
-- **计时器栏整栏可点击**：栏内零按钮，NSClickGestureRecognizer 整栏点击，根据状态分发到编辑弹窗/操作面板/阶段转换弹窗；hover 时底色加深 + 手形光标；`buildRestGuideView()` 三维分组休息指南
-- **idle 双入口**：计时器栏 idle 状态显示「▶ 开始专注 | ☕ 休息」左右并排，点击位置检测分发到 `timerEditTapped()` 或 `restDirectTapped()`
-- **独立休息模式**：`isStandaloneRest` 标记直接休息（非工作→休息流程），休息结束后直接 reset 回 idle，不弹"充电完毕"对话框
-- **休息选择 UI 共享**：`buildRestSelectionAccessoryView()` 提取引导/自由休息 radio 选择 UI，`handleWorkCompleted()` 和 `restDirectTapped()` 共用
-- **FocusByTime 弹窗全失焦关闭**：所有弹窗均失焦自动关闭（NSApp.didResignActive → abortModal）。阶段完成弹窗关闭后，FocusPendingAction 保留待处理动作，计时器栏显示 pending pill 徽章供用户点击重新弹出
-- **弹窗层级处理**：NSAlert.runModal() 会重置 layout() 阶段设置的 window level，因此必须通过 `didBecomeKey` 回调延迟设置层级。当前方案：prepareAlert() 先降低面板到 .normal（兜底防遮挡），再用 didBecomeKey 提升弹窗到 alertLevel（floatingBallLevel + 10）；restoreAfterAlert() 恢复面板层级。位置走系统默认居中，不做自定义定位
-
-### 配置迁移
-
-- V3.1: appConfigs 含 isFavorite → 仅保留关注（migrateToV31）
-- V3.7: Preferences 移除 colorTheme/ballColorStyle/ballCustomColorHex，新增 appTheme（保留旧 CodingKey 兼容解码）
-- V3.8: 新增 FocusTimerService + QuickPanel 计时器栏 + FloatingBall 进度环
-- V3.9: FocusTimerService 新增引导休息（RestStep/RestMode/RestIntensity）+ QuickPanel 强度选择弹窗 + 步骤进度列表 + idle 双入口（专注/休息）+ 独立休息模式
-- V4.0: 新增 coder-bridge 模块 + CoderBridgeService + AI Tab（三 Tab 快捷面板）+ CoderSession 模型 + DistributedNotification IPC
-- V4.1: coder-bridge 新增 hostKind 上报 + CoderSession 新增 HostKind 字段 + BindingState 统一 helper + IDE/Terminal 绑定策略分化
-- V4.2: QuickPanelView `currentTab` 拆分为 `selectedTab` + `displayTab`；新增 `hoverExpandedBundleID`；FloatingBallView 新增 AI 角标
-- V4.3: 关注 Tab 窗口行新增 AI 未读角标，CoderBridgeService 新增 `actionableCount(for:)` / `markAsRead(windowID:)`
-- AppConfig decoder 向后兼容（忽略旧字段）
-
-## 构建
-
-```bash
-make build      # 编译到 /tmp/focuspilot-build/
-make install    # 编译+签名+安装+启动
-make clean      # 清理
-```
-
-- 仅 Command Line Tools（无 Xcode IDE），swiftc 直接编译
-- VFS overlay 绕过 SwiftBridging module 重复定义 bug
-- 自签名证书 `FocusPilot Dev`（`make setup-cert`），权限持久化
-
-## 开发规范
-
-- **开发流程统一走 git worktree**：每个改动在独立工作树（`EnterWorktree` / `.claude/worktrees/`）里开发 + 验证，合并进 `main` 后清理工作树；保持主目录 `main` 始终干净可看，**不在 main 上直接改**。一次一个改动 → PR → 合并 → 清理
-- **原型功能改动在 PR/合并前必须做真实运行时验证**：本环境 `preview_*` 工具端口检测失灵，改用 **playwright-core + 系统 Chrome（headless，`channel`/`executablePath` 直连，不下载浏览器）真点交互**验证功能可用。「`node --check` JS 能解析」≠「功能能用」，只交静态校验不算验证
-- 使用 **Teams**（多 Agent 协作）进行开发和修复
-- **每次修改功能，都要更新 PRD（docs/PRD.md）和架构设计（docs/Architecture.md）；修改 UI 时同步更新设计规范（docs/DesignGuide.md）**
-- **每完成一个功能或大修改，自动使用 `/commit` skill 提交并推送到远程仓库**
-- **每次修复或新开发完成后，必须执行 `make install` 安装到本地**
-- **每次更新 `docs/fp-ui/` 目录下的文件后，必须输出当前 UI 设计进度表（各页面完整度和状态）**
-- **页面真实设计完成度以 `docs/fp-ui/00-layout-prototype.html` 母版同步完成为准；仅页面规格文档完成不得标记为 5/5 或“可开发”**
-- **每次输出 UI 设计进度表时，必须同时用浏览器打开 `docs/fp-ui/00-layout-prototype.html`，停留在页面等待用户自行查看，不用截图替代用户验收**
-- **每次修改功能后，必须检查 Settings 页面（`docs/fp-ui/07-settings.md` 及对应原型）是否需要同步调整配置项**
-
-## ⚠️ 高频 Bug 防范：窗口标题"无标题"
-
-**根因**：codesign --force 改变 CDHash → TCC 失效 → AXIsProcessTrusted() 返回 false → 所有窗口标题变成"(无标题)"
-
-**必检项**：每次修改 WindowService / PermissionManager / 安装流程后：
-
-1. 测试首次安装（无 TCC 记录）→ 弹授权 → 授权后标题正常
-2. 测试重新安装（有旧 TCC 记录）→ 权限失效 → 重新授权后恢复
-3. 测试正常运行 → 所有窗口标题正确
-
-**绝对禁止**：在 buildAXTitleMap 中用 `PermissionManager.shared.accessibilityGranted` 缓存值代替 `AXIsProcessTrusted()` 实时调用
+V4.3 悬浮球版本已稳定运行；产品战略文档已定稿、V1 MVP scope 明确；V1（FP-UI）新界面设计中。**各页面完整度与状态进度表见 `docs/FP-UI.md`。**
