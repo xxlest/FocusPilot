@@ -123,7 +123,7 @@
 
 ## 5. 页面清单
 
-一级导航 6 项，文档规格 9 个（含已合并的 02-inbox 和 03-focus 历史参考）。
+一级导航 6 项，文档规格 10 个（含已合并的 02-inbox 和 03-focus 历史参考，及非一级导航的 09-focusbar 悬浮层）。
 
 | 活动栏 | 页面 | 说明 | 规格状态 | 规格文档 | 原型 |
 |--------|------|------|---------|---------|------|
@@ -133,8 +133,11 @@
 | 🧠 | **Review** | 复习与内化中心：今日复习 / 内化挑战 / 卡片库 / 统计 | **可开发** | [06-review.md](fp-ui/06-review.md) | [00-layout-prototype.html](fp-ui/00-layout-prototype.html)、[06-review-today-prototype.html](fp-ui/06-review-today-prototype.html)、[06-review-challenge-prototype.html](fp-ui/06-review-challenge-prototype.html) |
 | 🤖 | AICrew | Agent 团队管理（成员 / Runtime 侧栏分段 + 成员动态 / 配置 / 执行记录） | **可开发** | [07-ai-crew.md](fp-ui/07-ai-crew.md) | [00-layout-prototype.html](fp-ui/00-layout-prototype.html) |
 | ⚙️ | Settings | 全局配置：Studio/AICrew/Projects/通用 | **可开发** | [08-settings.md](fp-ui/08-settings.md) | [00-layout-prototype.html](fp-ui/00-layout-prototype.html) |
+| 🔵 | **悬浮层**（非一级导航） | 常驻系统级入口：悬浮球 + 快捷面板（规划速览/对话入口）+ Focus Bar（实时状态条 + 番茄计时） | **可开发** | [09-focusbar.md](fp-ui/09-focusbar.md) | [00-layout-prototype.html](fp-ui/00-layout-prototype.html) |
 
 > **已合并**：原 Inbox（[02-inbox.md](fp-ui/02-inbox.md)）→ Projects 的 Inbox Tab；原 Focus（[03-focus.md](fp-ui/03-focus.md)）→ Studio 的全局视图。两份旧文档保留为历史参考。
+>
+> **悬浮层**（[09-focusbar.md](fp-ui/09-focusbar.md)）独立于六个一级页面、不占活动栏，常驻桌面与各 App 之上，单列一行说明。
 
 ### 原型策略
 
@@ -165,14 +168,9 @@
 
 ### 6.1 浮球/Focus Bar 任务数据：单一同源池 + 常驻自检
 
-母版 `00-layout-prototype.html` 中，浮球**规划清单**（今日/本周/本月/全局）与 **Focus Bar 各状态下拉**（未读/待规划/进行中/审核中/已完成/今日聚焦）的任务**全部从同一个 `FB_POOL` 任务池派生**，杜绝"同一任务在多处各写一份、可独立漂移"：
+浮球规划清单与 Focus Bar 各下拉**全部从同一个 `FB_POOL` 任务池派生**（`all` 全局规划 = 今日∪本周∪本月并集、`bar-num` 计数恒等于列表条数、看板 `workItems` 独立不并入）；母版内置 `?selfcheck` 不变量自检（顶部 PASS/FAIL 横幅 + `window.__SELFCHECK__`）。
 
-- `FB_POOL`：`id → {标题/状态/项目/未读标记/副标题}`，是浮球域任务属性的唯一来源；所有 id 均为 `RUN_DETAILS` 已有项，点击详情统一走 `openRunDetail`。
-- `planScopes`：规划清单各 scope 仅存成员 id；**`all`（全局规划）自动 = 今日∪本周∪本月并集**，保证全局是各子集的超集（修复过去"全局 < 子集"的包含倒置）。
-- Focus Bar 下拉内容与 `bar-num` 计数均由池按状态/未读派生，**计数恒等于列表条数**。
-- **看板 `workItems` 是独立的真实任务数据，不并入本池**（轻量统一：不改动详情面板路径，浮球/bar 仍走 `openRunDetail`、看板走自身详情）。
-
-**常驻自检（P3.7）**：母版内置一段不变量自检，访问 `00-layout-prototype.html?selfcheck`（或 `#selfcheck`）时运行，断言并在页面顶部显示 PASS/FAIL 横幅（结果亦写入 `window.__SELFCHECK__`）。校验项：全局=并集(I1)、三处计数一致(I2)、今日聚焦=今日规划(I3)、展示 id 详情可开(I4)、`.float-action` 行恰好 3 列即箭头不换行(I5)、下拉属性与池一致(I6)。改动浮球/Focus Bar 数据或结构后，应带 `?selfcheck` 复跑确认全绿，避免"断言只贴当轮功能"导致回归漏网。
+> **权威说明见 [09-focusbar.md §6 数据对象](fp-ui/09-focusbar.md)**（含 `FB_POOL`/`planScopes` 结构、6 项自检断言 I1~I6）。此处仅作索引，明细单点维护，避免漂移。
 
 ---
 

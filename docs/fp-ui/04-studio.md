@@ -6,7 +6,7 @@
 > **原型**：[00-layout-prototype.html](00-layout-prototype.html)
 > **参考**：[Codex App macOS 竞品调研](../竞品分析/Codex%20App%20macOS%20竞品调研.md)、[Codex UI 功能层次梳理](../竞品分析/Codex%20UI%20功能层次梳理.md)
 > **设计决策**：[Focus + Studio 合并设计](../superpowers/specs/2026-06-05-focus-studio-merge-design.md)
-> **历史**：原 Focus 页面（[03-focus.md](03-focus.md)）已合并至本页；原 Studio 旧版备份见 [04-studio-backup-v1.md](04-studio-backup-v1.md)
+> **历史**：原 Focus 页面（[03-focus.md](03-focus.md)）已合并至本页；原 Studio 旧版规格已废弃（如需查阅，见 git 历史 `git show 59c3339:docs/fp-ui/04-studio-backup-v1.md`）
 > **关联**：[PRD §3.1 任务执行（Agent 配置驱动）](../PRD.md)、[PRD §3.3 Task 双轴管理](../PRD.md)
 
 ---
