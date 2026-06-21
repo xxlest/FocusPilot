@@ -165,8 +165,8 @@ Free:   Group → ... → Task (→ Sub-task)
 | 执行中 | `running` | `#14B8A6` 青 | ⚡ | 抢到槽 + 拿到执行环境，`ExecutionRun(running)` 进行中 |
 | 等目录锁 | `waiting_lock` | `#64748B` 灰蓝 | 🔒 | `local_directory` 任务目标目录被同目录另一任务占用（queued 特例） |
 | 执行完成 | `completed` | `#22C55E` 绿 | ✓ | 当前 Run 正常跑完（瞬态）→ 随即 `status` 落「审核中」，执行状态回 `idle` |
-| 执行超时 | `timeout` | `#EF4444` 红 | ⏱ | Run 运行时长超过上限（Settings 可配）→ 中止，等人工重试/干预 |
-| 执行失败 | `failed` | `#DC2626` 深红 | ✕ | Run 报错/崩溃中止，等人工处理 |
+| 执行超时 | `timeout` | `#EF4444` 红 | ⏱ | Run 运行时长超过上限（Settings 可配）→ 中止，等人工重试/干预；可经人工「重试」回 `queued`（§3.2） |
+| 执行失败 | `failed` | `#DC2626` 深红 | ✕ | Run 报错/崩溃中止，等人工处理；可经人工「重试」回 `queued`（§3.2） |
 
 > 兼容：旧 `run_substate` 的 `working→running`、`waiting_local_directory→waiting_lock` 自动映射。
 
@@ -281,6 +281,7 @@ StudioSession:
 - **调度行为**：扫 `todo / in_progress / in_review / done` 四态（**除 `backlog`（规划区）/ `blocked` 外全部**；`cancelled` 归档不扫）。其中 `done` 仅在**有待处理输入**（详情页回复，`has_pending_input`）时才重新触发执行 → 抢槽进「进行中」；无输入的 `done` 保持执行状态 `idle`、不自动跑。手动卡片（无执行 Agent）任何状态都不进调度、不触发强制审核中、状态全人工拖动。
   > 设计意图：解决"在『已完成』任务详情页继续回复却不执行"的痛点——`done` 现在也可被回复重新唤起执行，执行状态轴让"在跑 / 没在跑"显式可见。
 - **blocked 触发与恢复**：V1 仅人工标 blocked；标时写 `blocked_from_status`，进行中被标则当前 Run aborted、释放槽/路径锁；解除回到来源状态，回 `todo` 则重新入调度、不自动续跑旧 Run。
+- **重试触发与恢复**：`run_state ∈ {failed, timeout}` 的任务在卡片/详情提供「↻ 重试」。触发后清当前（已 aborted）Run 标记、`run_state → queued`、`status` **不变**（仍 in_progress），下轮扫描器在**保留的 worktree / 路径锁 + 同一 session** 上 resume 上下文、起一个**新 executor Run**（对齐 §3.3 派发范式，**非走 blocked**）。失败/超时**不释放** worktree / 路径锁（任务未离开执行流）。与 blocked 区分：blocked = 外部依赖（人工标/解除），failed/timeout = 引擎内失败（一键重试）。
 
 ### 3.3 执行引擎
 
