@@ -4319,6 +4319,8 @@
               <div style="cursor:pointer;color:var(--dim);font-size:16px" onclick="closeTaskDetail()">✕</div>
               <div style="flex:1"><div class="fp-detail-id" style="font-size:10px;font-family:var(--mono);color:var(--dim)">FP-002</div><div class="fp-detail-title" style="font-size:15px;font-weight:600">看板状态模型实现</div></div>
               <span class="pill blue" style="font-size:11px">● In Progress</span>
+              <!-- ↻ 重试：仅 run_state=failed/timeout 时显示；此处演示态常驻 -->
+              <button class="btn" title="重试任务（执行失败/超时）" onclick="retryTask('FP-002')" style="min-height:28px;padding:0 9px;border-color:var(--line);color:var(--muted)">↻ 重试</button>
               <button class="btn" title="删除任务" onclick="deleteCurrentTask()" style="min-height:28px;padding:0 9px;color:var(--red);border-color:rgba(248,113,113,.3)">🗑 删除</button>
             </div>
             <div style="background:var(--elevated);border:1px solid var(--line);border-radius:var(--radius);padding:10px 14px;margin:12px 18px 0;font-size:11px">
