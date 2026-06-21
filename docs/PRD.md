@@ -165,7 +165,7 @@
 
 | 转换 | 触发条件 |
 |------|---------|
-| → `queued` | 配了执行 Agent 且 `status ∈ {todo, in_progress, in_review, done}`，被扫描到但并发槽满 / 路径锁被占 / 未到开始时间 |
+| → `queued` | 配了执行 Agent 且 `status ∈ {todo, in_progress, in_review, done}`，被扫描到但并发槽满 / 路径锁被占 / 未到开始时间；**或 `failed`/`timeout` 任务经人工「重试」**（`status` 不变、worktree resume 起新 Run） |
 | → `running` | 扫描器抢到并发槽 + 拿到执行环境（worktree / 目录锁）→ 创建 `ExecutionRun(running)` |
 | → `waiting_lock` | `local_directory` 任务目标目录被同目录另一任务占用（queued 特例） |
 | → `completed` | 当前 Run 正常跑完（瞬态）→ 随即 `status` 落「审核中」，执行状态回 `idle` |
