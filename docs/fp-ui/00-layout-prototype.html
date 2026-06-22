@@ -7505,12 +7505,21 @@ FocusPilot/
         if (idEl && idEl.textContent === id && typeof openTaskDetail === 'function') openTaskDetail(id);
       }
 
-      // 失败/超时消息气泡内的「⚠报错 + ↻重试」统一片段（中性色按钮，DesignGuide §5.10；不用任何状态色）
-      function retryBubbleHtml(reasonText, onclickExpr) {
-        return '<div style="margin-top:8px;padding:8px 10px;background:rgba(220,38,38,.06);border:1px solid var(--line-soft);border-radius:6px">' +
-          '<div style="font-size:11px;color:var(--red);margin-bottom:6px">⚠ ' + reasonText + '</div>' +
-          '<button class="btn fp-retry-btn" onclick="' + onclickExpr + '" style="font-size:10px;padding:2px 10px;min-height:0;border-color:var(--line);color:var(--muted)">↻ 重试</button>' +
+      // agent 回复操作栏：📋复制 + 🔄重新生成（每个最后一轮 agent 回复用，无条件，中性色，DesignGuide §5.10）
+      function actionBarHtml(regenOnclick) {
+        return '<div class="fp-msg-actions" style="display:flex;gap:6px;margin-top:8px">' +
+          '<button class="btn" type="button" onclick="copyReply(this)" style="font-size:10px;padding:2px 9px;min-height:0;border-color:var(--line);color:var(--muted)">📋 复制</button>' +
+          '<button class="btn fp-retry-btn" type="button" onclick="' + regenOnclick + '" style="font-size:10px;padding:2px 9px;min-height:0;border-color:var(--line);color:var(--muted)">🔄 重新生成</button>' +
           '</div>';
+      }
+      // 复制该回复文本到剪贴板（原型演示：取操作栏所在回复块的纯文本）
+      function copyReply(btn) {
+        var box = btn.parentElement ? btn.parentElement.parentElement : null;
+        var text = box ? (box.innerText || box.textContent || '') : '';
+        text = text.replace(/📋 复制|🔄 重新生成|✓ 已复制/g, '').trim();
+        try { if (navigator.clipboard) navigator.clipboard.writeText(text); } catch (e) {}
+        btn.textContent = '✓ 已复制';
+        setTimeout(function () { btn.textContent = '📋 复制'; }, 1200);
       }
 
       /* ── Render: Kanban Board from workItems ── */
@@ -8874,9 +8883,8 @@ FocusPilot/
               '<div style="display:flex;gap:8px;margin-bottom:14px"><span style="flex-shrink:0">🤖</span><div style="flex:1;min-width:0">' +
               '<div style="font-size:11px;margin-bottom:4px"><strong>' + task.exec.agent + '</strong> <span style="color:var(--dim)">· 自动执行 · ' + task.exec.time + '</span></div>' +
               '<div style="font-family:var(--mono);font-size:10px;line-height:1.7;color:var(--muted);background:var(--bg);border:1px solid var(--line-soft);border-radius:6px;padding:8px">' + task.exec.logs + '</div>' +
-              ((task.exec.run_state === 'failed' || task.exec.run_state === 'timeout')
-                ? retryBubbleHtml(task.exec.run_state === 'timeout' ? '执行超时 · Run 已中止' : '执行失败 · Run 报错中止', 'retryTask(\'' + task.id + '\')')
-                : '<div style="display:flex;gap:6px;margin-top:6px"><button class="btn" style="font-size:9px;min-height:22px;padding:0 8px">查看 Diff</button><button class="btn" style="font-size:9px;min-height:22px;padding:0 8px">日志</button></div>') +
+              '<div style="display:flex;gap:6px;margin-top:6px"><button class="btn" style="font-size:9px;min-height:22px;padding:0 8px">查看 Diff</button><button class="btn" style="font-size:9px;min-height:22px;padding:0 8px">日志</button></div>' +
+              actionBarHtml('retryTask(\'' + task.id + '\')') +
               '</div></div>';
           } else {
             convHtml += '<div style="background:var(--bg);border:1px solid var(--line-soft);border-radius:var(--radius);padding:20px;text-align:center;font-size:12px;color:var(--dim)">尚未开始执行 — 拖到「待办」即由 Agent 自动执行</div>';
@@ -8928,9 +8936,8 @@ FocusPilot/
               '<div style="display:flex;gap:8px;margin-bottom:14px"><span style="flex-shrink:0">🤖</span><div style="flex:1;min-width:0">' +
               '<div style="font-size:11px;margin-bottom:4px"><strong>' + task.exec.agent + '</strong> <span style="color:var(--dim)">· 自动执行 · ' + task.exec.time + '</span></div>' +
               '<div style="font-family:var(--mono);font-size:10px;line-height:1.7;color:var(--muted);background:var(--bg);border:1px solid var(--line-soft);border-radius:6px;padding:8px">' + task.exec.logs + '</div>' +
-              ((task.exec.run_state === 'failed' || task.exec.run_state === 'timeout')
-                ? retryBubbleHtml(task.exec.run_state === 'timeout' ? '执行超时 · Run 已中止' : '执行失败 · Run 报错中止', 'retryTask(\'' + task.id + '\')')
-                : '<div style="display:flex;gap:6px;margin-top:6px"><button class="btn" style="font-size:9px;min-height:22px;padding:0 8px">查看 Diff</button><button class="btn" style="font-size:9px;min-height:22px;padding:0 8px">日志</button></div>') +
+              '<div style="display:flex;gap:6px;margin-top:6px"><button class="btn" style="font-size:9px;min-height:22px;padding:0 8px">查看 Diff</button><button class="btn" style="font-size:9px;min-height:22px;padding:0 8px">日志</button></div>' +
+              actionBarHtml('retryTask(\'' + task.id + '\')') +
               '</div></div>';
           } else {
             convHtml += '<div style="background:var(--bg);border:1px solid var(--line-soft);border-radius:var(--radius);padding:20px;text-align:center;font-size:12px;color:var(--dim)">尚未开始执行 — 拖到「待办」即由 Agent 自动执行</div>';
@@ -10425,7 +10432,7 @@ FocusPilot/
             { role: 'user', text: '编译一下' },
             { role: 'agent', text: '', terminal: '$ make build\n✓ Build succeeded' },
             { role: 'user', text: '部署到测试环境' },
-            { role: 'agent', text: '', msg_state: 'failed', error: '未登录 · 请先运行 /login' }
+            { role: 'agent', text: '部署失败：未登录，请先运行 /login 后重试。' }
           ],
           diffFiles: [
             { name: 'KanbanDataSource.swift', status: 'M', active: true },
@@ -10904,6 +10911,8 @@ FocusPilot/
           return '<div class="quick-chat-empty">开始一次对话，历史会同步到 Home 和 Studio 项目视图。</div>';
         }
         var html = '';
+        var _lastAgentMsg = -1;
+        messages.forEach(function (m, i) { if (m.role === 'agent') _lastAgentMsg = i; });
         messages.forEach(function(m, idx) {
           if (m.role === 'user') {
             html += '<div class="message user" style="' + (compact ? 'max-width:88%' : '') + '">' + escapeHtml(m.text) + '</div>';
@@ -10913,19 +10922,18 @@ FocusPilot/
           if (m.text) body += '<div style="white-space:pre-line">' + escapeHtml(m.text) + '</div>';
           if (m.terminal) body += '<div style="margin-top:8px;background:var(--bg);border:1px solid var(--line-soft);border-radius:var(--radius);padding:8px 10px;font-family:var(--mono);font-size:11px;color:var(--green);white-space:pre-line">' + escapeHtml(m.terminal) + '</div>';
           if (m.diff) body += '<div style="margin-top:8px;background:var(--bg);border:1px solid var(--line-soft);border-radius:var(--radius);padding:8px 10px;font-family:var(--mono);font-size:11px;color:var(--muted)">已修改: ' + escapeHtml(m.diff) + '</div>';
-          if (m.msg_state === 'failed' || m.msg_state === 'timeout') body += retryBubbleHtml(m.error || (m.msg_state === 'timeout' ? '回复超时 · 请重试' : '未完成 · 请重试'), 'retryChatMessage(\'' + (sid || '') + '\',' + idx + ')');
+          if (idx === _lastAgentMsg) body += actionBarHtml('retryChatMessage(\'' + (sid || '') + '\',' + idx + ')');
           html += '<div class="message agent" style="' + (compact ? 'max-width:92%' : '') + '">' + body + '</div>';
         });
         return html;
       }
 
-      // 聊天消息重试 = 清失败态 + 重发上一轮（演示：清 msg_state 后重渲染当前对话；产品语义为重发上一轮 user prompt 触发新回复）
       function retryChatMessage(sid, idx) {
         var session = (typeof studioSessions !== 'undefined') ? studioSessions[sid] : null;
-        if (!session || !session.messages || !session.messages[idx]) return;
-        session.messages[idx].msg_state = 'ok';
+        if (!session || !session.messages) return;
+        // 重新生成 = 重发上一轮 user prompt 触发新回复（原型演示：重渲染当前对话）
         if (typeof homeActiveSessionId !== 'undefined' && homeActiveSessionId === sid && typeof renderHomeChatFromSession === 'function') renderHomeChatFromSession(sid);
-        if (typeof renderQuickChatHistory === 'function') renderQuickChatHistory();
+        if (typeof renderQuickChatThread === 'function') renderQuickChatThread();
       }
 
       function activateHomeChatTab() {
@@ -15061,7 +15069,9 @@ FocusPilot/
           live.innerHTML = "";
         }
 
-        document.getElementById("rdRounds").innerHTML = d.rounds.map((r) => {
+        var _lastAgentRound = -1;
+        d.rounds.forEach(function (r, i) { if (r.ic === '🤖') _lastAgentRound = i; });
+        document.getElementById("rdRounds").innerHTML = d.rounds.map((r, ri) => {
           let inner = `<div class="rd-round-meta"><strong>${r.who}</strong> <span class="dim">· ${r.meta}</span>`;
           if (r.pill) inner += ` <span class="rd-pill ${r.pill.cls}">${r.pill.text}</span>`;
           if (r.suffix) inner += ` <span class="dim">${r.suffix}</span>`;
@@ -15070,7 +15080,7 @@ FocusPilot/
           if (r.actions) inner += `<div class="rd-round-actions"><button class="rd-mini-btn" type="button">查看 Diff</button><button class="rd-mini-btn" type="button">日志</button></div>`;
           if (r.opinions) inner += r.opinions.map((o) => `<div class="rd-opinion ${o.cls}"><strong>${o.level}</strong> ${o.text}</div>`).join("");
           if (r.user) inner += `<div class="rd-user">${r.user}</div>`;
-          if (r.retry) inner += retryBubbleHtml(r.retry.reason || '执行失败 · Run 中止', "retryTask('" + d.id + "')");
+          if (ri === _lastAgentRound) inner += actionBarHtml("retryTask('" + d.id + "')");
           return `<div class="rd-round"><span class="ic">${r.ic}</span><div class="rd-round-body">${inner}</div></div>`;
         }).join("");
 
