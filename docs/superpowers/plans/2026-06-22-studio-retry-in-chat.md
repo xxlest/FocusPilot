@@ -1,5 +1,7 @@
 # Studio 对话消息级失败重试 Implementation Plan
 
+> **⚠️ 已被取代（2026-06-22 后续迭代）**：本计划针对「失败条件重试 / `msg_state` / 气泡内嵌 ↻」设计；该设计已整体演进为 **「对话操作栏（复制·重新生成）」** 模型——每条 agent 回复带 **📋 复制**、最后一条带 **🔄 重新生成**（任务态 = `retryTask`，聊天态 = 重发上一轮），不再依赖失败条件、不再引入 `msg_state`。权威现状见 [DesignGuide §5.10](../../DesignGuide.md)、[04-studio.md](../../fp-ui/04-studio.md) 与原型 commit `a9abb44`。下文保留为实现过程快照。
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development 或 superpowers:executing-plans 逐 task 实现。步骤用 `- [ ]` 跟踪。
 
 **Goal:** 把失败/超时重试从"卡片/详情头部按钮"改为**对话流消息气泡内嵌**(详情对话 + chatWindow),并修好 `retryTask` 刷新口径。
