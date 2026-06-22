@@ -3254,19 +3254,23 @@
                     <div class="hib-code">新建 Models.swift (+318)：定义 Workspace / Task / CrewMember / CrewRuntime 四个 Codable 结构体
 新建 ModelsTests.swift (+142)：12 个单测
 <span class="ok">✓ Build succeeded · 12 tests passed</span></div>
+                    <div class="fp-msg-actions" style="display:flex;gap:4px;margin-top:6px"><button class="btn fp-msg-btn" type="button" title="复制" aria-label="复制" onclick="copyReply(this)" style="font-size:10px;line-height:1;padding:2px 5px;min-height:0;border-color:var(--line);color:var(--muted);background:transparent">📋</button></div>
                   </div>
                   <div class="hib-trow">
                     <div class="hib-tactor">🔍 <span class="nm">质量审查员</span><span class="meta">· 评估 · 第 1 轮 / 共 3 轮</span><span class="badge">2 条意见</span></div>
                     <div class="hib-op crit"><b>Critical</b>CrewRuntime 缺少 daemon 心跳时间戳字段，无法做超时回收</div>
                     <div class="hib-op imp"><b>Important</b>Task 全量写入 UserDefaults，大对象建议按 id 分片存储</div>
+                    <div class="fp-msg-actions" style="display:flex;gap:4px;margin-top:6px"><button class="btn fp-msg-btn" type="button" title="复制" aria-label="复制" onclick="copyReply(this)" style="font-size:10px;line-height:1;padding:2px 5px;min-height:0;border-color:var(--line);color:var(--muted);background:transparent">📋</button></div>
                   </div>
                   <div class="hib-trow">
                     <div class="hib-tactor">🤖 <span class="nm">代码工程师</span><span class="meta">· 自动修复（第 2 轮）· 00:04:18</span></div>
                     <div class="hib-code">CrewRuntime 增加 lastHeartbeatAt: Date 字段；Task 持久化改为按 id 分片键存储
 <span class="ok">✓ Build succeeded · 14 tests passed</span></div>
+                    <div class="fp-msg-actions" style="display:flex;gap:4px;margin-top:6px"><button class="btn fp-msg-btn" type="button" title="复制" aria-label="复制" onclick="copyReply(this)" style="font-size:10px;line-height:1;padding:2px 5px;min-height:0;border-color:var(--line);color:var(--muted);background:transparent">📋</button></div>
                   </div>
                   <div class="hib-trow">
                     <div class="hib-tactor">🔍 <span class="nm">质量审查员</span><span class="meta">· 评估 · 第 2 轮</span><span class="pass">✓ 通过</span><span class="meta">→ 落「审核中」</span></div>
+                    <div class="fp-msg-actions" style="display:flex;gap:4px;margin-top:6px"><button class="btn fp-msg-btn" type="button" title="复制" aria-label="复制" onclick="copyReply(this)" style="font-size:10px;line-height:1;padding:2px 5px;min-height:0;border-color:var(--line);color:var(--muted);background:transparent">📋</button></div>
                   </div>
                   <div class="hib-trow">
                     <div class="hib-tactor">👤 <span class="nm">你</span><span class="meta">· 回复 = 触发下一轮 · 04-15 16:20</span></div>
@@ -3276,6 +3280,7 @@
                     <div class="hib-tactor">🤖 <span class="nm">代码工程师</span><span class="meta">· 自动执行（第 3 轮）· 00:02:36</span></div>
                     <div class="hib-code">CrewMember 增加 capabilityIndex 反向索引 + 增量维护
 <span class="ok">✓ Build succeeded · 16 tests passed</span></div>
+                    <div class="fp-msg-actions" style="display:flex;gap:4px;margin-top:6px"><button class="btn fp-msg-btn" type="button" title="复制" aria-label="复制" onclick="copyReply(this)" style="font-size:10px;line-height:1;padding:2px 5px;min-height:0;border-color:var(--line);color:var(--muted);background:transparent">📋</button><button class="btn fp-msg-btn fp-retry-btn" type="button" title="重新生成" aria-label="重新生成" onclick="retryTask('FP-001')" style="font-size:10px;line-height:1;padding:2px 5px;min-height:0;border-color:var(--line);color:var(--muted);background:transparent">🔄</button></div>
                   </div>
                   <div class="hib-accept">✅ <b>你已验收通过</b> · 拖入「已完成」· 04-16 09:30 · 共 3 轮 · 累计耗时 15m06s</div>
                 </div>
@@ -4338,7 +4343,7 @@
                   <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);margin-bottom:6px">📄 任务描述</div>
                   <div style="background:var(--bg);border:1px solid var(--line-soft);border-radius:var(--radius);padding:10px;font-size:12px;line-height:1.6;color:var(--muted);margin-bottom:14px">实现 Workspace 看板视图的状态模型，采用 Multica 7 态流转：backlog → todo → in_progress ⇄ in_review → done，旁路状态 blocked / cancelled。</div>
                   <div style="border-top:1px dashed var(--line-soft);margin:0 0 14px"></div>
-                  <div style="display:flex;gap:8px;margin-bottom:14px"><span style="flex-shrink:0">🤖</span><div style="flex:1;min-width:0"><div style="font-size:11px;margin-bottom:4px"><strong>代码工程师</strong> <span style="color:var(--dim)">· 自动执行 · 00:03:42</span></div><div style="font-family:var(--mono);font-size:10px;line-height:1.7;color:var(--muted);background:var(--bg);border:1px solid var(--line-soft);border-radius:6px;padding:8px">修改 Models.swift (+42)、新建 KanbanDataSource.swift (+186)<br><span style="color:var(--green)">✓ Build succeeded</span></div><div class="fp-msg-actions" style="display:flex;gap:4px;margin-top:6px"><button class="btn fp-msg-btn" type="button" title="复制" onclick="copyReply(this)" style="font-size:11px;line-height:1;padding:2px 6px;min-height:0;border-color:var(--line);color:var(--muted);background:transparent">📋</button><button class="btn fp-msg-btn fp-retry-btn" type="button" title="重新生成" onclick="retryCurrentDetail()" style="font-size:11px;line-height:1;padding:2px 6px;min-height:0;border-color:var(--line);color:var(--muted);background:transparent">🔄</button></div></div></div>
+                  <div style="display:flex;gap:8px;margin-bottom:14px"><span style="flex-shrink:0">🤖</span><div style="flex:1;min-width:0"><div style="font-size:11px;margin-bottom:4px"><strong>代码工程师</strong> <span style="color:var(--dim)">· 自动执行 · 00:03:42</span></div><div style="font-family:var(--mono);font-size:10px;line-height:1.7;color:var(--muted);background:var(--bg);border:1px solid var(--line-soft);border-radius:6px;padding:8px">修改 Models.swift (+42)、新建 KanbanDataSource.swift (+186)<br><span style="color:var(--green)">✓ Build succeeded</span></div><div class="fp-msg-actions" style="display:flex;gap:4px;margin-top:6px"><button class="btn fp-msg-btn" type="button" title="复制" onclick="copyReply(this)" style="font-size:10px;line-height:1;padding:2px 5px;min-height:0;border-color:var(--line);color:var(--muted);background:transparent">📋</button><button class="btn fp-msg-btn fp-retry-btn" type="button" title="重新生成" onclick="retryCurrentDetail()" style="font-size:10px;line-height:1;padding:2px 5px;min-height:0;border-color:var(--line);color:var(--muted);background:transparent">🔄</button></div></div></div>
                   <div style="display:flex;gap:8px;margin-bottom:14px"><span style="flex-shrink:0">🔍</span><div style="flex:1;min-width:0"><div style="font-size:11px;margin-bottom:4px"><strong>质量审查员</strong> <span style="color:var(--dim)">· 评估 · 第 1 轮 / 共 3 轮</span> <span class="pill amber" style="font-size:9px;padding:1px 5px">2 条意见</span></div><div style="padding:6px 9px;background:rgba(248,113,113,.08);border-left:3px solid var(--red);border-radius:0 4px 4px 0;margin-bottom:4px;font-size:11px"><strong style="color:var(--red)">Critical</strong> 状态转换缺少 blocked→todo 路径</div><div style="padding:6px 9px;background:rgba(242,196,15,.08);border-left:3px solid var(--amber);border-radius:0 4px 4px 0;font-size:11px"><strong style="color:var(--amber)">Important</strong> 拖拽动画帧率偏低</div></div></div>
                   <div style="display:flex;gap:8px;margin-bottom:14px"><span style="flex-shrink:0">🤖</span><div style="flex:1;min-width:0"><div style="font-size:11px;margin-bottom:4px"><strong>代码工程师</strong> <span style="color:var(--dim)">· 自动修复（第 2 轮）</span></div><div style="font-family:var(--mono);font-size:10px;line-height:1.7;color:var(--muted);background:var(--bg);border:1px solid var(--line-soft);border-radius:6px;padding:8px">补充 blocked→todo 转换 + 提升动画帧率</div></div></div>
                   <div style="display:flex;gap:8px;margin-bottom:14px"><span style="flex-shrink:0">🔍</span><div style="flex:1;min-width:0"><div style="font-size:11px"><strong>质量审查员</strong> <span style="color:var(--dim)">· 评估 · 第 2 轮</span> <span class="pill green" style="font-size:9px;padding:1px 5px">✓ 通过</span> <span style="color:var(--dim)">→ 落「审核中」</span></div></div></div>
@@ -4556,10 +4561,8 @@
                       <div style="flex-shrink:0;width:22px;height:22px;border-radius:50%;background:var(--surface);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:11px;margin-top:2px">🤖</div>
                       <div style="max-width:85%">
                         <div style="font-size:12px;line-height:1.6;color:var(--text);margin-bottom:8px">好的，我来修改 KanbanDataSource 中的动画参数。</div>
-                        <div style="background:var(--bg);border:1px solid var(--line-soft);border-radius:var(--radius);padding:8px 12px;font-family:var(--mono);font-size:11px;line-height:1.5;color:var(--muted);display:flex;align-items:center;justify-content:space-between">
-                          <span>已修改: <span style="color:var(--amber)">~</span> KanbanDataSource.swift <span style="color:var(--green)">+3</span> <span style="color:var(--red)">-2</span></span>
-                          <span style="color:var(--accent);cursor:pointer;font-size:10px">查看 Diff →</span>
-                        </div>
+                        <div style="background:var(--bg);border:1px solid var(--line-soft);border-radius:var(--radius);padding:8px 12px;font-family:var(--mono);font-size:11px;line-height:1.5;color:var(--muted)">已修改: <span style="color:var(--amber)">~</span> KanbanDataSource.swift <span style="color:var(--green)">+3</span> <span style="color:var(--red)">-2</span></div>
+                        <div class="fp-msg-actions" style="display:flex;gap:4px;margin-top:6px"><button class="btn fp-msg-btn" type="button" title="复制" aria-label="复制" onclick="copyReply(this)" style="font-size:10px;line-height:1;padding:2px 5px;min-height:0;border-color:var(--line);color:var(--muted);background:transparent">📋</button></div>
                       </div>
                     </div>
                     <!-- 用户消息 2 -->
@@ -4572,6 +4575,7 @@
                       <div style="flex-shrink:0;width:22px;height:22px;border-radius:50%;background:var(--surface);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:11px;margin-top:2px">🤖</div>
                       <div style="max-width:85%">
                         <div style="background:var(--bg);border:1px solid var(--line-soft);border-radius:var(--radius);padding:8px 12px;font-family:var(--mono);font-size:11px;line-height:1.6;color:var(--green);margin-bottom:8px">$ make build<br><span style="color:var(--green)">✓ Build succeeded</span></div>
+                        <div class="fp-msg-actions" style="display:flex;gap:4px;margin-top:6px"><button class="btn fp-msg-btn" type="button" title="复制" aria-label="复制" onclick="copyReply(this)" style="font-size:10px;line-height:1;padding:2px 5px;min-height:0;border-color:var(--line);color:var(--muted);background:transparent">📋</button></div>
                       </div>
                     </div>
                     <!-- 审批卡片 -->
@@ -4586,6 +4590,7 @@
                             <button class="btn" style="font-size:10px">✎ Edit</button>
                           </div>
                         </div>
+                        <div class="fp-msg-actions" style="display:flex;gap:4px;margin-top:6px"><button class="btn fp-msg-btn" type="button" title="复制" aria-label="复制" onclick="copyReply(this)" style="font-size:10px;line-height:1;padding:2px 5px;min-height:0;border-color:var(--line);color:var(--muted);background:transparent">📋</button><button class="btn fp-msg-btn fp-retry-btn" type="button" title="重新生成" aria-label="重新生成" onclick="regenChatWindow(this)" style="font-size:10px;line-height:1;padding:2px 5px;min-height:0;border-color:var(--line);color:var(--muted);background:transparent">🔄</button></div>
                       </div>
                     </div>
                   </div>
@@ -7513,11 +7518,11 @@ FocusPilot/
 
       // 复制按钮（每条 agent 回复都有；图标 only，hover 显示文字提示）
       function copyBtnHtml() {
-        return '<button class="btn fp-msg-btn" type="button" title="复制" aria-label="复制" onclick="copyReply(this)" style="font-size:11px;line-height:1;padding:2px 6px;min-height:0;border-color:var(--line);color:var(--muted);background:transparent">📋</button>';
+        return '<button class="btn fp-msg-btn" type="button" title="复制" aria-label="复制" onclick="copyReply(this)" style="font-size:10px;line-height:1;padding:2px 5px;min-height:0;border-color:var(--line);color:var(--muted);background:transparent">📋</button>';
       }
       // 重新生成按钮（仅最后一条 agent 回复；图标 only，hover 显示文字提示）
       function regenBtnHtml(regenOnclick) {
-        return '<button class="btn fp-msg-btn fp-retry-btn" type="button" title="重新生成" aria-label="重新生成" onclick="' + regenOnclick + '" style="font-size:11px;line-height:1;padding:2px 6px;min-height:0;border-color:var(--line);color:var(--muted);background:transparent">🔄</button>';
+        return '<button class="btn fp-msg-btn fp-retry-btn" type="button" title="重新生成" aria-label="重新生成" onclick="' + regenOnclick + '" style="font-size:10px;line-height:1;padding:2px 5px;min-height:0;border-color:var(--line);color:var(--muted);background:transparent">🔄</button>';
       }
       // 消息操作栏：每条都有「复制」；isLast=true 额外加「重新生成」
       function msgActionsHtml(regenOnclick, isLast) {
@@ -7527,7 +7532,7 @@ FocusPilot/
       }
       // 复制该回复文本到剪贴板（原型演示：取操作栏所在回复块纯文本，去掉图标）
       function copyReply(btn) {
-        var box = btn.closest('.message, .msg, .rd-round-body') || (btn.parentElement ? btn.parentElement.parentElement : null);
+        var box = btn.closest('.message, .msg, .rd-round-body, .hib-trow') || (btn.parentElement ? btn.parentElement.parentElement : null);
         var text = box ? (box.innerText || box.textContent || '') : '';
         text = text.replace(/📋|🔄|✓|⏳/g, '').trim();
         try { if (navigator.clipboard) navigator.clipboard.writeText(text); } catch (e) {}
@@ -8784,14 +8789,14 @@ FocusPilot/
           exec: null,
           // 已完成任务的完整对话流：执行 Agent ⇄ 评估 Agent 多轮接力 + 人工回复触发下一轮 + 验收落「已完成」
           conv:
-            '<div style="display:flex;gap:8px;margin-bottom:14px"><span style="flex-shrink:0">🤖</span><div style="flex:1;min-width:0"><div style="font-size:11px;margin-bottom:4px"><strong>代码工程师</strong> <span style="color:var(--dim)">· 自动执行（第 1 轮）· 00:08:12</span></div><div style="font-family:var(--mono);font-size:10px;line-height:1.7;color:var(--muted);background:var(--bg);border:1px solid var(--line-soft);border-radius:6px;padding:8px">新建 Models.swift (+318)：定义 Workspace / Task / CrewMember / CrewRuntime 四个 Codable 结构体<br>新建 ConfigStore+Codable.swift (+96)：UserDefaults 序列化 + 单字段保存<br>新建 ModelsTests.swift (+142)：12 个单测<br><span style="color:var(--green)">✓ Build succeeded · 12 tests passed</span></div></div></div>' +
-            '<div style="display:flex;gap:8px;margin-bottom:14px"><span style="flex-shrink:0">🔍</span><div style="flex:1;min-width:0"><div style="font-size:11px;margin-bottom:4px"><strong>质量审查员</strong> <span style="color:var(--dim)">· 评估 · 第 1 轮 / 共 3 轮</span> <span class="pill amber" style="font-size:9px;padding:1px 5px">2 条意见</span></div><div style="padding:6px 9px;background:rgba(248,113,113,.08);border-left:3px solid var(--red);border-radius:0 4px 4px 0;margin-bottom:4px;font-size:11px"><strong style="color:var(--red)">Critical</strong> CrewRuntime 缺少 daemon 心跳时间戳字段，无法做超时回收</div><div style="padding:6px 9px;background:rgba(242,196,15,.08);border-left:3px solid var(--amber);border-radius:0 4px 4px 0;font-size:11px"><strong style="color:var(--amber)">Important</strong> Task 全量写入 UserDefaults，大对象建议按 id 分片存储</div></div></div>' +
-            '<div style="display:flex;gap:8px;margin-bottom:14px"><span style="flex-shrink:0">🤖</span><div style="flex:1;min-width:0"><div style="font-size:11px;margin-bottom:4px"><strong>代码工程师</strong> <span style="color:var(--dim)">· 自动修复（第 2 轮）· 00:04:18</span></div><div style="font-family:var(--mono);font-size:10px;line-height:1.7;color:var(--muted);background:var(--bg);border:1px solid var(--line-soft);border-radius:6px;padding:8px">CrewRuntime 增加 lastHeartbeatAt: Date 字段 + 编解码<br>Task 持久化改为按 id 分片键存储<br><span style="color:var(--green)">✓ Build succeeded · 14 tests passed</span></div></div></div>' +
-            '<div style="display:flex;gap:8px;margin-bottom:14px"><span style="flex-shrink:0">🔍</span><div style="flex:1;min-width:0"><div style="font-size:11px"><strong>质量审查员</strong> <span style="color:var(--dim)">· 评估 · 第 2 轮</span> <span class="pill green" style="font-size:9px;padding:1px 5px">✓ 通过</span> <span style="color:var(--dim)">→ 落「审核中」</span></div></div></div>' +
+            '<div style="display:flex;gap:8px;margin-bottom:14px"><span style="flex-shrink:0">🤖</span><div style="flex:1;min-width:0"><div style="font-size:11px;margin-bottom:4px"><strong>代码工程师</strong> <span style="color:var(--dim)">· 自动执行（第 1 轮）· 00:08:12</span></div><div style="font-family:var(--mono);font-size:10px;line-height:1.7;color:var(--muted);background:var(--bg);border:1px solid var(--line-soft);border-radius:6px;padding:8px">新建 Models.swift (+318)：定义 Workspace / Task / CrewMember / CrewRuntime 四个 Codable 结构体<br>新建 ConfigStore+Codable.swift (+96)：UserDefaults 序列化 + 单字段保存<br>新建 ModelsTests.swift (+142)：12 个单测<br><span style="color:var(--green)">✓ Build succeeded · 12 tests passed</span></div>' + msgActionsHtml('', false) + '</div></div>' +
+            '<div style="display:flex;gap:8px;margin-bottom:14px"><span style="flex-shrink:0">🔍</span><div style="flex:1;min-width:0"><div style="font-size:11px;margin-bottom:4px"><strong>质量审查员</strong> <span style="color:var(--dim)">· 评估 · 第 1 轮 / 共 3 轮</span> <span class="pill amber" style="font-size:9px;padding:1px 5px">2 条意见</span></div><div style="padding:6px 9px;background:rgba(248,113,113,.08);border-left:3px solid var(--red);border-radius:0 4px 4px 0;margin-bottom:4px;font-size:11px"><strong style="color:var(--red)">Critical</strong> CrewRuntime 缺少 daemon 心跳时间戳字段，无法做超时回收</div><div style="padding:6px 9px;background:rgba(242,196,15,.08);border-left:3px solid var(--amber);border-radius:0 4px 4px 0;font-size:11px"><strong style="color:var(--amber)">Important</strong> Task 全量写入 UserDefaults，大对象建议按 id 分片存储</div>' + msgActionsHtml('', false) + '</div></div>' +
+            '<div style="display:flex;gap:8px;margin-bottom:14px"><span style="flex-shrink:0">🤖</span><div style="flex:1;min-width:0"><div style="font-size:11px;margin-bottom:4px"><strong>代码工程师</strong> <span style="color:var(--dim)">· 自动修复（第 2 轮）· 00:04:18</span></div><div style="font-family:var(--mono);font-size:10px;line-height:1.7;color:var(--muted);background:var(--bg);border:1px solid var(--line-soft);border-radius:6px;padding:8px">CrewRuntime 增加 lastHeartbeatAt: Date 字段 + 编解码<br>Task 持久化改为按 id 分片键存储<br><span style="color:var(--green)">✓ Build succeeded · 14 tests passed</span></div>' + msgActionsHtml('', false) + '</div></div>' +
+            '<div style="display:flex;gap:8px;margin-bottom:14px"><span style="flex-shrink:0">🔍</span><div style="flex:1;min-width:0"><div style="font-size:11px"><strong>质量审查员</strong> <span style="color:var(--dim)">· 评估 · 第 2 轮</span> <span class="pill green" style="font-size:9px;padding:1px 5px">✓ 通过</span> <span style="color:var(--dim)">→ 落「审核中」</span></div>' + msgActionsHtml('', false) + '</div></div>' +
             '<div style="border-top:1px dashed var(--line-soft);margin:0 0 14px"></div>' +
             '<div style="display:flex;gap:8px;margin-bottom:14px"><span style="flex-shrink:0">👤</span><div style="flex:1;min-width:0"><div style="font-size:11px;margin-bottom:4px"><strong>你</strong> <span style="color:var(--dim)">· 回复 = 触发下一轮 · 04-15 16:20</span></div><div style="font-size:12px;color:var(--text);background:var(--elevated);border-radius:6px;padding:7px 9px">CrewMember 的能力标签（capabilities）也加一个索引，后面按能力筛选 Agent 要用</div></div></div>' +
-            '<div style="display:flex;gap:8px;margin-bottom:14px"><span style="flex-shrink:0">🤖</span><div style="flex:1;min-width:0"><div style="font-size:11px;margin-bottom:4px"><strong>代码工程师</strong> <span style="color:var(--dim)">· 自动执行（第 3 轮）· 00:02:36</span></div><div style="font-family:var(--mono);font-size:10px;line-height:1.7;color:var(--muted);background:var(--bg);border:1px solid var(--line-soft);border-radius:6px;padding:8px">CrewMember 增加 capabilityIndex: [String: [UUID]] 反向索引 + 增量维护<br><span style="color:var(--green)">✓ Build succeeded · 16 tests passed</span></div></div></div>' +
-            '<div style="display:flex;gap:8px;margin-bottom:14px"><span style="flex-shrink:0">🔍</span><div style="flex:1;min-width:0"><div style="font-size:11px"><strong>质量审查员</strong> <span style="color:var(--dim)">· 评估 · 第 3 轮</span> <span class="pill green" style="font-size:9px;padding:1px 5px">✓ 通过</span></div></div></div>' +
+            '<div style="display:flex;gap:8px;margin-bottom:14px"><span style="flex-shrink:0">🤖</span><div style="flex:1;min-width:0"><div style="font-size:11px;margin-bottom:4px"><strong>代码工程师</strong> <span style="color:var(--dim)">· 自动执行（第 3 轮）· 00:02:36</span></div><div style="font-family:var(--mono);font-size:10px;line-height:1.7;color:var(--muted);background:var(--bg);border:1px solid var(--line-soft);border-radius:6px;padding:8px">CrewMember 增加 capabilityIndex: [String: [UUID]] 反向索引 + 增量维护<br><span style="color:var(--green)">✓ Build succeeded · 16 tests passed</span></div>' + msgActionsHtml('', false) + '</div></div>' +
+            '<div style="display:flex;gap:8px;margin-bottom:14px"><span style="flex-shrink:0">🔍</span><div style="flex:1;min-width:0"><div style="font-size:11px"><strong>质量审查员</strong> <span style="color:var(--dim)">· 评估 · 第 3 轮</span> <span class="pill green" style="font-size:9px;padding:1px 5px">✓ 通过</span></div>' + msgActionsHtml('retryTask(\'FP-001\')', true) + '</div></div>' +
             '<div style="border-top:1px dashed var(--line-soft);margin:0 0 14px"></div>' +
             '<div style="display:flex;gap:8px;align-items:center;background:rgba(74,222,128,.08);border:1px solid rgba(74,222,128,.25);border-radius:var(--radius);padding:9px 12px"><span style="flex-shrink:0">✅</span><div style="flex:1;min-width:0;font-size:11px"><strong style="color:var(--green)">你已验收通过</strong> <span style="color:var(--dim)">· 拖入「已完成」· 04-16 09:30 · 共 3 轮 · 累计耗时 15m06s</span></div></div>'
         },
@@ -8908,7 +8913,7 @@ FocusPilot/
           var convHtml = '<div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);margin-bottom:6px">📄 任务描述</div>' +
             '<div style="background:var(--bg);border:1px solid var(--line-soft);border-radius:var(--radius);padding:10px;font-size:12px;line-height:1.6;color:var(--muted);margin-bottom:14px">' + task.desc + '</div>';
           if (task.conv) {
-            convHtml += '<div style="border-top:1px dashed var(--line-soft);margin:0 0 14px"></div>' + task.conv + msgActionsHtml('retryTask(\'' + task.id + '\')', true);
+            convHtml += '<div style="border-top:1px dashed var(--line-soft);margin:0 0 14px"></div>' + task.conv;
           } else if (task.exec) {
             convHtml += '<div style="border-top:1px dashed var(--line-soft);margin:0 0 14px"></div>' +
               '<div style="display:flex;gap:8px;margin-bottom:14px"><span style="flex-shrink:0">🤖</span><div style="flex:1;min-width:0">' +
@@ -8960,7 +8965,7 @@ FocusPilot/
           var convHtml = '<div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);margin-bottom:6px">📄 任务描述</div>' +
             '<div style="background:var(--bg);border:1px solid var(--line-soft);border-radius:var(--radius);padding:10px;font-size:12px;line-height:1.6;color:var(--muted);margin-bottom:14px">' + task.desc + '</div>';
           if (task.conv) {
-            convHtml += '<div style="border-top:1px dashed var(--line-soft);margin:0 0 14px"></div>' + task.conv + msgActionsHtml('retryTask(\'' + task.id + '\')', true);
+            convHtml += '<div style="border-top:1px dashed var(--line-soft);margin:0 0 14px"></div>' + task.conv;
           } else if (task.exec) {
             convHtml += '<div style="border-top:1px dashed var(--line-soft);margin:0 0 14px"></div>' +
               '<div style="display:flex;gap:8px;margin-bottom:14px"><span style="flex-shrink:0">🤖</span><div style="flex:1;min-width:0">' +
@@ -10539,14 +10544,17 @@ FocusPilot/
         html += '<div style="font-size:11px;font-family:var(--mono);color:var(--muted)">' + data.agent + ' · ' + data.model + '</div>';
         if (data.preset) html += '<div style="font-size:11px;color:var(--dim);margin-top:4px">' + data.preset + '</div>';
         html += '</div><div style="display:flex;flex-direction:column;gap:16px">';
-        data.messages.forEach(function(m) {
+        var _lastStudioAgent = -1;
+        data.messages.forEach(function(m, i) { if (m.role !== 'user') _lastStudioAgent = i; });
+        data.messages.forEach(function(m, i) {
           if (m.role === 'user') {
             html += '<div style="display:flex;gap:8px;align-items:flex-start"><div style="flex-shrink:0;width:22px;height:22px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;margin-top:2px">👤</div><div style="background:var(--elevated);border:1px solid var(--line-soft);border-radius:10px;padding:10px 14px;font-size:12px;line-height:1.6;max-width:80%">' + m.text + '</div></div>';
           } else {
             html += '<div style="display:flex;gap:8px;align-items:flex-start"><div style="flex-shrink:0;width:22px;height:22px;border-radius:50%;background:var(--surface);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:11px;margin-top:2px">🤖</div><div style="max-width:85%">';
             if (m.text) html += '<div style="font-size:12px;line-height:1.6;color:var(--text);margin-bottom:8px;white-space:pre-line">' + m.text + '</div>';
             if (m.terminal) html += '<div style="background:var(--bg);border:1px solid var(--line-soft);border-radius:var(--radius);padding:8px 12px;font-family:var(--mono);font-size:11px;line-height:1.6;color:var(--green);margin-bottom:8px;white-space:pre">' + m.terminal + '</div>';
-            if (m.diff) html += '<div style="background:var(--bg);border:1px solid var(--line-soft);border-radius:var(--radius);padding:8px 12px;font-family:var(--mono);font-size:11px;line-height:1.5;color:var(--muted);display:flex;align-items:center;justify-content:space-between"><span>已修改: <span style="color:var(--amber)">~</span> ' + m.diff + '</span><span style="color:var(--accent);cursor:pointer;font-size:10px">查看 Diff →</span></div>';
+            if (m.diff) html += '<div style="background:var(--bg);border:1px solid var(--line-soft);border-radius:var(--radius);padding:8px 12px;font-family:var(--mono);font-size:11px;line-height:1.5;color:var(--muted)">已修改: <span style="color:var(--amber)">~</span> ' + m.diff + '</div>';
+            html += msgActionsHtml('regenChatWindow(this)', i === _lastStudioAgent);
             html += '</div></div>';
           }
         });
@@ -13923,17 +13931,6 @@ FocusPilot/
         padding: 8px;
       }
 .fb-root .rd-round-actions { display: flex; gap: 6px; margin-top: 6px; }
-.fb-root .rd-mini-btn {
-        font-size: 9px;
-        min-height: 22px;
-        padding: 0 8px;
-        border: 1px solid var(--line);
-        border-radius: 6px;
-        background: #fff;
-        color: var(--ink);
-        cursor: pointer;
-      }
-.fb-root .rd-mini-btn:hover { background: #f0efeb; }
 .fb-root .rd-opinion {
         padding: 6px 9px;
         border-radius: 0 4px 4px 0;
