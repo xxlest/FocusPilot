@@ -8827,6 +8827,13 @@ FocusPilot/
           desc: '深入研究 Multica 的 Agent Runtime 执行模式、Workspace 数据模型和 Task Queue 实现，为 FocusPilot 提供设计参考。',
           plan: null,
           exec: null
+        },
+        'PO-002': {
+          id: 'PO-002', title: 'API 文档更新', status: 'in_progress', statusLabel: '● In Progress', statusClass: 'blue',
+          priority: 'P1', mode: 'dialog', agent: '代码工程师', schedule: '今天', goal: '—',
+          desc: '更新 PilotOne 对外 API 文档：补全鉴权、分页、错误码章节，并与最新接口对齐。',
+          plan: null,
+          exec: { agent: '代码工程师', status: '执行超时', time: '00:30:00', step: '已中止', run_state: 'timeout', logs: '> 拉取最新接口定义...<br>> 生成鉴权章节...<br>> ✕ 执行超时 · Run 超过 30min 上限，已中止' }
         }
       };
 
