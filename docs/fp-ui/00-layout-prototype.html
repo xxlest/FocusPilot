@@ -7505,6 +7505,14 @@ FocusPilot/
         if (idEl && idEl.textContent === id && typeof openTaskDetail === 'function') openTaskDetail(id);
       }
 
+      // 失败/超时消息气泡内的「⚠报错 + ↻重试」统一片段（中性色按钮，DesignGuide §5.10；不用任何状态色）
+      function retryBubbleHtml(reasonText, onclickExpr) {
+        return '<div style="margin-top:8px;padding:8px 10px;background:rgba(220,38,38,.06);border:1px solid var(--line-soft);border-radius:6px">' +
+          '<div style="font-size:11px;color:var(--red);margin-bottom:6px">⚠ ' + reasonText + '</div>' +
+          '<button class="btn fp-retry-btn" onclick="' + onclickExpr + '" style="font-size:10px;padding:2px 10px;min-height:0;border-color:var(--line);color:var(--muted)">↻ 重试</button>' +
+          '</div>';
+      }
+
       /* ── Render: Kanban Board from workItems ── */
       function createKanbanCard(item) {
         var cardMeta = getWorkspaceMeta(item.projectId || deriveWorkspaceIdForItem(item));
@@ -8859,7 +8867,10 @@ FocusPilot/
               '<div style="display:flex;gap:8px;margin-bottom:14px"><span style="flex-shrink:0">🤖</span><div style="flex:1;min-width:0">' +
               '<div style="font-size:11px;margin-bottom:4px"><strong>' + task.exec.agent + '</strong> <span style="color:var(--dim)">· 自动执行 · ' + task.exec.time + '</span></div>' +
               '<div style="font-family:var(--mono);font-size:10px;line-height:1.7;color:var(--muted);background:var(--bg);border:1px solid var(--line-soft);border-radius:6px;padding:8px">' + task.exec.logs + '</div>' +
-              '<div style="display:flex;gap:6px;margin-top:6px"><button class="btn" style="font-size:9px;min-height:22px;padding:0 8px">查看 Diff</button><button class="btn" style="font-size:9px;min-height:22px;padding:0 8px">日志</button></div></div></div>';
+              ((task.exec.run_state === 'failed' || task.exec.run_state === 'timeout')
+                ? retryBubbleHtml(task.exec.run_state === 'timeout' ? '执行超时 · Run 已中止' : '执行失败 · Run 报错中止', 'retryTask(\'' + task.id + '\')')
+                : '<div style="display:flex;gap:6px;margin-top:6px"><button class="btn" style="font-size:9px;min-height:22px;padding:0 8px">查看 Diff</button><button class="btn" style="font-size:9px;min-height:22px;padding:0 8px">日志</button></div>') +
+              '</div></div>';
           } else {
             convHtml += '<div style="background:var(--bg);border:1px solid var(--line-soft);border-radius:var(--radius);padding:20px;text-align:center;font-size:12px;color:var(--dim)">尚未开始执行 — 拖到「待办」即由 Agent 自动执行</div>';
           }
@@ -8910,7 +8921,10 @@ FocusPilot/
               '<div style="display:flex;gap:8px;margin-bottom:14px"><span style="flex-shrink:0">🤖</span><div style="flex:1;min-width:0">' +
               '<div style="font-size:11px;margin-bottom:4px"><strong>' + task.exec.agent + '</strong> <span style="color:var(--dim)">· 自动执行 · ' + task.exec.time + '</span></div>' +
               '<div style="font-family:var(--mono);font-size:10px;line-height:1.7;color:var(--muted);background:var(--bg);border:1px solid var(--line-soft);border-radius:6px;padding:8px">' + task.exec.logs + '</div>' +
-              '<div style="display:flex;gap:6px;margin-top:6px"><button class="btn" style="font-size:9px;min-height:22px;padding:0 8px">查看 Diff</button><button class="btn" style="font-size:9px;min-height:22px;padding:0 8px">日志</button></div></div></div>';
+              ((task.exec.run_state === 'failed' || task.exec.run_state === 'timeout')
+                ? retryBubbleHtml(task.exec.run_state === 'timeout' ? '执行超时 · Run 已中止' : '执行失败 · Run 报错中止', 'retryTask(\'' + task.id + '\')')
+                : '<div style="display:flex;gap:6px;margin-top:6px"><button class="btn" style="font-size:9px;min-height:22px;padding:0 8px">查看 Diff</button><button class="btn" style="font-size:9px;min-height:22px;padding:0 8px">日志</button></div>') +
+              '</div></div>';
           } else {
             convHtml += '<div style="background:var(--bg);border:1px solid var(--line-soft);border-radius:var(--radius);padding:20px;text-align:center;font-size:12px;color:var(--dim)">尚未开始执行 — 拖到「待办」即由 Agent 自动执行</div>';
           }
@@ -14847,6 +14861,7 @@ FocusPilot/
             { ic: "🤖", who: "代码工程师", meta: "自动执行 · 00:05:30", code: "新建 StatusProjection.swift (+96)<br><span style=\"color:var(--green)\">✓ Build succeeded · 8 tests passed</span>", actions: true },
             { ic: "🔍", who: "质量审查员", meta: "评估 · 第 1 轮 / 共 3 轮", pill: { text: "1 条意见", cls: "amber" }, opinions: [
               { level: "Important", cls: "imp", text: "多 Workspace 并发更新需加节流" } ] },
+            { ic: "🤖", who: "代码工程师", meta: "自动修复（第 2 轮）· 00:00:48", code: "接入并发节流…<br><span style=\"color:var(--red)\">✕ 执行失败 · 节流模块编译报错</span>", retry: { reason: "执行失败 · Run 报错中止" } },
           ],
           attrs: { priorityKey: "p1", agentKey: "code", execmodeKey: "auto", evalKey: "qa3", schedule: "本周", workspace: "📁 本地项目", project: "PilotOne", goal: ["4月/FP 0.0.1", "PilotOne 0.0.1"], date: "04-22" },
         },
@@ -15036,6 +15051,7 @@ FocusPilot/
           if (r.actions) inner += `<div class="rd-round-actions"><button class="rd-mini-btn" type="button">查看 Diff</button><button class="rd-mini-btn" type="button">日志</button></div>`;
           if (r.opinions) inner += r.opinions.map((o) => `<div class="rd-opinion ${o.cls}"><strong>${o.level}</strong> ${o.text}</div>`).join("");
           if (r.user) inner += `<div class="rd-user">${r.user}</div>`;
+          if (r.retry) inner += retryBubbleHtml(r.retry.reason || '执行失败 · Run 中止', "retryTask('" + d.id + "')");
           return `<div class="rd-round"><span class="ic">${r.ic}</span><div class="rd-round-body">${inner}</div></div>`;
         }).join("");
 
