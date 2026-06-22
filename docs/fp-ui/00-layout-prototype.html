@@ -7505,21 +7505,46 @@ FocusPilot/
         if (idEl && idEl.textContent === id && typeof openTaskDetail === 'function') openTaskDetail(id);
       }
 
-      // agent 回复操作栏：📋复制 + 🔄重新生成（每个最后一轮 agent 回复用，无条件，中性色，DesignGuide §5.10）
-      function actionBarHtml(regenOnclick) {
-        return '<div class="fp-msg-actions" style="display:flex;gap:6px;margin-top:8px">' +
-          '<button class="btn" type="button" onclick="copyReply(this)" style="font-size:10px;padding:2px 9px;min-height:0;border-color:var(--line);color:var(--muted)">📋 复制</button>' +
-          '<button class="btn fp-retry-btn" type="button" onclick="' + regenOnclick + '" style="font-size:10px;padding:2px 9px;min-height:0;border-color:var(--line);color:var(--muted)">🔄 重新生成</button>' +
+      // 复制按钮（每条 agent 回复都有；图标 only，hover 显示文字提示）
+      function copyBtnHtml() {
+        return '<button class="btn fp-msg-btn" type="button" title="复制" aria-label="复制" onclick="copyReply(this)" style="font-size:13px;line-height:1;padding:3px 7px;min-height:0;border-color:var(--line);color:var(--muted);background:transparent">📋</button>';
+      }
+      // 重新生成按钮（仅最后一条 agent 回复；图标 only，hover 显示文字提示）
+      function regenBtnHtml(regenOnclick) {
+        return '<button class="btn fp-msg-btn fp-retry-btn" type="button" title="重新生成" aria-label="重新生成" onclick="' + regenOnclick + '" style="font-size:13px;line-height:1;padding:3px 7px;min-height:0;border-color:var(--line);color:var(--muted);background:transparent">🔄</button>';
+      }
+      // 消息操作栏：每条都有「复制」；isLast=true 额外加「重新生成」
+      function msgActionsHtml(regenOnclick, isLast) {
+        return '<div class="fp-msg-actions" style="display:flex;gap:4px;margin-top:6px">' +
+          copyBtnHtml() + (isLast ? regenBtnHtml(regenOnclick) : '') +
           '</div>';
       }
-      // 复制该回复文本到剪贴板（原型演示：取操作栏所在回复块的纯文本）
+      // 复制该回复文本到剪贴板（原型演示：取操作栏所在回复块纯文本，去掉图标）
       function copyReply(btn) {
-        var box = btn.parentElement ? btn.parentElement.parentElement : null;
+        var box = btn.closest('.message, .msg, .rd-round-body') || (btn.parentElement ? btn.parentElement.parentElement : null);
         var text = box ? (box.innerText || box.textContent || '') : '';
-        text = text.replace(/📋 复制|🔄 重新生成|✓ 已复制/g, '').trim();
+        text = text.replace(/📋|🔄|✓|⏳/g, '').trim();
         try { if (navigator.clipboard) navigator.clipboard.writeText(text); } catch (e) {}
-        btn.textContent = '✓ 已复制';
-        setTimeout(function () { btn.textContent = '📋 复制'; }, 1200);
+        btn.textContent = '✓';
+        setTimeout(function () { btn.textContent = '📋'; }, 1000);
+      }
+      // chatWindow(#chatThread, class="msg agent")统一注入操作栏：每条 agent 复制，最后一条加重新生成
+      function refreshChatActions() {
+        var thread = document.getElementById('chatThread');
+        if (!thread) return;
+        var agents = thread.querySelectorAll('.msg.agent');
+        agents.forEach(function (el, i) {
+          var bar = el.querySelector('.fp-msg-actions');
+          if (!bar) { bar = document.createElement('div'); el.appendChild(bar); }
+          bar.className = 'fp-msg-actions';
+          bar.style.cssText = 'display:flex;gap:4px;margin-top:6px';
+          bar.innerHTML = copyBtnHtml() + (i === agents.length - 1 ? regenBtnHtml('regenChatWindow(this)') : '');
+        });
+      }
+      // chatWindow 重新生成（原型演示：图标短暂转圈）
+      function regenChatWindow(btn) {
+        btn.textContent = '⏳';
+        setTimeout(function () { btn.textContent = '🔄'; }, 1000);
       }
 
       /* ── Render: Kanban Board from workItems ── */
@@ -8884,7 +8909,7 @@ FocusPilot/
               '<div style="font-size:11px;margin-bottom:4px"><strong>' + task.exec.agent + '</strong> <span style="color:var(--dim)">· 自动执行 · ' + task.exec.time + '</span></div>' +
               '<div style="font-family:var(--mono);font-size:10px;line-height:1.7;color:var(--muted);background:var(--bg);border:1px solid var(--line-soft);border-radius:6px;padding:8px">' + task.exec.logs + '</div>' +
               '<div style="display:flex;gap:6px;margin-top:6px"><button class="btn" style="font-size:9px;min-height:22px;padding:0 8px">查看 Diff</button><button class="btn" style="font-size:9px;min-height:22px;padding:0 8px">日志</button></div>' +
-              actionBarHtml('retryTask(\'' + task.id + '\')') +
+              msgActionsHtml('retryTask(\'' + task.id + '\')', true) +
               '</div></div>';
           } else {
             convHtml += '<div style="background:var(--bg);border:1px solid var(--line-soft);border-radius:var(--radius);padding:20px;text-align:center;font-size:12px;color:var(--dim)">尚未开始执行 — 拖到「待办」即由 Agent 自动执行</div>';
@@ -8937,7 +8962,7 @@ FocusPilot/
               '<div style="font-size:11px;margin-bottom:4px"><strong>' + task.exec.agent + '</strong> <span style="color:var(--dim)">· 自动执行 · ' + task.exec.time + '</span></div>' +
               '<div style="font-family:var(--mono);font-size:10px;line-height:1.7;color:var(--muted);background:var(--bg);border:1px solid var(--line-soft);border-radius:6px;padding:8px">' + task.exec.logs + '</div>' +
               '<div style="display:flex;gap:6px;margin-top:6px"><button class="btn" style="font-size:9px;min-height:22px;padding:0 8px">查看 Diff</button><button class="btn" style="font-size:9px;min-height:22px;padding:0 8px">日志</button></div>' +
-              actionBarHtml('retryTask(\'' + task.id + '\')') +
+              msgActionsHtml('retryTask(\'' + task.id + '\')', true) +
               '</div></div>';
           } else {
             convHtml += '<div style="background:var(--bg);border:1px solid var(--line-soft);border-radius:var(--radius);padding:20px;text-align:center;font-size:12px;color:var(--dim)">尚未开始执行 — 拖到「待办」即由 Agent 自动执行</div>';
@@ -10922,7 +10947,7 @@ FocusPilot/
           if (m.text) body += '<div style="white-space:pre-line">' + escapeHtml(m.text) + '</div>';
           if (m.terminal) body += '<div style="margin-top:8px;background:var(--bg);border:1px solid var(--line-soft);border-radius:var(--radius);padding:8px 10px;font-family:var(--mono);font-size:11px;color:var(--green);white-space:pre-line">' + escapeHtml(m.terminal) + '</div>';
           if (m.diff) body += '<div style="margin-top:8px;background:var(--bg);border:1px solid var(--line-soft);border-radius:var(--radius);padding:8px 10px;font-family:var(--mono);font-size:11px;color:var(--muted)">已修改: ' + escapeHtml(m.diff) + '</div>';
-          if (idx === _lastAgentMsg) body += actionBarHtml('retryChatMessage(\'' + (sid || '') + '\',' + idx + ')');
+          body += msgActionsHtml('retryChatMessage(\'' + (sid || '') + '\',' + idx + ')', idx === _lastAgentMsg);
           html += '<div class="message agent" style="' + (compact ? 'max-width:92%' : '') + '">' + body + '</div>';
         });
         return html;
@@ -14824,6 +14849,7 @@ FocusPilot/
 
       document.getElementById("openChatFromStrip").addEventListener("click", () => {
         chatWindow.classList.add("open");
+        refreshChatActions();
         chatInput.focus();
       });
 
@@ -14833,6 +14859,7 @@ FocusPilot/
 
       document.getElementById("newChatBtn").addEventListener("click", () => {
         chatThread.innerHTML = '<div class="msg agent">已创建全局新会话。你可以直接询问所有项目、运行记录、今日聚焦或等待验收任务。</div>';
+        refreshChatActions();
         chatInput.focus();
       });
 
@@ -14844,7 +14871,7 @@ FocusPilot/
         btn.addEventListener("click", () => {
           fbRoot.querySelectorAll("[data-chat-scope]").forEach((item) => item.classList.toggle("active", item === btn));
           chatThread.insertAdjacentHTML("beforeend", '<div class="msg agent">范围已切换为「' + btn.dataset.chatScope + '」。这只是查询范围，不会绑定当前 Workspace 或当前任务。</div>');
-          chatThread.scrollTop = chatThread.scrollHeight;
+          refreshChatActions(); chatThread.scrollTop = chatThread.scrollHeight;
         });
       });
 
@@ -14859,7 +14886,7 @@ FocusPilot/
         agentMsg.textContent = "我会在全部项目范围内查询，并返回可直接处理的任务列表。这个快捷助手不默认绑定当前 Workspace 或当前任务。";
         chatThread.append(userMsg, agentMsg);
         chatInput.value = "";
-        chatThread.scrollTop = chatThread.scrollHeight;
+        refreshChatActions(); chatThread.scrollTop = chatThread.scrollHeight;
       });
 
 
@@ -15080,7 +15107,7 @@ FocusPilot/
           if (r.actions) inner += `<div class="rd-round-actions"><button class="rd-mini-btn" type="button">查看 Diff</button><button class="rd-mini-btn" type="button">日志</button></div>`;
           if (r.opinions) inner += r.opinions.map((o) => `<div class="rd-opinion ${o.cls}"><strong>${o.level}</strong> ${o.text}</div>`).join("");
           if (r.user) inner += `<div class="rd-user">${r.user}</div>`;
-          if (ri === _lastAgentRound) inner += actionBarHtml("retryTask('" + d.id + "')");
+          if (r.ic === '🤖') inner += msgActionsHtml("retryTask('" + d.id + "')", ri === _lastAgentRound);
           return `<div class="rd-round"><span class="ic">${r.ic}</span><div class="rd-round-body">${inner}</div></div>`;
         }).join("");
 
