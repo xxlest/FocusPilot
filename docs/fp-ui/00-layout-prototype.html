@@ -10416,7 +10416,9 @@ FocusPilot/
             { role: 'user', text: '帮我把 animateRow 的动画改成 0.2s ease-out' },
             { role: 'agent', text: '好的，我来修改 KanbanDataSource 中的动画参数。', diff: 'KanbanDataSource.swift' },
             { role: 'user', text: '编译一下' },
-            { role: 'agent', text: '', terminal: '$ make build\n✓ Build succeeded' }
+            { role: 'agent', text: '', terminal: '$ make build\n✓ Build succeeded' },
+            { role: 'user', text: '部署到测试环境' },
+            { role: 'agent', text: '', msg_state: 'failed', error: '未登录 · 请先运行 /login' }
           ],
           diffFiles: [
             { name: 'KanbanDataSource.swift', status: 'M', active: true },
@@ -10890,12 +10892,12 @@ FocusPilot/
         return sid;
       }
 
-      function renderMessageBubbles(messages, compact) {
+      function renderMessageBubbles(messages, compact, sid) {
         if (!messages || !messages.length) {
           return '<div class="quick-chat-empty">开始一次对话，历史会同步到 Home 和 Studio 项目视图。</div>';
         }
         var html = '';
-        messages.forEach(function(m) {
+        messages.forEach(function(m, idx) {
           if (m.role === 'user') {
             html += '<div class="message user" style="' + (compact ? 'max-width:88%' : '') + '">' + escapeHtml(m.text) + '</div>';
             return;
@@ -10904,9 +10906,19 @@ FocusPilot/
           if (m.text) body += '<div style="white-space:pre-line">' + escapeHtml(m.text) + '</div>';
           if (m.terminal) body += '<div style="margin-top:8px;background:var(--bg);border:1px solid var(--line-soft);border-radius:var(--radius);padding:8px 10px;font-family:var(--mono);font-size:11px;color:var(--green);white-space:pre-line">' + escapeHtml(m.terminal) + '</div>';
           if (m.diff) body += '<div style="margin-top:8px;background:var(--bg);border:1px solid var(--line-soft);border-radius:var(--radius);padding:8px 10px;font-family:var(--mono);font-size:11px;color:var(--muted)">已修改: ' + escapeHtml(m.diff) + '</div>';
+          if (m.msg_state === 'failed' || m.msg_state === 'timeout') body += retryBubbleHtml(m.error || (m.msg_state === 'timeout' ? '回复超时 · 请重试' : '未完成 · 请重试'), 'retryChatMessage(\'' + (sid || '') + '\',' + idx + ')');
           html += '<div class="message agent" style="' + (compact ? 'max-width:92%' : '') + '">' + body + '</div>';
         });
         return html;
+      }
+
+      // 聊天消息重试 = 清失败态 + 重发上一轮（演示：清 msg_state 后重渲染当前对话；产品语义为重发上一轮 user prompt 触发新回复）
+      function retryChatMessage(sid, idx) {
+        var session = (typeof studioSessions !== 'undefined') ? studioSessions[sid] : null;
+        if (!session || !session.messages || !session.messages[idx]) return;
+        session.messages[idx].msg_state = 'ok';
+        if (typeof homeActiveSessionId !== 'undefined' && homeActiveSessionId === sid && typeof renderHomeChatFromSession === 'function') renderHomeChatFromSession(sid);
+        if (typeof renderQuickChatHistory === 'function') renderQuickChatHistory();
       }
 
       function activateHomeChatTab() {
