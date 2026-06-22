@@ -4319,8 +4319,6 @@
               <div style="cursor:pointer;color:var(--dim);font-size:16px" onclick="closeTaskDetail()">✕</div>
               <div style="flex:1"><div class="fp-detail-id" style="font-size:10px;font-family:var(--mono);color:var(--dim)">FP-002</div><div class="fp-detail-title" style="font-size:15px;font-weight:600">看板状态模型实现</div></div>
               <span class="pill blue" style="font-size:11px">● In Progress</span>
-              <!-- ↻ 重试：仅 run_state=failed/timeout 时显示；此处演示态常驻 -->
-              <button class="btn" title="重试任务（执行失败/超时）" onclick="retryTask('FP-002')" style="min-height:28px;padding:0 9px;border-color:var(--line);color:var(--muted)">↻ 重试</button>
               <button class="btn" title="删除任务" onclick="deleteCurrentTask()" style="min-height:28px;padding:0 9px;color:var(--red);border-color:rgba(248,113,113,.3)">🗑 删除</button>
             </div>
             <div style="background:var(--elevated);border:1px solid var(--line);border-radius:var(--radius);padding:10px 14px;margin:12px 18px 0;font-size:11px">
@@ -7469,7 +7467,8 @@ FocusPilot/
         var ekey = execStateOf(item);
         if (ekey && ekey !== 'idle' && EXEC_STATE_MODEL[ekey]) {
           var em = EXEC_STATE_MODEL[ekey];
-          html += '<span class="pill exec-badge" style="font-size:9px;padding:1px 6px;font-weight:700;border:none;background:' + em.color + '22;color:' + em.color + '">' + em.icon + ' ' + em.label + '</span>';
+          var hint = (ekey === 'failed' || ekey === 'timeout') ? ' title="点开详情可重试"' : '';
+          html += '<span class="pill exec-badge"' + hint + ' style="font-size:9px;padding:1px 6px;font-weight:700;border:none;background:' + em.color + '22;color:' + em.color + '">' + em.icon + ' ' + em.label + '</span>';
         }
         if (item.decision) html += '<span class="pill amber" style="font-size:9px;padding:1px 5px;font-weight:600">等你决策</span>';
         if (typeof taskChangesets !== 'undefined' && taskChangesets[item.id]) {
@@ -7489,9 +7488,6 @@ FocusPilot/
           html += '<span style="flex-shrink:0">Workspace</span><span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--muted)">' + wsInfo.icon + ' ' + meta.name + '</span>';
           html += '</div>';
         }
-        if (ekey === 'failed' || ekey === 'timeout') {
-          html += '<div style="margin-top:6px"><button class="btn fp-retry-btn" onclick="event.stopPropagation();retryTask(\'' + item.id + '\')" style="font-size:10px;padding:2px 10px;min-height:0;border-color:var(--line);color:var(--muted)">↻ 重试</button></div>';
-        }
         return html;
       }
 
@@ -7500,9 +7496,13 @@ FocusPilot/
         var it = (typeof workItems !== 'undefined' ? workItems : []).find(function (x) { return x.id === id; });
         if (!it) return;
         it.run_state = 'queued';
-        if (typeof renderKanbanFromItems === 'function') {
-          renderKanbanFromItems(typeof currentFocusFilter !== 'undefined' ? currentFocusFilter : 'all');
-        }
+        // 全视图卡片整卡 tint 同步（看板/列表/泳道/时间轴）——背景卡片不停留在失败红
+        if (typeof refreshStudioTaskViews === 'function') refreshStudioTaskViews();
+        // FocusBar 详情对话流（若打开当前任务）重渲染
+        if (typeof currentDetailId !== 'undefined' && currentDetailId === id && typeof renderRunDetail === 'function') renderRunDetail(id);
+        // 主面板详情（若 #fpDetailPanel 正显示该任务）重渲染对话流
+        var idEl = document.querySelector('#fpDetailPanel .fp-detail-id');
+        if (idEl && idEl.textContent === id && typeof openTaskDetail === 'function') openTaskDetail(id);
       }
 
       /* ── Render: Kanban Board from workItems ── */
