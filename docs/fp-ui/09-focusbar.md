@@ -47,7 +47,7 @@
                                                             ●  ← 悬浮球（含未读徽标/状态环）
 ```
 
-- **悬浮球**：`width/height 58px`、圆角矩形、蓝色玻璃渐变 + 内禅圆；右上 `ball-badge` 未读数；`ball-ring` 在专注（红）/休息（绿）时显示。锁定态变琥珀色（见 §4）。
+- **悬浮球**：`width/height 38px`、正圆（`border-radius:50%`）、红色玻璃径向渐变 + 内禅圆；右上 `ball-badge` 未读数；`ball-ring` 在专注（红）/休息（绿）时显示。锁定态变琥珀色（见 §4）。
 - **快捷面板**：宽 312px，浮在悬浮球左侧；动作行 5 项 + 底部对话入口（chat-strip）。
 - **Focus Bar**：贴屏幕顶部的横向状态条，6 个分组下拉 + 计时器 + 进度条 + 关闭按钮。
 
@@ -121,7 +121,7 @@
 
 | 任务 | 操作路径 |
 |------|---------|
-| 打开面板 | hover **悬浮球本体**（`.ball`，见下「感应区」行）→ `floating-zone.open`，淡入上移 |
+| 打开面板 | hover **悬浮球本体**（`.ball`，见下「感应区」行）→ `floating-zone.open`，淡入上移。**原型 hover 立即弹；真机实现应保留 ~150ms hover 延迟（V4 `hoverDelay`）防贴边/路过误触** |
 | 感应区 | 触发弹出的热区**仅为悬浮球可见本体**，**不含"未弹出的面板占位区"**。实现：`.float-panel` 默认 `pointer-events:none`，仅在 `.floating-zone:hover` / `.open`（hover 球本体或锁定）时恢复 `auto`——弹出后能移到面板上操作，但**鼠标在球外空白（含面板尚未弹出的占位区）移动不会误触发弹出**。⚠️ 切勿把面板占位区设为常驻 `pointer-events:auto`（面板 `opacity:0` 仍会拦截鼠标，曾导致"鼠标还没碰到球就弹面板"） |
 | 一级 → 二级菜单 | hover 动作行 → 二级菜单从左侧弹出；一/二级间有**透明桥接热区**（`.sub-menu::after`，14px）覆盖 10px 间隙，移动途中不脱离 hover |
 | 收起 | 鼠标离开 floatStack / floatPanel → `scheduleFloatingClose`：**320ms hover-intent 延迟**后移除 `.open`，再 ~150ms 淡出；锁定 / `fbAutoCollapse=false` 时不收起（详见下「收起验收口径」） |
