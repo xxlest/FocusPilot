@@ -13327,21 +13327,49 @@ FocusPilot/
 .fb-root .bar-btn:hover {
         background: rgba(0, 0, 0, 0.06);
       }
+/* 状态数字徽章（方案E·智能分级）：未读/今日聚焦=实心高对比徽章（行动核心），
+   其余生命周期态=柔和底色徽章；0 态退化为灰色裸数字（不出现空徽章）。
+   每态 --tone 取状态语义色（与看板/浮球同源）。规格/设计意图见 09-focusbar.md §3.5。 */
+.fb-root .bar-btn[data-tone="unread"]  { --tone: var(--red); }
+.fb-root .bar-btn[data-tone="plan"]    { --tone: #6b7280; }
+.fb-root .bar-btn[data-tone="running"] { --tone: var(--blue); }
+.fb-root .bar-btn[data-tone="review"]  { --tone: #8B5CF6; }
+.fb-root .bar-btn[data-tone="done"]    { --tone: #1f8f43; }
+.fb-root .bar-btn[data-tone="focus"]   { --tone: var(--blue); }
 .fb-root .bar-num {
-        font-size: 15px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 19px;
+        height: 19px;
+        margin-left: 5px;
+        padding: 0 6px;
+        border-radius: 9.5px;
+        font-size: 12.5px;
         font-weight: 800;
         font-variant-numeric: tabular-nums;
+        line-height: 1;
+        background: color-mix(in srgb, var(--tone) 15%, transparent);
+        color: var(--tone);
       }
-.fb-root .bar-btn[data-tone="plan"]    .bar-num { color: #6b7280; }
-.fb-root .bar-btn[data-tone="running"] .bar-num { color: var(--blue); }
-.fb-root .bar-btn[data-tone="review"]  .bar-num { color: #b4690e; }
-.fb-root .bar-btn[data-tone="done"]    .bar-num { color: #1f8f43; }
-.fb-root .bar-btn[data-tone="focus"]   .bar-num { color: var(--blue); }
-.fb-root .bar-btn[data-tone="unread"]  .bar-num { color: var(--red); }
-.fb-root .bar-dot { display:inline-block; width:6px; height:6px; border-radius:50%; background:var(--red); margin-right:5px; vertical-align:middle; }
+/* 实心徽章：仅未读 + 今日聚焦——把最响的视觉额度只给真正要你行动的两类 */
+.fb-root .bar-btn[data-tone="unread"] .bar-num,
+.fb-root .bar-btn[data-tone="focus"]  .bar-num {
+        background: var(--tone);
+        color: #fff;
+        font-size: 12px;
+        box-shadow: 0 1px 3px color-mix(in srgb, var(--tone) 45%, transparent);
+      }
+/* 0 态：退化为灰色裸数字，不出现空徽章（计数仍写入 textContent，自检 I2 不受影响） */
+.fb-root .bar-num.is-zero {
+        background: transparent;
+        box-shadow: none;
+        color: var(--dim);
+        font-weight: 700;
+      }
 .fb-root .bar-btn[data-tone="plan"]:hover { background: rgba(107, 114, 128, 0.12); }
 .fb-root .bar-btn[data-tone="running"]:hover { background: rgba(20, 122, 243, 0.12); }
-.fb-root .bar-btn[data-tone="review"]:hover { background: rgba(245, 158, 11, 0.16); }
+.fb-root .bar-btn[data-tone="review"]:hover { background: rgba(139, 92, 246, 0.16); }
 .fb-root .bar-btn[data-tone="done"]:hover { background: rgba(49, 199, 90, 0.14); }
 .fb-root .bar-btn[data-tone="focus"]:hover { background: rgba(20, 122, 243, 0.12); }
 .fb-root .bar-btn[data-tone="unread"]:hover { background: color-mix(in srgb, var(--red) 12%, transparent); }
@@ -13583,10 +13611,15 @@ FocusPilot/
 .fb-root .floating-zone:hover .ball, .fb-root .floating-zone.open .ball {
         transform: scale(1.04);
       }
+/* 面板未弹出时其占位区不接收鼠标，避免「鼠标在球外空白处就触发弹出」；
+   仅在 hover 球本体 / 锁定(.open) 时恢复可点击，以便弹出后移上去操作 */
+.fb-root .floating-zone:hover .float-panel, .fb-root .floating-zone.open .float-panel {
+        pointer-events: auto;
+      }
 .fb-root .float-panel {
         width: 312px;
         margin-left: auto;
-        pointer-events: auto;
+        pointer-events: none;
         border: 1px solid var(--line);
         border-radius: 26px;
         background: var(--surface);
@@ -14344,7 +14377,7 @@ FocusPilot/
 .fb-root { position: fixed; inset: 0; min-height: 0; background: none; color: var(--ink); pointer-events: none; z-index: 9000; }
 /* 「显示悬浮球」开关只隐藏悬浮球本体 + 其快捷面板，不连带 Focus Bar（Focus Bar 由 bar-pinned 独立控制）*/
 .fb-root.fb-hidden #floatingZone { display: none; }
-.fb-root .focus-bar, .fb-root .float-stack, .fb-root .float-panel,
+.fb-root .focus-bar, .fb-root .float-stack,
 .fb-root .quick-chat-window, .fb-root .modal-backdrop { pointer-events: auto; }
 /* .floating-zone/.float-menu/.rd-overlay/.rd-card 保持浮球原 pointer-events 编排，勿强制 */
 
@@ -14352,7 +14385,7 @@ FocusPilot/
 <div class="fb-root" id="fbRoot">
           <div class="focus-bar" id="focusBar">
             <div class="bar-group">
-              <button class="bar-btn" data-tone="unread" type="button"><span class="bar-dot"></span>未读 <b class="bar-num">6</b></button>
+              <button class="bar-btn" data-tone="unread" type="button">未读 <b class="bar-num">6</b></button>
               <div class="bar-menu" id="unreadMenu">
                 <div class="sub-title">未读消息（收件箱）<span class="ur-grp"><button type="button" data-ur="status">按状态</button><button type="button" data-ur="project">按项目</button></span></div>
                 <div id="unreadList" class="bar-list">
@@ -15304,7 +15337,7 @@ FocusPilot/
     var grp = btn.closest('.bar-group'), list = grp && grp.querySelector('.bar-list');
     if(list) list.innerHTML = ids.map(fbMiniHtml).join('');
     var num = btn.querySelector('.bar-num');
-    if(num) num.textContent = ids.length;
+    if(num){ num.textContent = ids.length; num.classList.toggle('is-zero', ids.length === 0); }
   }
   var byStatus = function(st){ return POOL_ORDER.filter(function(id){ return FB_POOL[id].st === st; }); };
   fbFillBar('unread',  UNREAD_ORDER);
@@ -15481,6 +15514,24 @@ FocusPilot/
       return b.getAttribute('data-st') !== p.st || b.getAttribute('data-pj') !== p.pj;
     });
     ok('I6 下拉属性与池一致', bad6.length===0, bad6.length ? bad6.length+'处不符' : '一致');
+
+    // I7 感应区收敛：面板未弹出时 .float-panel 不接收指针（防"球外空白/面板占位区误触发弹出"回归）
+    var fp7 = document.querySelector('#fbRoot .float-panel');
+    var fpPE7 = fp7 ? getComputedStyle(fp7).pointerEvents : '(缺失)';
+    ok('I7 面板占位区不拦截指针', !!fp7 && fpPE7 === 'none', fp7 ? 'pointer-events:'+fpPE7 : '面板缺失');
+
+    // I8 感应区命中校验：球外空白点（面板占位区内、球外）应穿透浮层、不落在 .floating-zone 交互区
+    //    比 I7 的纯 CSS 断言更贴近真实命中：即便将来别的浮层元素变成可命中，也能抓到回归
+    var fpel8 = document.querySelector('#fbRoot .float-panel');
+    var pr8 = fpel8 && fpel8.getBoundingClientRect();
+    var hit8 = pr8 ? document.elementFromPoint(Math.round(pr8.left + pr8.width/2), Math.round(pr8.top + 14)) : null;
+    ok('I8 球外空白点穿透浮层', !!hit8 && !hit8.closest('.floating-zone'), hit8 ? ('命中 ' + ('' + (hit8.className || hit8.tagName))).slice(0, 36) : '取点失败');
+
+    // I9 状态数字徽章 0 态护栏：每个 .bar-num "计数为0" ⟺ 带 .is-zero（防 0 态露出空徽章回归）
+    var bad9 = [].filter.call(document.querySelectorAll('.focus-bar .bar-num'), function(n){
+      return (n.textContent.trim() === '0') !== n.classList.contains('is-zero');
+    });
+    ok('I9 bar-num 0态退化一致', bad9.length===0, bad9.length ? bad9.length+'处不符' : '一致');
 
     var pass = res.every(function(r){ return r.pass; });
     window.__SELFCHECK__ = { pass: pass, results: res };

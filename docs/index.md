@@ -37,6 +37,8 @@
   - `08-settings.md` 全局配置 [草稿]
 - [focuspilot-ui-features.md](focuspilot-ui-features.md)
   从产品定位到 UI 细节的递进式功能说明书（基于 PRD 0.0.1 + V4.3 实现）。
+- [FocusBar-基于FP-UI最新原型的功能全景与AI任务监控工具参考.md](FocusBar-基于FP-UI最新原型的功能全景与AI任务监控工具参考.md)
+  基于 `docs/fp-ui/09-focusbar.md` 与 `.fb-root` 最新母版原型整理的独立参考，用于新起本地 AI 任务状态监控工具。
 
 ## 竞品分析
 
