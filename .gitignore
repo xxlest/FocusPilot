@@ -1,2 +1,6 @@
 .superpowers/
 docs/ccStudyCase/
+
+# AI 工具 / 配置目录（非交付物，不纳入版本库）
+.claude/
+.codex/
