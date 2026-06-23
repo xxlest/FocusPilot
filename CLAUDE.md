@@ -26,6 +26,8 @@ FocusPilot 定位为 macOS 上的个人自迭代系统（Personal AIOS）—— 
 
 ## 文档体系（分流入口）
 
+> ⚠️ **剥离说明（2026-06-23）**：FP-UI / V1 全新版本已剥离为同级独立项目 **RunOne（行一）**（`../RunOne/`），以全新仓库从原型开始重写。`PRD.md`、`DesignGuide.md`、`Editions.md`、`FP-UI.md`、`fp-ui/`、`focuspilot-ui-features.md`、`FocusBar-*.md` 已迁出本仓库；本仓库收敛为 **V4.3 悬浮球代码 + 战略 / 竞品 / 研究文档**的冻结存档。下列分流中指向上述已迁文档的条目仅作历史保留。
+
 ### 核心产品
 - **产品需求（主）**：`docs/PRD.md` — FocusPilot 0.0.1 主 PRD（两阶段模型、四模式、Crew、知识管道、Dashboard）
 - **产品需求（归档）**：`docs/archive/PRD-v4-legacy.md` — V4.x 既有功能清单、交互规则、验收标准
@@ -61,4 +63,4 @@ FocusPilot 定位为 macOS 上的个人自迭代系统（Personal AIOS）—— 
 
 ## 当前工作状态
 
-V4.3 悬浮球版本已稳定运行；产品战略文档已定稿、V1 MVP scope 明确；V1（FP-UI）新界面设计中。**各页面完整度与状态进度表见 `docs/FP-UI.md`。**
+V4.3 悬浮球版本已稳定运行；产品战略文档已定稿、V1 MVP scope 明确。V1（FP-UI）新界面已剥离至同级 **RunOne（行一）** 项目继续开发，本仓库不再维护 FP-UI 设计。

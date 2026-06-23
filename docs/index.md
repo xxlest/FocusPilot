@@ -1,17 +1,13 @@
 # Docs Index
 
-> FocusPilot 文档目录索引。目标是把当前有效文档、专题研究、竞品资料和产品线探索分开，避免都堆在 `docs` 顶层。
+> FocusPilot 文档目录索引。本仓库为 V4.3 悬浮球版本的冻结存档。
+
+> ⚠️ **剥离说明（2026-06-23）**：FP-UI / V1 全新版本（PRD / DesignGuide / Editions / FP-UI / fp-ui / focuspilot-ui-features / FocusBar）已迁出，剥离为同级独立项目 **RunOne（行一）**（`../RunOne/`）。本仓库仅保留 V4.3 技术文档与战略 / 竞品 / 研究资料。
 
 ## 核心产品
 
-- [PRD.md](PRD.md)
-  FocusPilot 当前正式产品需求文档，覆盖定位、功能、Engine、部署和 V1 范围。
 - [Architecture.md](Architecture.md)
   当前实现对应的技术架构、模块边界、状态流转和验收用例。
-- [DesignGuide.md](DesignGuide.md)
-  品牌、视觉、主题、动画和交互规范。
-- [Editions.md](Editions.md)
-  FocusPilot / PilotOne 产品家族与版本规划。
 
 ## 产品战略
 
@@ -21,25 +17,6 @@
   V1 执行方案：MVP scope、目标用户、首发渠道、定价模型。
 - [FocusPilot市场分析与阶段验证方案.md](产品战略/FocusPilot市场分析与阶段验证方案.md)
   市场机会分析、用户画像、竞品对标、五阶段验证计划。
-## UI 设计（V1 新界面）
-
-- [FP-UI.md](FP-UI.md)
-  设计总览：8 个页面进度表、技术架构、参考来源索引。
-- [fp-ui/](fp-ui/) — 页面设计文档
-  - `00-layout.md` 整体布局（活动栏+侧边栏+工作区）
-  - `01-home.md` 首页（AI 对话+Widget）[草稿]
-  - `02-inbox.md` 收集箱（待阅读/灵感/便签）[草稿]
-  - `03-focus.md` 行动工作台（规划+执行+评估）[设计中]
-  - `04-studio.md` AI 工作区（对话+文件+Git）[设计中]
-  - `05-area-projects.md` 项目资产沉淀区 [草稿]
-  - `06-review.md` 复习与内化中心 [设计中]
-  - `07-ai-crew.md` Agent 团队管理 [草稿]
-  - `08-settings.md` 全局配置 [草稿]
-- [focuspilot-ui-features.md](focuspilot-ui-features.md)
-  从产品定位到 UI 细节的递进式功能说明书（基于 PRD 0.0.1 + V4.3 实现）。
-- [FocusBar-基于FP-UI最新原型的功能全景与AI任务监控工具参考.md](FocusBar-基于FP-UI最新原型的功能全景与AI任务监控工具参考.md)
-  基于 `docs/fp-ui/09-focusbar.md` 与 `.fb-root` 最新母版原型整理的独立参考，用于新起本地 AI 任务状态监控工具。
-
 ## 竞品分析
 
 - [Z Code UI 功能层次梳理.md](竞品分析/Z%20Code%20UI%20功能层次梳理.md)
