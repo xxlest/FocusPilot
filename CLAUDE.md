@@ -34,12 +34,10 @@ FocusPilot 定位为 macOS 上的个人自迭代系统（Personal AIOS）—— 
 - **技术架构**：`docs/Architecture.md` — V4.3 架构明细（文件结构 / 模块职责 / 数据模型 / 接口契约 / 行为约束 / 验收用例）
 - **产品需求（归档）**：`docs/archive/PRD-v4-legacy.md` — V4.x 既有功能清单、交互规则、验收标准
 - **开发指南**：`docs/Development.md` — V4.3 开发流程 / 构建 / 修改前必读
-- **产品战略**：`docs/产品战略/` — 理念 / MVP scope / 市场分析（偏市场战略，后续可能并入 AIOS-MarketResearch）
-- **竞品分析**：`docs/竞品分析/` — Z Code / Codex / Plane / Multica UI 梳理（设计参考，后续可能迁往 RunOne 或 AIOS-MarketResearch）
 
 ### 已迁出（历史条目，勿在本仓库查找或维护）
-- 产品 PRD / 设计规范 / FP-UI 原型 / 功能说明书 → `../RunOne/`
-- 市场研究 / 产品线 / 横向研究资料 → `../AIOS-MarketResearch/`
+- 产品 PRD / 设计规范 / FP-UI 原型 / 功能说明书 / **产品理念** / **竞品分析** → `../RunOne/`
+- 市场研究 / 产品线 / 横向研究 / **市场策略** / **市场分析** → `../AIOS-MarketResearch/`
 
 ## 当前工作状态
 
