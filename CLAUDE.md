@@ -27,8 +27,8 @@ FocusPilot 定位为 macOS 上的个人自迭代系统（Personal AIOS）—— 
 ## 文档体系（分流入口）
 
 > ⚠️ **剥离说明（2026-06-24）**：本仓库已收敛为 **V4.3 悬浮球旧系统的冻结存档**，不再开发或维护新版本。
-> - **产品 / 设计 / FP-UI**（PRD / DesignGuide / Editions / FP-UI / fp-ui / focuspilot-ui-features / FocusBar）→ 已迁至 **RunOne（行一）** `../RunOne/`，**请勿在本仓库查找或维护**。
-> - **市场研究 / 产品线 / 横向研究**（PilotOne / 智能眼镜 / ClaudeCode）→ 已迁至 **AIOS-MarketResearch** `../AIOS-MarketResearch/`。
+> - **产品 / 设计 / FP-UI**（PRD / DesignGuide / Editions / FP-UI / fp-ui / pilotone-ui-features / FocusBar）→ 已迁至 **PilotOne** `../PilotOne/`，**请勿在本仓库查找或维护**。
+> - **市场研究 / 产品线 / 横向研究**（百工企业版 / 智能眼镜 / ClaudeCode）→ 已迁至 **AIOS-MarketResearch** `../AIOS-MarketResearch/`。
 
 ### 本仓库当前有效文档（V4.3 存档）
 - **技术架构**：`docs/Architecture.md` — V4.3 架构明细（文件结构 / 模块职责 / 数据模型 / 接口契约 / 行为约束 / 验收用例）
@@ -36,9 +36,9 @@ FocusPilot 定位为 macOS 上的个人自迭代系统（Personal AIOS）—— 
 - **开发指南**：`docs/Development.md` — V4.3 开发流程 / 构建 / 修改前必读
 
 ### 已迁出（历史条目，勿在本仓库查找或维护）
-- 产品 PRD / 设计规范 / FP-UI 原型 / 功能说明书 / **产品理念** / **竞品分析** → `../RunOne/`
+- 产品 PRD / 设计规范 / FP-UI 原型 / 功能说明书 / **产品理念** / **竞品分析** → `../PilotOne/`
 - 市场研究 / 产品线 / 横向研究 / **市场策略** / **市场分析** → `../AIOS-MarketResearch/`
 
 ## 当前工作状态
 
-V4.3 悬浮球版本已稳定运行；产品战略文档已定稿、V1 MVP scope 明确。V1（FP-UI）新界面已剥离至同级 **RunOne（行一）** 项目继续开发，本仓库不再维护 FP-UI 设计。
+V4.3 悬浮球版本已稳定运行；产品战略文档已定稿、V1 MVP scope 明确。V1（FP-UI）新界面已剥离至同级 **PilotOne** 项目继续开发，本仓库不再维护 FP-UI 设计。

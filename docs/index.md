@@ -3,7 +3,7 @@
 > FocusPilot 文档目录索引。本仓库为 V4.3 悬浮球版本的冻结存档。
 
 > ⚠️ **剥离说明（2026-06-24）**：
-> - **FP-UI / V1 全新版本 + 产品理念 + 竞品分析**已迁至同级 **RunOne（行一）**（`../RunOne/`）。
+> - **FP-UI / V1 全新版本 + 产品理念 + 竞品分析**已迁至同级 **PilotOne**（`../PilotOne/`）。
 > - **市场研究 / 产品线 / 横向研究 + 市场策略 / 市场分析**已迁至同级 **AIOS-MarketResearch**（`../AIOS-MarketResearch/`）。
 > - 本仓库仅保留 V4.3 技术文档（Architecture / Development / archive）作为冻结存档。
 
