@@ -2,7 +2,10 @@
 
 > FocusPilot 文档目录索引。本仓库为 V4.3 悬浮球版本的冻结存档。
 
-> ⚠️ **剥离说明（2026-06-23）**：FP-UI / V1 全新版本（PRD / DesignGuide / Editions / FP-UI / fp-ui / focuspilot-ui-features / FocusBar）已迁出，剥离为同级独立项目 **RunOne（行一）**（`../RunOne/`）。本仓库仅保留 V4.3 技术文档与战略 / 竞品 / 研究资料。
+> ⚠️ **剥离说明（2026-06-24）**：
+> - **FP-UI / V1 全新版本**（PRD / DesignGuide / Editions / FP-UI / fp-ui / focuspilot-ui-features / FocusBar）已剥离为同级独立项目 **RunOne（行一）**（`../RunOne/`）。
+> - **市场研究 / 产品线 / 横向研究资料**（PilotOne / 智能眼镜 / ClaudeCode）已迁至同级 **AIOS-MarketResearch**（`../AIOS-MarketResearch/`）。
+> - 本仓库仅保留 V4.3 技术文档与产品战略 / 竞品分析资料。
 
 ## 核心产品
 
@@ -27,35 +30,6 @@
   项目管理产品的完整 UI/IA 拆解，重点看 Work Item、容器模型和导航体系。
 - [Multica UI 功能层次梳理.md](竞品分析/Multica%20UI%20功能层次梳理.md)
   AI-native Issues / Agents / Runtimes / Skills 产品拆解，重点看双端统一布局和 Agent 一等公民设计。
-
-## 专题研究
-
-- [专题研究/智能眼镜](/Users/bruce/Workspace/2-Code/01-work/FocusPilot/docs/专题研究/智能眼镜)
-  FocusPilot 在智能眼镜接入方向上的方案与调研合集。
-- [FocusPilot-智能眼镜完整方案.md](/Users/bruce/Workspace/2-Code/01-work/FocusPilot/docs/专题研究/智能眼镜/FocusPilot-智能眼镜完整方案.md)
-  从产品价值、工作流路由、技术架构到实施阶段的完整方案。
-- [智能眼镜开发者能力调研报告.md](/Users/bruce/Workspace/2-Code/01-work/FocusPilot/docs/专题研究/智能眼镜/智能眼镜开发者能力调研报告.md)
-  各主流智能眼镜的开发开放度、接入方式和对接结论。
-
-## 参考研究
-
-- [参考研究/ClaudeCode](/Users/bruce/Workspace/2-Code/01-work/FocusPilot/docs/参考研究/ClaudeCode)
-  Claude Code 扩展体系相关的培训、讲解和传播材料。
-- [Claude Code 扩展体系深度解析.md](/Users/bruce/Workspace/2-Code/01-work/FocusPilot/docs/参考研究/ClaudeCode/Claude%20Code%20扩展体系深度解析.md)
-  面向有经验开发者的系统拆解。
-- [Claude Code 设计理念与可操作元素培训教程.md](/Users/bruce/Workspace/2-Code/01-work/FocusPilot/docs/参考研究/ClaudeCode/Claude%20Code%20设计理念与可操作元素培训教程.md)
-  面向入门读者的培训手册。
-
-## 产品线
-
-- [产品线/PilotOne](/Users/bruce/Workspace/2-Code/01-work/FocusPilot/docs/产品线/PilotOne)
-  企业版方向的场景探索、商业验证和筹备材料。
-- [场景探索](/Users/bruce/Workspace/2-Code/01-work/FocusPilot/docs/产品线/PilotOne/场景探索)
-  行业场景方案、案例与重构版产品设想。
-- [商业验证](/Users/bruce/Workspace/2-Code/01-work/FocusPilot/docs/产品线/PilotOne/商业验证)
-  市场、机会、融资、合作与验证相关材料。
-- [筹备材料](/Users/bruce/Workspace/2-Code/01-work/FocusPilot/docs/产品线/PilotOne/筹备材料)
-  沟通、访谈、MVP、验证计划等执行材料。
 
 ## 历史与过程
 

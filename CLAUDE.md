@@ -26,40 +26,20 @@ FocusPilot 定位为 macOS 上的个人自迭代系统（Personal AIOS）—— 
 
 ## 文档体系（分流入口）
 
-> ⚠️ **剥离说明（2026-06-23）**：FP-UI / V1 全新版本已剥离为同级独立项目 **RunOne（行一）**（`../RunOne/`），以全新仓库从原型开始重写。`PRD.md`、`DesignGuide.md`、`Editions.md`、`FP-UI.md`、`fp-ui/`、`focuspilot-ui-features.md`、`FocusBar-*.md` 已迁出本仓库；本仓库收敛为 **V4.3 悬浮球代码 + 战略 / 竞品 / 研究文档**的冻结存档。下列分流中指向上述已迁文档的条目仅作历史保留。
+> ⚠️ **剥离说明（2026-06-24）**：本仓库已收敛为 **V4.3 悬浮球旧系统的冻结存档**，不再开发或维护新版本。
+> - **产品 / 设计 / FP-UI**（PRD / DesignGuide / Editions / FP-UI / fp-ui / focuspilot-ui-features / FocusBar）→ 已迁至 **RunOne（行一）** `../RunOne/`，**请勿在本仓库查找或维护**。
+> - **市场研究 / 产品线 / 横向研究**（PilotOne / 智能眼镜 / ClaudeCode）→ 已迁至 **AIOS-MarketResearch** `../AIOS-MarketResearch/`。
 
-### 核心产品
-- **产品需求（主）**：`docs/PRD.md` — FocusPilot 0.0.1 主 PRD（两阶段模型、四模式、Crew、知识管道、Dashboard）
+### 本仓库当前有效文档（V4.3 存档）
+- **技术架构**：`docs/Architecture.md` — V4.3 架构明细（文件结构 / 模块职责 / 数据模型 / 接口契约 / 行为约束 / 验收用例）
 - **产品需求（归档）**：`docs/archive/PRD-v4-legacy.md` — V4.x 既有功能清单、交互规则、验收标准
-- **技术架构**：`docs/Architecture.md` — **架构明细唯一权威源**（文件结构 / 模块职责 / 数据模型 / 接口契约 / 模块交互 / 行为约束 / 关键设计决策 / 配置迁移 / 验收用例）
-- **设计规范**：`docs/DesignGuide.md` — 视觉准则、主题色值、动画参数、修改规则、Task 两轴状态色板（§4.8）
-- **版本规划**：`docs/Editions.md` — 个人版/企业版功能边界、付费方案
+- **开发指南**：`docs/Development.md` — V4.3 开发流程 / 构建 / 修改前必读
+- **产品战略**：`docs/产品战略/` — 理念 / MVP scope / 市场分析（偏市场战略，后续可能并入 AIOS-MarketResearch）
+- **竞品分析**：`docs/竞品分析/` — Z Code / Codex / Plane / Multica UI 梳理（设计参考，后续可能迁往 RunOne 或 AIOS-MarketResearch）
 
-### 产品战略
-- **产品理念**：`docs/产品战略/FocusPilot产品理念与市场定位.md` — AIOS 定位、知行一体化系统论述（权威版本）
-- **V1 执行方案**：`docs/产品战略/FocusPilot-V1-MVP-Scope与市场策略.md` — MVP scope、目标用户、定价
-- **市场分析**：`docs/产品战略/FocusPilot市场分析与阶段验证方案.md` — 市场机会、用户画像、五阶段验证
-
-### UI 设计（V1 新界面）
-- **设计总览 + 8 页进度**：`docs/FP-UI.md` — **UI 设计与进度唯一权威源**
-- **页面设计**：`docs/fp-ui/00~08` — Layout / Home / Studio / Projects / Review / AICrew / Settings
-- **功能说明书**：`docs/focuspilot-ui-features.md` — 从产品定位到 UI 细节的递进式讲解
-
-### 开发
-- **开发指南**：`docs/Development.md` — **开发流程唯一权威源，动手前必读**（开发规范 / 构建 / 参考项目 / 修改前必读 / 高频 Bug 防范）
-
-### 竞品分析
-- `docs/竞品分析/` — Z Code / Codex / Plane / Multica 四份 UI 功能层次梳理
-
-**原型 / 需求联动规则（每次必做）**：每一次调整 `docs/fp-ui/` 原型，**或**在沟通中敲定新的交互行为 / 需求，都必须同步固化到文档——目标是「后续任何人仅凭文档 + 原型即可直接开发，不依赖本次对话」。每次按下列载体逐项核对（不涉及的确认跳过即可）：
-- **页面规格 `docs/fp-ui/NN-*.md`**（交互的**单一权威源**）：交互行为、感应 / 触发边界、状态与规则、关键 class、**设计意图与踩过的坑**。
-- **`docs/PRD.md`**：涉及数据模型 / 状态定义 / 过滤规则 / 页面职责时同步；原型是 PRD 的可视化表达，两者不得矛盾。
-- **`docs/DesignGuide.md`**：涉及颜色 / 动画 / 尺寸等视觉参数时同步。
-- **可执行自检**：能断言的规格尽量在原型 `?selfcheck` 不变量里加一条作回归护栏（优于纯文字验收）。
-
-沟通里的「设计意图 / 为什么这么做 / 踩过的坑」必须落到文档（尤其页面规格），**不能只留在对话里**——这是"脱离上下文也能开发"的关键。
-
-**Task 两轴状态模型（权威源·设计参考根据）**：生命周期 `status`（6 态：待规划/待办/进行中/审核中/已完成/已阻塞）+ 执行状态 `run_state`（7 态：未执行/排队/执行中/等目录锁/执行完成/执行超时/执行失败，引擎自动驱动、整卡变色）。颜色见 `docs/DesignGuide.md §4.8`；状态机/枚举/转换/调度集见 `docs/fp-ui/04-studio.md §2.4·§3.2`；产品级模型+颜色表+转换表见 `docs/PRD.md`。改任一状态/颜色/转换都以这三处为准并保持同步，勿在本文件内重复明细。
+### 已迁出（历史条目，勿在本仓库查找或维护）
+- 产品 PRD / 设计规范 / FP-UI 原型 / 功能说明书 → `../RunOne/`
+- 市场研究 / 产品线 / 横向研究资料 → `../AIOS-MarketResearch/`
 
 ## 当前工作状态
 
