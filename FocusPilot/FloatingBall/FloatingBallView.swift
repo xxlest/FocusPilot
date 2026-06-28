@@ -34,6 +34,8 @@ final class FloatingBallView: NSView {
     private var progressRingLayer: CAShapeLayer?
     /// 进度环背景轨道图层
     private var progressTrackLayer: CAShapeLayer?
+    /// 当前是否处于球心倒计时模式（决定球面画完整 logo 还是纯色球面承载数字）
+    private var isCountdownMode = false
 
     // MARK: - 子视图
 
@@ -97,6 +99,21 @@ final class FloatingBallView: NSView {
         label.isEditable = false
         label.lineBreakMode = .byClipping
         label.maximumNumberOfLines = 1
+        return label
+    }()
+
+    /// FocusByTime 球心倒计时文字（计时器运行/暂停且面板未钉住时替代 logo）
+    private let countdownLabel: NSTextField = {
+        let label = NSTextField(labelWithString: "")
+        label.font = .monospacedDigitSystemFont(ofSize: 16, weight: .semibold)
+        label.textColor = .white
+        label.alignment = .center
+        label.drawsBackground = false
+        label.isBezeled = false
+        label.isEditable = false
+        label.lineBreakMode = .byClipping
+        label.maximumNumberOfLines = 1
+        label.isHidden = true
         return label
     }()
 
@@ -167,15 +184,24 @@ final class FloatingBallView: NSView {
         iconView.layer?.masksToBounds = true
         addSubview(iconView)
 
+        // FocusByTime 球心倒计时（居中，覆盖于 logo 之上，初始隐藏）
+        countdownLabel.translatesAutoresizingMaskIntoConstraints = false
+        countdownLabel.font = countdownFont(for: size)
+        addSubview(countdownLabel)
+        NSLayoutConstraint.activate([
+            countdownLabel.centerXAnchor.constraint(equalTo: centerXAnchor),
+            countdownLabel.centerYAnchor.constraint(equalTo: centerYAnchor),
+        ])
+
         // AI 未读角标（球内右上角，pill 形状）
         badgeContainer.translatesAutoresizingMaskIntoConstraints = false
         badgeLabel.translatesAutoresizingMaskIntoConstraints = false
         badgeContainer.addSubview(badgeLabel)
         addSubview(badgeContainer)
         NSLayoutConstraint.activate([
-            // 容器在球内右上角
-            badgeContainer.topAnchor.constraint(equalTo: topAnchor, constant: 4),
-            badgeContainer.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -4),
+            // 容器贴右上角（略微外探，避让球心倒计时数字）
+            badgeContainer.topAnchor.constraint(equalTo: topAnchor, constant: 0),
+            badgeContainer.trailingAnchor.constraint(equalTo: trailingAnchor, constant: 0),
             badgeContainer.heightAnchor.constraint(equalToConstant: 14),
             badgeContainer.widthAnchor.constraint(greaterThanOrEqualToConstant: 14),
             // label 在容器内居中，左右 4px padding
@@ -217,10 +243,12 @@ final class FloatingBallView: NSView {
         )
         iconView.layer?.cornerRadius = iconSize / 2
         iconView.layer?.masksToBounds = true
-        let colors = currentGradientColors()
-        iconView.image = createBrandLogo(size: iconSize, gradientColors: colors)
+        refreshBallIcon(iconSize: iconSize)
 
         // badgeLabel 使用 Auto Layout，无需手动设置 frame
+
+        // 球心倒计时字号跟随 ball size 缩放
+        countdownLabel.font = countdownFont(for: size)
 
         // 同步更新圆形阴影路径
         layer?.shadowPath = CGPath(ellipseIn: CGRect(x: 0, y: 0, width: size, height: size), transform: nil)
@@ -353,7 +381,12 @@ final class FloatingBallView: NSView {
         progressRingLayer = ring
     }
 
-    /// 更新进度环 + 悬浮球整体视觉状态（由通知触发）
+    /// 球心倒计时字号（跟随 ball size 缩放，适配 0.7 球面）
+    private func countdownFont(for size: CGFloat) -> NSFont {
+        .monospacedDigitSystemFont(ofSize: round(size * 0.38), weight: .bold)
+    }
+
+    /// 更新进度环 + 球心倒计时 + 悬浮球整体视觉状态（由通知触发）
     private func updateProgressRing() {
         let timer = FocusTimerService.shared
         let isActive = timer.status != .idle
@@ -362,22 +395,48 @@ final class FloatingBallView: NSView {
         progressTrackLayer?.isHidden = !isActive
         progressRingLayer?.isHidden = !isActive
 
+        // 球心倒计时：计时器运行/暂停 且 面板未钉住时显示，球面切纯色承载数字；
+        // 面板钉住/展开时维持完整 logo（倒计时交给面板计时器栏，避免重复）
+        let showCountdown = isActive && !isPanelPinned
+        countdownLabel.isHidden = !showCountdown
+        // 球面图标只在模式切换时重绘（避免逐秒重绘）；iconView 始终可见做数字底
+        if showCountdown != isCountdownMode {
+            isCountdownMode = showCountdown
+            refreshBallIcon()
+        }
+
         if isActive {
+            // 末分钟（剩余 < 60s）：切红色秒数 + 进度环转红
+            let isFinalMinute = timer.remainingSeconds < 60
+            let phaseColor: NSColor = timer.phase == .work ? accentColor : .systemGreen
+            let ringColor: NSColor = isFinalMinute ? .systemRed : phaseColor
+
             // 进度值
             progressRingLayer?.strokeEnd = timer.progress
-
-            // 颜色：工作=accent，休息=绿色
-            let phaseColor: NSColor = timer.phase == .work ? accentColor : .systemGreen
-            progressRingLayer?.strokeColor = phaseColor.cgColor
+            progressRingLayer?.strokeColor = ringColor.cgColor
 
             // 进度环加粗（更醒目）
             progressTrackLayer?.lineWidth = 2.5
             progressRingLayer?.lineWidth = 2.5
 
-            // 悬浮球光晕颜色跟随阶段（工作=accent，休息=绿色）
-            layer?.shadowColor = phaseColor.withAlphaComponent(0.7).cgColor
+            // 悬浮球光晕颜色跟随阶段/末分钟
+            layer?.shadowColor = ringColor.withAlphaComponent(0.7).cgColor
             layer?.shadowRadius = 10
             layer?.shadowOpacity = 0.5
+
+            // 球心数字：平时显示剩余分钟（向上取整），末分钟显示红色秒数
+            if showCountdown {
+                if isFinalMinute {
+                    countdownLabel.stringValue = "\(timer.remainingSeconds)"
+                    countdownLabel.textColor = NSColor(calibratedRed: 1.0, green: 0.42, blue: 0.38, alpha: 1.0)
+                } else {
+                    let minutes = (timer.remainingSeconds + 59) / 60
+                    countdownLabel.stringValue = "\(minutes)"
+                    countdownLabel.textColor = .white
+                }
+                // 暂停态：数字变淡（静止，不闪烁）
+                countdownLabel.alphaValue = timer.status == .paused ? 0.5 : 1.0
+            }
         } else {
             // idle 状态：恢复默认 accent 光晕
             progressTrackLayer?.lineWidth = 2.0
@@ -500,6 +559,8 @@ final class FloatingBallView: NSView {
         isPanelPinned = notification.userInfo?["isPinned"] as? Bool ?? false
         updatePinBadge(isPinned: isPanelPinned)
         updateAIBadge()
+        // 钉住/收起切换时同步球心倒计时与 logo 的显隐
+        updateProgressRing()
     }
 
     @objc private func coderBridgeSessionsDidChange() {
@@ -547,7 +608,7 @@ final class FloatingBallView: NSView {
         // 图标尺寸从当前 iconView frame 取（跟随 ball size 缩放）
         let size = iconView.frame.width > 0 ? iconView.frame.width : CGFloat(Constants.Ball.defaultSize) * 0.7
         let colors = gradientColors ?? currentGradientColors()
-        iconView.image = createBrandLogo(size: size, gradientColors: colors)
+        iconView.image = createBrandLogo(size: size, gradientColors: colors, drawEnso: !isCountdownMode)
         // 同步更新光晕颜色（跟随主题 accent）
         let accentColor = ConfigStore.shared.preferences.appTheme.colors.nsAccent
         layer?.shadowColor = accentColor.withAlphaComponent(0.4).cgColor
@@ -558,11 +619,17 @@ final class FloatingBallView: NSView {
         return createBrandLogoImage(size: size, gradientColors: gradientColors)
     }
 
-    private func createBrandLogo(size: CGFloat, gradientColors: (light: NSColor, medium: NSColor, dark: NSColor)) -> NSImage {
-        return Self.createBrandLogoImage(size: size, gradientColors: gradientColors)
+    private func createBrandLogo(size: CGFloat, gradientColors: (light: NSColor, medium: NSColor, dark: NSColor), drawEnso: Bool = true) -> NSImage {
+        return Self.createBrandLogoImage(size: size, gradientColors: gradientColors, drawEnso: drawEnso)
     }
 
-    private static func createBrandLogoImage(size: CGFloat, gradientColors: (light: NSColor, medium: NSColor, dark: NSColor)) -> NSImage {
+    /// 按当前模式刷新球面图标：倒计时模式画纯色球面（无禅圆），否则画完整 logo
+    private func refreshBallIcon(iconSize: CGFloat? = nil) {
+        let s = iconSize ?? (iconView.frame.width > 0 ? iconView.frame.width : CGFloat(Constants.Ball.defaultSize) * 0.7)
+        iconView.image = createBrandLogo(size: s, gradientColors: currentGradientColors(), drawEnso: !isCountdownMode)
+    }
+
+    private static func createBrandLogoImage(size: CGFloat, gradientColors: (light: NSColor, medium: NSColor, dark: NSColor), drawEnso: Bool = true) -> NSImage {
         let image = NSImage(size: NSSize(width: size, height: size))
         image.lockFocus()
 
@@ -610,6 +677,8 @@ final class FloatingBallView: NSView {
         innerGlow.stroke()
 
         // 5. 禅圆 Ensō（一笔未闭合弧线，起笔墨滴 + 粗→细渐变 + 收笔散点）
+        // 倒计时模式跳过禅圆，留出干净的纯色球面承载球心数字
+        if drawEnso {
         NSGraphicsContext.saveGraphicsState()
         circlePath.addClip()
 
@@ -691,6 +760,7 @@ final class FloatingBallView: NSView {
         }
 
         NSGraphicsContext.restoreGraphicsState()
+        }
 
         image.unlockFocus()
         return image
